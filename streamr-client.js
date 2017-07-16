@@ -1,23 +1,15 @@
 "use strict";
 
 (function() {
-
-	var debug
-	if (typeof module !== 'undefined') {
-		debug = require('debug')('StreamrClient')
-	} else {
-		debug = (window.debug ? window.debug('StreamrClient') : function() {
-			if (window.consoleLoggingEnabled)
-				console.log.apply(console, arguments)
-		})
-	}
 	
-	var WebSocket
-	if (typeof module !== 'undefined') {
-		WebSocket = require('ws')
-	} else {
-		WebSocket = window.WebSocket
-	}
+	var debug = (typeof window !== 'undefined' && window.debug) ? window.debug('StreamrClient') : // If in browser and window.debug exists
+		(typeof require !== 'undefined' ? require('debug')('StreamrClient') : // Else if in node
+			function() { // Else use mock
+				if (window.consoleLoggingEnabled)
+					console.log.apply(console, arguments)
+			})
+	
+	var WebSocket = typeof window !== 'undefined' ? window.WebSocket : require('ws')
 
 	var BYE_KEY = "_bye"
 
