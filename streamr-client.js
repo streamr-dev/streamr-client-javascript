@@ -2,6 +2,10 @@
 
 (function() {
 	
+	/* <---
+	Checking of the environment must be done with ternary operator instead of if-clause because of (possible) usage in Webpack.
+	With if-clause, Webpack forces the code to use require, also in browser.
+	Now it just works, in browser, in Node.js and in browser with Webpack. */
 	var debug = (typeof window !== 'undefined' && window.debug) ? window.debug('StreamrClient') : // If in browser and window.debug exists
 		(typeof require !== 'undefined' ? require('debug')('StreamrClient') : // Else if in node
 			function() { // Else use mock
@@ -10,7 +14,8 @@
 			})
 	
 	var WebSocket = typeof window !== 'undefined' ? window.WebSocket : require('ws')
-
+	/* ---> */
+	
 	var BYE_KEY = "_bye"
 
 	function extend() {
