@@ -27,7 +27,10 @@
     "babel-eslint": "^8.0.3",
     "babel-loader": "^7.1.2",
     "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-2017": "0.0.0",
     "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-2": "^6.24.1",
     "chai": "^4.1.2",
     "eslint": "^4.13.1",
     "eslint-loader": "^1.9.0",
@@ -39,8 +42,10 @@
     "yargs": "^10.0.3"
   },
   "dependencies": {
+    "babel-runtime": "^6.26.0",
     "debug": "^3.1.0",
     "eventemitter3": "^3.0.1",
+    "querystring": "^0.2.0",
     "ws": "^5.1.0"
   }
 }

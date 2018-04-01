@@ -40,3 +40,8 @@ subscription.on('resent', function() {
 subscription.on('no_resend', function() {
     console.log('Nothing to resend for '+subscription.streamId)
 })
+
+console.log('Attempting to get stream')
+client.getStream('7wa7APtlTq6EC5iTCBy6dw').then((stream) => {
+    console.log(stream)
+})

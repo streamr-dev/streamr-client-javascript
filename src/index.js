@@ -1,6 +1,7 @@
 import StreamrClient from './StreamrClient'
-//import Subscription from './Subscription'
-//import Connection from './Connection'
-//import * as Protocol from './Protocol'
+import AllEndpoints from './rest/AllEndpoints'
+
+// Mixin the rest endpoints to the StreamrClient
+Object.assign(StreamrClient.prototype, AllEndpoints)
 
 export default StreamrClient

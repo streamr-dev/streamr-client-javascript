@@ -1,10 +1,9 @@
 export async function authFetch(url, apiKey, opts = {}) {
-    let req = {
+    let req = Object.assign({}, opts, {
         headers: apiKey ? {
             Authorization: 'token '+ apiKey
-        } : undefined,
-        ...opts
-    }
+        } : undefined
+    })
 
     let res = await fetch(url, req)
 

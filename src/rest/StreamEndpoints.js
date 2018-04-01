@@ -60,9 +60,9 @@ export async function produceToStream(streamId, data, apiKey = this.options.apiK
     // Send data to the stream
     return await authFetch(this.options.restUrl + '/streams/' + streamId + '/data',
         apiKey,
-        {
-            ...requestOptions,
+        Object.assign({}, requestOptions, {
             method: 'POST',
             body: JSON.stringify(data)
         })
+    )
 }
