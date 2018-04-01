@@ -1,28 +1,45 @@
 {
   "name": "streamr-client",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "JS client for subscribing to Streamr streams",
   "repository": {
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
-  "main": "streamr-client.js",
+  "main": "dist/streamr-client.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "mocha test"
+    "build": "webpack --env dev && webpack --env build && npm run test",
+    "dev": "webpack --progress --colors --watch --env dev",
+    "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
+    "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
   },
-  "author": "",
-  "license": "",
-  "dependencies": {
-    "debug": "*",
-    "eventemitter3": "*",
-    "ws": "^3.0.0"
+  "author": "Streamr Network AG",
+  "license": "AGPL-3.0-or-later",
+  "browser": {
+    "ws": "./src/shims/ws.js"
   },
   "devDependencies": {
-    "mocha": "*",
-    "mockery": "*",
-    "sinon": "^1.17.5"
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.0.3",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-preset-env": "^1.6.1",
+    "chai": "^4.1.2",
+    "eslint": "^4.13.1",
+    "eslint-loader": "^1.9.0",
+    "mocha": "^4.0.1",
+    "mockery": "^2.1.0",
+    "sinon": "^4.5.0",
+    "webpack": "^3.10.0",
+    "yargs": "^10.0.3"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "eventemitter3": "^3.0.1",
+    "ws": "^5.1.0"
   }
 }
