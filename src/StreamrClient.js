@@ -13,6 +13,7 @@ export default class StreamrClient extends EventEmitter {
         this.options = {
             // The server to connect to
             url: 'wss://www.streamr.com/api/v1/ws',
+            restUrl: 'https://www.streamr.com/api/v1',
             // Automatically connect on first subscribe
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
