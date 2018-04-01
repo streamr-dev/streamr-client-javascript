@@ -1,27 +1,29 @@
 /* global __dirname, require, module*/
 
 const webpack = require('webpack')
-const UglifyJsPlugin = webpack.optimize.UglifyJsPlugin
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const path = require('path')
 const env = require('yargs').argv.env // use --env with webpack 2
+const target = require('yargs').argv.target // use --env with webpack 2
 const pkg = require('./package.json')
 
 let libraryName = pkg.name
 
-let plugins = [], outputFile
+let plugins = []
+let outputFile =  libraryName + '.' + target
 
-if (env === 'build') {
-    plugins.push(new UglifyJsPlugin({
-        minimize: true
-    }))
-    outputFile = libraryName + '.min.js'
+if (env === 'prod') {
+    plugins.push(new UglifyJsPlugin())
+    outputFile += '.min.js'
 } else {
-    outputFile = libraryName + '.js'
+    outputFile += '.js'
 }
 
+// Config which is common to both web and node builds
 const config = {
     entry: __dirname + '/src/index.js',
     devtool: 'source-map',
+    target: target,
     output: {
         path: __dirname + '/dist',
         filename: outputFile,

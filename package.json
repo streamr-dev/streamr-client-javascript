@@ -6,21 +6,21 @@
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
-  "main": "dist/streamr-client.js",
+  "main": "dist/streamr-client.node.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "build": "webpack --env dev && webpack --env build && npm run test",
+    "build": "webpack --env dev --target web && webpack --env dev --target node && webpack --env prod --target web && npm run test",
     "dev": "webpack --progress --colors --watch --env dev",
     "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
     "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
   },
+  "browser": {
+    "ws": "./src/shim/ws.js"
+  },
   "author": "Streamr Network AG",
   "license": "AGPL-3.0-or-later",
-  "browser": {
-    "ws": "./src/shims/ws.js"
-  },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
@@ -34,6 +34,7 @@
     "mocha": "^4.0.1",
     "mockery": "^2.1.0",
     "sinon": "^4.5.0",
+    "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^3.10.0",
     "yargs": "^10.0.3"
   },

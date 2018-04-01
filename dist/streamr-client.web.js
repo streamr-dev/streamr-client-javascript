@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -426,7 +426,7 @@ if (true) {
  * Expose `debug()` as the module.
  */
 
-exports = module.exports = __webpack_require__(7);
+exports = module.exports = __webpack_require__(6);
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
@@ -616,7 +616,7 @@ function localstorage() {
   } catch (e) {}
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ }),
 /* 2 */
@@ -701,21 +701,11 @@ function isByeMessage(message) {
 "use strict";
 
 
-var WebSocket = typeof window !== 'undefined' ? window.WebSocket : __webpack_require__(3);
-module.exports = WebSocket;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _StreamrClient = __webpack_require__(5);
+var _StreamrClient = __webpack_require__(4);
 
 var _StreamrClient2 = _interopRequireDefault(_StreamrClient);
 
@@ -729,7 +719,7 @@ exports.default = _StreamrClient2.default;
 module.exports = exports['default'];
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -751,11 +741,11 @@ var _debug = __webpack_require__(1);
 
 var _debug2 = _interopRequireDefault(_debug);
 
-var _Subscription = __webpack_require__(9);
+var _Subscription = __webpack_require__(8);
 
 var _Subscription2 = _interopRequireDefault(_Subscription);
 
-var _Connection = __webpack_require__(10);
+var _Connection = __webpack_require__(9);
 
 var _Connection2 = _interopRequireDefault(_Connection);
 
@@ -1178,7 +1168,7 @@ exports.default = StreamrClient;
 module.exports = exports['default'];
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -1368,7 +1358,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -1384,7 +1374,7 @@ exports.coerce = coerce;
 exports.disable = disable;
 exports.enable = enable;
 exports.enabled = enabled;
-exports.humanize = __webpack_require__(8);
+exports.humanize = __webpack_require__(7);
 
 /**
  * Active `debug` instances.
@@ -1599,7 +1589,7 @@ function coerce(val) {
 
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports) {
 
 /**
@@ -1757,7 +1747,7 @@ function plural(ms, n, name) {
 
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2001,7 +1991,7 @@ exports.default = Subscription;
 module.exports = exports['default'];
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2021,7 +2011,7 @@ var _debug = __webpack_require__(1);
 
 var _debug2 = _interopRequireDefault(_debug);
 
-var _ws = __webpack_require__(3);
+var _ws = __webpack_require__(10);
 
 var _ws2 = _interopRequireDefault(_ws);
 
@@ -2118,7 +2108,24 @@ var Connection = function (_EventEmitter) {
 exports.default = Connection;
 module.exports = exports['default'];
 
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var ws = void 0;
+
+if (typeof WebSocket !== 'undefined') {
+    ws = WebSocket;
+} else {
+    ws = window.WebSocket;
+}
+
+module.exports = ws;
+
 /***/ })
 /******/ ]);
 });
-//# sourceMappingURL=streamr-client.js.map
+//# sourceMappingURL=streamr-client.web.js.map
