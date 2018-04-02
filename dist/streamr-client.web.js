@@ -1913,7 +1913,7 @@ var authFetch = exports.authFetch = function () {
                             } : undefined
                         });
                         _context.next = 3;
-                        return fetch(url, req);
+                        return (0, _nodeFetch2.default)(url, req);
 
                     case 3:
                         res = _context.sent;
@@ -1963,6 +1963,10 @@ var authFetch = exports.authFetch = function () {
         return _ref.apply(this, arguments);
     };
 }();
+
+var _nodeFetch = __webpack_require__(137);
+
+var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -4232,6 +4236,8 @@ module.exports = exports['default'];
 "use strict";
 
 
+// In browsers, the ws package is replaced with this to use native websockets
+
 var ws = void 0;
 
 if (typeof WebSocket !== 'undefined') {
@@ -6275,6 +6281,21 @@ var Stream = function () {
 
 exports.default = Stream;
 module.exports = exports['default'];
+
+/***/ }),
+/* 137 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// In browsers, the node-fetch package is replaced with this to use native fetch
+
+if (typeof fetch !== 'undefined') {
+    module.exports = fetch;
+} else {
+    module.exports = window.fetch;
+}
 
 /***/ })
 /******/ ]);

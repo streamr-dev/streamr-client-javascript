@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 export async function authFetch(url, apiKey, opts = {}) {
     let req = Object.assign({}, opts, {
         headers: apiKey ? {
