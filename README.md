@@ -27,7 +27,7 @@ var sub = client.subscribe(
     {
         stream: 'streamId',
         partition: 0,           // Optional, defaults to zero. Use for partitioned streams to select partition.
-        authKey: 'authKey'      // Optional. If not given, uses the authKey given at client creation time.
+        apiKey: 'secret'      // Optional. If not given, uses the apiKey given at client creation time.
         // optional resend options here
     },
     function(message, metadata) {
@@ -41,7 +41,7 @@ var sub = client.subscribe(
 Option | Default value | Description
 ------ | ------------- | -----------
 url | wss://www.streamr.com/api/v1/ws | Address of the Streamr websocket endpoint to connect to.
-authKey | null | Define default authKey to use when none is specified in the call to `client.subscribe`.
+apiKey | null | Define default apiKey to use when none is specified in the call to `client.subscribe`.
 autoConnect | true | If set to `true`, the client connects automatically on the first call to `subscribe()`. Otherwise an explicit call to `connect()` is required.
 autoDisconnect | true  | If set to `true`, the client automatically disconnects when the last stream is unsubscribed. Otherwise the connection is left open and can be disconnected explicitly by calling `disconnect()`.
 
@@ -75,7 +75,7 @@ Note that only one of the resend options can be used for a particular subscripti
 Name | Description
 ---- | -----------
 stream    | Stream id to subscribe to
-authKey   | User key or stream key that authorizes the subscription. If defined, overrides the client's `authKey`.
+apiKey   | User key or stream key that authorizes the subscription. If defined, overrides the client's `apiKey`.
 partition | Partition number to subscribe to. Defaults to the default partition (0).
 resend_all | Set to `true` if you want all the messages for the stream resent from the earliest available message.
 resend_last | Resend the previous `N` messages.
