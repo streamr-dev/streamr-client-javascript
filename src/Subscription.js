@@ -11,7 +11,7 @@ function generateSubscriptionId() {
 
 export default class Subscription extends EventEmitter {
 
-    constructor(streamId, streamPartition, authKey, callback, options) {
+    constructor(streamId, streamPartition, apiKey, callback, options) {
         super()
 
         if (!streamId) {
@@ -24,7 +24,7 @@ export default class Subscription extends EventEmitter {
         this.id = generateSubscriptionId()
         this.streamId = streamId
         this.streamPartition = streamPartition
-        this.authKey = authKey
+        this.apiKey = apiKey
         this.callback = callback
         this.options = options || {}
         this.queue = []

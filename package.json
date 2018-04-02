@@ -1,7 +1,7 @@
 {
   "name": "streamr-client",
   "version": "0.10.0",
-  "description": "JS client for subscribing to Streamr streams",
+  "description": "JavaScript client library for Streamr",
   "repository": {
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
@@ -12,9 +12,9 @@
   },
   "scripts": {
     "build": "webpack --env dev --target web && webpack --env dev --target node && webpack --env prod --target web && npm run test",
-    "dev": "webpack --progress --colors --watch --env dev --target web",
-    "test": "webpack --env dev --target node && mocha --require babel-core/register --colors ./test/*.spec.js",
-    "test:watch": "webpack --env dev --target node && mocha --require babel-core/register --colors -w ./test/*.spec.js"
+    "dev": "webpack --progress --colors --watch --env dev --target node",
+    "test": "webpack --env dev --target node && mocha --require babel-core/register --colors --recursive ./test",
+    "test:watch": "webpack --env dev --target node && mocha --require babel-core/register --colors -w --recursive ./test"
   },
   "browser": {
     "ws": "./src/shim/ws.js",

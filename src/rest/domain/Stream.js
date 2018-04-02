@@ -7,8 +7,26 @@ export default class Stream {
         Object.assign(this, props)
     }
 
-    async getPermissions(apiKey = this._client.options.apiKey) {
-        return await authFetch(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey)
+    async update(apiKey = this._client.options.apiKey) {
+        let json = await authFetch(this._client.options.restUrl + '/streams/' + this.id,
+            apiKey,
+            {
+                method: 'PUT',
+                body: JSON.stringify(this)
+            })
+        return json ? new Stream(this._client, json) : undefined
+    }
+
+    delete(apiKey = this._client.options.apiKey) {
+        return authFetch(this._client.options.restUrl + '/streams/' + this.id,
+            apiKey,
+            {
+                method: 'DELETE',
+            })
+    }
+
+    getPermissions(apiKey = this._client.options.apiKey) {
+        return authFetch(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey)
     }
 
     async isPublic(apiKey = this._client.options.apiKey) {
@@ -16,8 +34,8 @@ export default class Stream {
         return permissions.find((permission) => (permission.anonymous && permission.operation === 'read')) !== undefined
     }
 
-    async makePublic(apiKey = this._client.options.apiKey) {
-        return await authFetch(this._client.options.restUrl + '/streams/' + this.id + '/permissions',
+    makePublic(apiKey = this._client.options.apiKey) {
+        return authFetch(this._client.options.restUrl + '/streams/' + this.id + '/permissions',
             apiKey,
             {
                 method: 'POST',
@@ -28,17 +46,12 @@ export default class Stream {
             })
     }
 
-    async detectFields(apiKey = this._client.options.apiKey) {
-        return await authFetch(this._client.options.restUrl + '/streams/' + this.id + '/detectFields', apiKey)
+    detectFields(apiKey = this._client.options.apiKey) {
+        return authFetch(this._client.options.restUrl + '/streams/' + this.id + '/detectFields', apiKey)
     }
 
-    async update(apiKey = this._client.options.apiKey) {
-        let json = await authFetch(this.options.restUrl + '/streams/' + this.id,
-            apiKey,
-            {
-                method: 'PUT',
-                body: JSON.stringify(this)
-            })
-        return json ? new Stream(this._client, json) : undefined
+    produce(data, apiKey = this._client.options.apiKey, requestOptions = {}) {
+        return this._client.produceToStream(this.id, data, apiKey, requestOptions)
     }
+
 }

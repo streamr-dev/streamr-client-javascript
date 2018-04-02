@@ -98,7 +98,7 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 /***/ (function(module, exports, __webpack_require__) {
 
 var store = __webpack_require__(39)('wks');
-var uid = __webpack_require__(20);
+var uid = __webpack_require__(21);
 var Symbol = __webpack_require__(1).Symbol;
 var USE_SYMBOL = typeof Symbol == 'function';
 
@@ -235,7 +235,7 @@ module.exports = !__webpack_require__(11)(function () {
 /***/ (function(module, exports, __webpack_require__) {
 
 var dP = __webpack_require__(5);
-var createDesc = __webpack_require__(19);
+var createDesc = __webpack_require__(20);
 module.exports = __webpack_require__(7) ? function (object, key, value) {
   return dP.f(object, key, createDesc(1, value));
 } : function (object, key, value) {
@@ -290,7 +290,7 @@ module.exports = function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // optional / simple context binding
-var aFunction = __webpack_require__(18);
+var aFunction = __webpack_require__(19);
 module.exports = function (fn, that, length) {
   aFunction(fn);
   if (that === undefined) return fn;
@@ -346,6 +346,22 @@ module.exports = {};
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/**
+ * Detect Electron renderer process, which is node, but we should
+ * treat as a browser.
+ */
+
+if (typeof process === 'undefined' || process.type === 'renderer') {
+  module.exports = __webpack_require__(123);
+} else {
+  module.exports = __webpack_require__(125);
+}
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
@@ -360,7 +376,7 @@ module.exports = {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports) {
 
 module.exports = function (it) {
@@ -370,7 +386,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 module.exports = function (bitmap, value) {
@@ -384,7 +400,7 @@ module.exports = function (bitmap, value) {
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 var id = 0;
@@ -395,14 +411,14 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 exports.f = {}.propertyIsEnumerable;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.13 ToObject(argument)
@@ -413,7 +429,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -440,14 +456,14 @@ exports.default = typeof _symbol2.default === "function" && _typeof(_iterator2.d
 };
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports) {
 
 module.exports = true;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var def = __webpack_require__(5).f;
@@ -460,7 +476,7 @@ module.exports = function (it, tag, stat) {
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -475,7 +491,7 @@ exports.default = function (instance, Constructor) {
 };
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -508,22 +524,6 @@ exports.default = function () {
 }();
 
 /***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Detect Electron renderer process, which is node, but we should
- * treat as a browser.
- */
-
-if (typeof process === 'undefined' || process.type === 'renderer') {
-  module.exports = __webpack_require__(123);
-} else {
-  module.exports = __webpack_require__(125);
-}
-
-
-/***/ }),
 /* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -552,7 +552,7 @@ const Limiter = __webpack_require__(137);
 const zlib = __webpack_require__(74);
 
 const bufferUtil = __webpack_require__(50);
-const constants = __webpack_require__(17);
+const constants = __webpack_require__(18);
 
 const TRAILER = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 const EMPTY_BLOCK = Buffer.from([0x00]);
@@ -1129,7 +1129,7 @@ module.exports = function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var shared = __webpack_require__(39)('keys');
-var uid = __webpack_require__(20);
+var uid = __webpack_require__(21);
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
 };
@@ -1224,7 +1224,7 @@ exports.f = __webpack_require__(2);
 
 var global = __webpack_require__(1);
 var core = __webpack_require__(0);
-var LIBRARY = __webpack_require__(24);
+var LIBRARY = __webpack_require__(25);
 var wksExt = __webpack_require__(43);
 var defineProperty = __webpack_require__(5).f;
 module.exports = function (name) {
@@ -1248,7 +1248,7 @@ module.exports = { "default": __webpack_require__(111), __esModule: true };
 
 exports.__esModule = true;
 
-var _typeof2 = __webpack_require__(23);
+var _typeof2 = __webpack_require__(24);
 
 var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -1279,7 +1279,7 @@ var _create = __webpack_require__(120);
 
 var _create2 = _interopRequireDefault(_create);
 
-var _typeof2 = __webpack_require__(23);
+var _typeof2 = __webpack_require__(24);
 
 var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -1776,7 +1776,7 @@ exports.default = function (fn) {
 "use strict";
 
 // 25.4.1.5 NewPromiseCapability(C)
-var aFunction = __webpack_require__(18);
+var aFunction = __webpack_require__(19);
 
 function PromiseCapability(C) {
   var resolve, reject;
@@ -1902,13 +1902,13 @@ __webpack_require__(61)(String, 'String', function (iterated) {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(24);
+var LIBRARY = __webpack_require__(25);
 var $export = __webpack_require__(3);
 var redefine = __webpack_require__(62);
 var hide = __webpack_require__(8);
 var Iterators = __webpack_require__(16);
 var $iterCreate = __webpack_require__(97);
-var setToStringTag = __webpack_require__(25);
+var setToStringTag = __webpack_require__(26);
 var getPrototypeOf = __webpack_require__(64);
 var ITERATOR = __webpack_require__(2)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
@@ -1993,7 +1993,7 @@ module.exports = document && document.documentElement;
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
 var has = __webpack_require__(9);
-var toObject = __webpack_require__(22);
+var toObject = __webpack_require__(23);
 var IE_PROTO = __webpack_require__(38)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
@@ -2048,8 +2048,8 @@ exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
 /* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var pIE = __webpack_require__(21);
-var createDesc = __webpack_require__(19);
+var pIE = __webpack_require__(22);
+var createDesc = __webpack_require__(20);
 var toIObject = __webpack_require__(12);
 var toPrimitive = __webpack_require__(35);
 var has = __webpack_require__(9);
@@ -2405,7 +2405,7 @@ const url = __webpack_require__(31);
 const PerMessageDeflate = __webpack_require__(32);
 const EventTarget = __webpack_require__(138);
 const extension = __webpack_require__(75);
-const constants = __webpack_require__(17);
+const constants = __webpack_require__(18);
 const Receiver = __webpack_require__(76);
 const Sender = __webpack_require__(78);
 
@@ -3460,7 +3460,7 @@ const stream = __webpack_require__(33);
 const PerMessageDeflate = __webpack_require__(32);
 const bufferUtil = __webpack_require__(50);
 const validation = __webpack_require__(77);
-const constants = __webpack_require__(17);
+const constants = __webpack_require__(18);
 
 const GET_INFO = 0;
 const GET_PAYLOAD_LENGTH_16 = 1;
@@ -4016,7 +4016,7 @@ const crypto = __webpack_require__(49);
 const PerMessageDeflate = __webpack_require__(32);
 const bufferUtil = __webpack_require__(50);
 const validation = __webpack_require__(77);
-const constants = __webpack_require__(17);
+const constants = __webpack_require__(18);
 
 /**
  * HyBi Sender implementation.
@@ -4447,7 +4447,7 @@ module.exports = function (it) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 var anObject = __webpack_require__(4);
-var aFunction = __webpack_require__(18);
+var aFunction = __webpack_require__(19);
 var SPECIES = __webpack_require__(2)('species');
 module.exports = function (O, D) {
   var C = anObject(O).constructor;
@@ -4609,56 +4609,58 @@ var authFetch = exports.authFetch = function () {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
+                        log('fetching: ', url, opts);
+
                         req = (0, _assign2.default)({}, opts, {
                             headers: apiKey ? {
                                 Authorization: 'token ' + apiKey
                             } : undefined
                         });
-                        _context.next = 3;
+                        _context.next = 4;
                         return (0, _nodeFetch2.default)(url, req);
 
-                    case 3:
+                    case 4:
                         res = _context.sent;
-                        _context.next = 6;
+                        _context.next = 7;
                         return res.text();
 
-                    case 6:
+                    case 7:
                         text = _context.sent;
 
                         if (!(res.ok && text.length)) {
-                            _context.next = 17;
+                            _context.next = 18;
                             break;
                         }
 
-                        _context.prev = 8;
+                        _context.prev = 9;
                         return _context.abrupt('return', JSON.parse(text));
 
-                    case 12:
-                        _context.prev = 12;
-                        _context.t0 = _context['catch'](8);
+                    case 13:
+                        _context.prev = 13;
+                        _context.t0 = _context['catch'](9);
                         throw 'Failed to parse JSON response: ' + text;
 
-                    case 15:
-                        _context.next = 22;
+                    case 16:
+                        _context.next = 23;
                         break;
 
-                    case 17:
+                    case 18:
                         if (!res.ok) {
-                            _context.next = 21;
+                            _context.next = 22;
                             break;
                         }
 
                         return _context.abrupt('return', {});
 
-                    case 21:
+                    case 22:
                         throw 'Request to ' + url + ' returned with error code ' + res.status + ': ' + text;
 
-                    case 22:
+                    case 23:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[8, 12]]);
+        }, _callee, this, [[9, 13]]);
     }));
 
     return function authFetch(_x2, _x3) {
@@ -4670,7 +4672,13 @@ var _nodeFetch = __webpack_require__(161);
 
 var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
 
+var _debug = __webpack_require__(17);
+
+var _debug2 = _interopRequireDefault(_debug);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var log = (0, _debug2.default)('StreamrClient:utils');
 
 /***/ }),
 /* 85 */
@@ -4730,8 +4738,8 @@ $export($export.S + $export.F, 'Object', { assign: __webpack_require__(88) });
 // 19.1.2.1 Object.assign(target, source, ...)
 var getKeys = __webpack_require__(14);
 var gOPS = __webpack_require__(41);
-var pIE = __webpack_require__(21);
-var toObject = __webpack_require__(22);
+var pIE = __webpack_require__(22);
+var toObject = __webpack_require__(23);
 var IObject = __webpack_require__(56);
 var $assign = Object.assign;
 
@@ -4819,7 +4827,7 @@ var _keys = __webpack_require__(58);
 
 var _keys2 = _interopRequireDefault(_keys);
 
-var _typeof2 = __webpack_require__(23);
+var _typeof2 = __webpack_require__(24);
 
 var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -4831,11 +4839,11 @@ var _getPrototypeOf = __webpack_require__(45);
 
 var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-var _classCallCheck2 = __webpack_require__(26);
+var _classCallCheck2 = __webpack_require__(27);
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = __webpack_require__(27);
+var _createClass2 = __webpack_require__(28);
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
@@ -4851,7 +4859,7 @@ var _eventemitter = __webpack_require__(48);
 
 var _eventemitter2 = _interopRequireDefault(_eventemitter);
 
-var _debug = __webpack_require__(28);
+var _debug = __webpack_require__(17);
 
 var _debug2 = _interopRequireDefault(_debug);
 
@@ -4882,7 +4890,7 @@ var StreamrClient = function (_EventEmitter) {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            authKey: null
+            apiKey: null
         };
         _this.subsByStream = {};
         _this.subById = {};
@@ -4891,6 +4899,11 @@ var StreamrClient = function (_EventEmitter) {
         _this.connected = false;
 
         (0, _assign2.default)(_this.options, options || {});
+
+        // Backwards compatibility for option 'authKey' => 'apiKey'
+        if (_this.options.authKey && !_this.options.apiKey) {
+            _this.options.apiKey = _this.options.authKey;
+        }
         return _this;
     }
 
@@ -4953,7 +4966,7 @@ var StreamrClient = function (_EventEmitter) {
             }
 
             // Create the Subscription object and bind handlers
-            var sub = new _Subscription2.default(options.stream, options.partition || 0, options.authKey || this.options.authKey, callback, options);
+            var sub = new _Subscription2.default(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options);
             sub.on('gap', function (from, to) {
                 _this2._requestResend(sub, {
                     resend_from: from, resend_to: to
@@ -5218,7 +5231,7 @@ var StreamrClient = function (_EventEmitter) {
             // If this is the first subscription for this stream, send a subscription request to the server
             if (!subs._subscribing && subscribedSubs.length === 0) {
                 var req = (0, _assign2.default)({}, sub.options, {
-                    type: 'subscribe', stream: sub.streamId, authKey: sub.authKey
+                    type: 'subscribe', stream: sub.streamId, authKey: sub.apiKey
                 });
                 (0, _debug2.default)('_requestSubscribe: subscribing client: %o', req);
                 subs._subscribing = true;
@@ -5257,7 +5270,7 @@ var StreamrClient = function (_EventEmitter) {
             sub.resending = true;
 
             var request = (0, _assign2.default)({}, options, resendOptions, {
-                type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.authKey, sub: sub.id
+                type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id
             });
             (0, _debug2.default)('_requestResend: %o', request);
             this.connection.send(request);
@@ -5288,7 +5301,7 @@ module.exports = __webpack_require__(0).Object.keys;
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 Object.keys(O)
-var toObject = __webpack_require__(22);
+var toObject = __webpack_require__(23);
 var $keys = __webpack_require__(14);
 
 __webpack_require__(59)('keys', function () {
@@ -5343,8 +5356,8 @@ module.exports = function (TO_STRING) {
 "use strict";
 
 var create = __webpack_require__(42);
-var descriptor = __webpack_require__(19);
-var setToStringTag = __webpack_require__(25);
+var descriptor = __webpack_require__(20);
+var setToStringTag = __webpack_require__(26);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
@@ -5464,8 +5477,8 @@ var redefine = __webpack_require__(62);
 var META = __webpack_require__(105).KEY;
 var $fails = __webpack_require__(11);
 var shared = __webpack_require__(39);
-var setToStringTag = __webpack_require__(25);
-var uid = __webpack_require__(20);
+var setToStringTag = __webpack_require__(26);
+var uid = __webpack_require__(21);
 var wks = __webpack_require__(2);
 var wksExt = __webpack_require__(43);
 var wksDefine = __webpack_require__(44);
@@ -5475,7 +5488,7 @@ var anObject = __webpack_require__(4);
 var isObject = __webpack_require__(6);
 var toIObject = __webpack_require__(12);
 var toPrimitive = __webpack_require__(35);
-var createDesc = __webpack_require__(19);
+var createDesc = __webpack_require__(20);
 var _create = __webpack_require__(42);
 var gOPNExt = __webpack_require__(108);
 var $GOPD = __webpack_require__(67);
@@ -5604,10 +5617,10 @@ if (!USE_NATIVE) {
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
   __webpack_require__(66).f = gOPNExt.f = $getOwnPropertyNames;
-  __webpack_require__(21).f = $propertyIsEnumerable;
+  __webpack_require__(22).f = $propertyIsEnumerable;
   __webpack_require__(41).f = $getOwnPropertySymbols;
 
-  if (DESCRIPTORS && !__webpack_require__(24)) {
+  if (DESCRIPTORS && !__webpack_require__(25)) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
   }
 
@@ -5694,7 +5707,7 @@ setToStringTag(global.JSON, 'JSON', true);
 /* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var META = __webpack_require__(20)('meta');
+var META = __webpack_require__(21)('meta');
 var isObject = __webpack_require__(6);
 var has = __webpack_require__(9);
 var setDesc = __webpack_require__(5).f;
@@ -5756,7 +5769,7 @@ var meta = module.exports = {
 // all enumerable object keys, includes symbols
 var getKeys = __webpack_require__(14);
 var gOPS = __webpack_require__(41);
-var pIE = __webpack_require__(21);
+var pIE = __webpack_require__(22);
 module.exports = function (it) {
   var result = getKeys(it);
   var getSymbols = gOPS.f;
@@ -5833,7 +5846,7 @@ module.exports = __webpack_require__(0).Object.getPrototypeOf;
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 Object.getPrototypeOf(O)
-var toObject = __webpack_require__(22);
+var toObject = __webpack_require__(23);
 var $getPrototypeOf = __webpack_require__(64);
 
 __webpack_require__(59)('getPrototypeOf', function () {
@@ -6676,11 +6689,11 @@ var _getPrototypeOf = __webpack_require__(45);
 
 var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-var _classCallCheck2 = __webpack_require__(26);
+var _classCallCheck2 = __webpack_require__(27);
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = __webpack_require__(27);
+var _createClass2 = __webpack_require__(28);
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
@@ -6696,7 +6709,7 @@ var _eventemitter = __webpack_require__(48);
 
 var _eventemitter2 = _interopRequireDefault(_eventemitter);
 
-var _debug = __webpack_require__(28);
+var _debug = __webpack_require__(17);
 
 var _debug2 = _interopRequireDefault(_debug);
 
@@ -6713,7 +6726,7 @@ function generateSubscriptionId() {
 var Subscription = function (_EventEmitter) {
     (0, _inherits3.default)(Subscription, _EventEmitter);
 
-    function Subscription(streamId, streamPartition, authKey, callback, options) {
+    function Subscription(streamId, streamPartition, apiKey, callback, options) {
         (0, _classCallCheck3.default)(this, Subscription);
 
         var _this = (0, _possibleConstructorReturn3.default)(this, (Subscription.__proto__ || (0, _getPrototypeOf2.default)(Subscription)).call(this));
@@ -6728,7 +6741,7 @@ var Subscription = function (_EventEmitter) {
         _this.id = generateSubscriptionId();
         _this.streamId = streamId;
         _this.streamPartition = streamPartition;
-        _this.authKey = authKey;
+        _this.apiKey = apiKey;
         _this.callback = callback;
         _this.options = options || {};
         _this.queue = [];
@@ -6946,11 +6959,11 @@ var _getPrototypeOf = __webpack_require__(45);
 
 var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-var _classCallCheck2 = __webpack_require__(26);
+var _classCallCheck2 = __webpack_require__(27);
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = __webpack_require__(27);
+var _createClass2 = __webpack_require__(28);
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
@@ -6966,7 +6979,7 @@ var _eventemitter = __webpack_require__(48);
 
 var _eventemitter2 = _interopRequireDefault(_eventemitter);
 
-var _debug = __webpack_require__(28);
+var _debug = __webpack_require__(17);
 
 var _debug2 = _interopRequireDefault(_debug);
 
@@ -7353,7 +7366,7 @@ const url = __webpack_require__(31);
 
 const PerMessageDeflate = __webpack_require__(32);
 const extension = __webpack_require__(75);
-const constants = __webpack_require__(17);
+const constants = __webpack_require__(18);
 const WebSocket = __webpack_require__(71);
 
 /**
@@ -7734,15 +7747,11 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.produceToStream = exports.getOrCreateStream = exports.createStream = exports.getStreamByName = exports.getStream = undefined;
+exports.getOrCreateStream = exports.createStream = exports.getStreamByName = exports.listStreams = exports.getStream = undefined;
 
 var _assign = __webpack_require__(10);
 
 var _assign2 = _interopRequireDefault(_assign);
-
-var _typeof2 = __webpack_require__(23);
-
-var _typeof3 = _interopRequireDefault(_typeof2);
 
 var _stringify = __webpack_require__(29);
 
@@ -7788,24 +7797,26 @@ var getStream = exports.getStream = function () {
     };
 }();
 
-var getStreamByName = exports.getStreamByName = function () {
-    var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(name) {
+var listStreams = exports.listStreams = function () {
+    var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2() {
+        var _this = this;
+
+        var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         var apiKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.options.apiKey;
         var url, json;
         return _regenerator2.default.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        url = this.options.restUrl + '/streams?' + (0, _querystring.stringify)({
-                            name: name,
-                            public: false
-                        });
+                        url = this.options.restUrl + '/streams?' + (0, _querystring.stringify)(query);
                         _context2.next = 3;
                         return (0, _utils.authFetch)(url, apiKey);
 
                     case 3:
                         json = _context2.sent;
-                        return _context2.abrupt('return', json[0] ? new _Stream2.default(this, json[0]) : undefined);
+                        return _context2.abrupt('return', json ? json.map(function (stream) {
+                            return new _Stream2.default(_this, stream);
+                        }) : []);
 
                     case 5:
                     case 'end':
@@ -7815,30 +7826,28 @@ var getStreamByName = exports.getStreamByName = function () {
         }, _callee2, this);
     }));
 
-    return function getStreamByName(_x4) {
+    return function listStreams() {
         return _ref2.apply(this, arguments);
     };
 }();
 
-var createStream = exports.createStream = function () {
-    var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(name, description) {
-        var apiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.options.apiKey;
+var getStreamByName = exports.getStreamByName = function () {
+    var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(name) {
+        var apiKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.options.apiKey;
         var json;
         return _regenerator2.default.wrap(function _callee3$(_context3) {
             while (1) {
                 switch (_context3.prev = _context3.next) {
                     case 0:
                         _context3.next = 2;
-                        return (0, _utils.authFetch)(this.options.restUrl + '/streams', apiKey, {
-                            method: 'POST',
-                            body: (0, _stringify2.default)({
-                                name: name, description: description
-                            })
-                        });
+                        return this.listStreams({
+                            name: name,
+                            public: false
+                        }, apiKey);
 
                     case 2:
                         json = _context3.sent;
-                        return _context3.abrupt('return', json ? new _Stream2.default(this, json) : undefined);
+                        return _context3.abrupt('return', json[0] ? new _Stream2.default(this, json[0]) : undefined);
 
                     case 4:
                     case 'end':
@@ -7848,50 +7857,38 @@ var createStream = exports.createStream = function () {
         }, _callee3, this);
     }));
 
-    return function createStream(_x6, _x7) {
+    return function getStreamByName(_x6) {
         return _ref3.apply(this, arguments);
     };
 }();
 
-var getOrCreateStream = exports.getOrCreateStream = function () {
-    var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(name, description) {
-        var apiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.options.apiKey;
+var createStream = exports.createStream = function () {
+    var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(props) {
+        var apiKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.options.apiKey;
         var json;
         return _regenerator2.default.wrap(function _callee4$(_context4) {
             while (1) {
                 switch (_context4.prev = _context4.next) {
                     case 0:
-                        _context4.next = 2;
-                        return this.getStreamByName(name, apiKey);
+                        if (!(!props || !props.name)) {
+                            _context4.next = 2;
+                            break;
+                        }
+
+                        throw 'Stream properties must contain a "name" field!';
 
                     case 2:
+                        _context4.next = 4;
+                        return (0, _utils.authFetch)(this.options.restUrl + '/streams', apiKey, {
+                            method: 'POST',
+                            body: (0, _stringify2.default)(props)
+                        });
+
+                    case 4:
                         json = _context4.sent;
-
-                        if (json) {
-                            _context4.next = 8;
-                            break;
-                        }
-
-                        _context4.next = 6;
-                        return this.createStream(name, description, apiKey);
+                        return _context4.abrupt('return', json ? new _Stream2.default(this, json) : undefined);
 
                     case 6:
-                        json = _context4.sent;
-
-                        (0, _debug2.default)('Created stream: %s (%s)', name, json.id);
-
-                    case 8:
-                        if (json) {
-                            _context4.next = 12;
-                            break;
-                        }
-
-                        throw 'Unable to find or create stream: ' + name;
-
-                    case 12:
-                        return _context4.abrupt('return', new _Stream2.default(this, json));
-
-                    case 13:
                     case 'end':
                         return _context4.stop();
                 }
@@ -7899,34 +7896,74 @@ var getOrCreateStream = exports.getOrCreateStream = function () {
         }, _callee4, this);
     }));
 
-    return function getOrCreateStream(_x9, _x10) {
+    return function createStream(_x8) {
         return _ref4.apply(this, arguments);
     };
 }();
 
-var produceToStream = exports.produceToStream = function () {
-    var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(streamId, data) {
-        var apiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.options.apiKey;
-        var requestOptions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+var getOrCreateStream = exports.getOrCreateStream = function () {
+    var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(props) {
+        var apiKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.options.apiKey;
+        var json;
         return _regenerator2.default.wrap(function _callee5$(_context5) {
             while (1) {
                 switch (_context5.prev = _context5.next) {
                     case 0:
-                        if ((typeof streamId === 'undefined' ? 'undefined' : (0, _typeof3.default)(streamId)) === _Stream2.default) {
-                            streamId = streamId.id;
+                        json = void 0;
+
+                        // Try looking up the stream by id or name, whichever is defined
+
+                        if (!props.id) {
+                            _context5.next = 7;
+                            break;
                         }
 
-                        // Send data to the stream
-                        _context5.next = 3;
-                        return (0, _utils.authFetch)(this.options.restUrl + '/streams/' + streamId + '/data', apiKey, (0, _assign2.default)({}, requestOptions, {
-                            method: 'POST',
-                            body: (0, _stringify2.default)(data)
-                        }));
-
-                    case 3:
-                        return _context5.abrupt('return', _context5.sent);
+                        _context5.next = 4;
+                        return this.getStream(props.id, apiKey);
 
                     case 4:
+                        json = _context5.sent;
+                        _context5.next = 11;
+                        break;
+
+                    case 7:
+                        if (!props.name) {
+                            _context5.next = 11;
+                            break;
+                        }
+
+                        _context5.next = 10;
+                        return this.getStreamByName(props.name, apiKey);
+
+                    case 10:
+                        json = _context5.sent;
+
+                    case 11:
+                        if (json) {
+                            _context5.next = 16;
+                            break;
+                        }
+
+                        _context5.next = 14;
+                        return this.createStream(props, apiKey);
+
+                    case 14:
+                        json = _context5.sent;
+
+                        (0, _debug2.default)('Created stream: %s (%s)', props.name, json.id);
+
+                    case 16:
+                        if (json) {
+                            _context5.next = 20;
+                            break;
+                        }
+
+                        throw 'Unable to find or create stream: ' + props.name;
+
+                    case 20:
+                        return _context5.abrupt('return', new _Stream2.default(this, json));
+
+                    case 21:
                     case 'end':
                         return _context5.stop();
                 }
@@ -7934,14 +7971,16 @@ var produceToStream = exports.produceToStream = function () {
         }, _callee5, this);
     }));
 
-    return function produceToStream(_x13, _x14) {
+    return function getOrCreateStream(_x10) {
         return _ref5.apply(this, arguments);
     };
 }();
 
+exports.produceToStream = produceToStream;
+
 var _querystring = __webpack_require__(159);
 
-var _debug = __webpack_require__(28);
+var _debug = __webpack_require__(17);
 
 var _debug2 = _interopRequireDefault(_debug);
 
@@ -7952,6 +7991,21 @@ var _Stream2 = _interopRequireDefault(_Stream);
 var _utils = __webpack_require__(84);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function produceToStream(streamId, data) {
+    var apiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.options.apiKey;
+    var requestOptions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+    if (streamId instanceof _Stream2.default) {
+        streamId = streamId.id;
+    }
+
+    // Send data to the stream
+    return (0, _utils.authFetch)(this.options.restUrl + '/streams/' + streamId + '/data', apiKey, (0, _assign2.default)({}, requestOptions, {
+        method: 'POST',
+        body: (0, _stringify2.default)(data)
+    }));
+}
 
 /***/ }),
 /* 142 */
@@ -8752,13 +8806,13 @@ module.exports = __webpack_require__(0).Promise;
 
 "use strict";
 
-var LIBRARY = __webpack_require__(24);
+var LIBRARY = __webpack_require__(25);
 var global = __webpack_require__(1);
 var ctx = __webpack_require__(13);
 var classof = __webpack_require__(79);
 var $export = __webpack_require__(3);
 var isObject = __webpack_require__(6);
-var aFunction = __webpack_require__(18);
+var aFunction = __webpack_require__(19);
 var anInstance = __webpack_require__(147);
 var forOf = __webpack_require__(148);
 var speciesConstructor = __webpack_require__(80);
@@ -8964,7 +9018,7 @@ if (!USE_NATIVE) {
 }
 
 $export($export.G + $export.W + $export.F * !USE_NATIVE, { Promise: $Promise });
-__webpack_require__(25)($Promise, PROMISE);
+__webpack_require__(26)($Promise, PROMISE);
 __webpack_require__(155)(PROMISE);
 Wrapper = __webpack_require__(0)[PROMISE];
 
@@ -9339,13 +9393,13 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _stringify = __webpack_require__(29);
-
-var _stringify2 = _interopRequireDefault(_stringify);
-
 var _regenerator = __webpack_require__(51);
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _stringify = __webpack_require__(29);
+
+var _stringify2 = _interopRequireDefault(_stringify);
 
 var _asyncToGenerator2 = __webpack_require__(52);
 
@@ -9355,11 +9409,11 @@ var _assign = __webpack_require__(10);
 
 var _assign2 = _interopRequireDefault(_assign);
 
-var _classCallCheck2 = __webpack_require__(26);
+var _classCallCheck2 = __webpack_require__(27);
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = __webpack_require__(27);
+var _createClass2 = __webpack_require__(28);
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
@@ -9376,21 +9430,26 @@ var Stream = function () {
     }
 
     (0, _createClass3.default)(Stream, [{
-        key: 'getPermissions',
+        key: 'update',
         value: function () {
             var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee() {
                 var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
+                var json;
                 return _regenerator2.default.wrap(function _callee$(_context) {
                     while (1) {
                         switch (_context.prev = _context.next) {
                             case 0:
                                 _context.next = 2;
-                                return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey);
+                                return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id, apiKey, {
+                                    method: 'PUT',
+                                    body: (0, _stringify2.default)(this)
+                                });
 
                             case 2:
-                                return _context.abrupt('return', _context.sent);
+                                json = _context.sent;
+                                return _context.abrupt('return', json ? new Stream(this._client, json) : undefined);
 
-                            case 3:
+                            case 4:
                             case 'end':
                                 return _context.stop();
                         }
@@ -9398,12 +9457,28 @@ var Stream = function () {
                 }, _callee, this);
             }));
 
-            function getPermissions() {
+            function update() {
                 return _ref.apply(this, arguments);
             }
 
-            return getPermissions;
+            return update;
         }()
+    }, {
+        key: 'delete',
+        value: function _delete() {
+            var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
+
+            return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id, apiKey, {
+                method: 'DELETE'
+            });
+        }
+    }, {
+        key: 'getPermissions',
+        value: function getPermissions() {
+            var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
+
+            return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey);
+        }
     }, {
         key: 'isPublic',
         value: function () {
@@ -9439,102 +9514,32 @@ var Stream = function () {
         }()
     }, {
         key: 'makePublic',
-        value: function () {
-            var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3() {
-                var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
-                return _regenerator2.default.wrap(function _callee3$(_context3) {
-                    while (1) {
-                        switch (_context3.prev = _context3.next) {
-                            case 0:
-                                _context3.next = 2;
-                                return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey, {
-                                    method: 'POST',
-                                    body: (0, _stringify2.default)({
-                                        anonymous: true,
-                                        operation: 'read'
-                                    })
-                                });
+        value: function makePublic() {
+            var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
 
-                            case 2:
-                                return _context3.abrupt('return', _context3.sent);
-
-                            case 3:
-                            case 'end':
-                                return _context3.stop();
-                        }
-                    }
-                }, _callee3, this);
-            }));
-
-            function makePublic() {
-                return _ref3.apply(this, arguments);
-            }
-
-            return makePublic;
-        }()
+            return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey, {
+                method: 'POST',
+                body: (0, _stringify2.default)({
+                    anonymous: true,
+                    operation: 'read'
+                })
+            });
+        }
     }, {
         key: 'detectFields',
-        value: function () {
-            var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4() {
-                var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
-                return _regenerator2.default.wrap(function _callee4$(_context4) {
-                    while (1) {
-                        switch (_context4.prev = _context4.next) {
-                            case 0:
-                                _context4.next = 2;
-                                return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/detectFields', apiKey);
+        value: function detectFields() {
+            var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
 
-                            case 2:
-                                return _context4.abrupt('return', _context4.sent);
-
-                            case 3:
-                            case 'end':
-                                return _context4.stop();
-                        }
-                    }
-                }, _callee4, this);
-            }));
-
-            function detectFields() {
-                return _ref4.apply(this, arguments);
-            }
-
-            return detectFields;
-        }()
+            return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/detectFields', apiKey);
+        }
     }, {
-        key: 'update',
-        value: function () {
-            var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5() {
-                var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
-                var json;
-                return _regenerator2.default.wrap(function _callee5$(_context5) {
-                    while (1) {
-                        switch (_context5.prev = _context5.next) {
-                            case 0:
-                                _context5.next = 2;
-                                return (0, _utils.authFetch)(this.options.restUrl + '/streams/' + this.id, apiKey, {
-                                    method: 'PUT',
-                                    body: (0, _stringify2.default)(this)
-                                });
+        key: 'produce',
+        value: function produce(data) {
+            var apiKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._client.options.apiKey;
+            var requestOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
-                            case 2:
-                                json = _context5.sent;
-                                return _context5.abrupt('return', json ? new Stream(this._client, json) : undefined);
-
-                            case 4:
-                            case 'end':
-                                return _context5.stop();
-                        }
-                    }
-                }, _callee5, this);
-            }));
-
-            function update() {
-                return _ref5.apply(this, arguments);
-            }
-
-            return update;
-        }()
+            return this._client.produceToStream(this.id, data, apiKey, requestOptions);
+        }
     }]);
     return Stream;
 }();

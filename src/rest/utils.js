@@ -1,6 +1,11 @@
 import fetch from 'node-fetch'
+import debug from 'debug'
+
+const log = debug('StreamrClient:utils')
 
 export async function authFetch(url, apiKey, opts = {}) {
+    log('fetching: ', url, opts)
+
     let req = Object.assign({}, opts, {
         headers: apiKey ? {
             Authorization: 'token '+ apiKey

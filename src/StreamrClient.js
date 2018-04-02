@@ -18,7 +18,7 @@ export default class StreamrClient extends EventEmitter {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            authKey: null
+            apiKey: null
         }
         this.subsByStream = {}
         this.subById = {}
@@ -27,6 +27,11 @@ export default class StreamrClient extends EventEmitter {
         this.connected = false
 
         Object.assign(this.options, options || {})
+
+        // Backwards compatibility for option 'authKey' => 'apiKey'
+        if (this.options.authKey && !this.options.apiKey) {
+            this.options.apiKey = this.options.authKey
+        }
     }
 
     _addSubscription(sub) {
@@ -81,7 +86,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         // Create the Subscription object and bind handlers
-        let sub = new Subscription(options.stream, options.partition || 0, options.authKey || this.options.authKey, callback, options)
+        let sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             this._requestResend(sub, {
                 resend_from: from, resend_to: to
@@ -332,7 +337,7 @@ export default class StreamrClient extends EventEmitter {
         // If this is the first subscription for this stream, send a subscription request to the server
         if (!subs._subscribing && subscribedSubs.length === 0) {
             let req = Object.assign({}, sub.options, {
-                type: 'subscribe', stream: sub.streamId, authKey: sub.authKey
+                type: 'subscribe', stream: sub.streamId, authKey: sub.apiKey
             })
             debug('_requestSubscribe: subscribing client: %o', req)
             subs._subscribing = true
@@ -370,7 +375,7 @@ export default class StreamrClient extends EventEmitter {
         sub.resending = true
 
         let request = Object.assign({}, options, resendOptions, {
-            type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.authKey, sub: sub.id
+            type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id
         })
         debug('_requestResend: %o', request)
         this.connection.send(request)
