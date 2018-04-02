@@ -20,7 +20,7 @@
     "ws": "./src/shim/ws.js",
     "node-fetch": "./src/shim/node-fetch.js"
   },
-  "author": "Streamr Network AG",
+  "author": "Streamr",
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "babel-cli": "^6.26.0",
