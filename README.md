@@ -91,19 +91,55 @@ Argument | Description
 message  | A javascript object containing the message itself
 metadata | Metadata for the message, for example `metadata.timestamp` etc.
 
-### Methods
+### StreamrClient object
+
+#### Connecting
 
 Name | Description
 ---- | -----------
 connect() | Connects to the server, and also subscribes to any streams for which `subscribe()` has been called before calling `connect()`.
 disconnect() | Disconnects from the server, clearing all subscriptions.
 pause() | Disconnects from the server without clearing subscriptions.
+
+#### Managing subscriptions
+
+Name | Description
+---- | -----------
 subscribe(options, callback) | Subscribes to a stream. Messages in this stream are passed to the `callback` function. See below for subscription options. Returns a `Subscription` object.
 unsubscribe(Subscription) | Unsubscribes the given `Subscription`.
 unsubscribeAll(`streamId`) | Unsubscribes all `Subscriptions` for `streamId`.
 getSubscriptions(`streamId`) | Returns a list of `Subscriptions` for `streamId`.
-bind(eventName, function) | Binds a `function` to an event called `eventName`
-unbind(eventName, function) | Unbinds the `function` from events called `eventName`
+
+#### Stream API
+
+All the below functions return a Promise which gets resolved with the result. They can also take an `apiKey` as an extra argument. Otherwise the `apiKey` defined in the `StreamrClient` options is used, if any.
+
+Name | Description
+---- | -----------
+getStream(streamId) | Fetches a Stream object from the API.
+listStreams(query) | Fetches an array of Stream objects from the API. For the query params, consult the API docs.
+getStreamByName(name) | Fetches a Stream which exactly matches the given name.
+createStream(properties) | Creates a Stream with the given properties. For more information on the Stream properties, consult the API docs.
+getOrCreateStream(properties) | Gets a Stream with the id or name given in `properties`, or creates it if one is not found.
+produceToStream(streamId, message) | Produces a new message (data point) to the given Stream.
+
+#### Listening to state changes of the client 
+
+on(eventName, function) | Binds a `function` to an event called `eventName`
+once(eventName, function) | Binds a `function` to an event called `eventName`. It gets called once and then removed.
+removeListener(eventName, function) | Unbinds the `function` from events called `eventName`
+
+### Stream object
+
+All the below functions return a Promise which gets resolved with the result. They can also take an `apiKey` as an extra argument. Otherwise the `apiKey` defined in the `StreamrClient` options is used, if any.
+
+Name | Description
+---- | -----------
+update() | Updates the properties of this Stream object by sending them to the API.
+delete() | Deletes this Stream.
+getPermissions() | Returns the list of permissions for this Stream.
+detectFields() | Updates the Stream field config (schema) to match the latest data point in the Stream.
+produce(message) | Produces a new message (data point) to this Stream.
 
 ### Subscription options
 

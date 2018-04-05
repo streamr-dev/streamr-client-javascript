@@ -9515,52 +9515,6 @@ var Stream = function () {
             return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey);
         }
     }, {
-        key: 'isPublic',
-        value: function () {
-            var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2() {
-                var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
-                var permissions;
-                return _regenerator2.default.wrap(function _callee2$(_context2) {
-                    while (1) {
-                        switch (_context2.prev = _context2.next) {
-                            case 0:
-                                _context2.next = 2;
-                                return this.getPermissions(apiKey);
-
-                            case 2:
-                                permissions = _context2.sent;
-                                return _context2.abrupt('return', permissions.find(function (permission) {
-                                    return permission.anonymous && permission.operation === 'read';
-                                }) !== undefined);
-
-                            case 4:
-                            case 'end':
-                                return _context2.stop();
-                        }
-                    }
-                }, _callee2, this);
-            }));
-
-            function isPublic() {
-                return _ref2.apply(this, arguments);
-            }
-
-            return isPublic;
-        }()
-    }, {
-        key: 'makePublic',
-        value: function makePublic() {
-            var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;
-
-            return (0, _utils.authFetch)(this._client.options.restUrl + '/streams/' + this.id + '/permissions', apiKey, {
-                method: 'POST',
-                body: (0, _stringify2.default)({
-                    anonymous: true,
-                    operation: 'read'
-                })
-            });
-        }
-    }, {
         key: 'detectFields',
         value: function detectFields() {
             var apiKey = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._client.options.apiKey;

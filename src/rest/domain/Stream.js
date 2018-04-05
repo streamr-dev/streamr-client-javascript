@@ -32,25 +32,6 @@ export default class Stream {
         return authFetch(`${this._client.options.restUrl}/streams/${this.id}/permissions`, apiKey)
     }
 
-    async isPublic(apiKey = this._client.options.apiKey) {
-        const permissions = await this.getPermissions(apiKey)
-        return permissions.find((permission) => (permission.anonymous && permission.operation === 'read')) !== undefined
-    }
-
-    makePublic(apiKey = this._client.options.apiKey) {
-        return authFetch(
-            `${this._client.options.restUrl}/streams/${this.id}/permissions`,
-            apiKey,
-            {
-                method: 'POST',
-                body: JSON.stringify({
-                    anonymous: true,
-                    operation: 'read',
-                }),
-            },
-        )
-    }
-
     detectFields(apiKey = this._client.options.apiKey) {
         return authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
     }

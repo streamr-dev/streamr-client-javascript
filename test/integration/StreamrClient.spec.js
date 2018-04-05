@@ -168,18 +168,6 @@ describe('StreamrClient', function () {
         it('Stream.getPermissions', () => createdStream.getPermissions().then((permissions) => {
             assert.equal(permissions.length, 3) // read, write, share for the owner
         }))
-
-        it('Stream.isPublic returns false for non-public Streams', () => createdStream.isPublic().then((isPublic) => {
-            assert(!isPublic)
-        }))
-
-        it('Stream.makePublic', () => createdStream.makePublic().then((result) => {
-            console.log(result)
-            return createdStream.isPublic()
-        })
-            .then((isPublic) => {
-                assert(isPublic)
-            }))
     })
 
     describe('Stream deletion', () => {
