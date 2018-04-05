@@ -1,11 +1,11 @@
 import EventEmitter from 'eventemitter3'
-import debug from 'debug'
-
-import Subscription from './Subscription'
+import debugFactory from 'debug'
+import { Subscription, State } from './Subscription'
 import Connection from './Connection'
 
-export default class StreamrClient extends EventEmitter {
+const debug = debugFactory('StreamrClient')
 
+export default class StreamrClient extends EventEmitter {
     constructor(options) {
         super()
 
@@ -18,7 +18,7 @@ export default class StreamrClient extends EventEmitter {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            apiKey: null
+            apiKey: null,
         }
         this.subsByStream = {}
         this.subById = {}
@@ -48,9 +48,7 @@ export default class StreamrClient extends EventEmitter {
         delete this.subById[sub.id]
 
         if (this.subsByStream[sub.streamId]) {
-            this.subsByStream[sub.streamId] = this.subsByStream[sub.streamId].filter((it) => {
-                return it !== sub
-            })
+            this.subsByStream[sub.streamId] = this.subsByStream[sub.streamId].filter((it) => it !== sub)
 
             if (this.subsByStream[sub.streamId].length === 0) {
                 delete this.subsByStream[sub.streamId]
@@ -62,34 +60,37 @@ export default class StreamrClient extends EventEmitter {
         return this.subsByStream[streamId] || []
     }
 
-    subscribe(options, callback, legacyOptions) {
-        if (!options) {
-            throw 'subscribe: Invalid arguments: subscription options is required!'
+    subscribe(optionsOrStreamId, callback, legacyOptions) {
+        if (!optionsOrStreamId) {
+            throw new Error('subscribe: Invalid arguments: subscription options is required!')
         } else if (!callback) {
-            throw 'subscribe: Invalid arguments: callback is required!'
+            throw new Error('subscribe: Invalid arguments: callback is required!')
         }
 
         // Backwards compatibility for giving a streamId as first argument
-        if (typeof options === 'string') {
+        let options
+        if (typeof optionsOrStreamId === 'string') {
             options = {
-                stream: options
+                stream: optionsOrStreamId,
             }
-        } else if (typeof options !== 'object') {
-            throw 'subscribe: options must be an object'
+        } else if (typeof optionsOrStreamId === 'object') {
+            options = optionsOrStreamId
+        } else {
+            throw new Error(`subscribe: options must be an object! Given: ${optionsOrStreamId}`)
         }
 
         // Backwards compatibility for giving an options object as third argument
         Object.assign(options, legacyOptions)
 
         if (!options.stream) {
-            throw 'subscribe: Invalid arguments: options.stream is not given'
+            throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
         // Create the Subscription object and bind handlers
-        let sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             this._requestResend(sub, {
-                resend_from: from, resend_to: to
+                resend_from: from, resend_to: to,
             })
         })
         sub.on('done', () => {
@@ -112,31 +113,32 @@ export default class StreamrClient extends EventEmitter {
 
     unsubscribe(sub) {
         if (!sub || !sub.streamId) {
-            throw 'unsubscribe: please give a Subscription object as an argument!'
+            throw new Error('unsubscribe: please give a Subscription object as an argument!')
         }
 
         // If this is the last subscription for this stream, unsubscribe the client too
-        if (this.subsByStream[sub.streamId] !== undefined && this.subsByStream[sub.streamId].length === 1 && this.connected && !this.disconnecting && sub.isSubscribed() && !sub.unsubscribing) {
-            sub.unsubscribing = true
+        if (this.subsByStream[sub.streamId] !== undefined && this.subsByStream[sub.streamId].length === 1
+            && this.connected && !this.disconnecting && sub.getState() === State.subscribed) {
+            sub.setState(State.unsubscribing)
             this._requestUnsubscribe(sub.streamId)
-        } else if (!sub.unsubscribing) {
+        } else if (sub.getState() !== State.unsubscribing) {
             // Else the sub can be cleaned off immediately
             this._removeSubscription(sub)
-            sub.emit('unsubscribed')
+            sub.setState(State.unsubscribed)
             this._checkAutoDisconnect()
         }
     }
 
     unsubscribeAll(streamId) {
         if (!streamId) {
-            throw 'unsubscribeAll: a stream id is required!'
+            throw new Error('unsubscribeAll: a stream id is required!')
         } else if (typeof streamId !== 'string') {
-            throw 'unsubscribe: stream id must be a string!'
+            throw new Error('unsubscribe: stream id must be a string!')
         }
 
         if (this.subsByStream[streamId]) {
             // Copy the list to avoid concurrent modifications
-            let l = this.subsByStream[streamId].slice()
+            const l = this.subsByStream[streamId].slice()
             l.forEach((sub) => {
                 this.unsubscribe(sub)
             })
@@ -170,14 +172,13 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on('b', (msg) => {
             // Notify the Subscriptions for this stream. If this is not the message each individual Subscription
             // is expecting, they will either ignore it or request resend via gap event.
-            let streamId = msg.streamId
-            let subs = this.subsByStream[streamId]
+            const subs = this.subsByStream[msg.streamId]
             if (subs) {
                 for (let i = 0; i < subs.length; i++) {
                     subs[i].handleMessage(msg, false)
                 }
             } else {
-                debug('WARN: message received for stream with no subscriptions: %s', streamId)
+                debug('WARN: message received for stream with no subscriptions: %s', msg.streamId)
             }
         })
 
@@ -192,19 +193,17 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on('subscribed', (response) => {
             if (response.error) {
-                this.handleError('Error subscribing to ' + response.stream + ': ' + response.error)
+                this.handleError(`Error subscribing to ${response.stream}: ${response.error}`)
             } else {
-                let subs = this.subsByStream[response.stream]
-                delete subs._subscribing
+                const subs = this.subsByStream[response.stream]
+                delete subs.subscribing
 
                 debug('Client subscribed: %o', response)
 
                 // Report subscribed to all non-resending Subscriptions for this stream
-                subs.filter((sub) => {
-                    return !sub.resending
-                })
+                subs.filter((sub) => !sub.resending)
                     .forEach((sub) => {
-                        sub.emit('subscribed')
+                        sub.setState(State.subscribed)
                     })
             }
         })
@@ -214,10 +213,10 @@ export default class StreamrClient extends EventEmitter {
 
             if (this.subsByStream[response.stream]) {
                 // Copy the list to avoid concurrent modifications
-                let l = this.subsByStream[response.stream].slice()
+                const l = this.subsByStream[response.stream].slice()
                 l.forEach((sub) => {
                     this._removeSubscription(sub)
-                    sub.emit('unsubscribed')
+                    sub.setState(State.unsubscribed)
                 })
             }
 
@@ -259,9 +258,9 @@ export default class StreamrClient extends EventEmitter {
 
             Object.keys(this.subsByStream)
                 .forEach((streamId) => {
-                    let subs = this.subsByStream[streamId]
+                    const subs = this.subsByStream[streamId]
                     subs.forEach((sub) => {
-                        if (!sub.isSubscribed()) {
+                        if (sub.getState() !== State.subscribed) {
                             this._resendAndSubscribe(sub)
                         }
                     })
@@ -277,16 +276,15 @@ export default class StreamrClient extends EventEmitter {
 
             Object.keys(this.subsByStream)
                 .forEach((streamId) => {
-                    let subs = this.subsByStream[streamId]
-                    delete subs._subscribing
+                    const subs = this.subsByStream[streamId]
+                    delete subs.subscribing
                     subs.forEach((sub) => {
-                        sub.emit('disconnected')
+                        sub.setState(State.unsubscribed)
                     })
                 })
         })
 
-        this.connection.connect() // TODO: i did not find this anywhere else?
-        return this.subsByStream
+        this.connection.connect()
     }
 
     pause() {
@@ -314,8 +312,8 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _resendAndSubscribe(sub) {
-        if (!sub.subscribing && !sub.resending) {
-            sub.subscribing = true
+        if (sub.getState() !== State.subscribing && !sub.resending) {
+            sub.setState(State.subscribing)
             this._requestSubscribe(sub)
 
             // Once subscribed, ask for a resend
@@ -328,27 +326,25 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _requestSubscribe(sub) {
-        let subs = this.subsByStream[sub.streamId]
+        const subs = this.subsByStream[sub.streamId]
 
-        let subscribedSubs = subs.filter((it) => {
-            return it.isSubscribed()
-        })
+        const subscribedSubs = subs.filter((it) => it.getState() === State.subscribed)
 
         // If this is the first subscription for this stream, send a subscription request to the server
-        if (!subs._subscribing && subscribedSubs.length === 0) {
-            let req = Object.assign({}, sub.options, {
-                type: 'subscribe', stream: sub.streamId, authKey: sub.apiKey
+        if (!subs.subscribing && subscribedSubs.length === 0) {
+            const req = Object.assign({}, sub.options, {
+                type: 'subscribe', stream: sub.streamId, authKey: sub.apiKey,
             })
             debug('_requestSubscribe: subscribing client: %o', req)
-            subs._subscribing = true
+            subs.subscribing = true
             this.connection.send(req)
         } else if (subscribedSubs.length > 0) {
             // If there already is a subscribed subscription for this stream, this new one will just join it immediately
             debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
 
             setTimeout(() => {
-                sub.emit('subscribed')
-            }, 0)
+                sub.setState(State.subscribed)
+            })
         }
     }
 
@@ -356,13 +352,13 @@ export default class StreamrClient extends EventEmitter {
         debug('Client unsubscribing stream %o', streamId)
         this.connection.send({
             type: 'unsubscribe',
-            stream: streamId
+            stream: streamId,
         })
     }
 
     _requestResend(sub, resendOptions) {
         // If overriding resendOptions are given, need to remove resend options in sub.options
-        let options = Object.assign({}, sub.getEffectiveResendOptions())
+        const options = Object.assign({}, sub.getEffectiveResendOptions())
         if (resendOptions) {
             Object.keys(options)
                 .forEach((key) => {
@@ -372,10 +368,10 @@ export default class StreamrClient extends EventEmitter {
                 })
         }
 
-        sub.resending = true
+        sub.setResending(true)
 
-        let request = Object.assign({}, options, resendOptions, {
-            type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id
+        const request = Object.assign({}, options, resendOptions, {
+            type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id,
         })
         debug('_requestResend: %o', request)
         this.connection.send(request)

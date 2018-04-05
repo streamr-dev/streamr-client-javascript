@@ -1,14 +1,15 @@
 import EventEmitter from 'eventemitter3'
-import debug from 'debug'
+import debugFactory from 'debug'
 import WebSocket from 'ws'
+import { decodeBrowserWrapper, decodeMessage } from './Protocol'
 
-import {decodeBrowserWrapper, decodeMessage} from './Protocol'
+const debug = debugFactory('StreamrClient::Connection')
 
 export default class Connection extends EventEmitter {
     constructor(options) {
         super()
         if (!options.url) {
-            throw 'URL is not defined!'
+            throw new Error('URL is not defined!')
         }
         this.options = options
         this.connected = false
@@ -51,7 +52,7 @@ export default class Connection extends EventEmitter {
             }
 
             this.socket.onmessage = (messageEvent) => {
-                let decoded = decodeBrowserWrapper(messageEvent.data)
+                const decoded = decodeBrowserWrapper(messageEvent.data)
                 this.emit(decoded.type, decodeMessage(decoded.type, decoded.msg), decoded.subId)
             }
         }

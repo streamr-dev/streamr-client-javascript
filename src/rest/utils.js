@@ -6,25 +6,25 @@ const log = debug('StreamrClient:utils')
 export async function authFetch(url, apiKey, opts = {}) {
     log('fetching: ', url, opts)
 
-    let req = Object.assign({}, opts, {
+    const req = Object.assign({}, opts, {
         headers: apiKey ? {
-            Authorization: 'token '+ apiKey
-        } : undefined
+            Authorization: `token ${apiKey}`,
+        } : undefined,
     })
 
-    let res = await fetch(url, req)
+    const res = await fetch(url, req)
 
-    let text = await res.text()
+    const text = await res.text()
 
     if (res.ok && text.length) {
         try {
             return JSON.parse(text)
         } catch (err) {
-            throw 'Failed to parse JSON response: '+text
+            throw new Error(`Failed to parse JSON response: ${text}`)
         }
     } else if (res.ok) {
         return {}
     } else {
-        throw 'Request to '+url+' returned with error code '+res.status+': '+text
+        throw new Error(`Request to ${url} returned with error code ${res.status}: ${text}`)
     }
 }

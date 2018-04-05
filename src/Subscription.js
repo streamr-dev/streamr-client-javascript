@@ -1,24 +1,32 @@
 import EventEmitter from 'eventemitter3'
-import debug from 'debug'
+import debugFactory from 'debug'
+import { isByeMessage } from './Protocol'
 
-import {isByeMessage} from './Protocol'
+const debug = debugFactory('StreamrClient::Subscription')
 
 let subId = 0
 function generateSubscriptionId() {
-    let id = subId++
+    const id = subId
+    subId += 1
     return id.toString()
 }
 
-export default class Subscription extends EventEmitter {
+export const State = {
+    unsubscribed: 'unsubscribed',
+    subscribing: 'subscribing',
+    subscribed: 'subscribed',
+    unsubscribing: 'unsubscribing',
+}
 
+export class Subscription extends EventEmitter {
     constructor(streamId, streamPartition, apiKey, callback, options) {
         super()
 
         if (!streamId) {
-            throw 'No stream id given!'
+            throw new Error('No stream id given!')
         }
         if (!callback) {
-            throw 'No callback given!'
+            throw new Error('No callback given!')
         }
 
         this.id = generateSubscriptionId()
@@ -28,69 +36,53 @@ export default class Subscription extends EventEmitter {
         this.callback = callback
         this.options = options || {}
         this.queue = []
-        this.subscribing = false
-        this.subscribed = false
+        this.state = State.unsubscribed
+        this.resending = false
         this.lastReceivedOffset = null
 
         // Check that multiple resend options are not given
         let resendOptionCount = 0
         if (this.options.resend_all) {
-            resendOptionCount++
+            resendOptionCount += 1
         }
         if (this.options.resend_from != null) {
-            resendOptionCount++
+            resendOptionCount += 1
         }
         if (this.options.resend_last != null) {
-            resendOptionCount++
+            resendOptionCount += 1
         }
         if (this.options.resend_from_time != null) {
-            resendOptionCount++
+            resendOptionCount += 1
         }
         if (resendOptionCount > 1) {
-            throw 'Multiple resend options active! Please use only one: ' + JSON.stringify(options)
+            throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(options)}`)
         }
 
         // Automatically convert Date objects to numbers for resend_from_time
         if (this.options.resend_from_time != null
             && typeof this.options.resend_from_time !== 'number') {
-
             if (typeof this.options.resend_from_time.getTime === 'function') {
                 this.options.resend_from_time = this.options.resend_from_time.getTime()
             } else {
-                throw 'resend_from_time option must be a Date object or a number representing time!'
+                throw new Error('resend_from_time option must be a Date object or a number representing time!')
             }
         }
 
-        /*** Message handlers ***/
-
-        this.on('subscribed', () => {
-            debug('Sub %s subscribed to stream: %s', this.id, this.streamId)
-            this.subscribed = true
-            this.subscribing = false
-        })
+        /** * Message handlers ** */
 
         this.on('unsubscribed', () => {
-            debug('Sub %s unsubscribed: %s', this.id, this.streamId)
-            this.subscribed = false
-            this.subscribing = false
-            this.unsubscribing = false
-            this.resending = false
-        })
-
-        this.on('resending', (response) => {
-            debug('Sub %s resending: %o', this.id, response)
-            // this.resending = true was set elsewhere before making the request
+            this.setResending(false)
         })
 
         this.on('no_resend', (response) => {
             debug('Sub %s no_resend: %o', this.id, response)
-            this.resending = false
+            this.setResending(false)
             this.checkQueue()
         })
 
         this.on('resent', (response) => {
             debug('Sub %s resent: %o', this.id, response)
-            this.resending = false
+            this.setResending(false)
             this.checkQueue()
         })
 
@@ -99,18 +91,23 @@ export default class Subscription extends EventEmitter {
         })
 
         this.on('disconnected', () => {
-            this.subscribed = false
-            this.subscribing = false
-            this.resending = false
+            this.setState(State.unsubscribed)
+            this.setResending(false)
         })
     }
 
-    handleMessage(msg, isResend) {
-        let content = msg.content
-        let offset = msg.offset
-        let previousOffset = msg.previousOffset
+    /**
+     * Gap check: If the msg contains the previousOffset, and we know the lastReceivedOffset,
+     * and the previousOffset is larger than what has been received, we have a gap!
+     */
+    checkForGap(msg) {
+        return msg.previousOffset != null &&
+            this.lastReceivedOffset != null &&
+            msg.previousOffset > this.lastReceivedOffset
+    }
 
-        if (previousOffset == null) {
+    handleMessage(msg, isResend) {
+        if (msg.previousOffset == null) {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
         }
 
@@ -118,30 +115,23 @@ export default class Subscription extends EventEmitter {
         // If resending, queue broadcasted messages
         if (this.resending && !isResend) {
             this.queue.push(msg)
+        } else if (this.checkForGap(msg) && !this.resending) {
+            // Queue the message to be processed after resend
+            this.queue.push(msg)
+
+            const from = this.lastReceivedOffset + 1
+            const to = msg.previousOffset
+            debug('Gap detected, requesting resend for stream %s from %d to %d', this.streamId, from, to)
+            this.emit('gap', from, to)
+        } else if (this.lastReceivedOffset != null && msg.offset <= this.lastReceivedOffset) {
+            // Prevent double-processing of messages for any reason
+            debug('Sub %s already received message: %d, lastReceivedOffset: %d. Ignoring message.', this.id, msg.offset, this.lastReceivedOffset)
         } else {
-            // Gap check
-            if (previousOffset != null && 					// previousOffset is required to check for gaps
-                this.lastReceivedOffset != null &&  		// and we need to know what msg was the previous one
-                previousOffset > this.lastReceivedOffset &&	// previous message had larger offset than our previous msg => gap!
-                !this.resending) {
-
-                // Queue the message to be processed after resend
-                this.queue.push(msg)
-
-                let from = this.lastReceivedOffset + 1
-                let to = previousOffset
-                debug('Gap detected, requesting resend for stream %s from %d to %d', this.streamId, from, to)
-                this.emit('gap', from, to)
-            } else if (this.lastReceivedOffset != null && offset <= this.lastReceivedOffset) {
-                // Prevent double-processing of messages for any reason
-                debug('Sub %s already received message: %d, lastReceivedOffset: %d. Ignoring message.', this.id, offset, this.lastReceivedOffset)
-            } else {
-                // Normal case where prevOffset == null || lastReceivedOffset == null || prevOffset === lastReceivedOffset
-                this.lastReceivedOffset = offset
-                this.callback(content, msg)
-                if (isByeMessage(content)) {
-                    this.emit('done')
-                }
+            // Normal case where prevOffset == null || lastReceivedOffset == null || prevOffset === lastReceivedOffset
+            this.lastReceivedOffset = msg.offset
+            this.callback(msg.content, msg)
+            if (isByeMessage(msg.content)) {
+                this.emit('done')
             }
         }
     }
@@ -150,16 +140,10 @@ export default class Subscription extends EventEmitter {
         if (this.queue.length) {
             debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId)
 
-            let i
-            let length = this.queue.length
-
-            let originalQueue = this.queue
+            const originalQueue = this.queue
             this.queue = []
 
-            for (i = 0; i < length; i++) {
-                let msg = originalQueue[i]
-                this.handleMessage(msg, false)
-            }
+            originalQueue.forEach((msg) => this.handleMessage(msg, false))
         }
     }
 
@@ -181,21 +165,36 @@ export default class Subscription extends EventEmitter {
         if (this.hasReceivedMessages() && this.hasResendOptions()) {
             if (this.options.resend_all || this.options.resend_from || this.options.resend_from_time) {
                 return {
-                    resend_from: this.lastReceivedOffset + 1
+                    resend_from: this.lastReceivedOffset + 1,
                 }
             } else if (this.options.resend_last) {
                 return this.options
             }
-        } else {
-            return this.options
         }
+
+        return this.options
     }
 
     hasReceivedMessages() {
         return this.lastReceivedOffset != null
     }
 
-    isSubscribed() {
-        return this.subscribed
+    getState() {
+        return this.state
+    }
+
+    setState(state) {
+        debug(`Subscription: Stream ${this.streamId} state changed ${this.state} => ${state}`)
+        this.state = state
+        this.emit(state)
+    }
+
+    isResending() {
+        return this.resending
+    }
+
+    setResending(resending) {
+        debug(`Subscription: Stream ${this.streamId} resending: ${resending}`)
+        this.resending = resending
     }
 }

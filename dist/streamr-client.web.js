@@ -1659,7 +1659,7 @@ function decodeBrowserWrapper(rawMsg) {
     var jsonMsg = JSON.parse(rawMsg);
     var version = jsonMsg[0];
     if (version !== 0) {
-        throw 'Unknown message version: ' + version;
+        throw new Error('Unknown message version: ' + version);
     }
 
     return {
@@ -1672,28 +1672,26 @@ function decodeBrowserWrapper(rawMsg) {
 function decodeMessage(type, message) {
     if (type === 'b' || type === 'u') {
         if (FIELDS_BY_PROTOCOL_VERSION[message[0]] === undefined) {
-            throw 'Unsupported version: ' + message[0];
+            throw new Error('Unsupported version: ' + message[0]);
         }
         var result = {};
         var fields = FIELDS_BY_PROTOCOL_VERSION[message[0]];
 
         for (var i = 0; i < message.length; i++) {
-
             // Parse content if necessary
             if (fields[i] === 'content') {
                 if (result.contentType === CONTENT_TYPE_JSON) {
-                    message[i] = JSON.parse(message[i]);
+                    result[fields[i]] = JSON.parse(message[i]);
                 } else {
-                    throw 'Unknown content type: ' + result.contentType;
+                    throw new Error('Unknown content type: ' + result.contentType);
                 }
+            } else {
+                result[fields[i]] = message[i];
             }
-
-            result[fields[i]] = message[i];
         }
         return result;
-    } else {
-        return message;
     }
+    return message;
 }
 
 function createSubscribeRequest(stream, resendOptions) {
@@ -1936,7 +1934,7 @@ var authFetch = exports.authFetch = function () {
                     case 13:
                         _context.prev = 13;
                         _context.t0 = _context['catch'](9);
-                        throw 'Failed to parse JSON response: ' + text;
+                        throw new Error('Failed to parse JSON response: ' + text);
 
                     case 16:
                         _context.next = 23;
@@ -1951,7 +1949,7 @@ var authFetch = exports.authFetch = function () {
                         return _context.abrupt('return', {});
 
                     case 22:
-                        throw 'Request to ' + url + ' returned with error code ' + res.status + ': ' + text;
+                        throw new Error('Request to ' + url + ' returned with error code ' + res.status + ': ' + text);
 
                     case 23:
                     case 'end':
@@ -2163,13 +2161,13 @@ var _debug2 = _interopRequireDefault(_debug);
 
 var _Subscription = __webpack_require__(110);
 
-var _Subscription2 = _interopRequireDefault(_Subscription);
-
 var _Connection = __webpack_require__(112);
 
 var _Connection2 = _interopRequireDefault(_Connection);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var debug = (0, _debug2.default)('StreamrClient');
 
 var StreamrClient = function (_EventEmitter) {
     (0, _inherits3.default)(StreamrClient, _EventEmitter);
@@ -2238,40 +2236,43 @@ var StreamrClient = function (_EventEmitter) {
         }
     }, {
         key: 'subscribe',
-        value: function subscribe(options, callback, legacyOptions) {
+        value: function subscribe(optionsOrStreamId, callback, legacyOptions) {
             var _this2 = this;
 
-            if (!options) {
-                throw 'subscribe: Invalid arguments: subscription options is required!';
+            if (!optionsOrStreamId) {
+                throw new Error('subscribe: Invalid arguments: subscription options is required!');
             } else if (!callback) {
-                throw 'subscribe: Invalid arguments: callback is required!';
+                throw new Error('subscribe: Invalid arguments: callback is required!');
             }
 
             // Backwards compatibility for giving a streamId as first argument
-            if (typeof options === 'string') {
+            var options = void 0;
+            if (typeof optionsOrStreamId === 'string') {
                 options = {
-                    stream: options
+                    stream: optionsOrStreamId
                 };
-            } else if ((typeof options === 'undefined' ? 'undefined' : (0, _typeof3.default)(options)) !== 'object') {
-                throw 'subscribe: options must be an object';
+            } else if ((typeof optionsOrStreamId === 'undefined' ? 'undefined' : (0, _typeof3.default)(optionsOrStreamId)) === 'object') {
+                options = optionsOrStreamId;
+            } else {
+                throw new Error('subscribe: options must be an object! Given: ' + optionsOrStreamId);
             }
 
             // Backwards compatibility for giving an options object as third argument
             (0, _assign2.default)(options, legacyOptions);
 
             if (!options.stream) {
-                throw 'subscribe: Invalid arguments: options.stream is not given';
+                throw new Error('subscribe: Invalid arguments: options.stream is not given');
             }
 
             // Create the Subscription object and bind handlers
-            var sub = new _Subscription2.default(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options);
+            var sub = new _Subscription.Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options);
             sub.on('gap', function (from, to) {
                 _this2._requestResend(sub, {
                     resend_from: from, resend_to: to
                 });
             });
             sub.on('done', function () {
-                (0, _debug2.default)('done event for sub %d', sub.id);
+                debug('done event for sub %d', sub.id);
                 _this2.unsubscribe(sub);
             });
 
@@ -2291,17 +2292,17 @@ var StreamrClient = function (_EventEmitter) {
         key: 'unsubscribe',
         value: function unsubscribe(sub) {
             if (!sub || !sub.streamId) {
-                throw 'unsubscribe: please give a Subscription object as an argument!';
+                throw new Error('unsubscribe: please give a Subscription object as an argument!');
             }
 
             // If this is the last subscription for this stream, unsubscribe the client too
-            if (this.subsByStream[sub.streamId] !== undefined && this.subsByStream[sub.streamId].length === 1 && this.connected && !this.disconnecting && sub.isSubscribed() && !sub.unsubscribing) {
-                sub.unsubscribing = true;
+            if (this.subsByStream[sub.streamId] !== undefined && this.subsByStream[sub.streamId].length === 1 && this.connected && !this.disconnecting && sub.getState() === _Subscription.State.subscribed) {
+                sub.setState(_Subscription.State.unsubscribing);
                 this._requestUnsubscribe(sub.streamId);
-            } else if (!sub.unsubscribing) {
+            } else if (sub.getState() !== _Subscription.State.unsubscribing) {
                 // Else the sub can be cleaned off immediately
                 this._removeSubscription(sub);
-                sub.emit('unsubscribed');
+                sub.setState(_Subscription.State.unsubscribed);
                 this._checkAutoDisconnect();
             }
         }
@@ -2311,9 +2312,9 @@ var StreamrClient = function (_EventEmitter) {
             var _this3 = this;
 
             if (!streamId) {
-                throw 'unsubscribeAll: a stream id is required!';
+                throw new Error('unsubscribeAll: a stream id is required!');
             } else if (typeof streamId !== 'string') {
-                throw 'unsubscribe: stream id must be a string!';
+                throw new Error('unsubscribe: stream id must be a string!');
             }
 
             if (this.subsByStream[streamId]) {
@@ -2340,14 +2341,14 @@ var StreamrClient = function (_EventEmitter) {
             var _this4 = this;
 
             if (this.connected) {
-                (0, _debug2.default)('connect() called while already connected, doing nothing...');
+                debug('connect() called while already connected, doing nothing...');
                 return;
             } else if (this.connecting) {
-                (0, _debug2.default)('connect() called while connecting, doing nothing...');
+                debug('connect() called while connecting, doing nothing...');
                 return;
             }
 
-            (0, _debug2.default)('Connecting to %s', this.options.url);
+            debug('Connecting to %s', this.options.url);
             this.connecting = true;
             this.disconnecting = false;
 
@@ -2357,14 +2358,13 @@ var StreamrClient = function (_EventEmitter) {
             this.connection.on('b', function (msg) {
                 // Notify the Subscriptions for this stream. If this is not the message each individual Subscription
                 // is expecting, they will either ignore it or request resend via gap event.
-                var streamId = msg.streamId;
-                var subs = _this4.subsByStream[streamId];
+                var subs = _this4.subsByStream[msg.streamId];
                 if (subs) {
                     for (var i = 0; i < subs.length; i++) {
                         subs[i].handleMessage(msg, false);
                     }
                 } else {
-                    (0, _debug2.default)('WARN: message received for stream with no subscriptions: %s', streamId);
+                    debug('WARN: message received for stream with no subscriptions: %s', msg.streamId);
                 }
             });
 
@@ -2373,7 +2373,7 @@ var StreamrClient = function (_EventEmitter) {
                 if (sub !== undefined && _this4.subById[sub] !== undefined) {
                     _this4.subById[sub].handleMessage(msg, true);
                 } else {
-                    (0, _debug2.default)('WARN: subscription not found for stream: %s, sub: %s', msg.streamId, sub);
+                    debug('WARN: subscription not found for stream: %s, sub: %s', msg.streamId, sub);
                 }
             });
 
@@ -2382,28 +2382,28 @@ var StreamrClient = function (_EventEmitter) {
                     _this4.handleError('Error subscribing to ' + response.stream + ': ' + response.error);
                 } else {
                     var subs = _this4.subsByStream[response.stream];
-                    delete subs._subscribing;
+                    delete subs.subscribing;
 
-                    (0, _debug2.default)('Client subscribed: %o', response);
+                    debug('Client subscribed: %o', response);
 
                     // Report subscribed to all non-resending Subscriptions for this stream
                     subs.filter(function (sub) {
                         return !sub.resending;
                     }).forEach(function (sub) {
-                        sub.emit('subscribed');
+                        sub.setState(_Subscription.State.subscribed);
                     });
                 }
             });
 
             this.connection.on('unsubscribed', function (response) {
-                (0, _debug2.default)('Client unsubscribed: %o', response);
+                debug('Client unsubscribed: %o', response);
 
                 if (_this4.subsByStream[response.stream]) {
                     // Copy the list to avoid concurrent modifications
                     var l = _this4.subsByStream[response.stream].slice();
                     l.forEach(function (sub) {
                         _this4._removeSubscription(sub);
-                        sub.emit('unsubscribed');
+                        sub.setState(_Subscription.State.unsubscribed);
                     });
                 }
 
@@ -2415,7 +2415,7 @@ var StreamrClient = function (_EventEmitter) {
                 if (_this4.subById[response.sub]) {
                     _this4.subById[response.sub].emit('resending', response);
                 } else {
-                    (0, _debug2.default)('resent: Subscription %d is gone already', response.sub);
+                    debug('resent: Subscription %d is gone already', response.sub);
                 }
             });
 
@@ -2423,7 +2423,7 @@ var StreamrClient = function (_EventEmitter) {
                 if (_this4.subById[response.sub]) {
                     _this4.subById[response.sub].emit('no_resend', response);
                 } else {
-                    (0, _debug2.default)('resent: Subscription %d is gone already', response.sub);
+                    debug('resent: Subscription %d is gone already', response.sub);
                 }
             });
 
@@ -2431,13 +2431,13 @@ var StreamrClient = function (_EventEmitter) {
                 if (_this4.subById[response.sub]) {
                     _this4.subById[response.sub].emit('resent', response);
                 } else {
-                    (0, _debug2.default)('resent: Subscription %d is gone already', response.sub);
+                    debug('resent: Subscription %d is gone already', response.sub);
                 }
             });
 
             // On connect/reconnect, send pending subscription requests
             this.connection.on('connected', function () {
-                (0, _debug2.default)('Connected!');
+                debug('Connected!');
                 _this4.connected = true;
                 _this4.connecting = false;
                 _this4.disconnecting = false;
@@ -2446,7 +2446,7 @@ var StreamrClient = function (_EventEmitter) {
                 (0, _keys2.default)(_this4.subsByStream).forEach(function (streamId) {
                     var subs = _this4.subsByStream[streamId];
                     subs.forEach(function (sub) {
-                        if (!sub.isSubscribed()) {
+                        if (sub.getState() !== _Subscription.State.subscribed) {
                             _this4._resendAndSubscribe(sub);
                         }
                     });
@@ -2454,7 +2454,7 @@ var StreamrClient = function (_EventEmitter) {
             });
 
             this.connection.on('disconnected', function () {
-                (0, _debug2.default)('Disconnected.');
+                debug('Disconnected.');
                 _this4.connected = false;
                 _this4.connecting = false;
                 _this4.disconnecting = false;
@@ -2462,15 +2462,14 @@ var StreamrClient = function (_EventEmitter) {
 
                 (0, _keys2.default)(_this4.subsByStream).forEach(function (streamId) {
                     var subs = _this4.subsByStream[streamId];
-                    delete subs._subscribing;
+                    delete subs.subscribing;
                     subs.forEach(function (sub) {
-                        sub.emit('disconnected');
+                        sub.setState(_Subscription.State.unsubscribed);
                     });
                 });
             });
 
-            this.connection.connect(); // TODO: i did not find this anywhere else?
-            return this.subsByStream;
+            this.connection.connect();
         }
     }, {
         key: 'pause',
@@ -2496,7 +2495,7 @@ var StreamrClient = function (_EventEmitter) {
         value: function _checkAutoDisconnect() {
             // Disconnect if no longer subscribed to any streams
             if (this.options.autoDisconnect && (0, _keys2.default)(this.subsByStream).length === 0) {
-                (0, _debug2.default)('Disconnecting due to no longer being subscribed to any streams');
+                debug('Disconnecting due to no longer being subscribed to any streams');
                 this.disconnect();
             }
         }
@@ -2505,8 +2504,8 @@ var StreamrClient = function (_EventEmitter) {
         value: function _resendAndSubscribe(sub) {
             var _this6 = this;
 
-            if (!sub.subscribing && !sub.resending) {
-                sub.subscribing = true;
+            if (sub.getState() !== _Subscription.State.subscribing && !sub.resending) {
+                sub.setState(_Subscription.State.subscribing);
                 this._requestSubscribe(sub);
 
                 // Once subscribed, ask for a resend
@@ -2523,30 +2522,30 @@ var StreamrClient = function (_EventEmitter) {
             var subs = this.subsByStream[sub.streamId];
 
             var subscribedSubs = subs.filter(function (it) {
-                return it.isSubscribed();
+                return it.getState() === _Subscription.State.subscribed;
             });
 
             // If this is the first subscription for this stream, send a subscription request to the server
-            if (!subs._subscribing && subscribedSubs.length === 0) {
+            if (!subs.subscribing && subscribedSubs.length === 0) {
                 var req = (0, _assign2.default)({}, sub.options, {
                     type: 'subscribe', stream: sub.streamId, authKey: sub.apiKey
                 });
-                (0, _debug2.default)('_requestSubscribe: subscribing client: %o', req);
-                subs._subscribing = true;
+                debug('_requestSubscribe: subscribing client: %o', req);
+                subs.subscribing = true;
                 this.connection.send(req);
             } else if (subscribedSubs.length > 0) {
                 // If there already is a subscribed subscription for this stream, this new one will just join it immediately
-                (0, _debug2.default)('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId);
+                debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId);
 
                 setTimeout(function () {
-                    sub.emit('subscribed');
-                }, 0);
+                    sub.setState(_Subscription.State.subscribed);
+                });
             }
         }
     }, {
         key: '_requestUnsubscribe',
         value: function _requestUnsubscribe(streamId) {
-            (0, _debug2.default)('Client unsubscribing stream %o', streamId);
+            debug('Client unsubscribing stream %o', streamId);
             this.connection.send({
                 type: 'unsubscribe',
                 stream: streamId
@@ -2565,18 +2564,18 @@ var StreamrClient = function (_EventEmitter) {
                 });
             }
 
-            sub.resending = true;
+            sub.setResending(true);
 
             var request = (0, _assign2.default)({}, options, resendOptions, {
                 type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id
             });
-            (0, _debug2.default)('_requestResend: %o', request);
+            debug('_requestResend: %o', request);
             this.connection.send(request);
         }
     }, {
         key: 'handleError',
         value: function handleError(msg) {
-            (0, _debug2.default)(msg);
+            debug(msg);
             this.emit('error', msg);
         }
     }]);
@@ -3849,6 +3848,7 @@ function plural(ms, n, name) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.Subscription = exports.State = undefined;
 
 var _stringify = __webpack_require__(27);
 
@@ -3886,13 +3886,23 @@ var _Protocol = __webpack_require__(62);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var debug = (0, _debug2.default)('StreamrClient::Subscription');
+
 var subId = 0;
 function generateSubscriptionId() {
-    var id = subId++;
+    var id = subId;
+    subId += 1;
     return id.toString();
 }
 
-var Subscription = function (_EventEmitter) {
+var State = exports.State = {
+    unsubscribed: 'unsubscribed',
+    subscribing: 'subscribing',
+    subscribed: 'subscribed',
+    unsubscribing: 'unsubscribing'
+};
+
+var Subscription = exports.Subscription = function (_EventEmitter) {
     (0, _inherits3.default)(Subscription, _EventEmitter);
 
     function Subscription(streamId, streamPartition, apiKey, callback, options) {
@@ -3901,10 +3911,10 @@ var Subscription = function (_EventEmitter) {
         var _this = (0, _possibleConstructorReturn3.default)(this, (Subscription.__proto__ || (0, _getPrototypeOf2.default)(Subscription)).call(this));
 
         if (!streamId) {
-            throw 'No stream id given!';
+            throw new Error('No stream id given!');
         }
         if (!callback) {
-            throw 'No callback given!';
+            throw new Error('No callback given!');
         }
 
         _this.id = generateSubscriptionId();
@@ -3914,139 +3924,120 @@ var Subscription = function (_EventEmitter) {
         _this.callback = callback;
         _this.options = options || {};
         _this.queue = [];
-        _this.subscribing = false;
-        _this.subscribed = false;
+        _this.state = State.unsubscribed;
+        _this.resending = false;
         _this.lastReceivedOffset = null;
 
         // Check that multiple resend options are not given
         var resendOptionCount = 0;
         if (_this.options.resend_all) {
-            resendOptionCount++;
+            resendOptionCount += 1;
         }
         if (_this.options.resend_from != null) {
-            resendOptionCount++;
+            resendOptionCount += 1;
         }
         if (_this.options.resend_last != null) {
-            resendOptionCount++;
+            resendOptionCount += 1;
         }
         if (_this.options.resend_from_time != null) {
-            resendOptionCount++;
+            resendOptionCount += 1;
         }
         if (resendOptionCount > 1) {
-            throw 'Multiple resend options active! Please use only one: ' + (0, _stringify2.default)(options);
+            throw new Error('Multiple resend options active! Please use only one: ' + (0, _stringify2.default)(options));
         }
 
         // Automatically convert Date objects to numbers for resend_from_time
         if (_this.options.resend_from_time != null && typeof _this.options.resend_from_time !== 'number') {
-
             if (typeof _this.options.resend_from_time.getTime === 'function') {
                 _this.options.resend_from_time = _this.options.resend_from_time.getTime();
             } else {
-                throw 'resend_from_time option must be a Date object or a number representing time!';
+                throw new Error('resend_from_time option must be a Date object or a number representing time!');
             }
         }
 
-        /*** Message handlers ***/
-
-        _this.on('subscribed', function () {
-            (0, _debug2.default)('Sub %s subscribed to stream: %s', _this.id, _this.streamId);
-            _this.subscribed = true;
-            _this.subscribing = false;
-        });
+        /** * Message handlers ** */
 
         _this.on('unsubscribed', function () {
-            (0, _debug2.default)('Sub %s unsubscribed: %s', _this.id, _this.streamId);
-            _this.subscribed = false;
-            _this.subscribing = false;
-            _this.unsubscribing = false;
-            _this.resending = false;
-        });
-
-        _this.on('resending', function (response) {
-            (0, _debug2.default)('Sub %s resending: %o', _this.id, response);
-            // this.resending = true was set elsewhere before making the request
+            _this.setResending(false);
         });
 
         _this.on('no_resend', function (response) {
-            (0, _debug2.default)('Sub %s no_resend: %o', _this.id, response);
-            _this.resending = false;
+            debug('Sub %s no_resend: %o', _this.id, response);
+            _this.setResending(false);
             _this.checkQueue();
         });
 
         _this.on('resent', function (response) {
-            (0, _debug2.default)('Sub %s resent: %o', _this.id, response);
-            _this.resending = false;
+            debug('Sub %s resent: %o', _this.id, response);
+            _this.setResending(false);
             _this.checkQueue();
         });
 
         _this.on('connected', function () {});
 
         _this.on('disconnected', function () {
-            _this.subscribed = false;
-            _this.subscribing = false;
-            _this.resending = false;
+            _this.setState(State.unsubscribed);
+            _this.setResending(false);
         });
         return _this;
     }
 
+    /**
+     * Gap check: If the msg contains the previousOffset, and we know the lastReceivedOffset,
+     * and the previousOffset is larger than what has been received, we have a gap!
+     */
+
+
     (0, _createClass3.default)(Subscription, [{
+        key: 'checkForGap',
+        value: function checkForGap(msg) {
+            return msg.previousOffset != null && this.lastReceivedOffset != null && msg.previousOffset > this.lastReceivedOffset;
+        }
+    }, {
         key: 'handleMessage',
         value: function handleMessage(msg, isResend) {
-            var content = msg.content;
-            var offset = msg.offset;
-            var previousOffset = msg.previousOffset;
-
-            if (previousOffset == null) {
-                (0, _debug2.default)('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg);
+            if (msg.previousOffset == null) {
+                debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg);
             }
 
             // TODO: check this.options.resend_last ?
             // If resending, queue broadcasted messages
             if (this.resending && !isResend) {
                 this.queue.push(msg);
+            } else if (this.checkForGap(msg) && !this.resending) {
+                // Queue the message to be processed after resend
+                this.queue.push(msg);
+
+                var from = this.lastReceivedOffset + 1;
+                var to = msg.previousOffset;
+                debug('Gap detected, requesting resend for stream %s from %d to %d', this.streamId, from, to);
+                this.emit('gap', from, to);
+            } else if (this.lastReceivedOffset != null && msg.offset <= this.lastReceivedOffset) {
+                // Prevent double-processing of messages for any reason
+                debug('Sub %s already received message: %d, lastReceivedOffset: %d. Ignoring message.', this.id, msg.offset, this.lastReceivedOffset);
             } else {
-                // Gap check
-                if (previousOffset != null && // previousOffset is required to check for gaps
-                this.lastReceivedOffset != null && // and we need to know what msg was the previous one
-                previousOffset > this.lastReceivedOffset && // previous message had larger offset than our previous msg => gap!
-                !this.resending) {
-
-                    // Queue the message to be processed after resend
-                    this.queue.push(msg);
-
-                    var from = this.lastReceivedOffset + 1;
-                    var to = previousOffset;
-                    (0, _debug2.default)('Gap detected, requesting resend for stream %s from %d to %d', this.streamId, from, to);
-                    this.emit('gap', from, to);
-                } else if (this.lastReceivedOffset != null && offset <= this.lastReceivedOffset) {
-                    // Prevent double-processing of messages for any reason
-                    (0, _debug2.default)('Sub %s already received message: %d, lastReceivedOffset: %d. Ignoring message.', this.id, offset, this.lastReceivedOffset);
-                } else {
-                    // Normal case where prevOffset == null || lastReceivedOffset == null || prevOffset === lastReceivedOffset
-                    this.lastReceivedOffset = offset;
-                    this.callback(content, msg);
-                    if ((0, _Protocol.isByeMessage)(content)) {
-                        this.emit('done');
-                    }
+                // Normal case where prevOffset == null || lastReceivedOffset == null || prevOffset === lastReceivedOffset
+                this.lastReceivedOffset = msg.offset;
+                this.callback(msg.content, msg);
+                if ((0, _Protocol.isByeMessage)(msg.content)) {
+                    this.emit('done');
                 }
             }
         }
     }, {
         key: 'checkQueue',
         value: function checkQueue() {
-            if (this.queue.length) {
-                (0, _debug2.default)('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId);
+            var _this2 = this;
 
-                var i = void 0;
-                var length = this.queue.length;
+            if (this.queue.length) {
+                debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId);
 
                 var originalQueue = this.queue;
                 this.queue = [];
 
-                for (i = 0; i < length; i++) {
-                    var msg = originalQueue[i];
-                    this.handleMessage(msg, false);
-                }
+                originalQueue.forEach(function (msg) {
+                    return _this2.handleMessage(msg, false);
+                });
             }
         }
     }, {
@@ -4077,9 +4068,9 @@ var Subscription = function (_EventEmitter) {
                 } else if (this.options.resend_last) {
                     return this.options;
                 }
-            } else {
-                return this.options;
             }
+
+            return this.options;
         }
     }, {
         key: 'hasReceivedMessages',
@@ -4087,16 +4078,31 @@ var Subscription = function (_EventEmitter) {
             return this.lastReceivedOffset != null;
         }
     }, {
-        key: 'isSubscribed',
-        value: function isSubscribed() {
-            return this.subscribed;
+        key: 'getState',
+        value: function getState() {
+            return this.state;
+        }
+    }, {
+        key: 'setState',
+        value: function setState(state) {
+            debug('Subscription: Stream ' + this.streamId + ' state changed ' + this.state + ' => ' + state);
+            this.state = state;
+            this.emit(state);
+        }
+    }, {
+        key: 'isResending',
+        value: function isResending() {
+            return this.resending;
+        }
+    }, {
+        key: 'setResending',
+        value: function setResending(resending) {
+            debug('Subscription: Stream ' + this.streamId + ' resending: ' + resending);
+            this.resending = resending;
         }
     }]);
     return Subscription;
 }(_eventemitter2.default);
-
-exports.default = Subscription;
-module.exports = exports['default'];
 
 /***/ }),
 /* 111 */
@@ -4160,6 +4166,8 @@ var _Protocol = __webpack_require__(62);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var debug = (0, _debug2.default)('StreamrClient::Connection');
+
 var Connection = function (_EventEmitter) {
     (0, _inherits3.default)(Connection, _EventEmitter);
 
@@ -4169,7 +4177,7 @@ var Connection = function (_EventEmitter) {
         var _this = (0, _possibleConstructorReturn3.default)(this, (Connection.__proto__ || (0, _getPrototypeOf2.default)(Connection)).call(this));
 
         if (!options.url) {
-            throw 'URL is not defined!';
+            throw new Error('URL is not defined!');
         }
         _this.options = options;
         _this.connected = false;
@@ -4195,7 +4203,7 @@ var Connection = function (_EventEmitter) {
                 this.emit('connecting');
 
                 this.socket.onopen = function () {
-                    (0, _debug2.default)('Connected to ', _this2.options.url);
+                    debug('Connected to ', _this2.options.url);
                     _this2.connected = true;
                     _this2.connecting = false;
                     _this2.emit('connected');
@@ -4203,7 +4211,7 @@ var Connection = function (_EventEmitter) {
 
                 this.socket.onclose = function () {
                     if (!_this2.disconnecting) {
-                        (0, _debug2.default)('Connection lost. Attempting to reconnect');
+                        debug('Connection lost. Attempting to reconnect');
                         setTimeout(function () {
                             _this2.connect();
                         }, 2000);
@@ -4427,7 +4435,7 @@ var createStream = exports.createStream = function () {
                             break;
                         }
 
-                        throw 'Stream properties must contain a "name" field!';
+                        throw new Error('Stream properties must contain a "name" field!');
 
                     case 2:
                         _context4.next = 4;
@@ -4510,7 +4518,7 @@ var getOrCreateStream = exports.getOrCreateStream = function () {
                             break;
                         }
 
-                        throw 'Unable to find or create stream: ' + props.name;
+                        throw new Error('Unable to find or create stream: ' + props.name);
 
                     case 20:
                         return _context5.abrupt('return', new _Stream2.default(this, json));
@@ -4544,12 +4552,15 @@ var _utils = __webpack_require__(68);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function produceToStream(streamId, data) {
+function produceToStream(streamObjectOrId, data) {
     var apiKey = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.options.apiKey;
     var requestOptions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-    if (streamId instanceof _Stream2.default) {
-        streamId = streamId.id;
+    var streamId = void 0;
+    if (streamObjectOrId instanceof _Stream2.default) {
+        streamId = streamObjectOrId.id;
+    } else {
+        streamId = streamObjectOrId;
     }
 
     // Send data to the stream
