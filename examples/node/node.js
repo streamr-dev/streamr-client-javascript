@@ -16,7 +16,7 @@ const subscription = client.subscribe(
     },
     function(message) {
         // Handle the messages in this stream
-        console.log(message)
+        console.log(JSON.stringify(message))
     }
 )
 

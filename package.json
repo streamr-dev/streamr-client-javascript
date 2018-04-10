@@ -7,6 +7,7 @@
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
   "main": "dist/streamr-client.node.js",
+  "module": "src/index.js",
   "directories": {
     "test": "test"
   },
