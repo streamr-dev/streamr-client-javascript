@@ -1,5 +1,5 @@
-import * as StreamEndpoints from './StreamEndpoints'
+const StreamEndpoints = require('./StreamEndpoints')
 
 const endpoints = Object.assign({}, StreamEndpoints)
 
-export default endpoints
+module.exports = endpoints

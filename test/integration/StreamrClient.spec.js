@@ -1,7 +1,6 @@
-import assert from 'assert'
+const assert = require('assert')
 
-// Run against transpiled file
-import StreamrClient from '../../dist/streamr-client.node'
+const StreamrClient = require('../../src/index')
 
 describe('StreamrClient', function () {
     this.timeout(10 * 1000)

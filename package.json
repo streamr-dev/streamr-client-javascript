@@ -6,22 +6,24 @@
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
-  "main": "dist/streamr-client.node.js",
-  "module": "src/index.js",
+  "main": "src/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "build": "webpack --env dev --target web && webpack --env dev --target node && webpack --env prod --target web && npm run test",
-    "dev": "webpack --progress --colors --watch --env dev --target node",
-    "test": "webpack --env dev --target node && mocha --require babel-core/register --colors --recursive ./test",
-    "test:watch": "webpack --env dev --target node && mocha --require babel-core/register --colors -w --recursive ./test",
+    "build": "webpack --env dev && webpack --env prod && npm run test",
+    "dev": "webpack --progress --colors --watch --env dev",
+    "test": "npm run test-unit && npm run test-integration",
+    "test:watch": "mocha --require babel-core/register --colors -w --recursive ./test",
     "test-unit": "mocha --require babel-core/register --colors --recursive ./test/unit",
-    "test-integration": "webpack --env dev --target node && mocha --require babel-core/register --colors --recursive ./test/integration"
+    "test-integration": "mocha --require babel-core/register --colors --recursive ./test/integration"
   },
   "browser": {
     "ws": "./src/shim/ws.js",
     "node-fetch": "./src/shim/node-fetch.js"
+  },
+  "engines": {
+    "node": ">= 8"
   },
   "author": "Streamr",
   "license": "AGPL-3.0-or-later",

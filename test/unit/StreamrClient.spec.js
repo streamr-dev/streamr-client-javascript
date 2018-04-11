@@ -1,9 +1,9 @@
-import EventEmitter from 'eventemitter3'
-import assert from 'assert'
-import mockery from 'mockery'
-import sinon from 'sinon'
-import debug from 'debug'
-import { State } from '../../src/Subscription'
+const EventEmitter = require('eventemitter3')
+const assert = require('assert')
+const mockery = require('mockery')
+const sinon = require('sinon')
+const debug = require('debug')
+const Subscription = require('../../src/Subscription')
 
 const mockDebug = debug('mock')
 
@@ -262,7 +262,7 @@ describe('StreamrClient', () => {
 
             // when subscribed, a bye message is received, leading to an unsubscribe
             client.connection.on('subscribed', (response) => {
-                if (sub1.getState() === State.subscribed && sub2.getState() === State.subscribed) {
+                if (sub1.getState() === Subscription.State.subscribed && sub2.getState() === Subscription.State.subscribed) {
                     client.unsubscribe(sub1)
                     client.connection.once('unsubscribed', (response) => {
                         socket.disconnect()
@@ -392,7 +392,7 @@ describe('StreamrClient', () => {
             client.connect()
 
             client.connection.once('subscribed', () => {
-                assert.equal(subscription.getState(), State.subscribed)
+                assert.equal(subscription.getState(), Subscription.State.subscribed)
                 done()
             })
         })
@@ -455,7 +455,7 @@ describe('StreamrClient', () => {
             }, (message) => {})
             socket.resendHandler = function (request) {
                 assert.equal(request.resend_all, true)
-                assert.equal(sub.getState() === State.subscribed, true)
+                assert.equal(sub.getState() === Subscription.State.subscribed, true)
                 socket.done = true
                 done()
             }
@@ -825,13 +825,13 @@ describe('StreamrClient', () => {
 
             client.connection.once('subscribed', () => {
                 client.unsubscribe(sub)
-                assert.equal(sub.getState(), State.unsubscribing)
+                assert.equal(sub.getState(), Subscription.State.unsubscribing)
                 client.unsubscribe(sub)
             })
 
             client.connection.on('unsubscribed', () => {
                 assert.equal(count, 1)
-                assert.notEqual(sub.getState(), State.unsubscribing)
+                assert.notEqual(sub.getState(), Subscription.State.unsubscribing)
                 done()
             })
         })
@@ -900,15 +900,15 @@ describe('StreamrClient', () => {
             client.connect()
 
             client.connection.on('subscribed', (response) => {
-                if (sub1.getState() === State.subscribed && sub2.getState() === State.subscribed) {
+                if (sub1.getState() === Subscription.State.subscribed && sub2.getState() === Subscription.State.subscribed) {
                     client.unsubscribe(sub1)
                     client.unsubscribe(sub2)
                 }
             })
 
             client.connection.on('disconnected', () => {
-                assert.equal(sub1.getState(), State.unsubscribed)
-                assert.equal(sub2.getState(), State.unsubscribed)
+                assert.equal(sub1.getState(), Subscription.State.unsubscribed)
+                assert.equal(sub2.getState(), Subscription.State.unsubscribed)
                 done()
             })
         })
@@ -960,7 +960,7 @@ describe('StreamrClient', () => {
             })
 
             client.connection.on('subscribed', (response) => {
-                if (sub1.getState() === State.subscribed && sub2.getState() === State.subscribed) {
+                if (sub1.getState() === Subscription.State.subscribed && sub2.getState() === Subscription.State.subscribed) {
                     client.unsubscribe(sub1)
                     client.unsubscribe(sub2)
                     done()
@@ -1087,15 +1087,15 @@ describe('StreamrClient', () => {
             client.connection.once('disconnected', () => {
                 sub2 = client.subscribe('stream2', 'auth', (message) => {})
 
-                assert(sub1.getState() !== State.subscribed)
-                assert(sub2.getState() !== State.subscribed)
+                assert(sub1.getState() !== Subscription.State.subscribed)
+                assert(sub2.getState() !== Subscription.State.subscribed)
 
                 assert.equal(client.getSubscriptions('stream1').length, 1)
                 assert.equal(client.getSubscriptions('stream2').length, 1)
 
                 client.connect()
                 client.connection.on('subscribed', (response) => {
-                    if (sub1.getState() === State.subscribed && sub2.getState() === State.subscribed) {
+                    if (sub1.getState() === Subscription.State.subscribed && sub2.getState() === Subscription.State.subscribed) {
                         socket.done = true
                         done()
                     }
@@ -1743,7 +1743,7 @@ describe('StreamrClient', () => {
             client.connect()
 
             client.connection.on('subscribed', () => {
-                if (sub1.getState() === State.subscribed && sub2.getState() === State.subscribed) {
+                if (sub1.getState() === Subscription.State.subscribed && sub2.getState() === Subscription.State.subscribed) {
                     client.unsubscribe(sub1)
                     client.unsubscribe(sub2)
                 }

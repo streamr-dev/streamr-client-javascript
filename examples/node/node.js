@@ -1,8 +1,7 @@
 // To enable debug logging:
 // DEBUG=StreamrClient node examples/node.js
 
-// In your own node app, just require('streamr-client'). The require is different here because we require a local file
-const StreamrClient = require('../dist/streamr-client.node')
+const StreamrClient = require('streamr-client')
 
 // Create the client with default options
 const client = new StreamrClient()

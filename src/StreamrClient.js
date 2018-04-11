@@ -1,11 +1,10 @@
-import EventEmitter from 'eventemitter3'
-import debugFactory from 'debug'
-import { Subscription, State } from './Subscription'
-import Connection from './Connection'
+const EventEmitter = require('eventemitter3')
+const debug = require('debug')('StreamrClient')
 
-const debug = debugFactory('StreamrClient')
+const Subscription = require('./Subscription')
+const Connection = require('./Connection')
 
-export default class StreamrClient extends EventEmitter {
+module.exports = class StreamrClient extends EventEmitter {
     constructor(options) {
         super()
 
@@ -118,13 +117,13 @@ export default class StreamrClient extends EventEmitter {
 
         // If this is the last subscription for this stream, unsubscribe the client too
         if (this.subsByStream[sub.streamId] !== undefined && this.subsByStream[sub.streamId].length === 1
-            && this.connected && !this.disconnecting && sub.getState() === State.subscribed) {
-            sub.setState(State.unsubscribing)
+            && this.connected && !this.disconnecting && sub.getState() === Subscription.State.subscribed) {
+            sub.setState(Subscription.State.unsubscribing)
             this._requestUnsubscribe(sub.streamId)
-        } else if (sub.getState() !== State.unsubscribing) {
+        } else if (sub.getState() !== Subscription.State.unsubscribing) {
             // Else the sub can be cleaned off immediately
             this._removeSubscription(sub)
-            sub.setState(State.unsubscribed)
+            sub.setState(Subscription.State.unsubscribed)
             this._checkAutoDisconnect()
         }
     }
@@ -203,7 +202,7 @@ export default class StreamrClient extends EventEmitter {
                 // Report subscribed to all non-resending Subscriptions for this stream
                 subs.filter((sub) => !sub.resending)
                     .forEach((sub) => {
-                        sub.setState(State.subscribed)
+                        sub.setState(Subscription.State.subscribed)
                     })
             }
         })
@@ -216,7 +215,7 @@ export default class StreamrClient extends EventEmitter {
                 const l = this.subsByStream[response.stream].slice()
                 l.forEach((sub) => {
                     this._removeSubscription(sub)
-                    sub.setState(State.unsubscribed)
+                    sub.setState(Subscription.State.unsubscribed)
                 })
             }
 
@@ -260,7 +259,7 @@ export default class StreamrClient extends EventEmitter {
                 .forEach((streamId) => {
                     const subs = this.subsByStream[streamId]
                     subs.forEach((sub) => {
-                        if (sub.getState() !== State.subscribed) {
+                        if (sub.getState() !== Subscription.State.subscribed) {
                             this._resendAndSubscribe(sub)
                         }
                     })
@@ -279,7 +278,7 @@ export default class StreamrClient extends EventEmitter {
                     const subs = this.subsByStream[streamId]
                     delete subs.subscribing
                     subs.forEach((sub) => {
-                        sub.setState(State.unsubscribed)
+                        sub.setState(Subscription.State.unsubscribed)
                     })
                 })
         })
@@ -312,8 +311,8 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _resendAndSubscribe(sub) {
-        if (sub.getState() !== State.subscribing && !sub.resending) {
-            sub.setState(State.subscribing)
+        if (sub.getState() !== Subscription.State.subscribing && !sub.resending) {
+            sub.setState(Subscription.State.subscribing)
             this._requestSubscribe(sub)
 
             // Once subscribed, ask for a resend
@@ -328,7 +327,7 @@ export default class StreamrClient extends EventEmitter {
     _requestSubscribe(sub) {
         const subs = this.subsByStream[sub.streamId]
 
-        const subscribedSubs = subs.filter((it) => it.getState() === State.subscribed)
+        const subscribedSubs = subs.filter((it) => it.getState() === Subscription.State.subscribed)
 
         // If this is the first subscription for this stream, send a subscription request to the server
         if (!subs.subscribing && subscribedSubs.length === 0) {
@@ -343,7 +342,7 @@ export default class StreamrClient extends EventEmitter {
             debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
 
             setTimeout(() => {
-                sub.setState(State.subscribed)
+                sub.setState(Subscription.State.subscribed)
             })
         }
     }

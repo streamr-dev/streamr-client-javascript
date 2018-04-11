@@ -1,8 +1,7 @@
-import EventEmitter from 'eventemitter3'
-import debugFactory from 'debug'
-import { isByeMessage } from './Protocol'
+const EventEmitter = require('eventemitter3')
+const debug = require('debug')('StreamrClient::Subscription')
 
-const debug = debugFactory('StreamrClient::Subscription')
+const protocol = require('./Protocol')
 
 let subId = 0
 function generateSubscriptionId() {
@@ -11,14 +10,16 @@ function generateSubscriptionId() {
     return id.toString()
 }
 
-export const State = {
-    unsubscribed: 'unsubscribed',
-    subscribing: 'subscribing',
-    subscribed: 'subscribed',
-    unsubscribing: 'unsubscribing',
-}
+module.exports = class Subscription extends EventEmitter {
+    static get State() {
+        return {
+            unsubscribed: 'unsubscribed',
+            subscribing: 'subscribing',
+            subscribed: 'subscribed',
+            unsubscribing: 'unsubscribing',
+        }
+    }
 
-export class Subscription extends EventEmitter {
     constructor(streamId, streamPartition, apiKey, callback, options) {
         super()
 
@@ -36,7 +37,7 @@ export class Subscription extends EventEmitter {
         this.callback = callback
         this.options = options || {}
         this.queue = []
-        this.state = State.unsubscribed
+        this.state = Subscription.State.unsubscribed
         this.resending = false
         this.lastReceivedOffset = null
 
@@ -91,7 +92,7 @@ export class Subscription extends EventEmitter {
         })
 
         this.on('disconnected', () => {
-            this.setState(State.unsubscribed)
+            this.setState(Subscription.State.unsubscribed)
             this.setResending(false)
         })
     }
@@ -130,7 +131,7 @@ export class Subscription extends EventEmitter {
             // Normal case where prevOffset == null || lastReceivedOffset == null || prevOffset === lastReceivedOffset
             this.lastReceivedOffset = msg.offset
             this.callback(msg.content, msg)
-            if (isByeMessage(msg.content)) {
+            if (protocol.isByeMessage(msg.content)) {
                 this.emit('done')
             }
         }

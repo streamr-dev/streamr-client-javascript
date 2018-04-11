@@ -1,13 +1,13 @@
-import { authFetch } from '../utils'
+const utils = require('../utils')
 
-export default class Stream {
+module.exports = class Stream {
     constructor(client, props) {
         this._client = client
         Object.assign(this, props)
     }
 
     async update(apiKey = this._client.options.apiKey) {
-        const json = await authFetch(
+        const json = await utils.authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
             apiKey,
             {
@@ -19,7 +19,7 @@ export default class Stream {
     }
 
     delete(apiKey = this._client.options.apiKey) {
-        return authFetch(
+        return utils.authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
             apiKey,
             {
@@ -29,11 +29,11 @@ export default class Stream {
     }
 
     getPermissions(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/permissions`, apiKey)
+        return utils.authFetch(`${this._client.options.restUrl}/streams/${this.id}/permissions`, apiKey)
     }
 
     detectFields(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
+        return utils.authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
     }
 
     produce(data, apiKey = this._client.options.apiKey, requestOptions = {}) {
