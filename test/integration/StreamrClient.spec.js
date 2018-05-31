@@ -1,6 +1,8 @@
-const assert = require('assert')
+import 'babel-polyfill' // Needed because of mocha
+import assert from 'assert'
+import fetch from 'node-fetch'
 
-const StreamrClient = require('../../src/index')
+import StreamrClient from '../../src'
 
 describe('StreamrClient', function () {
     this.timeout(10 * 1000)
@@ -22,6 +24,16 @@ describe('StreamrClient', function () {
         opts = Object.assign({}, defaultOptions, opts)
         return new StreamrClient(opts)
     }
+    
+    before(() => {
+        return fetch('http://localhost:8081')
+            .catch((e) => {
+                if (e.errno === 'ENOTFOUND') {
+                    throw new Error('Integration testing requires the api and http-api ("entire stack") to be run in the background. ' +
+                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+                }
+            })
+    })
 
     beforeEach(() => {
         client = createClient()

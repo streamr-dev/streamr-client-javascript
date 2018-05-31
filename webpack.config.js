@@ -1,34 +1,20 @@
-/* global __dirname, require, module */
+/* eslint-disable */
 
-// const webpack = require('webpack')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const path = require('path')
-const yargs = require('yargs')
 const pkg = require('./package.json')
+const merge = require('lodash').merge
 
-const { env } = yargs.argv // use --env with webpack 2
 const libraryName = pkg.name
 
-const plugins = []
-
-let outputFile = libraryName
-if (env === 'prod') {
-    plugins.push(new UglifyJsPlugin())
-    outputFile += '.min.js'
-} else {
-    outputFile += '.js'
-}
-
-const config = {
+const commonConfig = {
     entry: path.join(__dirname, 'src', 'index.js'),
     devtool: 'source-map',
     output: {
         path: path.join(__dirname, 'dist'),
-        filename: outputFile,
         library: {
             root: 'StreamrClient',
             amd: libraryName,
-            commonjs: libraryName,
         },
         libraryTarget: 'umd',
         umdNamedDefine: true,
@@ -54,7 +40,28 @@ const config = {
         modules: [path.resolve('./node_modules'), path.resolve('./src')],
         extensions: ['.json', '.js'],
     },
-    plugins,
+    plugins: [],
 }
 
-module.exports = config
+const serverConfig = merge({}, commonConfig, {
+    target: 'node',
+    output: {
+        filename: libraryName + '.js'
+    },
+})
+
+const clientConfig = merge({}, commonConfig, {
+    target: 'web',
+    output: {
+        filename: libraryName + '.web.js',
+    },
+})
+
+const clientMinifiedConfig = merge({}, clientConfig, {
+    plugins: [new UglifyJsPlugin()],
+    output: {
+        filename: libraryName + '.web.min.js',
+    },
+})
+
+module.exports = [serverConfig, clientConfig, clientMinifiedConfig]

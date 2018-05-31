@@ -1,8 +1,4 @@
 {
-  "presets": ["env"],
-  "plugins": ["babel-plugin-add-module-exports",
-    ["transform-runtime", {
-      "polyfill": false,
-      "regenerator": true
-    }]]
+  "presets": ["env", "stage-2"],
+  "plugins": ["babel-plugin-add-module-exports"]
 }

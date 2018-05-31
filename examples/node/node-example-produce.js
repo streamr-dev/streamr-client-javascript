@@ -1,7 +1,7 @@
 // To enable debug logging:
 // DEBUG=StreamrClient node examples/node.js
 
-const StreamrClient = require('streamr-client')
+import StreamrClient from 'streamr-client'
 
 const STREAM_ID = 'MY-STREAM-ID'
 const API_KEY = 'MY-API-KEY'
