@@ -1,9 +1,10 @@
-/* eslint-disable */
+/* eslint-disable prefer-template */
+/* eslint-disable prefer-destructuring */
 
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const path = require('path')
-const pkg = require('./package.json')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const merge = require('lodash').merge
+const pkg = require('./package.json')
 
 const libraryName = pkg.name
 
@@ -46,7 +47,7 @@ const commonConfig = {
 const serverConfig = merge({}, commonConfig, {
     target: 'node',
     output: {
-        filename: libraryName + '.js'
+        filename: libraryName + '.js',
     },
 })
 
