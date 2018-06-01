@@ -5,6 +5,7 @@ const path = require('path')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const merge = require('lodash').merge
 const pkg = require('./package.json')
+const nodeExternals = require('webpack-node-externals')
 
 const libraryName = pkg.name
 
@@ -46,6 +47,7 @@ const commonConfig = {
 
 const serverConfig = merge({}, commonConfig, {
     target: 'node',
+    externals: [nodeExternals()],
     output: {
         filename: libraryName + '.js',
     },
