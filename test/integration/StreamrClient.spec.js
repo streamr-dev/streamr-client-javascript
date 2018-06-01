@@ -14,26 +14,26 @@ describe('StreamrClient', function () {
     let client
     let createdStream
 
-    const defaultOptions = {
+    const createClient = (opts = {}) => new StreamrClient({
         url: `ws://${dataApi}/api/v1/ws`,
         restUrl: `http://${engineAndEditor}/api/v1`,
         apiKey: 'tester1-api-key',
-    }
-
-    function createClient(opts = {}) {
-        opts = Object.assign({}, defaultOptions, opts)
-        return new StreamrClient(opts)
-    }
-    
-    before(() => {
-        return fetch('http://localhost:8081')
-            .catch((e) => {
-                if (e.errno === 'ENOTFOUND') {
-                    throw new Error('Integration testing requires the api and http-api ("entire stack") to be run in the background. ' +
-                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-                }
-            })
+        ...opts,
     })
+
+    before(() => Promise.all([ // TODO: Figure out how to handle this when setting up a CI
+        fetch(`http://${engineAndEditor}`),
+        fetch(`http://${dataApi}`),
+    ])
+        .catch((e) => {
+            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+                throw new Error('Integration testing requires that engine-and-editor ' +
+                    'and data-api ("entire stack") are running in the background. ' +
+                    'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+            } else {
+                throw e
+            }
+        }))
 
     beforeEach(() => {
         client = createClient()
