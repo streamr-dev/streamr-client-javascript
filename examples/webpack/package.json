@@ -1,0 +1,44 @@
+{
+  "name": "streamr-client-webpack-example",
+  "version": "0.0.0",
+  "description": "Example of how streamr-client can be included in webpack projects",
+  "scripts": {
+    "build": "NODE_ENV=production webpack",
+    "dev": "webpack --progress --colors --watch"
+  },
+  "engines": {
+    "node": ">= 8"
+  },
+  "author": "Streamr",
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.2.2",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-2017": "0.0.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "chai": "^4.1.2",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-config-streamr": "^1.1.7",
+    "eslint-loader": "^1.9.0",
+    "eslint-plugin-flowtype": "^2.46.1",
+    "eslint-plugin-import": "^2.10.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.7.0",
+    "lodash": "^4.17.10",
+    "mocha": "^4.0.1",
+    "mockery": "^2.1.0",
+    "sinon": "^4.5.0",
+    "uglifyjs-webpack-plugin": "^1.2.4",
+    "webpack": "^3.10.0"
+  },
+  "dependencies": {
+    "streamr-client": "0.10.2"
+  }
+}
