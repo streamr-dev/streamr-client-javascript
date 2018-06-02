@@ -19,6 +19,8 @@
     "test-integration": "mocha ./test/integration"
   },
   "browser": {
+    "http": "./src/shim/http-https.js",
+    "https": "./src/shim/http-https.js",
     "ws": "./src/shim/ws.js",
     "node-fetch": "./src/shim/node-fetch.js"
   },

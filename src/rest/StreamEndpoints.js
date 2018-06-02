@@ -1,6 +1,6 @@
 import qs from 'querystring'
-import http from 'http'
-import https from 'https'
+import { Agent as HttpAgent } from 'http'
+import { Agent as HttpsAgent } from 'https'
 import debugFactory from 'debug'
 
 import Stream from './domain/Stream'
@@ -14,8 +14,8 @@ const agentSettings = {
 }
 
 const agentByProtocol = {
-    http: new http.Agent(agentSettings),
-    https: new https.Agent(agentSettings),
+    http: new HttpAgent(agentSettings),
+    https: new HttpsAgent(agentSettings),
 }
 
 function getKeepAliveAgentForUrl(url) {
