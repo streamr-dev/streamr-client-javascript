@@ -1,6 +1,6 @@
 import StreamrClient from 'streamr-client'
 
-function log(msg) {
+const log = (msg) => {
     const elem = document.createElement('p')
     elem.innerHTML = msg
     document.body.appendChild(elem)
@@ -8,36 +8,49 @@ function log(msg) {
 
 // Create the client with default options
 const client = new StreamrClient()
-// Subscribe to a stream
-const subscription = client.subscribe(
-    {
+
+document.getElementById('subscribe').addEventListener('click', () => {
+    // Subscribe to a stream
+    const subscription = client.subscribe({
         stream: '7wa7APtlTq6EC5iTCBy6dw',
         // Resend the last 10 messages on connect
         resend_last: 10,
-    },
-    (message) => {
+    }, (message) => {
         // Handle the messages in this stream
         log(JSON.stringify(message))
-    },
-)
+    })
 
-// Event binding examples
-client.on('connected', () => {
-    log('A connection has been established!')
+    // Event binding examples
+    client.on('connected', () => {
+        log('A connection has been established!')
+    })
+
+    subscription.on('subscribed', () => {
+        log(`Subscribed to ${subscription.streamId}`)
+    })
+
+    subscription.on('resending', () => {
+        log(`Resending from ${subscription.streamId}`)
+    })
+
+    subscription.on('resent', () => {
+        log(`Resend complete for ${subscription.streamId}`)
+    })
+
+    subscription.on('no_resend', () => {
+        log(`Nothing to resend for ${subscription.streamId}`)
+    })
 })
 
-subscription.on('subscribed', () => {
-    log(`Subscribed to ${subscription.streamId}`)
-})
+document.getElementById('produce').addEventListener('click', () => {
+    // Here is the event we'll be sending
+    const msg = {
+        hello: 'world',
+        random: Math.random(),
+    }
 
-subscription.on('resending', () => {
-    log(`Resending from ${subscription.streamId}`)
-})
-
-subscription.on('resent', () => {
-    log(`Resend complete for ${subscription.streamId}`)
-})
-
-subscription.on('no_resend', () => {
-    log(`Nothing to resend for ${subscription.streamId}`)
+    // Produce the event to the Stream
+    client.produceToStream('MY-STREAM-ID', msg, 'MY-API-KEY')
+        .then(() => log('Sent successfully: ', msg))
+        .catch((err) => log(err))
 })
