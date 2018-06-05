@@ -170,7 +170,7 @@ The client and the subscriptions can fire events as detailed below. You can bind
     // So does the Subscription object
 	const sub = client.subscribe(...)
 	sub.on('subscribed', () => {
-	    console.log('Subscribed to '+sub.streamId)
+	    console.log(`Subscribed to ${sub.streamId}`)
 	})
 ```
 
