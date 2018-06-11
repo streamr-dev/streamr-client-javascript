@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import axios from 'axios'
 import debugFactory from 'debug'
 
 const debug = debugFactory('StreamrClient:utils')
@@ -8,24 +8,18 @@ export const authFetch = async (url, apiKey, opts = {}) => {
 
     const req = {
         ...opts,
-        headers: apiKey ? {
-            Authorization: `token ${apiKey}`,
-        } : undefined,
+        data: opts.data || opts.body, // opts.body for legacy reasons
+        headers: {
+            Authorization: apiKey ? `token ${apiKey}` : undefined,
+            ...(opts.headers || {}),
+        },
     }
 
-    const res = await fetch(url, req)
-
-    const text = await res.text()
-
-    if (res.ok && text.length) {
-        try {
-            return JSON.parse(text)
-        } catch (err) {
-            throw new Error(`Failed to parse JSON response: ${text}`)
-        }
-    } else if (res.ok) {
-        return {}
-    } else {
-        throw new Error(`Request to ${url} returned with error code ${res.status}: ${text}`)
+    try {
+        const { data } = await axios(url, req)
+        return data
+    } catch (e) {
+        // TODO: what to log here?
+        throw new Error(`${e.message} ${JSON.stringify(e.response.data)}`)
     }
 }

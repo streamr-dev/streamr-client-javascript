@@ -1,39 +1,21 @@
-import { authFetch } from '../utils'
+import GenericDomainObject from './GenericDomainObject'
 
-export default class Stream {
-    constructor(client, props) {
-        this._client = client
-        Object.assign(this, props)
+export default class Stream extends GenericDomainObject {
+    async update(apiKey) {
+        const newStream = await this._client.updateStream(this.id, this, apiKey)
+        this.setProps(this, newStream || {})
     }
 
-    async update(apiKey = this._client.options.apiKey) {
-        const json = await authFetch(
-            `${this._client.options.restUrl}/streams/${this.id}`,
-            apiKey,
-            {
-                method: 'PUT',
-                body: JSON.stringify(this),
-            },
-        )
-        return json ? new Stream(this._client, json) : undefined
+    delete(apiKey) {
+        return this._client.deleteStream(this.id, apiKey)
     }
 
-    delete(apiKey = this._client.options.apiKey) {
-        return authFetch(
-            `${this._client.options.restUrl}/streams/${this.id}`,
-            apiKey,
-            {
-                method: 'DELETE',
-            },
-        )
+    getPermissions(apiKey) {
+        return this._client.getStreamPermissions(this.id, apiKey)
     }
 
-    getPermissions(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/permissions`, apiKey)
-    }
-
-    detectFields(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
+    detectFields(apiKey) {
+        return this._client.detectStreamFields(this.id, apiKey)
     }
 
     produce(data, apiKey = this._client.options.apiKey, requestOptions = {}, keepAlive = true) {

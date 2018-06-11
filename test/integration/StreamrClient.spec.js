@@ -1,6 +1,6 @@
 import 'babel-polyfill' // Needed because of mocha
 import assert from 'assert'
-import fetch from 'node-fetch'
+import axios from 'axios'
 
 import StreamrClient from '../../src'
 
@@ -22,16 +22,14 @@ describe('StreamrClient', function () {
     })
 
     before(() => Promise.all([ // TODO: Figure out how to handle this when setting up a CI
-        fetch(`http://${engineAndEditor}`),
-        fetch(`http://${dataApi}`),
+        axios.get(`http://${engineAndEditor}`),
+        axios.get(`http://${dataApi}`),
     ])
         .catch((e) => {
-            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+            if (e.code === 'ENOTFOUND' || e.code === 'ECONNREFUSED') {
                 throw new Error('Integration testing requires that engine-and-editor ' +
                     'and data-api ("entire stack") are running in the background. ' +
                     'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-            } else {
-                throw e
             }
         }))
 

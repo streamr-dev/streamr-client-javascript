@@ -6,16 +6,19 @@ const StreamrClient = require('streamr-client')
 const STREAM_ID = 'MY-STREAM-ID'
 const API_KEY = 'MY-API-KEY'
 
+if (STREAM_ID === 'MY-STREAM-ID' || API_KEY === 'MY-API-KEY') {
+    throw new Error('Replace MY-STREAM-ID and MY-API-KEY with your Stream ID and API key!')
+}
+
 // Create the client and give the API key to use by default
 const client = new StreamrClient({
-    restUrl: 'http://localhost:8890/api/v1',
-    apiKey: API_KEY
+    apiKey: API_KEY,
 })
 
 // Here is the event we'll be sending
 const msg = {
     hello: 'world',
-    random: Math.random()
+    random: Math.random(),
 }
 
 // Produce the event to the Stream
