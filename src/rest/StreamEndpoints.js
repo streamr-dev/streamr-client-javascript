@@ -1,5 +1,7 @@
 import qs from 'querystring'
 import debugFactory from 'debug'
+import http from 'http'
+import https from 'https'
 import { authFetch } from './utils'
 
 import Stream from './domain/Stream'
@@ -93,7 +95,7 @@ export function detectStreamFields(streamId, apiKey = this.options.apiKey) {
     return authFetch(`${this.options.restUrl}/streams/${streamId}/detectFields`, apiKey)
 }
 
-export function produceToStream(streamOrId, data, apiKey = this.options.apiKey, requestOptions = {}) {
+export function produceToStream(streamOrId, data, apiKey = this.options.apiKey, requestOptions = {}, keepAlive = true) {
     let streamId
     if (streamOrId instanceof String || typeof streamOrId === 'string') {
         streamId = streamOrId
@@ -106,6 +108,12 @@ export function produceToStream(streamOrId, data, apiKey = this.options.apiKey, 
         `${this.options.restUrl}/streams/${streamId}/data`,
         apiKey,
         {
+            httpAgent: http.Agent({
+                keepAlive,
+            }),
+            httpsAgent: https.Agent({
+                keepAlive,
+            }),
             ...requestOptions,
             method: 'POST',
             data,
