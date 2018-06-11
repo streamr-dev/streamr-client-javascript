@@ -12,15 +12,8 @@ const debug = debugFactory('StreamrClient')
 // In the below functions, 'this' is intended to be the StreamrClient
 export async function getStream(streamId, apiKey = this.options.apiKey) {
     const url = `${this.options.restUrl}/streams/${streamId}`
-    try {
-        const json = await authFetch(url, apiKey)
-        return new Stream(this, json)
-    } catch (e) {
-        if (e.response.status === 404) {
-            return undefined
-        }
-        throw e
-    }
+    const json = await authFetch(url, apiKey)
+    return json ? new Stream(this, json) : undefined
 }
 
 export async function listStreams(query = {}, apiKey = this.options.apiKey) {
@@ -54,14 +47,20 @@ export async function createStream(props, apiKey = this.options.apiKey) {
 }
 
 export async function getOrCreateStream(props, apiKey = this.options.apiKey) {
-    let stream = await (props.id ? this.getStream(props.id, apiKey) : this.getStreamByName(props.name, apiKey))
+    let stream
+    // Try looking up the stream by id or name, whichever is defined
+    if (props.id) {
+        stream = await this.getStream(props.id, apiKey)
+    } else if (props.name) {
+        stream = await this.getStreamByName(props.name, apiKey)
+    }
 
     // If not found, try creating the stream
     if (!stream) {
         stream = await this.createStream(props, apiKey)
+        debug('Created stream: %s (%s)', props.name, stream && stream.id)
     }
 
-    debug('Created stream: %s (%s)', props.name, stream.id)
     return stream
 }
 
