@@ -19,6 +19,8 @@ export const authFetch = async (url, apiKey, opts = {}) => {
         const { data } = await axios(url, req)
         return data
     } catch (e) {
-        throw new Error(`Request to ${url} failed with http status code ${e.response.status}: ${JSON.stringify(e.response.data)}`)
+        const status = (e.response && e.response.status) || 'unknown'
+        const dataMessage = (e.response && e.response.data && `: ${JSON.stringify(e.response.data)}`) || ''
+        throw new Error(`Request to ${url} failed with http status code ${status}${dataMessage}`)
     }
 }

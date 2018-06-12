@@ -1,13 +1,13 @@
 export default class GenericDomainObject {
-    constructor(client, props = {}) {
+    constructor(client, state = {}) {
         if (!client) {
             throw new Error('A client must be given')
         }
         this._client = client
-        Object.assign(this, props)
+        Object.assign(this, state)
     }
 
-    setProps(props = {}) {
-        Object.assign(this, props)
+    setState(state = {}) {
+        Object.assign(this, state)
     }
 }

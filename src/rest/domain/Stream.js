@@ -3,7 +3,7 @@ import GenericDomainObject from './GenericDomainObject'
 export default class Stream extends GenericDomainObject {
     async update(apiKey) {
         const newStream = await this._client.updateStream(this.id, this, apiKey)
-        this.setProps(this, newStream || {})
+        this.setState(this, newStream || {})
     }
 
     delete(apiKey) {

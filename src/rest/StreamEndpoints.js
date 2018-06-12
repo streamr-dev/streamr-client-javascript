@@ -1,7 +1,7 @@
 import qs from 'querystring'
-import debugFactory from 'debug'
 import http from 'http'
 import https from 'https'
+import debugFactory from 'debug'
 import { authFetch } from './utils'
 
 import Stream from './domain/Stream'
@@ -23,57 +23,57 @@ export async function listStreams(query = {}, apiKey = this.options.apiKey) {
 }
 
 export async function getStreamByName(name, apiKey = this.options.apiKey) {
-    const json = await this.listStreams({
+    const streamJson = await this.listStreams({
         name,
         public: false,
     }, apiKey)
-    return json[0] ? new Stream(this, json[0]) : undefined
+    return streamJson[0] ? new Stream(this, streamJson[0]) : undefined
 }
 
-export async function createStream(props, apiKey = this.options.apiKey) {
-    if (!props || !props.name) {
+export async function createStream(streamData, apiKey = this.options.apiKey) {
+    if (!streamData || !streamData.name) {
         throw new Error('Stream properties must contain a "name" field!')
     }
 
-    const json = await authFetch(
+    const streamJson = await authFetch(
         `${this.options.restUrl}/streams`,
         apiKey,
         {
             method: 'POST',
-            data: props,
+            data: streamData,
         },
     )
-    return json ? new Stream(this, json) : undefined
+    return streamJson ? new Stream(this, streamJson) : undefined
 }
 
-export async function getOrCreateStream(props, apiKey = this.options.apiKey) {
+export async function getOrCreateStream(streamData, apiKey = this.options.apiKey) {
     let stream
     // Try looking up the stream by id or name, whichever is defined
-    if (props.id) {
-        stream = await this.getStream(props.id, apiKey)
-    } else if (props.name) {
-        stream = await this.getStreamByName(props.name, apiKey)
+    if (streamData.id) {
+        stream = await this.getStream(streamData.id, apiKey)
+    } else if (streamData.name) {
+        stream = await this.getStreamByName(streamData.name, apiKey)
     }
 
     // If not found, try creating the stream
     if (!stream) {
-        stream = await this.createStream(props, apiKey)
-        debug('Created stream: %s (%s)', props.name, stream && stream.id)
+        stream = await this.createStream(streamData, apiKey)
+        debug('Created stream: %s (%s)', streamData.name, stream && stream.id)
     }
 
     return stream
 }
 
-export async function updateStream(streamId, props, apiKey = this.options.apiKey) {
-    const json = await authFetch(
+export async function updateStream(streamId, streamData, apiKey = this.options.apiKey) {
+    const newStreamJson = await authFetch(
         `${this.options.restUrl}/streams/${streamId}`,
         apiKey,
         {
             method: 'PUT',
-            data: props,
+            data: streamData,
         },
     )
-    return json ? new Stream(this, json) : undefined
+    return newStreamJson ? new Stream(this, newStreamJson) : undefined
 }
 
 export function deleteStream(streamId, apiKey = this.options.apiKey) {
