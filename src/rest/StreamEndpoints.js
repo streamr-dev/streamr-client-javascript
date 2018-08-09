@@ -11,6 +11,7 @@ const debug = debugFactory('StreamrClient')
 const agentSettings = {
     keepAlive: true,
     keepAliveMsecs: 5000,
+    maxSockets: 1,
 }
 
 const agentByProtocol = {
