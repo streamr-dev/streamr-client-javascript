@@ -7,6 +7,7 @@ import Subscription from './Subscription'
 import Stream from './rest/domain/Stream'
 import Connection from './Connection'
 import InvalidJsonError from './errors/InvalidJsonError'
+import FailedToProduceError from './errors/FailedToProduceError'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options) {
@@ -87,7 +88,11 @@ export default class StreamrClient extends EventEmitter {
             this.publishQueue.push([streamId, data, apiKey])
             this.connect()
         } else {
-            throw new Error('Can\'t publish: Client is not connected, and autoConnect is false!')
+            throw new FailedToProduceError(
+                streamId,
+                data,
+                'Wait for the "connected" event before calling produceToStream, or set autoConnect to true!',
+            )
         }
     }
 
