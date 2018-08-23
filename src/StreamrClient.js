@@ -345,7 +345,9 @@ export default class StreamrClient extends EventEmitter {
                     debug('WARN: InvalidJsonError received for stream with no subscriptions: %s', err.streamId)
                 }
             } else {
-                throw err
+                const errorObject = err instanceof Error ? err : new Error(err)
+                this.emit('error', errorObject)
+                console.error(errorObject.message)
             }
         })
 

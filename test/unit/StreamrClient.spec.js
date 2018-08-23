@@ -1700,7 +1700,9 @@ describe('StreamrClient', () => {
 
         it('should return and resolve a promise', () => {
             client.options.autoConnect = true
-            return client.produceToStream('stream1', pubMsg)
+            const promise = client.produceToStream('stream1', pubMsg)
+            assert(promise instanceof Promise)
+            return promise
         })
 
         it('should reject the promise if autoConnect is false and the client is not connected', (done) => {
@@ -1711,7 +1713,6 @@ describe('StreamrClient', () => {
                 done()
             })
         })
-
     })
 
     describe('Subscription', () => {
@@ -1799,6 +1800,17 @@ describe('StreamrClient', () => {
             client.connection.once('connected', () => {
                 client.disconnect()
             })
+        })
+
+        it('must emit an error event when the server sends an error message', (done) => {
+            client.on('connected', () => {
+                socket.fakeReceive([0, 7, '', 'Authentication failed.'])
+            })
+            client.on('error', (err) => {
+                assert(err instanceof Error)
+                done()
+            })
+            client.connect()
         })
     })
 })
