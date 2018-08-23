@@ -4,6 +4,7 @@ import debugFactory from 'debug'
 const debug = debugFactory('StreamrClient')
 
 import Subscription from './Subscription'
+import Stream from './rest/domain/Stream'
 import Connection from './Connection'
 import InvalidJsonError from './errors/InvalidJsonError'
 
@@ -24,6 +25,7 @@ export default class StreamrClient extends EventEmitter {
         }
         this.subsByStream = {}
         this.subById = {}
+        this.publishQueue = []
 
         this.connection = null
         this.connected = false
@@ -60,6 +62,33 @@ export default class StreamrClient extends EventEmitter {
 
     getSubscriptions(streamId) {
         return this.subsByStream[streamId] || []
+    }
+
+    async produceToStream(streamObjectOrId, data, apiKey = this.options.apiKey) {
+        // Validate streamObjectOrId
+        let streamId
+        if (streamObjectOrId instanceof Stream) {
+            streamId = streamObjectOrId.id
+        } else if (typeof streamObjectOrId === 'string') {
+            streamId = streamObjectOrId
+        } else {
+            throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
+        }
+
+        // Validate data
+        if (typeof data !== 'object') {
+            throw new Error(`Message data must be an object! Was: ${data}`)
+        }
+
+        // If connected, emit a publish request
+        if (this.connected) {
+            this._requestPublish(streamId, data, apiKey)
+        } else if (this.options.autoConnect) {
+            this.publishQueue.push([streamId, data, apiKey])
+            this.connect()
+        } else {
+            throw new Error('Can\'t publish: Client is not connected, and autoConnect is false!')
+        }
     }
 
     subscribe(optionsOrStreamId, callback, legacyOptions) {
@@ -261,6 +290,7 @@ export default class StreamrClient extends EventEmitter {
             this.disconnecting = false
             this.emit('connected')
 
+            // Check pending subscriptions
             Object.keys(this.subsByStream)
                 .forEach((streamId) => {
                     const subs = this.subsByStream[streamId]
@@ -270,6 +300,13 @@ export default class StreamrClient extends EventEmitter {
                         }
                     })
                 })
+
+            // Check pending publish requests
+            const publishQueueCopy = this.publishQueue.slice(0)
+            this.publishQueue = []
+            publishQueueCopy.forEach((args) => {
+                this.produceToStream(...args)
+            })
         })
 
         this.connection.on('disconnected', () => {
@@ -396,6 +433,18 @@ export default class StreamrClient extends EventEmitter {
         const request = Object.assign({}, options, resendOptions, {
             type: 'resend', stream: sub.streamId, partition: sub.streamPartition, authKey: sub.apiKey, sub: sub.id,
         })
+        debug('_requestResend: %o', request)
+        this.connection.send(request)
+    }
+
+    _requestPublish(streamId, data, apiKey) {
+        const request = {
+            type: 'publish',
+            stream: streamId,
+            authKey: apiKey,
+            msg: JSON.stringify(data),
+        }
+
         debug('_requestResend: %o', request)
         this.connection.send(request)
     }
