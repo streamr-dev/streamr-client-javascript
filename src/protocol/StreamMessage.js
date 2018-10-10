@@ -1,6 +1,8 @@
 import InvalidJsonError from '../errors/InvalidJsonError'
 import UnsupportedVersionError from '../errors/UnsupportedVersionError'
 
+const BYE_KEY = '_bye'
+
 class StreamMessage {
     constructor(streamId, streamPartition, timestamp, ttl, offset, previousOffset, contentType, content) {
         this.streamId = streamId
@@ -16,10 +18,11 @@ class StreamMessage {
     getParsedContent() {
         if (this.parsedContent !== undefined) {
             return this.parsedContent
-        } else if (this.contentType === StreamMessage.CONTENT_TYPES.JSON) {
+        } else if (this.contentType === StreamMessage.CONTENT_TYPES.JSON && typeof this.content === 'object') {
+            this.parsedContent = this.content
+        } else if (this.contentType === StreamMessage.CONTENT_TYPES.JSON && typeof this.content === 'string') {
             try {
                 this.parsedContent = JSON.parse(this.content)
-                return this.parsedContent
             } catch (err) {
                 throw new InvalidJsonError(
                     this.streamId,
@@ -31,6 +34,8 @@ class StreamMessage {
         } else {
             throw new Error(`Unsupported content type: ${this.contentType}`)
         }
+
+        return this.parsedContent
     }
 
     getSerializedContent() {
@@ -65,24 +70,28 @@ class StreamMessage {
     serialize(version = 28) {
         return JSON.stringify(this.toObject(version))
     }
-}
 
-/**
- * Version 28: [version, streamId, streamPartition, timestamp, ttl, offset, previousOffset, contentType, content]
- */
-StreamMessage.deserialize = (stringOrArray, parseContent = true) => {
-    const message = (typeof stringOrArray === 'string' ? JSON.parse(stringOrArray) : stringOrArray)
+    static deserialize(stringOrArray, parseContent = true) {
+        const message = (typeof stringOrArray === 'string' ? JSON.parse(stringOrArray) : stringOrArray)
 
-    if (message[0] === 28) {
-        const result = new StreamMessage(...message.slice(1))
+        /**
+         * Version 28: [version, streamId, streamPartition, timestamp, ttl, offset, previousOffset, contentType, content]
+         */
+        if (message[0] === 28) {
+            const result = new this.prototype.constructor(...message.slice(1))
 
-        // Ensure that the content parses
-        if (parseContent) {
-            result.getParsedContent()
+            // Ensure that the content parses
+            if (parseContent) {
+                result.getParsedContent()
+            }
+            return result
         }
-        return result
+        throw new UnsupportedVersionError(message[0], 'Supported versions: [28]')
     }
-    throw new UnsupportedVersionError(message[0], 'Supported versions: [28]')
+
+    isByeMessage() {
+        return !!this.getParsedContent()[BYE_KEY]
+    }
 }
 
 StreamMessage.CONTENT_TYPES = {

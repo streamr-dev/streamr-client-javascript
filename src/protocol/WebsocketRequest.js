@@ -16,6 +16,10 @@ class WebsocketRequest {
     serialize() {
         return JSON.stringify(this.toObject())
     }
+
+    static deserialize(stringOrObject) {
+        return (typeof stringOrObject === 'string' ? JSON.parse(stringOrObject) : stringOrObject)
+    }
 }
 
 module.exports = WebsocketRequest

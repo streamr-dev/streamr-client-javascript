@@ -1,7 +1,13 @@
 import assert from 'assert'
 import MessageFromServer from '../../../src/protocol/MessageFromServer'
 import StreamMessage from '../../../src/protocol/StreamMessage'
-import StreamAndPartition from '../../../src/protocol/StreamAndPartition'
+import BroadcastMessage from '../../../src/protocol/BroadcastMessage'
+import UnicastMessage from '../../../src/protocol/UnicastMessage'
+import SubscribeResponse from '../../../src/protocol/SubscribeResponse'
+import UnsubscribeResponse from '../../../src/protocol/UnsubscribeResponse'
+import ResendResponseResending from '../../../src/protocol/ResendResponseResending'
+import ResendResponseResent from '../../../src/protocol/ResendResponseResent'
+import ResendResponseNoResend from '../../../src/protocol/ResendResponseNoResend'
 import ErrorResponse from '../../../src/protocol/ErrorResponse'
 
 describe('MessageFromServer', () => {
@@ -14,7 +20,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamMessage)
+                assert(result.payload instanceof BroadcastMessage)
             })
 
             it('correctly parses unicast messages', () => {
@@ -24,7 +30,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamMessage)
+                assert(result.payload instanceof UnicastMessage)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -37,7 +43,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamAndPartition)
+                assert(result.payload instanceof SubscribeResponse)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -50,7 +56,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamAndPartition)
+                assert(result.payload instanceof UnsubscribeResponse)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -63,7 +69,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamAndPartition)
+                assert(result.payload instanceof ResendResponseResending)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -76,7 +82,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamAndPartition)
+                assert(result.payload instanceof ResendResponseResent)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -89,7 +95,7 @@ describe('MessageFromServer', () => {
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
 
                 assert(result instanceof MessageFromServer)
-                assert(result.payload instanceof StreamAndPartition)
+                assert(result.payload instanceof ResendResponseNoResend)
                 assert.equal(result.subId, 'subId')
             })
 
@@ -111,8 +117,7 @@ describe('MessageFromServer', () => {
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.BROADCAST,
-                    StreamMessage.deserialize(msg[3]),
+                    BroadcastMessage.deserialize(msg[3]),
                 ).serialize()
 
                 assert(typeof serialized === 'string')
@@ -124,8 +129,7 @@ describe('MessageFromServer', () => {
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.UNICAST,
-                    StreamMessage.deserialize(msg[3]),
+                    UnicastMessage.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -140,8 +144,7 @@ describe('MessageFromServer', () => {
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.SUBSCRIBED,
-                    StreamAndPartition.deserialize(msg[3]),
+                    SubscribeResponse.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -156,8 +159,7 @@ describe('MessageFromServer', () => {
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.UNSUBSCRIBED,
-                    StreamAndPartition.deserialize(msg[3]),
+                    UnsubscribeResponse.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -172,8 +174,7 @@ describe('MessageFromServer', () => {
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.RESENDING,
-                    StreamAndPartition.deserialize(msg[3]),
+                    ResendResponseResending.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -188,8 +189,7 @@ describe('MessageFromServer', () => {
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.RESENT,
-                    StreamAndPartition.deserialize(msg[3]),
+                    ResendResponseResent.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -204,8 +204,7 @@ describe('MessageFromServer', () => {
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.NO_RESEND,
-                    StreamAndPartition.deserialize(msg[3]),
+                    ResendResponseNoResend.deserialize(msg[3]),
                     'subId',
                 ).serialize()
 
@@ -214,12 +213,11 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes error messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.RESENT, null, {
+                const msg = [0, MessageFromServer.MESSAGE_TYPES.ERROR, null, {
                     error: 'foo',
                 }]
 
                 const serialized = new MessageFromServer(
-                    MessageFromServer.MESSAGE_TYPES.RESENT,
                     ErrorResponse.deserialize(msg[3]),
                 ).serialize()
 

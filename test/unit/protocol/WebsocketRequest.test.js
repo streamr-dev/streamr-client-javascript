@@ -16,4 +16,21 @@ describe('WebsocketRequest', () => {
             assert.deepEqual(msg, JSON.parse(serialized))
         })
     })
+
+    describe('deserialize', () => {
+        it('returns objects as they are', () => {
+            const msg = {
+                foo: 'bar',
+            }
+            const result = WebsocketRequest.deserialize(msg)
+            assert.deepEqual(msg, result)
+        })
+        it('parses strings', () => {
+            const msg = {
+                foo: 'bar',
+            }
+            const result = WebsocketRequest.deserialize(JSON.stringify(msg))
+            assert.deepEqual(msg, result)
+        })
+    })
 })

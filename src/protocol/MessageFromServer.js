@@ -1,25 +1,42 @@
 import UnsupportedVersionError from '../errors/UnsupportedVersionError'
-import StreamMessage from './StreamMessage'
-import StreamAndPartition from './StreamAndPartition'
+import BroadcastMessage from './BroadcastMessage'
+import UnicastMessage from './UnicastMessage'
+import SubscribeResponse from './SubscribeResponse'
+import UnsubscribeResponse from './UnsubscribeResponse'
+import ResendResponseResending from './ResendResponseResending'
+import ResendResponseResent from './ResendResponseResent'
+import ResendResponseNoResend from './ResendResponseNoResend'
 import ErrorResponse from './ErrorResponse'
 
-const PAYLOAD_CLASS_BY_CODE = [
-    StreamMessage, // 0: broadcast
-    StreamMessage, // 1: unicast
-    StreamAndPartition, // 2: subscribed
-    StreamAndPartition, // 3: unsubscribed
-    StreamAndPartition, // 4: resending
-    StreamAndPartition, // 5: resent
-    StreamAndPartition, // 6: no_resend
+const payloadClassByMessageType = [
+    BroadcastMessage, // 0: broadcast
+    UnicastMessage, // 1: unicast
+    SubscribeResponse, // 2: subscribed
+    UnsubscribeResponse, // 3: unsubscribed
+    ResendResponseResending, // 4: resending
+    ResendResponseResent, // 5: resent
+    ResendResponseNoResend, // 6: no_resend
     ErrorResponse, // 7: error
 ]
 
+const messageTypeByClassName = {
+    BroadcastMessage: 0,
+    UnicastMessage: 1,
+    SubscribeResponse: 2,
+    UnsubscribeResponse: 3,
+    ResendResponseResending: 4,
+    ResendResponseResent: 5,
+    ResendResponseNoResend: 6,
+    ErrorResponse: 7,
+}
+
 class MessageFromServer {
-    constructor(messageType, payload, subId) {
-        if (PAYLOAD_CLASS_BY_CODE[messageType] === undefined) {
-            throw new Error(`Invalid message type: ${JSON.stringify(messageType)}`)
+    constructor(payload, subId) {
+        this.messageType = messageTypeByClassName[payload.constructor.name]
+        if (this.messageType === undefined) {
+            throw new Error(`Unexpected payload type: ${payload.constructor.name}`)
         }
-        this.messageType = messageType
+
         this.payload = payload
         this.subId = subId
     }
@@ -34,16 +51,16 @@ class MessageFromServer {
     serialize(version = 0) {
         return JSON.stringify(this.toObject(version))
     }
-}
 
-MessageFromServer.deserialize = (stringOrArray, parsePayload = true) => {
-    const message = (typeof stringOrArray === 'string' ? JSON.parse(stringOrArray) : stringOrArray)
+    static deserialize(stringOrArray) {
+        const message = (typeof stringOrArray === 'string' ? JSON.parse(stringOrArray) : stringOrArray)
 
-    if (message[0] === 0) {
-        const payload = (parsePayload ? PAYLOAD_CLASS_BY_CODE[message[1]].deserialize(message[3]) : message[3])
-        return new MessageFromServer(message[1], payload, message[2])
+        if (message[0] === 0) {
+            const payload = payloadClassByMessageType[message[1]].deserialize(message[3])
+            return new MessageFromServer(payload, message[2])
+        }
+        throw UnsupportedVersionError(message[0], 'Supported versions: [0]')
     }
-    throw UnsupportedVersionError(message[0], 'Supported versions: [0]')
 }
 
 MessageFromServer.MESSAGE_TYPES = {

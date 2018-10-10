@@ -27,22 +27,22 @@ class PublishRequest extends WebsocketRequest {
             pkey: this.partitionKey,
         }
     }
-}
 
-PublishRequest.deserialize = (stringOrObject) => {
-    const msg = (typeof stringOrObject === 'string' ? JSON.parse(stringOrObject) : stringOrObject)
+    static deserialize(stringOrObject) {
+        const msg = super.deserialize(stringOrObject)
 
-    if (msg.type !== TYPE) {
-        throw new Error(`Invalid PublishRequest: ${JSON.stringify(stringOrObject)}`)
+        if (msg.type !== TYPE) {
+            throw new Error(`Invalid PublishRequest: ${JSON.stringify(stringOrObject)}`)
+        }
+
+        return new PublishRequest(
+            msg.stream,
+            msg.authKey,
+            msg.msg,
+            msg.ts,
+            msg.pkey,
+        )
     }
-
-    return new PublishRequest(
-        msg.stream,
-        msg.authKey,
-        msg.msg,
-        msg.ts,
-        msg.pkey,
-    )
 }
 
 module.exports = PublishRequest

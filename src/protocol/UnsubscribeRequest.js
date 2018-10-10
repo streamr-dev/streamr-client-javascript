@@ -3,7 +3,7 @@ import WebsocketRequest from './WebsocketRequest'
 const TYPE = 'unsubscribe'
 
 class UnsubscribeRequest extends WebsocketRequest {
-    constructor(streamId, streamPartition) {
+    constructor(streamId, streamPartition = 0) {
         super(TYPE, streamId)
         this.streamPartition = streamPartition
     }

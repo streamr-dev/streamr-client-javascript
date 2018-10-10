@@ -14,11 +14,13 @@ class StreamAndPartition {
     serialize() {
         return JSON.stringify(this.toObject())
     }
-}
 
-StreamAndPartition.deserialize = (stringOrObject) => {
-    const msg = (typeof stringOrObject === 'string' ? JSON.parse(stringOrObject) : stringOrObject)
-    return new StreamAndPartition(msg.stream, msg.partition)
+    static deserialize(stringOrObject) {
+        const msg = (typeof stringOrObject === 'string' ? JSON.parse(stringOrObject) : stringOrObject)
+
+        // calling this.prototype.constructor instead of new StreamAndPartition(...) works for subclasses too
+        return new this.prototype.constructor(msg.stream, msg.partition)
+    }
 }
 
 module.exports = StreamAndPartition

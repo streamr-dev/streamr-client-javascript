@@ -45,7 +45,7 @@ describe('StreamMessage', () => {
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}',
                 ).serialize(28)
 
-                assert.deepEqual(arr, serialized)
+                assert.deepEqual(serialized, JSON.stringify(arr))
             })
         })
     })
@@ -73,6 +73,23 @@ describe('StreamMessage', () => {
                     return true
                 })
             })
+        })
+    })
+
+    describe('getParsedContent()', () => {
+        it('returns an object if the constructor was given an object', () => {
+            const content = {
+                foo: 'bar',
+            }
+            const msg = new StreamMessage('streamId', 0, Date.now(), 0, 1, null, StreamMessage.CONTENT_TYPES.JSON, content)
+            assert.deepEqual(msg.getParsedContent(), content)
+        })
+        it('returns an object if the constructor was given a string', () => {
+            const content = {
+                foo: 'bar',
+            }
+            const msg = new StreamMessage('streamId', 0, Date.now(), 0, 1, null, StreamMessage.CONTENT_TYPES.JSON, JSON.stringify(content))
+            assert.deepEqual(msg.getParsedContent(), content)
         })
     })
 })

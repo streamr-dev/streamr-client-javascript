@@ -2,6 +2,8 @@ import assert from 'assert'
 import sinon from 'sinon'
 
 import Connection from '../../src/Connection'
+import MessageFromServer from '../../src/protocol/MessageFromServer'
+import UnicastMessage from '../../src/protocol/UnicastMessage'
 import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
 describe('Connection', () => {
@@ -121,14 +123,28 @@ describe('Connection', () => {
             conn.connect()
         })
 
-        it('emits error event if socket.send throws', (done) => {
-            conn.socket.send = sinon.stub().throws()
+        it('sends the serialized message over the socket', () => {
+            const request = {
+                serialize: sinon.stub().returns('foo'),
+            }
+            conn.socket.send = sinon.stub()
 
-            const msg = {}
-            conn.on('error', () => {
+            conn.send(request)
+            assert(request.serialize.calledOnce)
+            assert(conn.socket.send.calledWith('foo'))
+        })
+
+        it('emits error event if socket.send throws', (done) => {
+            const request = {
+                serialize: sinon.stub(),
+            }
+            conn.socket.send = sinon.stub().throws(new Error('test'))
+
+            conn.on('error', (err) => {
+                assert.equal(err.message, 'test')
                 done()
             })
-            conn.send(msg)
+            conn.send(request)
         })
     })
 
@@ -138,18 +154,24 @@ describe('Connection', () => {
             conn.socket.onopen()
         })
 
-        it('emits decoded messages', (done) => {
-            conn.on('b', (decodedMessage) => {
-                assert.equal(decodedMessage.offset, 3445690152)
+        it('emits events named by messateTypeName and the MessageFromServer as an argument', (done) => {
+            conn.on('UnicastMessage', (message, subId) => {
+                assert(message instanceof UnicastMessage)
+                assert.equal(message.offset, 10)
+                assert.equal(message.getParsedContent().hello, 'world')
+                assert.equal(subId, 'subId')
                 done()
             })
+
+            const message = new MessageFromServer(
+                new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
+                    hello: 'world',
+                }),
+                'subId',
+            )
+
             conn.socket.onmessage({
-                data: JSON.stringify([0, 0, '',
-                    [28, 'L9xDhrevS_CE3_OA6pLVuQ', 0, 1538926879033, 0,
-                        3445690152, 3445690148, 27,
-                        JSON.stringify({
-                            t: 'p', id: 437.0, lat: 60.16314, lng: 24.908923, color: 'rgba(233, 87, 15, 1.0)',
-                        })]]),
+                data: message.serialize(),
             })
         })
 
@@ -158,9 +180,14 @@ describe('Connection', () => {
                 assert(err instanceof InvalidJsonError)
                 done()
             })
+
+            const message = new MessageFromServer(
+                new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
+                'subId',
+            )
+
             conn.socket.onmessage({
-                data: JSON.stringify([0, 0, '',
-                    [28, 'L9xDhrevS_CE3_OA6pLVuQ', 0, 1538926879033, 0, 3445690152, 3445690148, 27, 'invalid json']]),
+                data: message.serialize(),
             })
         })
     })
