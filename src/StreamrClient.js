@@ -101,27 +101,27 @@ export default class StreamrClient extends EventEmitter {
         })
 
         // Route resending state messages to corresponding Subscriptions
-        this.connection.on('ResendResponseResending', (response, subId) => {
-            if (this.subById[subId]) {
-                this.subById[subId].emit('resending', response)
+        this.connection.on('ResendResponseResending', (response) => {
+            if (this.subById[response.subId]) {
+                this.subById[response.subId].emit('resending', response)
             } else {
-                debug('resent: Subscription %d is gone already', subId)
+                debug('resent: Subscription %d is gone already', response.subId)
             }
         })
 
-        this.connection.on('ResendResponseNoResend', (response, subId) => {
-            if (this.subById[subId]) {
-                this.subById[subId].emit('no_resend', response)
+        this.connection.on('ResendResponseNoResend', (response) => {
+            if (this.subById[response.subId]) {
+                this.subById[response.subId].emit('no_resend', response)
             } else {
-                debug('resent: Subscription %d is gone already', subId)
+                debug('resent: Subscription %d is gone already', response.subId)
             }
         })
 
-        this.connection.on('ResendResponseResent', (response, subId) => {
-            if (this.subById[subId]) {
-                this.subById[subId].emit('resent', response)
+        this.connection.on('ResendResponseResent', (response) => {
+            if (this.subById[response.subId]) {
+                this.subById[response.subId].emit('resent', response)
             } else {
-                debug('resent: Subscription %d is gone already', subId)
+                debug('resent: Subscription %d is gone already', response.subId)
             }
         })
 
@@ -163,6 +163,12 @@ export default class StreamrClient extends EventEmitter {
                         sub.setState(Subscription.State.unsubscribed)
                     })
                 })
+        })
+
+        this.connection.on('ErrorResponse', (err) => {
+            const errorObject = new Error(err.errorMessage)
+            this.emit('error', errorObject)
+            console.error(errorObject.message)
         })
 
         this.connection.on('error', (err) => {

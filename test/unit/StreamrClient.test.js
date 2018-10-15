@@ -18,6 +18,7 @@ import ResendRequest from '../../src/protocol/ResendRequest'
 import ResendResponseResending from '../../src/protocol/ResendResponseResending'
 import ResendResponseResent from '../../src/protocol/ResendResponseResent'
 import ResendResponseNoResend from '../../src/protocol/ResendResponseNoResend'
+import ErrorResponse from '../../src/protocol/ErrorResponse'
 import FailedToProduceError from '../../src/errors/FailedToProduceError'
 import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
@@ -225,7 +226,7 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('subscribed', () => {
+        describe('SubscribeResponse', () => {
             beforeEach(() => client.connect())
 
             it('marks Subscriptions as subscribed', () => {
@@ -264,7 +265,7 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('unsubscribed', () => {
+        describe('UnsubscribeResponse', () => {
             // Before each test, client is connected, subscribed, and unsubscribe() is called
             let sub
             beforeEach(async () => {
@@ -310,7 +311,7 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('b (broadcast)', () => {
+        describe('BroadcastMessage', () => {
             beforeEach(() => client.connect())
 
             it('should call the message handler of each subscription', () => {
@@ -350,7 +351,7 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('u (unicast)', () => {
+        describe('UnicastMessage', () => {
             beforeEach(() => client.connect())
 
             it('should call the message handler of specified Subscription', (done) => {
@@ -391,63 +392,79 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('resending', () => {
+        describe('ResendResponseResending', () => {
             beforeEach(() => client.connect())
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition, sub.id)
                 sub.on('resending', (event) => {
                     assert.deepEqual(event, resendResponse)
                     done()
                 })
-                connection.emitMessage(resendResponse, sub.id)
+                connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition, 'unknown subid')
                 sub.on('resending', sinon.stub().throws())
-                connection.emitMessage(resendResponse, 'unknown subId')
+                connection.emitMessage(resendResponse)
             })
         })
 
-        describe('no_resend', () => {
+        describe('ResendResponseNoResend', () => {
             beforeEach(() => client.connect())
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition, sub.id)
                 sub.on('no_resend', (event) => {
                     assert.deepEqual(event, resendResponse)
                     done()
                 })
-                connection.emitMessage(resendResponse, sub.id)
+                connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition, 'unknown subid')
                 sub.on('no_resend', sinon.stub().throws())
-                connection.emitMessage(resendResponse, 'unknown subId')
+                connection.emitMessage(resendResponse)
             })
         })
 
-        describe('resent', () => {
+        describe('ResendResponseResent', () => {
             beforeEach(() => client.connect())
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition, sub.id)
                 sub.on('resent', (event) => {
                     assert.deepEqual(event, resendResponse)
                     done()
                 })
-                connection.emitMessage(resendResponse, sub.id)
+                connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition)
+                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition, 'unknown subid')
                 sub.on('resent', sinon.stub().throws())
-                connection.emitMessage(resendResponse, 'unknown subId')
+                connection.emitMessage(resendResponse)
+            })
+        })
+
+        describe('ErrorResponse', () => {
+            beforeEach(() => client.connect())
+
+            it('emits an error event on client', (done) => {
+                setupSubscription('stream1')
+                const errorResponse = new ErrorResponse('Test error')
+                connection.emitMessage(errorResponse)
+
+                client.on('error', (err) => {
+                    assert.equal(err.message, errorResponse.errorMessage)
+                    done()
+                })
+                connection.emit('ErrorResponse', errorResponse)
             })
         })
 

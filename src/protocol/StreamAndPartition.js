@@ -15,11 +15,15 @@ class StreamAndPartition {
         return JSON.stringify(this.toObject())
     }
 
+    static objectToConstructorArgs(msg) {
+        return [msg.stream, msg.partition]
+    }
+
     static deserialize(stringOrObject) {
         const msg = (typeof stringOrObject === 'string' ? JSON.parse(stringOrObject) : stringOrObject)
 
         // calling this.prototype.constructor instead of new StreamAndPartition(...) works for subclasses too
-        return new this.prototype.constructor(msg.stream, msg.partition)
+        return new this.prototype.constructor(...this.objectToConstructorArgs(msg))
     }
 }
 
