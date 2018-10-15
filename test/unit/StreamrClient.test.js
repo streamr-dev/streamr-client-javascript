@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
 import debug from 'debug'
 
-import StreamrClient from '../../src/StreamrClient'
+import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
 import SubscribeRequest from '../../src/protocol/SubscribeRequest'
@@ -815,6 +815,11 @@ describe('StreamrClient', () => {
                 })
             })
         })
+    })
+
+    it('exposes protocol messages under StreamrClient.Protocol', () => {
+        assert(StreamrClient.Protocol !== undefined)
+        assert(StreamrClient.Protocol.MessageFromServer !== undefined)
     })
 })
 
