@@ -3,30 +3,29 @@ import assert from 'assert'
 import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
+import config from './config'
 
 /**
  * These tests should be run in sequential order!
  */
 describe('StreamrClient', () => {
-    const dataApi = 'localhost:8890'
-    const engineAndEditor = 'localhost:8081/streamr-core'
     const name = `StreamrClient-integration-${Date.now()}`
 
     let client
     let createdStream
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: `ws://${dataApi}/api/v1/ws`,
-        restUrl: `http://${engineAndEditor}/api/v1`,
+        url: config.websocketUrl,
+        restUrl: config.restUrl,
         apiKey: 'tester1-api-key',
         autoConnect: false,
         autoDisconnect: false,
         ...opts,
     })
 
-    beforeAll(() => Promise.all([ // TODO: Figure out how to handle this when setting up a CI
-        fetch(`http://${engineAndEditor}`),
-        fetch(`http://${dataApi}`),
+    beforeAll(() => Promise.all([
+        fetch(config.restUrl),
+        fetch(config.websocketUrl.replace('ws://', 'http://')),
     ])
         .then(() => {
             client = createClient()
@@ -116,7 +115,7 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-            })
+            }, 5000)
         }, 10000)
 
         it('client.subscribe (realtime)', (done) => {
