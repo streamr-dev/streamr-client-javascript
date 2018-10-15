@@ -73,7 +73,7 @@ class Connection extends EventEmitter {
     }
 
     emitMessage(payload, subId) {
-        this.emit(payload.constructor.name, payload, subId)
+        this.emit(payload.constructor.getMessageName(), payload, subId)
     }
 
     disconnect() {

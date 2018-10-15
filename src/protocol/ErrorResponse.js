@@ -3,6 +3,13 @@ module.exports = class ErrorResponse {
         this.errorMessage = errorMessage
     }
 
+    static getMessageType() {
+        return 7
+    }
+    static getMessageName() {
+        return 'ErrorResponse'
+    }
+
     toObject() {
         return {
             error: this.errorMessage,

@@ -14,7 +14,7 @@ describe('MessageFromServer', () => {
     describe('version 0', () => {
         describe('deserialize', () => {
             it('correctly parses broadcast messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.BROADCAST, null, [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
+                const msg = [0, BroadcastMessage.getMessageType(), null, [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
@@ -24,7 +24,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses unicast messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.UNICAST, 'subId', [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
+                const msg = [0, UnicastMessage.getMessageType(), 'subId', [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
@@ -35,7 +35,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses subscribed messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.SUBSCRIBED, 'subId', {
+                const msg = [0, SubscribeResponse.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
                 }]
@@ -48,7 +48,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses unsubscribed messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.UNSUBSCRIBED, 'subId', {
+                const msg = [0, UnsubscribeResponse.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
                 }]
@@ -61,9 +61,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses resending messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.RESENDING, 'subId', {
+                const msg = [0, ResendResponseResending.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
@@ -74,9 +75,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses resent messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.RESENT, 'subId', {
+                const msg = [0, ResendResponseResent.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
@@ -87,9 +89,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses no_resend messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.NO_RESEND, 'subId', {
+                const msg = [0, ResendResponseNoResend.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const result = MessageFromServer.deserialize(JSON.stringify(msg))
@@ -100,7 +103,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly parses error messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.ERROR, null, {
+                const msg = [0, ErrorResponse.getMessageType(), null, {
                     error: 'foo',
                 }]
 
@@ -113,7 +116,7 @@ describe('MessageFromServer', () => {
 
         describe('serialize', () => {
             it('correctly serializes broadcast messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.BROADCAST, null, [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
+                const msg = [0, BroadcastMessage.getMessageType(), null, [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const serialized = new MessageFromServer(BroadcastMessage.deserialize(msg[3])).serialize()
@@ -123,7 +126,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes unicast messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.UNICAST, 'subId', [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
+                const msg = [0, UnicastMessage.getMessageType(), 'subId', [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
                 const serialized = new MessageFromServer(
@@ -136,7 +139,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes subscribed messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.SUBSCRIBED, 'subId', {
+                const msg = [0, SubscribeResponse.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
                 }]
@@ -151,7 +154,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes unsubscribed messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.UNSUBSCRIBED, 'subId', {
+                const msg = [0, UnsubscribeResponse.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
                 }]
@@ -166,9 +169,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes resending messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.RESENDING, 'subId', {
+                const msg = [0, ResendResponseResending.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const serialized = new MessageFromServer(
@@ -181,9 +185,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes resent messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.RESENT, 'subId', {
+                const msg = [0, ResendResponseResent.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const serialized = new MessageFromServer(
@@ -196,9 +201,10 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes no_resend messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.NO_RESEND, 'subId', {
+                const msg = [0, ResendResponseNoResend.getMessageType(), 'subId', {
                     stream: 'id',
                     partition: 0,
+                    sub: 'subId',
                 }]
 
                 const serialized = new MessageFromServer(
@@ -211,7 +217,7 @@ describe('MessageFromServer', () => {
             })
 
             it('correctly serializes error messages', () => {
-                const msg = [0, MessageFromServer.MESSAGE_TYPES.ERROR, null, {
+                const msg = [0, ErrorResponse.getMessageType(), null, {
                     error: 'foo',
                 }]
 

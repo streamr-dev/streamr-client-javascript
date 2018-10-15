@@ -19,24 +19,9 @@ const payloadClassByMessageType = [
     ErrorResponse, // 7: error
 ]
 
-const messageTypeByClassName = {
-    BroadcastMessage: 0,
-    UnicastMessage: 1,
-    SubscribeResponse: 2,
-    UnsubscribeResponse: 3,
-    ResendResponseResending: 4,
-    ResendResponseResent: 5,
-    ResendResponseNoResend: 6,
-    ErrorResponse: 7,
-}
-
 class MessageFromServer {
     constructor(payload, subId) {
-        this.messageType = messageTypeByClassName[payload.constructor.name]
-        if (this.messageType === undefined) {
-            throw new Error(`Unexpected payload type: ${payload.constructor.name}`)
-        }
-
+        this.messageType = payload.constructor.getMessageType() // call static method
         this.payload = payload
         this.subId = subId
     }
@@ -61,17 +46,6 @@ class MessageFromServer {
         }
         throw UnsupportedVersionError(message[0], 'Supported versions: [0]')
     }
-}
-
-MessageFromServer.MESSAGE_TYPES = {
-    BROADCAST: 0,
-    UNICAST: 1,
-    SUBSCRIBED: 2,
-    UNSUBSCRIBED: 3,
-    RESENDING: 4,
-    RESENT: 5,
-    NO_RESEND: 6,
-    ERROR: 7,
 }
 
 module.exports = MessageFromServer

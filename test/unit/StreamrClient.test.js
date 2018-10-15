@@ -105,7 +105,7 @@ describe('StreamrClient', () => {
         }
 
         c.emitMessage = (payload, subId) => {
-            c.emit(payload.constructor.name, payload, subId)
+            c.emit(payload.constructor.getMessageName(), payload, subId)
         }
 
         c.expect = (msgToExpect) => {
