@@ -148,46 +148,66 @@ describe('Connection', () => {
         })
     })
 
-    describe('message handling on socket', () => {
+    describe('event handling on socket', () => {
         beforeEach(() => {
             conn.connect()
             conn.socket.onopen()
         })
 
-        it('emits events named by messateTypeName and the MessageFromServer as an argument', (done) => {
-            conn.on('UnicastMessage', (message, subId) => {
-                assert(message instanceof UnicastMessage)
-                assert.equal(message.offset, 10)
-                assert.equal(message.getParsedContent().hello, 'world')
-                assert.equal(subId, 'subId')
-                done()
+        describe('message', () => {
+            it('emits events named by messateTypeName and the MessageFromServer as an argument', (done) => {
+                conn.on('UnicastMessage', (message, subId) => {
+                    assert(message instanceof UnicastMessage)
+                    assert.equal(message.offset, 10)
+                    assert.equal(message.getParsedContent().hello, 'world')
+                    assert.equal(subId, 'subId')
+                    done()
+                })
+
+                const message = new MessageFromServer(
+                    new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
+                        hello: 'world',
+                    }),
+                    'subId',
+                )
+
+                conn.socket.onmessage({
+                    data: message.serialize(),
+                })
             })
 
-            const message = new MessageFromServer(
-                new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
-                    hello: 'world',
-                }),
-                'subId',
-            )
+            it('emits an error event when a message contains invalid json', (done) => {
+                conn.on('error', (err) => {
+                    assert(err instanceof InvalidJsonError)
+                    done()
+                })
 
-            conn.socket.onmessage({
-                data: message.serialize(),
+                const message = new MessageFromServer(
+                    new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
+                    'subId',
+                )
+
+                conn.socket.onmessage({
+                    data: message.serialize(),
+                })
             })
         })
 
-        it('emits an error event when a message contains invalid json', (done) => {
-            conn.on('error', (err) => {
-                assert(err instanceof InvalidJsonError)
-                done()
+        describe('close', () => {
+            let clock
+            beforeAll(() => {
+                clock = sinon.useFakeTimers()
             })
 
-            const message = new MessageFromServer(
-                new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
-                'subId',
-            )
+            afterAll(() => {
+                clock.restore()
+            })
 
-            conn.socket.onmessage({
-                data: message.serialize(),
+            it('tries to reconnect after 2 seconds', () => {
+                conn.connect = sinon.stub()
+                conn.socket.events.emit('close')
+                clock.tick(2100)
+                assert(conn.connect.calledOnce)
             })
         })
     })
