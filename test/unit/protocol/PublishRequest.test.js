@@ -1,6 +1,5 @@
 import assert from 'assert'
 import PublishRequest from '../../../src/protocol/PublishRequest'
-import SubscribeRequest from '../../../src/protocol/SubscribeRequest'
 
 describe('PublishRequest', () => {
     describe('deserialize', () => {

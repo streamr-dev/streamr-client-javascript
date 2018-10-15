@@ -1,6 +1,5 @@
 import 'babel-polyfill' // Needed because of mocha
 import assert from 'assert'
-import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
 import config from './config'

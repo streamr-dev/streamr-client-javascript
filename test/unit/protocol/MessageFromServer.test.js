@@ -116,9 +116,7 @@ describe('MessageFromServer', () => {
                 const msg = [0, MessageFromServer.MESSAGE_TYPES.BROADCAST, null, [28, 'TsvTbqshTsuLg_HyUjxigA', 0, 1529549961116, 0,
                     941516902, 941499898, StreamMessage.CONTENT_TYPES.JSON, '{"valid": "json"}']]
 
-                const serialized = new MessageFromServer(
-                    BroadcastMessage.deserialize(msg[3]),
-                ).serialize()
+                const serialized = new MessageFromServer(BroadcastMessage.deserialize(msg[3])).serialize()
 
                 assert(typeof serialized === 'string')
                 assert.deepEqual(msg, JSON.parse(serialized))
@@ -217,9 +215,7 @@ describe('MessageFromServer', () => {
                     error: 'foo',
                 }]
 
-                const serialized = new MessageFromServer(
-                    ErrorResponse.deserialize(msg[3]),
-                ).serialize()
+                const serialized = new MessageFromServer(ErrorResponse.deserialize(msg[3])).serialize()
 
                 assert(typeof serialized === 'string')
                 assert.deepEqual(msg, JSON.parse(serialized))

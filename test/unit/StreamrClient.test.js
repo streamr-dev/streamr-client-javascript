@@ -61,9 +61,9 @@ describe('StreamrClient', () => {
     function msg(streamId = 'stream1', offset = 0, content = {}, subId) {
         if (subId !== undefined) {
             return new UnicastMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content)
-        } else {
-            return new BroadcastMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content)
         }
+
+        return new BroadcastMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content)
     }
 
     function createConnectionMock() {
@@ -252,7 +252,6 @@ describe('StreamrClient', () => {
                 const sub2 = client.subscribe({
                     stream: 'stream1', resend_last: 1,
                 }, () => {})
-
 
                 connection.expect(new ResendRequest(sub1.streamId, sub1.streamPartition, sub1.id, {
                     resend_all: true,

@@ -4,14 +4,20 @@ import Subscription from '../../src/Subscription'
 import StreamMessage from '../../src/protocol/StreamMessage'
 import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
-const createMsg = (offset = 1, previousOffset = null, content = {}) => {
-    return new StreamMessage('streamId', 0, Date.now(), 0, offset, previousOffset, StreamMessage.CONTENT_TYPES.JSON, content)
-}
+const createMsg = (offset = 1, previousOffset = null, content = {}) => new StreamMessage(
+    'streamId',
+    0,
+    Date.now(),
+    0,
+    offset,
+    previousOffset,
+    StreamMessage.CONTENT_TYPES.JSON,
+    content,
+)
 
 const msg = createMsg()
 
 describe('Subscription', () => {
-
     describe('handleMessage()', () => {
         it('calls the message handler', (done) => {
             const sub = new Subscription(msg.streamId, msg.streamPartition, 'apiKey', (content, receivedMsg) => {
@@ -38,7 +44,7 @@ describe('Subscription', () => {
                 }
             })
 
-            msgs.forEach((msg) => sub.handleMessage(msg))
+            msgs.forEach((m) => sub.handleMessage(m))
         })
 
         it('queues messages during resending', () => {
@@ -82,7 +88,7 @@ describe('Subscription', () => {
         describe('gap detection', () => {
             it('emits "gap" if a gap is detected', (done) => {
                 const msg1 = msg
-                const msg4 = createMsg(4,3)
+                const msg4 = createMsg(4, 3)
 
                 const sub = new Subscription(msg.streamId, msg.streamPartition, 'apiKey', sinon.stub())
                 sub.on('gap', (from, to) => {
