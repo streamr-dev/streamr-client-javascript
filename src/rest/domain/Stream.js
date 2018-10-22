@@ -6,10 +6,11 @@ export default class Stream {
         Object.assign(this, props)
     }
 
-    async update(apiKey = this._client.options.apiKey) {
+    async update() {
         const json = await authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
-            apiKey,
+            this._client.options.sessionToken,
+            this._client.options.loginFunction,
             {
                 method: 'PUT',
                 body: JSON.stringify(this.toObject()),
@@ -28,25 +29,34 @@ export default class Stream {
         return result
     }
 
-    delete(apiKey = this._client.options.apiKey) {
+    delete() {
         return authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
-            apiKey,
+            this._client.options.sessionToken,
+            this._client.options.loginFunction,
             {
                 method: 'DELETE',
             },
         )
     }
 
-    getPermissions(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/permissions`, apiKey)
+    getPermissions() {
+        return authFetch(
+            `${this._client.options.restUrl}/streams/${this.id}/permissions`,
+            this._client.options.sessionToken,
+            this._client.options.loginFunction,
+        )
     }
 
-    detectFields(apiKey = this._client.options.apiKey) {
-        return authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
+    detectFields() {
+        return authFetch(
+            `${this._client.options.restUrl}/streams/${this.id}/detectFields`,
+            this._client.options.sessionToken,
+            this._client.options.loginFunction,
+        )
     }
 
-    produce(data, apiKey = this._client.options.apiKey) {
-        return this._client.produceToStream(this.id, data, apiKey)
+    produce(data) {
+        return this._client.produceToStream(this.id, data)
     }
 }

@@ -61,7 +61,7 @@ const clientConfig = merge({}, commonConfig, {
 })
 
 const clientMinifiedConfig = merge({}, clientConfig, {
-    plugins: [new UglifyJsPlugin()],
+    plugins: [new UglifyJsPlugin(), new Web3()],
     output: {
         filename: libraryName + '.web.min.js',
     },

@@ -3,16 +3,20 @@ import debugFactory from 'debug'
 
 const debug = debugFactory('StreamrClient:utils')
 
-export const authFetch = async (url, apiKey, opts = {}) => {
+export const authFetch = async (url, sessionToken, loginFunction, opts = {}) => {
     debug('authFetch: ', url, opts)
+    const newHeaders = opts.headers ? opts.headers : {}
+    if (sessionToken) {
+        newHeaders.Authorization = `Bearer ${sessionToken}`
+    } else if (loginFunction) {
+        const tokenObj = await loginFunction()
+        newHeaders.Authorization = `Bearer ${tokenObj.token}`
+    }
 
     const req = {
         ...opts,
-        headers: apiKey ? {
-            Authorization: `token ${apiKey}`,
-        } : undefined,
+        headers: newHeaders,
     }
-
     const res = await fetch(url, req)
 
     const text = await res.text()

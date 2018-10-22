@@ -15,6 +15,10 @@ import Stream from './rest/domain/Stream'
 import Connection from './Connection'
 import FailedToProduceError from './errors/FailedToProduceError'
 
+const Web3 = require('web3')
+
+const web3 = new Web3()
+
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
         super()
@@ -29,12 +33,37 @@ export default class StreamrClient extends EventEmitter {
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
             apiKey: null,
+            privateKey: null,
+            sessionToken: null,
         }
         this.subsByStream = {}
         this.subById = {}
         this.publishQueue = []
 
         Object.assign(this.options, options || {})
+
+        if (this.options.privateKey) {
+            this.account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
+            this.options.loginFunction = async () => {
+                const promise = this.loginWithChallengeResponse((d) => this.account.sign(d).signature, this.account.address)
+                promise.then((tokenObj) => {
+                    this.options.sessionToken = tokenObj.token
+                })
+                return promise
+            }
+        }
+
+        if (this.options.apiKey) {
+            this.options.loginFunction = async () => {
+                const promise = this.loginWithApiKey({
+                    apikey: this.options.apiKey,
+                })
+                promise.then((tokenObj) => {
+                    this.options.sessionToken = tokenObj.token
+                })
+                return promise
+            }
+        }
 
         // Backwards compatibility for option 'authKey' => 'apiKey'
         if (this.options.authKey && !this.options.apiKey) {
