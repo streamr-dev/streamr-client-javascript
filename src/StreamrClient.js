@@ -32,8 +32,10 @@ export default class StreamrClient extends EventEmitter {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            apiKey: null,
             privateKey: null,
+            apiKey: null,
+            username: null,
+            password: null,
             sessionToken: null,
         }
         this.subsByStream = {}
@@ -57,6 +59,19 @@ export default class StreamrClient extends EventEmitter {
             this.options.loginFunction = async () => {
                 const promise = this.loginWithApiKey({
                     apikey: this.options.apiKey,
+                })
+                promise.then((tokenObj) => {
+                    this.options.sessionToken = tokenObj.token
+                })
+                return promise
+            }
+        }
+
+        if (this.options.username && this.options.password) {
+            this.options.loginFunction = async () => {
+                const promise = this.loginWithUsernamePassword({
+                    username: this.options.username,
+                    password: this.options.password,
                 })
                 promise.then((tokenObj) => {
                     this.options.sessionToken = tokenObj.token

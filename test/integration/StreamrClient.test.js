@@ -16,10 +16,7 @@ describe('StreamrClient', () => {
     const createClient = (opts = {}) => new StreamrClient({
         url: config.websocketUrl,
         restUrl: config.restUrl,
-        /*
-        privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-        */
-        apiKey: 'tester1-api-key',
+        apiKey: 'tester2-api-key',
         autoConnect: false,
         autoDisconnect: false,
         ...opts,

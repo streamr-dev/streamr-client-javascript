@@ -11,22 +11,29 @@ describe('StreamEndpoints', () => {
     const name = `StreamEndpoints-integration-${Date.now()}`
 
     let client
+    let clientPrivateKey
+    let clientUsernamePassword
     let createdStream
 
     const createClient = (opts = {}) => new StreamrClient({
         url: config.websocketUrl,
         restUrl: config.restUrl,
-        /*
-        privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-        */
-        apiKey: 'tester1-api-key',
         autoConnect: false,
         autoDisconnect: false,
         ...opts,
     })
 
     beforeAll(() => {
-        client = createClient()
+        client = createClient({
+            apiKey: 'tester1-api-key',
+        })
+        clientPrivateKey = createClient({
+            privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+        })
+        clientUsernamePassword = createClient({
+            username: 'tester2@streamr.com',
+            password: 'tester2',
+        })
     })
 
     describe('Stream creation', () => {
@@ -37,6 +44,20 @@ describe('StreamEndpoints', () => {
                 createdStream = stream
                 assert(stream.id)
                 assert.equal(stream.name, name)
+            }))
+
+        it('createStream with private key', () => clientPrivateKey.createStream({
+            name: 'Login test 1',
+        })
+            .then((stream) => {
+                assert(stream.id)
+            }))
+
+        it('createStream with username/password', () => clientUsernamePassword.createStream({
+            name: 'Login test 2',
+        })
+            .then((stream) => {
+                assert(stream.id)
             }))
 
         it('getOrCreate an existing Stream', () => client.getOrCreateStream({

@@ -99,4 +99,22 @@ describe('LoginEndpoints', () => {
                 assert(sessionToken.expires)
             }))
     })
+
+    describe('Username/password login', () => {
+        it('login should fail', async () => {
+            await assertThrowsAsync(async () => client.loginWithUsernamePassword({
+                username: 'username',
+                password: 'password',
+            }), /Error/)
+        })
+        it('login should pass', () => client.loginWithUsernamePassword({
+            username: 'tester2@streamr.com',
+            password: 'tester2',
+        })
+            .then((sessionToken) => {
+                assert(sessionToken)
+                assert(sessionToken.token)
+                assert(sessionToken.expires)
+            }))
+    })
 })
