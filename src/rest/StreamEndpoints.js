@@ -32,13 +32,13 @@ function getKeepAliveAgentForUrl(url) {
 // In the below functions, 'this' is intended to be the StreamrClient
 export async function getStream(streamId) {
     const url = `${this.options.restUrl}/streams/${streamId}`
-    const json = await authFetch(url, this.options.sessionToken, this.options.loginFunction)
+    const json = await authFetch(url, this.session)
     return json ? new Stream(this, json) : undefined
 }
 
 export async function listStreams(query = {}) {
     const url = `${this.options.restUrl}/streams?${qs.stringify(query)}`
-    const json = await authFetch(url, this.options.sessionToken, this.options.loginFunction)
+    const json = await authFetch(url, this.session)
     return json ? json.map((stream) => new Stream(this, stream)) : []
 }
 
@@ -57,8 +57,7 @@ export async function createStream(props) {
 
     const json = await authFetch(
         `${this.options.restUrl}/streams`,
-        this.options.sessionToken,
-        this.options.loginFunction,
+        this.session,
         {
             method: 'POST',
             body: JSON.stringify(props),
@@ -102,8 +101,7 @@ export function produceToStreamHttp(streamObjectOrId, data, requestOptions = {},
     // Send data to the stream
     return authFetch(
         `${this.options.restUrl}/streams/${streamId}/data`,
-        this.options.sessionToken,
-        this.options.loginFunction,
+        this.session,
         Object.assign({}, requestOptions, {
             method: 'POST',
             body: JSON.stringify(data),

@@ -4,7 +4,6 @@ async function getSessionToken(url, props) {
     return authFetch(
         url,
         undefined,
-        undefined,
         {
             method: 'POST',
             body: JSON.stringify(props),
@@ -19,7 +18,6 @@ export async function getChallenge() {
     const url = `${this.options.restUrl}/login/challenge`
     const challenge = await authFetch(
         url,
-        undefined,
         undefined,
         {
             method: 'POST',
@@ -38,12 +36,12 @@ export async function sendChallengeResponse(props) {
 }
 
 export async function loginWithChallengeResponse(signingFunction, address) {
-    return this.getChallenge()
-        .then((challenge) => this.sendChallengeResponse({
-            challenge,
-            signature: signingFunction(challenge.challenge),
-            address,
-        }))
+    const challenge = await this.getChallenge()
+    return this.sendChallengeResponse({
+        challenge,
+        signature: signingFunction(challenge.challenge),
+        address,
+    })
 }
 
 export async function loginWithApiKey(props) {

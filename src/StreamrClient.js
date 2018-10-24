@@ -13,11 +13,8 @@ const debug = debugFactory('StreamrClient')
 import Subscription from './Subscription'
 import Stream from './rest/domain/Stream'
 import Connection from './Connection'
+import Session from './Session'
 import FailedToProduceError from './errors/FailedToProduceError'
-
-const Web3 = require('web3')
-
-const web3 = new Web3()
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -32,11 +29,12 @@ export default class StreamrClient extends EventEmitter {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            privateKey: null,
-            apiKey: null,
-            username: null,
-            password: null,
-            sessionToken: null,
+            auth: {
+                privateKey: null,
+                apiKey: null,
+                username: null,
+                password: null,
+            },
         }
         this.subsByStream = {}
         this.subById = {}
@@ -44,41 +42,10 @@ export default class StreamrClient extends EventEmitter {
 
         Object.assign(this.options, options || {})
 
-        if (this.options.privateKey) {
-            this.account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
-            this.options.loginFunction = async () => {
-                const promise = this.loginWithChallengeResponse((d) => this.account.sign(d).signature, this.account.address)
-                promise.then((tokenObj) => {
-                    this.options.sessionToken = tokenObj.token
-                })
-                return promise
-            }
-        }
+        this.session = new Session(this)
 
-        if (this.options.apiKey) {
-            this.options.loginFunction = async () => {
-                const promise = this.loginWithApiKey({
-                    apikey: this.options.apiKey,
-                })
-                promise.then((tokenObj) => {
-                    this.options.sessionToken = tokenObj.token
-                })
-                return promise
-            }
-        }
-
-        if (this.options.username && this.options.password) {
-            this.options.loginFunction = async () => {
-                const promise = this.loginWithUsernamePassword({
-                    username: this.options.username,
-                    password: this.options.password,
-                })
-                promise.then((tokenObj) => {
-                    this.options.sessionToken = tokenObj.token
-                })
-                return promise
-            }
-        }
+        // Backwards compatibility for the use of apiKey in other code than strict authentication by the Session
+        this.options.apiKey = this.options.auth.apiKey
 
         // Backwards compatibility for option 'authKey' => 'apiKey'
         if (this.options.authKey && !this.options.apiKey) {

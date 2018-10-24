@@ -3,14 +3,12 @@ import debugFactory from 'debug'
 
 const debug = debugFactory('StreamrClient:utils')
 
-export const authFetch = async (url, sessionToken, loginFunction, opts = {}) => {
+export const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
     debug('authFetch: ', url, opts)
     const newHeaders = opts.headers ? opts.headers : {}
-    if (sessionToken) {
-        newHeaders.Authorization = `Bearer ${sessionToken}`
-    } else if (loginFunction) {
-        const tokenObj = await loginFunction()
-        newHeaders.Authorization = `Bearer ${tokenObj.token}`
+    if (session) {
+        const token = await session.getSessionToken(requireNewToken)
+        newHeaders.Authorization = `Bearer ${token}`
     }
 
     const req = {
@@ -29,6 +27,8 @@ export const authFetch = async (url, sessionToken, loginFunction, opts = {}) => 
         }
     } else if (res.ok) {
         return {}
+    } else if ((res.status === 400 || res.status === 401) && !requireNewToken) {
+        return authFetch(url, session, opts, true)
     } else {
         throw new Error(`Request to ${url} returned with error code ${res.status}: ${text}`)
     }

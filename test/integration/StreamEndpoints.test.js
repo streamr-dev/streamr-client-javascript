@@ -25,14 +25,20 @@ describe('StreamEndpoints', () => {
 
     beforeAll(() => {
         client = createClient({
-            apiKey: 'tester1-api-key',
+            auth: {
+                apiKey: 'tester1-api-key',
+            },
         })
         clientPrivateKey = createClient({
-            privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            auth: {
+                privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            },
         })
         clientUsernamePassword = createClient({
-            username: 'tester2@streamr.com',
-            password: 'tester2',
+            auth: {
+                username: 'tester2@streamr.com',
+                password: 'tester2',
+            },
         })
     })
 
@@ -58,6 +64,21 @@ describe('StreamEndpoints', () => {
         })
             .then((stream) => {
                 assert(stream.id)
+            }))
+
+        it('createStream twice with token expiration', () => clientPrivateKey.createStream({
+            name: 'Login test 3a',
+        })
+            .then((stream1) => {
+                assert(stream1)
+                // We mimic the fact that the token expired by setting it to some value unknown by the backend
+                clientPrivateKey.session.sessionToken = 'invalid-token'
+                clientPrivateKey.createStream({
+                    name: 'Login test 3b',
+                })
+                    .then((stream2) => {
+                        assert(stream2)
+                    })
             }))
 
         it('getOrCreate an existing Stream', () => client.getOrCreateStream({

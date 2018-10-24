@@ -9,8 +9,7 @@ export default class Stream {
     async update() {
         const json = await authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
-            this._client.options.sessionToken,
-            this._client.options.loginFunction,
+            this._client.session,
             {
                 method: 'PUT',
                 body: JSON.stringify(this.toObject()),
@@ -32,8 +31,7 @@ export default class Stream {
     delete() {
         return authFetch(
             `${this._client.options.restUrl}/streams/${this.id}`,
-            this._client.options.sessionToken,
-            this._client.options.loginFunction,
+            this._client.session,
             {
                 method: 'DELETE',
             },
@@ -43,16 +41,14 @@ export default class Stream {
     getPermissions() {
         return authFetch(
             `${this._client.options.restUrl}/streams/${this.id}/permissions`,
-            this._client.options.sessionToken,
-            this._client.options.loginFunction,
+            this._client.session,
         )
     }
 
     detectFields() {
         return authFetch(
             `${this._client.options.restUrl}/streams/${this.id}/detectFields`,
-            this._client.options.sessionToken,
-            this._client.options.loginFunction,
+            this._client.session,
         )
     }
 
