@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import WebSocket from 'ws'
 
-import MessageFromServer from './protocol/MessageFromServer'
+import { MessageFromServer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
 

@@ -1,8 +1,9 @@
 import assert from 'assert'
 import sinon from 'sinon'
+
+import { StreamMessage, Errors } from 'streamr-client-protocol'
+
 import Subscription from '../../src/Subscription'
-import StreamMessage from '../../src/protocol/StreamMessage'
-import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
 const createMsg = (offset = 1, previousOffset = null, content = {}) => new StreamMessage(
     'streamId',
@@ -155,7 +156,7 @@ describe('Subscription', () => {
             sub.handleMessage(msg1)
 
             // Get notified of an invalid message
-            const err = new InvalidJsonError(msg.streamId, 'invalid json', 'test error msg', 2, 1)
+            const err = new Errors.InvalidJsonError(msg.streamId, 'invalid json', 'test error msg', 2, 1)
             sub.handleError(err)
 
             // Receive msg3 successfully

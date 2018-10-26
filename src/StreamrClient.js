@@ -1,16 +1,18 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
+import {
+    SubscribeRequest,
+    UnsubscribeRequest,
+    PublishRequest,
+    ResendRequest,
+    Errors,
+} from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient')
 
 import Subscription from './Subscription'
 import Stream from './rest/domain/Stream'
 import Connection from './Connection'
-import SubscribeRequest from './protocol/SubscribeRequest'
-import UnsubscribeRequest from './protocol/UnsubscribeRequest'
-import ResendRequest from './protocol/ResendRequest'
-import PublishRequest from './protocol/PublishRequest'
-import InvalidJsonError from './errors/InvalidJsonError'
 import FailedToProduceError from './errors/FailedToProduceError'
 
 export default class StreamrClient extends EventEmitter {
@@ -173,7 +175,7 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on('error', (err) => {
             // If there is an error parsing a json message in a stream, fire error events on the relevant subs
-            if (err instanceof InvalidJsonError) {
+            if (err instanceof Errors.InvalidJsonError) {
                 const subs = this.subsByStream[err.streamId]
                 if (subs) {
                     subs.forEach((sub) => {

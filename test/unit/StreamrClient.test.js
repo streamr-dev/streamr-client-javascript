@@ -2,25 +2,27 @@ import assert from 'assert'
 import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
 import debug from 'debug'
+import {
+    SubscribeRequest,
+    SubscribeResponse,
+    UnsubscribeRequest,
+    UnsubscribeResponse,
+    PublishRequest,
+    StreamMessage,
+    BroadcastMessage,
+    UnicastMessage,
+    ResendRequest,
+    ResendResponseResending,
+    ResendResponseResent,
+    ResendResponseNoResend,
+    ErrorResponse,
+    Errors,
+} from 'streamr-client-protocol'
 
 import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import SubscribeRequest from '../../src/protocol/SubscribeRequest'
-import SubscribeResponse from '../../src/protocol/SubscribeResponse'
-import UnsubscribeRequest from '../../src/protocol/UnsubscribeRequest'
-import UnsubscribeResponse from '../../src/protocol/UnsubscribeResponse'
-import PublishRequest from '../../src/protocol/PublishRequest'
-import StreamMessage from '../../src/protocol/StreamMessage'
-import BroadcastMessage from '../../src/protocol/BroadcastMessage'
-import UnicastMessage from '../../src/protocol/UnicastMessage'
-import ResendRequest from '../../src/protocol/ResendRequest'
-import ResendResponseResending from '../../src/protocol/ResendResponseResending'
-import ResendResponseResent from '../../src/protocol/ResendResponseResent'
-import ResendResponseNoResend from '../../src/protocol/ResendResponseNoResend'
-import ErrorResponse from '../../src/protocol/ErrorResponse'
 import FailedToProduceError from '../../src/errors/FailedToProduceError'
-import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
 const mockDebug = debug('mock')
 
@@ -473,7 +475,7 @@ describe('StreamrClient', () => {
 
             it('reports InvalidJsonErrors to subscriptions', (done) => {
                 const sub = setupSubscription('stream1')
-                const jsonError = new InvalidJsonError(sub.streamId)
+                const jsonError = new Errors.InvalidJsonError(sub.streamId)
 
                 sub.handleError = (err) => {
                     assert.equal(err, jsonError)
@@ -831,11 +833,6 @@ describe('StreamrClient', () => {
                 })
             })
         })
-    })
-
-    it('exposes protocol messages under StreamrClient.Protocol', () => {
-        assert(StreamrClient.Protocol !== undefined)
-        assert(StreamrClient.Protocol.MessageFromServer !== undefined)
     })
 })
 

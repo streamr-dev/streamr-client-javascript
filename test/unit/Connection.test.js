@@ -1,10 +1,13 @@
 import assert from 'assert'
 import sinon from 'sinon'
 
+import {
+    MessageFromServer,
+    UnicastMessage,
+    Errors,
+} from 'streamr-client-protocol'
+
 import Connection from '../../src/Connection'
-import MessageFromServer from '../../src/protocol/MessageFromServer'
-import UnicastMessage from '../../src/protocol/UnicastMessage'
-import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
 describe('Connection', () => {
     let conn
@@ -178,7 +181,7 @@ describe('Connection', () => {
 
             it('emits an error event when a message contains invalid json', (done) => {
                 conn.on('error', (err) => {
-                    assert(err instanceof InvalidJsonError)
+                    assert(err instanceof Errors.InvalidJsonError)
                     done()
                 })
 

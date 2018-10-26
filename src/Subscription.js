@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import InvalidJsonError from './errors/InvalidJsonError'
+import { Errors } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Subscription')
 
@@ -209,7 +209,7 @@ export default class Subscription extends EventEmitter {
          * If parsing the (expected) message failed, we should still mark it as received. Otherwise the
          * gap detection will think a message was lost, and re-request the failing message.
          */
-        if (err instanceof InvalidJsonError && !this.checkForGap(err.streamMessage.previousOffset)) {
+        if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.previousOffset)) {
             this.lastReceivedOffset = err.streamMessage.offset
         }
         this.emit('error', err)
