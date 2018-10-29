@@ -7,13 +7,14 @@ import { WebsocketResponse } from 'streamr-client-protocol'
 const debug = debugFactory('StreamrClient::Connection')
 
 class Connection extends EventEmitter {
-    constructor(options, socket) {
+    constructor(options, session, socket) {
         super()
         if (!options.url) {
             throw new Error('URL is not defined!')
         }
         this.options = options
         this.state = Connection.State.DISCONNECTED
+        this.session = session
         this.socket = socket
 
         if (options.autoConnect) {
@@ -92,12 +93,24 @@ class Connection extends EventEmitter {
         })
     }
 
-    send(websocketRequest) {
-        try {
-            this.socket.send(websocketRequest.serialize())
-        } catch (err) {
-            this.emit('error', err)
-        }
+    isConnected() {
+        return (this.socket && this.socket.CONNECTED)
+    }
+
+    send(websocketRequest, requireNewToken = false) {
+        this.session.getSessionToken(requireNewToken).then((sessionToken) => {
+            websocketRequest.setSessionToken(sessionToken)
+
+            try {
+                this.socket.send(websocketRequest.serialize())
+            } catch (err) {
+                if (!requireNewToken) {
+                    this.send(websocketRequest, true)
+                } else {
+                    this.emit('error', err)
+                }
+            }
+        })
     }
 }
 

@@ -55,7 +55,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         // Event handling on connection object
-        this.connection = connection || new Connection(this.options)
+        this.connection = connection || new Connection(this.options, this.session)
 
         // Broadcast messages to all subs listening on stream
         this.connection.on('BroadcastMessage', (msg) => {
