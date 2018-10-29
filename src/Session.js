@@ -29,7 +29,7 @@ export default class Session {
                 w3.eth.personal.sign(d, this.address), this.account.address)
         } else if (this.options.apiKey) {
             this.loginFunction = async () => this._client.loginWithApiKey({
-                apikey: this.options.apiKey,
+                apiKey: this.options.apiKey,
             })
         } else if (this.options.username && this.options.password) {
             this.loginFunction = async () => this._client.loginWithUsernamePassword({

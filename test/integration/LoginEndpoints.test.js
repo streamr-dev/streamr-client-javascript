@@ -87,11 +87,11 @@ describe('LoginEndpoints', () => {
     describe('API key login', () => {
         it('login should fail', async () => {
             await assertThrowsAsync(async () => client.loginWithApiKey({
-                apikey: 'apikey',
+                apiKey: 'apikey',
             }), /Error/)
         })
         it('login should pass', () => client.loginWithApiKey({
-            apikey: 'tester1-api-key',
+            apiKey: 'tester1-api-key',
         })
             .then((sessionToken) => {
                 assert(sessionToken)

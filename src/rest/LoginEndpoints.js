@@ -45,8 +45,8 @@ export async function loginWithChallengeResponse(signingFunction, address) {
 }
 
 export async function loginWithApiKey(props) {
-    if (!props || !props.apikey) {
-        throw new Error('Properties must contain "apikey" field!')
+    if (!props || !props.apiKey) {
+        throw new Error('Properties must contain "apiKey" field!')
     }
 
     const url = `${this.options.restUrl}/login/apikey`
