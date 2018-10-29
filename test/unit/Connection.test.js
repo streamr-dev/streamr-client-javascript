@@ -12,11 +12,10 @@ import Connection from '../../src/Connection'
 
 describe('Connection', () => {
     let conn
-
     beforeEach(() => {
         conn = new Connection({
             url: 'foo',
-        }, {
+        }, sinon.stub().throws(), {
             close: sinon.mock(),
         })
     })
@@ -129,9 +128,12 @@ describe('Connection', () => {
 
         it('sends the serialized message over the socket', () => {
             const request = {
+                setSessionToken: sinon.stub(),
                 serialize: sinon.stub().returns('foo'),
             }
-            conn.socket.send = sinon.stub()
+
+            // This doesn't preserve the context of the 'conn' object so 'conn.socket.send' is undefined.
+            conn.session.getSessionToken = sinon.stub().resolves('token')
 
             conn.send(request)
             assert(request.serialize.calledOnce)
@@ -140,6 +142,7 @@ describe('Connection', () => {
 
         it('emits error event if socket.send throws', (done) => {
             const request = {
+                setSessionToken: sinon.stub(),
                 serialize: sinon.stub(),
             }
             conn.socket.send = sinon.stub().throws(new Error('test'))
@@ -148,6 +151,7 @@ describe('Connection', () => {
                 assert.equal(err.message, 'test')
                 done()
             })
+            conn.session.getSessionToken = sinon.stub().returns(Promise.resolve('token'))
             conn.send(request)
         })
     })

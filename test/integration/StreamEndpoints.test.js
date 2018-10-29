@@ -115,7 +115,6 @@ describe('StreamEndpoints', () => {
                     foo: 'bar',
                     count: 0,
                 })
-                client.disconnect()
 
                 // Need time to propagate to storage
                 setTimeout(() => {

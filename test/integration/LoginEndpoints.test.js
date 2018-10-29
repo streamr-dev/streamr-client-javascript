@@ -25,7 +25,9 @@ describe('LoginEndpoints', () => {
     })
 
     describe('Challenge generation', () => {
-        it('should retrieve a challenge', () => client.getChallenge()
+        it('should retrieve a challenge', () => client.getChallenge({
+            address: 'some-address',
+        })
             .then((challenge) => {
                 assert(challenge)
                 assert(challenge.id)
@@ -58,21 +60,26 @@ describe('LoginEndpoints', () => {
                 address: 'some-address',
             }), /Error/)
         })
-        it('login should pass and should receive a session token', () => client.getChallenge()
-            .then((challenge) => {
-                const account = web3.eth.accounts.create()
-                const signatureObject = account.sign(challenge.challenge)
-                client.sendChallengeResponse({
-                    challenge,
-                    signature: signatureObject.signature,
-                    address: account.address,
-                })
-                    .then((sessionToken) => {
-                        assert(sessionToken)
-                        assert(sessionToken.token)
-                        assert(sessionToken.expires)
+        it('login should pass and should receive a session token', () => {
+            const account = web3.eth.accounts.create()
+            client.getChallenge({
+                address: account.address,
+            })
+                .then((challenge) => {
+                    assert(challenge.challenge)
+                    const signatureObject = account.sign(challenge.challenge)
+                    client.sendChallengeResponse({
+                        challenge,
+                        signature: signatureObject.signature,
+                        address: account.address,
                     })
-            }))
+                        .then((sessionToken) => {
+                            assert(sessionToken)
+                            assert(sessionToken.token)
+                            assert(sessionToken.expires)
+                        })
+                })
+        })
         it('login should pass using combined function', () => {
             const account = web3.eth.accounts.create()
             client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)

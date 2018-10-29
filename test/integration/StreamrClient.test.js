@@ -17,7 +17,7 @@ describe('StreamrClient', () => {
         url: config.websocketUrl,
         restUrl: config.restUrl,
         auth: {
-            apiKey: 'tester2-api-key',
+            privateKey: '0x12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
         },
         autoConnect: false,
         autoDisconnect: false,
