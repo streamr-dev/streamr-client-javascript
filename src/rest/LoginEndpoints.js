@@ -14,16 +14,18 @@ async function getSessionToken(url, props) {
     )
 }
 
-export async function getChallenge() {
-    const url = `${this.options.restUrl}/login/challenge`
-    const challenge = await authFetch(
+export async function getChallenge(props) {
+    if (!props || !props.address) {
+        throw new Error('Properties must contain "address" field!')
+    }
+    const url = `${this.options.restUrl}/login/challenge/${props.address}`
+    return authFetch(
         url,
         undefined,
         {
             method: 'POST',
         },
     )
-    return challenge
 }
 
 export async function sendChallengeResponse(props) {
@@ -36,7 +38,9 @@ export async function sendChallengeResponse(props) {
 }
 
 export async function loginWithChallengeResponse(signingFunction, address) {
-    const challenge = await this.getChallenge()
+    const challenge = await this.getChallenge({
+        address,
+    })
     return this.sendChallengeResponse({
         challenge,
         signature: signingFunction(challenge.challenge),
