@@ -126,18 +126,18 @@ describe('Connection', () => {
             conn.connect()
         })
 
-        it('sends the serialized message over the socket', () => {
+        it('sends the serialized message over the socket', (done) => {
             const request = {
                 setSessionToken: sinon.stub(),
                 serialize: sinon.stub().returns('foo'),
             }
-
-            // This doesn't preserve the context of the 'conn' object so 'conn.socket.send' is undefined.
-            conn.session.getSessionToken = sinon.stub().resolves('token')
-
-            conn.send(request)
-            assert(request.serialize.calledOnce)
-            assert(conn.socket.send.calledWith('foo'))
+            conn.socket.send = sinon.stub()
+            conn.session.getSessionToken = sinon.stub().returns(Promise.resolve('token'))
+            conn.send(request).then(() => {
+                assert(request.serialize.calledOnce)
+                assert(conn.socket.send.calledWith('foo'))
+                done()
+            })
         })
 
         it('emits error event if socket.send throws', (done) => {
