@@ -21,7 +21,7 @@ export default class Subscription extends EventEmitter {
         }
     }
 
-    constructor(streamId, streamPartition, apiKey, callback, options) {
+    constructor(streamId, streamPartition, apiKey, sessionToken, callback, options) {
         super()
 
         if (!streamId) {
@@ -35,6 +35,7 @@ export default class Subscription extends EventEmitter {
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.apiKey = apiKey
+        this.sessionToken = sessionToken
         this.callback = callback
         this.options = options || {}
         this.queue = []

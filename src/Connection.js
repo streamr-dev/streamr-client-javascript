@@ -97,12 +97,9 @@ class Connection extends EventEmitter {
         return (this.socket && this.socket.CONNECTED)
     }
 
-    async send(websocketRequest, requireNewToken = false) {
-        const sessionToken = await this.session.getSessionToken(requireNewToken)
-        websocketRequest.setSessionToken(sessionToken)
+    send(websocketRequest) {
         try {
-            const s = websocketRequest.serialize()
-            this.socket.send(s)
+            this.socket.send(websocketRequest.serialize())
         } catch (err) {
             this.emit('error', err)
         }

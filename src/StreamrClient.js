@@ -228,6 +228,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async produceToStream(streamObjectOrId, data, apiKey = this.options.apiKey) {
+        const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
         if (streamObjectOrId instanceof Stream) {
@@ -245,7 +246,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If connected, emit a publish request
         if (this.isConnected()) {
-            this._requestPublish(streamId, data, apiKey)
+            this._requestPublish(streamId, data, apiKey, sessionToken)
         } else if (this.options.autoConnect) {
             this.publishQueue.push([streamId, data, apiKey])
             this.connect().catch(() => {}) // ignore
@@ -258,7 +259,7 @@ export default class StreamrClient extends EventEmitter {
         }
     }
 
-    subscribe(optionsOrStreamId, callback, legacyOptions) {
+    async subscribe(optionsOrStreamId, callback, legacyOptions) {
         if (!optionsOrStreamId) {
             throw new Error('subscribe: Invalid arguments: subscription options is required!')
         } else if (!callback) {
@@ -284,8 +285,10 @@ export default class StreamrClient extends EventEmitter {
             throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
+        const sessionToken = await this.session.getSessionToken()
+
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, sessionToken, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
                 this._requestResend(sub, {
@@ -405,7 +408,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If this is the first subscription for this stream, send a subscription request to the server
         if (!subs.subscribing && subscribedSubs.length === 0) {
-            const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey)
+            const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey, sub.sessionToken)
             debug('_requestSubscribe: subscribing client: %o', request)
             subs.subscribing = true
             this.connection.send(request)
@@ -427,13 +430,20 @@ export default class StreamrClient extends EventEmitter {
     _requestResend(sub, resendOptions) {
         sub.setResending(true)
 
-        const request = new ResendRequest(sub.streamId, sub.streamPartition, sub.id, resendOptions || sub.getEffectiveResendOptions(), sub.apiKey)
+        const request = new ResendRequest(
+            sub.streamId,
+            sub.streamPartition,
+            sub.id,
+            resendOptions || sub.getEffectiveResendOptions(),
+            sub.apiKey,
+            sub.sessionToken,
+        )
         debug('_requestResend: %o', request)
         this.connection.send(request)
     }
 
-    _requestPublish(streamId, data, apiKey) {
-        const request = new PublishRequest(streamId, apiKey, undefined, data)
+    _requestPublish(streamId, data, apiKey, sessionToken) {
+        const request = new PublishRequest(streamId, apiKey, sessionToken, data)
         debug('_requestResend: %o', request)
         this.connection.send(request)
     }
