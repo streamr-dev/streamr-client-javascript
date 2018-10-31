@@ -114,27 +114,27 @@ describe('StreamEndpoints', () => {
                 client.produceToStream(createdStream.id, {
                     foo: 'bar',
                     count: 0,
+                }).then(() => {
+                    // Need time to propagate to storage
+                    setTimeout(() => {
+                        createdStream.detectFields().then((stream) => {
+                            assert.deepEqual(
+                                stream.config.fields,
+                                [
+                                    {
+                                        name: 'foo',
+                                        type: 'string',
+                                    },
+                                    {
+                                        name: 'count',
+                                        type: 'number',
+                                    },
+                                ],
+                            )
+                            done()
+                        })
+                    }, 5000)
                 })
-
-                // Need time to propagate to storage
-                setTimeout(() => {
-                    createdStream.detectFields().then((stream) => {
-                        assert.deepEqual(
-                            stream.config.fields,
-                            [
-                                {
-                                    name: 'foo',
-                                    type: 'string',
-                                },
-                                {
-                                    name: 'count',
-                                    type: 'number',
-                                },
-                            ],
-                        )
-                        done()
-                    })
-                }, 5000)
             })
         }, 10000)
     })

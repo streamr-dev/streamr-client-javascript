@@ -126,23 +126,19 @@ describe('Connection', () => {
             conn.connect()
         })
 
-        it('sends the serialized message over the socket', (done) => {
+        it('sends the serialized message over the socket', () => {
             const request = {
-                setSessionToken: sinon.stub(),
                 serialize: sinon.stub().returns('foo'),
             }
             conn.socket.send = sinon.stub()
-            conn.session.getSessionToken = sinon.stub().returns(Promise.resolve('token'))
-            conn.send(request).then(() => {
-                assert(request.serialize.calledOnce)
-                assert(conn.socket.send.calledWith('foo'))
-                done()
-            })
+
+            conn.send(request)
+            assert(request.serialize.calledOnce)
+            assert(conn.socket.send.calledWith('foo'))
         })
 
         it('emits error event if socket.send throws', (done) => {
             const request = {
-                setSessionToken: sinon.stub(),
                 serialize: sinon.stub(),
             }
             conn.socket.send = sinon.stub().throws(new Error('test'))
@@ -151,7 +147,6 @@ describe('Connection', () => {
                 assert.equal(err.message, 'test')
                 done()
             })
-            conn.session.getSessionToken = sinon.stub().returns(Promise.resolve('token'))
             conn.send(request)
         })
     })

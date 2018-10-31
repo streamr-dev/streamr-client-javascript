@@ -50,10 +50,10 @@ describe('StreamrClient', () => {
         asyncs = []
     }
 
-    function setupSubscription(streamId, emitSubscribed = true, subscribeOptions = {}, handler = sinon.stub()) {
+    async function setupSubscription(streamId, emitSubscribed = true, subscribeOptions = {}, handler = sinon.stub()) {
         assert(client.isConnected(), 'setupSubscription: Client is not connected!')
         connection.expect(new SubscribeRequest(streamId))
-        const sub = client.subscribe({
+        const sub = await client.subscribe({
             stream: streamId,
             ...subscribeOptions,
         }, handler)
@@ -70,6 +70,19 @@ describe('StreamrClient', () => {
         }
 
         return new BroadcastMessage(new StreamMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content))
+    }
+
+    async function assertThrowsAsync(fn) {
+        let f = () => {}
+        try {
+            await fn()
+        } catch (e) {
+            f = () => {
+                throw e
+            }
+        } finally {
+            assert.throws(f)
+        }
     }
 
     function createConnectionMock() {
@@ -131,6 +144,7 @@ describe('StreamrClient', () => {
             autoConnect: false,
             autoDisconnect: false,
         }, connection)
+        client.session.getSessionToken = sinon.stub()
     })
 
     afterEach(() => {
@@ -170,13 +184,13 @@ describe('StreamrClient', () => {
                 return client.connect()
             })
 
-            it('should not subscribe to unsubscribed streams on reconnect', (done) => {
+            it('should not subscribe to unsubscribed streams on reconnect', async (done) => {
                 // On connect
                 connection.expect(new SubscribeRequest('stream1'))
                 // On unsubscribe
                 connection.expect(new UnsubscribeRequest('stream1'))
 
-                const sub = client.subscribe('stream1', () => {})
+                const sub = await client.subscribe('stream1', () => {})
                 client.connect().then(() => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                     client.unsubscribe(sub)
@@ -189,8 +203,8 @@ describe('StreamrClient', () => {
                 })
             })
 
-            it('should request resend according to sub.getEffectiveResendOptions()', () => {
-                const sub = client.subscribe({
+            it('should request resend according to sub.getEffectiveResendOptions()', async () => {
+                const sub = await client.subscribe({
                     stream: 'stream1',
                     resend_all: true,
                 }, () => {})
@@ -218,14 +232,14 @@ describe('StreamrClient', () => {
                 connection.emit('disconnected')
             })
 
-            it('does not remove subscriptions', () => {
-                const sub = setupSubscription('stream1')
+            it('does not remove subscriptions', async () => {
+                const sub = await setupSubscription('stream1')
                 connection.emit('disconnected')
                 assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
             })
 
-            it('sets subscription state to unsubscribed', () => {
-                const sub = setupSubscription('stream1')
+            it('sets subscription state to unsubscribed', async () => {
+                const sub = await setupSubscription('stream1')
                 connection.emit('disconnected')
                 assert.equal(sub.getState(), Subscription.State.unsubscribed)
             })
@@ -234,13 +248,13 @@ describe('StreamrClient', () => {
         describe('SubscribeResponse', () => {
             beforeEach(() => client.connect())
 
-            it('marks Subscriptions as subscribed', () => {
-                const sub = setupSubscription('stream1')
+            it('marks Subscriptions as subscribed', async () => {
+                const sub = await setupSubscription('stream1')
                 assert.equal(sub.getState(), Subscription.State.subscribed)
             })
 
-            it('emits a resend request if resend options were given', () => {
-                const sub = setupSubscription('stream1', false, {
+            it('emits a resend request if resend options were given', async () => {
+                const sub = await setupSubscription('stream1', false, {
                     resend_all: true,
                 })
                 connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -249,13 +263,13 @@ describe('StreamrClient', () => {
                 connection.emitMessage(new SubscribeResponse(sub.streamId))
             })
 
-            it('emits multiple resend requests as per multiple subscriptions', () => {
+            it('emits multiple resend requests as per multiple subscriptions', async () => {
                 connection.expect(new SubscribeRequest('stream1'))
 
-                const sub1 = client.subscribe({
+                const sub1 = await client.subscribe({
                     stream: 'stream1', resend_all: true,
                 }, () => {})
-                const sub2 = client.subscribe({
+                const sub2 = await client.subscribe({
                     stream: 'stream1', resend_last: 1,
                 }, () => {})
 
@@ -275,7 +289,7 @@ describe('StreamrClient', () => {
             let sub
             beforeEach(async () => {
                 await client.connect()
-                sub = setupSubscription('stream1')
+                sub = await setupSubscription('stream1')
 
                 connection.expect(new UnsubscribeRequest(sub.streamId))
                 client.unsubscribe(sub)
@@ -319,15 +333,15 @@ describe('StreamrClient', () => {
         describe('BroadcastMessage', () => {
             beforeEach(() => client.connect())
 
-            it('should call the message handler of each subscription', () => {
+            it('should call the message handler of each subscription', async () => {
                 connection.expect(new SubscribeRequest('stream1'))
 
                 const counter = sinon.stub()
 
-                client.subscribe({
+                await client.subscribe({
                     stream: 'stream1',
                 }, counter)
-                client.subscribe({
+                await client.subscribe({
                     stream: 'stream1',
                 }, counter)
 
@@ -342,12 +356,12 @@ describe('StreamrClient', () => {
                 connection.emitMessage(msg('unexpected-stream'))
             })
 
-            it('does not mutate messages', (done) => {
+            it('does not mutate messages', async (done) => {
                 const sentMsg = {
                     foo: 'bar',
                 }
 
-                const sub = setupSubscription('stream1', true, {}, (receivedMsg) => {
+                const sub = await setupSubscription('stream1', true, {}, (receivedMsg) => {
                     assert.deepEqual(sentMsg, receivedMsg)
                     done()
                 })
@@ -359,16 +373,16 @@ describe('StreamrClient', () => {
         describe('UnicastMessage', () => {
             beforeEach(() => client.connect())
 
-            it('should call the message handler of specified Subscription', (done) => {
+            it('should call the message handler of specified Subscription', async (done) => {
                 connection.expect(new SubscribeRequest('stream1'))
 
                 // this sub's handler must not be called
-                client.subscribe({
+                await client.subscribe({
                     stream: 'stream1',
                 }, sinon.stub().throws())
 
                 // this sub's handler must be called
-                const sub2 = client.subscribe({
+                const sub2 = await client.subscribe({
                     stream: 'stream1',
                 }, () => {
                     done()
@@ -383,12 +397,12 @@ describe('StreamrClient', () => {
                 connection.emitMessage(msg(sub.streamId, 0, {}, 'unknown subId'), 'unknown subId')
             })
 
-            it('does not mutate messages', (done) => {
+            it('does not mutate messages', async (done) => {
                 const sentMsg = {
                     foo: 'bar',
                 }
 
-                const sub = setupSubscription('stream1', true, {}, (receivedMsg) => {
+                const sub = await setupSubscription('stream1', true, {}, (receivedMsg) => {
                     assert.deepEqual(sentMsg, receivedMsg)
                     done()
                 })
@@ -475,8 +489,8 @@ describe('StreamrClient', () => {
         describe('error', () => {
             beforeEach(() => client.connect())
 
-            it('reports InvalidJsonErrors to subscriptions', (done) => {
-                const sub = setupSubscription('stream1')
+            it('reports InvalidJsonErrors to subscriptions', async (done) => {
+                const sub = await setupSubscription('stream1')
                 const jsonError = new Errors.InvalidJsonError(sub.streamId)
 
                 sub.handleError = (err) => {
@@ -535,28 +549,22 @@ describe('StreamrClient', () => {
         describe('when connected', () => {
             beforeEach(() => client.connect())
 
-            it('throws an error if no options are given', () => {
-                assert.throws(() => {
-                    client.subscribe(undefined, () => {})
-                })
+            it('throws an error if no options are given', async () => {
+                await assertThrowsAsync(async () => client.subscribe(undefined, () => {}))
             })
 
-            it('throws an error if options is wrong type', () => {
-                assert.throws(() => {
-                    client.subscribe(['streamId'], () => {})
-                })
+            it('throws an error if options is wrong type', async () => {
+                await assertThrowsAsync(async () => client.subscribe(['streamId'], () => {}))
             })
 
-            it('throws an error if no callback is given', () => {
-                assert.throws(() => {
-                    client.subscribe('stream1')
-                })
+            it('throws an error if no callback is given', async () => {
+                await assertThrowsAsync(async () => client.subscribe('stream1'))
             })
 
-            it('sends a subscribe request', () => {
+            it('sends a subscribe request', async () => {
                 connection.expect(new SubscribeRequest('stream1', undefined, 'auth'))
 
-                client.subscribe({
+                await client.subscribe({
                     stream: 'stream1', apiKey: 'auth',
                 }, () => {})
             })
@@ -573,12 +581,12 @@ describe('StreamrClient', () => {
                 client.subscribe('stream1', () => {})
             })
 
-            it('sets subscribed state on subsequent subscriptions without further subscribe requests', (done) => {
+            it('sets subscribed state on subsequent subscriptions without further subscribe requests', async (done) => {
                 connection.expect(new SubscribeRequest('stream1'))
                 const sub = client.subscribe('stream1', () => {})
                 connection.emitMessage(new SubscribeResponse(sub.streamId))
 
-                const sub2 = client.subscribe(sub.streamId, () => {})
+                const sub2 = await client.subscribe(sub.streamId, () => {})
                 sub2.on('subscribed', () => {
                     assert.equal(sub2.getState(), Subscription.State.subscribed)
                     done()
@@ -586,8 +594,8 @@ describe('StreamrClient', () => {
             })
 
             describe('with resend options', () => {
-                it('supports resend_all', () => {
-                    const sub = setupSubscription('stream1', false, {
+                it('supports resend_all', async () => {
+                    const sub = await setupSubscription('stream1', false, {
                         resend_all: true,
                     })
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -596,8 +604,8 @@ describe('StreamrClient', () => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                 })
 
-                it('supports resend_from', () => {
-                    const sub = setupSubscription('stream1', false, {
+                it('supports resend_from', async () => {
+                    const sub = await setupSubscription('stream1', false, {
                         resend_from: 5,
                     })
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -606,8 +614,8 @@ describe('StreamrClient', () => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                 })
 
-                it('supports resend_last', () => {
-                    const sub = setupSubscription('stream1', false, {
+                it('supports resend_last', async () => {
+                    const sub = await setupSubscription('stream1', false, {
                         resend_last: 5,
                     })
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -616,9 +624,9 @@ describe('StreamrClient', () => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                 })
 
-                it('supports resend_from_time', () => {
+                it('supports resend_from_time', async () => {
                     const time = Date.now()
-                    const sub = setupSubscription('stream1', false, {
+                    const sub = await setupSubscription('stream1', false, {
                         resend_from_time: time,
                     })
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -627,9 +635,9 @@ describe('StreamrClient', () => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                 })
 
-                it('supports resend_from_time given as a Date object', () => {
+                it('supports resend_from_time given as a Date object', async () => {
                     const time = new Date()
-                    const sub = setupSubscription('stream1', false, {
+                    const sub = await setupSubscription('stream1', false, {
                         resend_from_time: time,
                     })
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
@@ -638,28 +646,24 @@ describe('StreamrClient', () => {
                     connection.emitMessage(new SubscribeResponse(sub.streamId))
                 })
 
-                it('throws if resend_from_time is invalid', () => {
-                    assert.throws(() => {
-                        client.subscribe({
-                            stream: 'stream1',
-                            resend_from_time: 'invalid',
-                        }, () => {})
-                    })
+                it('throws if resend_from_time is invalid', async () => {
+                    await assertThrowsAsync(async () => client.subscribe({
+                        stream: 'stream1',
+                        resend_from_time: 'invalid',
+                    }, () => {}))
                 })
 
-                it('throws if multiple resend options are given', () => {
-                    assert.throws(() => {
-                        client.subscribe({
-                            stream: 'stream1', apiKey: 'auth', resend_all: true, resend_last: 5,
-                        }, () => {})
-                    })
+                it('throws if multiple resend options are given', async () => {
+                    await assertThrowsAsync(async () => client.subscribe({
+                        stream: 'stream1', apiKey: 'auth', resend_all: true, resend_last: 5,
+                    }, () => {}))
                 })
             })
 
             describe('Subscription event handling', () => {
                 describe('gap', () => {
-                    it('sends resend request', () => {
-                        const sub = setupSubscription('stream1')
+                    it('sends resend request', async () => {
+                        const sub = await setupSubscription('stream1')
                         connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                             resend_from: 1,
                             resend_to: 5,
@@ -668,8 +672,8 @@ describe('StreamrClient', () => {
                         sub.emit('gap', 1, 5)
                     })
 
-                    it('does not send another resend request while resend is in progress', () => {
-                        const sub = setupSubscription('stream1')
+                    it('does not send another resend request while resend is in progress', async () => {
+                        const sub = await setupSubscription('stream1')
                         connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                             resend_from: 1,
                             resend_to: 5,
@@ -681,8 +685,8 @@ describe('StreamrClient', () => {
                 })
 
                 describe('done', () => {
-                    it('unsubscribes', (done) => {
-                        const sub = setupSubscription('stream1')
+                    it('unsubscribes', async (done) => {
+                        const sub = await setupSubscription('stream1')
 
                         client.unsubscribe = (unsub) => {
                             assert.equal(sub, unsub)
@@ -700,7 +704,7 @@ describe('StreamrClient', () => {
         let sub
         beforeEach(async () => {
             await client.connect()
-            sub = setupSubscription('stream1', true, {}, sinon.stub().throws())
+            sub = await setupSubscription('stream1', true, {}, sinon.stub().throws())
         })
 
         it('sends an unsubscribe request', () => {
@@ -708,16 +712,16 @@ describe('StreamrClient', () => {
             client.unsubscribe(sub)
         })
 
-        it('does not send unsubscribe request if there are other subs remaining for the stream', () => {
-            client.subscribe({
+        it('does not send unsubscribe request if there are other subs remaining for the stream', async () => {
+            await client.subscribe({
                 stream: sub.streamId,
             }, () => {})
 
             client.unsubscribe(sub)
         })
 
-        it('sends unsubscribe request when the last subscription is unsubscribed', (done) => {
-            const sub2 = client.subscribe({
+        it('sends unsubscribe request when the last subscription is unsubscribed', async (done) => {
+            const sub2 = await client.subscribe({
                 stream: sub.streamId,
             }, () => {})
 
@@ -772,7 +776,7 @@ describe('StreamrClient', () => {
         })
 
         it('resets subscriptions', async () => {
-            const sub = setupSubscription('stream1')
+            const sub = await setupSubscription('stream1')
             await client.disconnect()
             assert.deepEqual(client.getSubscriptions(sub.streamId), [])
         })
@@ -787,7 +791,7 @@ describe('StreamrClient', () => {
         })
 
         it('does not reset subscriptions', async () => {
-            const sub = setupSubscription('stream1')
+            const sub = await setupSubscription('stream1')
             await client.pause()
             assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
         })
