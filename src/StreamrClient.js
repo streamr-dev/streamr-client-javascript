@@ -48,51 +48,47 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on('BroadcastMessage', (msg) => {
             // Notify the Subscriptions for this stream. If this is not the message each individual Subscription
             // is expecting, they will either ignore it or request resend via gap event.
-            const subs = this.subsByStream[msg.streamId]
+            const subs = this.subsByStream[msg.payload.streamId]
             if (subs) {
                 subs.forEach((sub) => {
-                    sub.handleMessage(msg, false)
+                    sub.handleMessage(msg.payload, false)
                 })
             } else {
-                debug('WARN: message received for stream with no subscriptions: %s', msg.streamId)
+                debug('WARN: message received for stream with no subscriptions: %s', msg.payload.streamId)
             }
         })
 
         // Unicast messages to a specific subscription only
-        this.connection.on('UnicastMessage', (msg, sub) => {
-            if (sub !== undefined && this.subById[sub] !== undefined) {
-                this.subById[sub].handleMessage(msg, true)
+        this.connection.on('UnicastMessage', (msg) => {
+            if (msg.subId !== undefined && this.subById[msg.subId] !== undefined) {
+                this.subById[msg.subId].handleMessage(msg.payload, true)
             } else {
-                debug('WARN: subscription not found for stream: %s, sub: %s', msg.streamId, sub)
+                debug('WARN: subscription not found for stream: %s, sub: %s', msg.payload.streamId, msg.subId)
             }
         })
 
         this.connection.on('SubscribeResponse', (response) => {
-            if (response.error) {
-                this.handleError(`Error subscribing to ${response.stream}: ${response.error}`)
-            } else {
-                const subs = this.subsByStream[response.streamId]
+            const subs = this.subsByStream[response.payload.streamId]
 
-                // The typeof array === 'object'
-                if (subs && typeof subs === 'object') {
-                    delete subs.subscribing
-                    // Report subscribed to all non-resending Subscriptions for this stream
-                    subs.filter((sub) => !sub.resending)
-                        .forEach((sub) => {
-                            sub.setState(Subscription.State.subscribed)
-                        })
-                }
-
-                debug('Client subscribed: %o', response)
+            // The typeof array === 'object'
+            if (subs && typeof subs === 'object') {
+                delete subs.subscribing
+                // Report subscribed to all non-resending Subscriptions for this stream
+                subs.filter((sub) => !sub.resending)
+                    .forEach((sub) => {
+                        sub.setState(Subscription.State.subscribed)
+                    })
             }
+
+            debug('Client subscribed: %o', response.payload)
         })
 
         this.connection.on('UnsubscribeResponse', (response) => {
-            debug('Client unsubscribed: %o', response)
+            debug('Client unsubscribed: %o', response.payload)
 
-            if (this.subsByStream[response.streamId]) {
+            if (this.subsByStream[response.payload.streamId]) {
                 // Copy the list to avoid concurrent modifications
-                const l = this.subsByStream[response.streamId].slice()
+                const l = this.subsByStream[response.payload.streamId].slice()
                 l.forEach((sub) => {
                     this._removeSubscription(sub)
                     sub.setState(Subscription.State.unsubscribed)
@@ -104,26 +100,26 @@ export default class StreamrClient extends EventEmitter {
 
         // Route resending state messages to corresponding Subscriptions
         this.connection.on('ResendResponseResending', (response) => {
-            if (this.subById[response.subId]) {
-                this.subById[response.subId].emit('resending', response)
+            if (this.subById[response.payload.subId]) {
+                this.subById[response.payload.subId].emit('resending', response.payload)
             } else {
-                debug('resent: Subscription %d is gone already', response.subId)
+                debug('resent: Subscription %d is gone already', response.payload.subId)
             }
         })
 
         this.connection.on('ResendResponseNoResend', (response) => {
-            if (this.subById[response.subId]) {
-                this.subById[response.subId].emit('no_resend', response)
+            if (this.subById[response.payload.subId]) {
+                this.subById[response.payload.subId].emit('no_resend', response.payload)
             } else {
-                debug('resent: Subscription %d is gone already', response.subId)
+                debug('resent: Subscription %d is gone already', response.payload.subId)
             }
         })
 
         this.connection.on('ResendResponseResent', (response) => {
-            if (this.subById[response.subId]) {
-                this.subById[response.subId].emit('resent', response)
+            if (this.subById[response.payload.subId]) {
+                this.subById[response.payload.subId].emit('resent', response.payload)
             } else {
-                debug('resent: Subscription %d is gone already', response.subId)
+                debug('resent: Subscription %d is gone already', response.payload.subId)
             }
         })
 
@@ -168,7 +164,7 @@ export default class StreamrClient extends EventEmitter {
         })
 
         this.connection.on('ErrorResponse', (err) => {
-            const errorObject = new Error(err.errorMessage)
+            const errorObject = new Error(err.payload.error)
             this.emit('error', errorObject)
             console.error(errorObject.message)
         })

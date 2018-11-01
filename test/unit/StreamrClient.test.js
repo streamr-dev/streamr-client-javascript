@@ -9,12 +9,15 @@ import {
     UnsubscribeResponse,
     PublishRequest,
     StreamMessage,
+    StreamAndPartition,
     BroadcastMessage,
     UnicastMessage,
     ResendRequest,
+    ResendResponseMessage,
     ResendResponseResending,
     ResendResponseResent,
     ResendResponseNoResend,
+    ErrorMessage,
     ErrorResponse,
     Errors,
 } from 'streamr-client-protocol'
@@ -56,17 +59,17 @@ describe('StreamrClient', () => {
         }, handler)
 
         if (emitSubscribed) {
-            connection.emitMessage(new SubscribeResponse(sub.streamId))
+            connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
         }
         return sub
     }
 
     function msg(streamId = 'stream1', offset = 0, content = {}, subId) {
         if (subId !== undefined) {
-            return new UnicastMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content)
+            return new UnicastMessage(new StreamMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content), subId)
         }
 
-        return new BroadcastMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content)
+        return new BroadcastMessage(new StreamMessage(streamId, 0, Date.now(), 0, offset, null, StreamMessage.CONTENT_TYPES.JSON, content))
     }
 
     function createConnectionMock() {
@@ -106,8 +109,8 @@ describe('StreamrClient', () => {
             )
         }
 
-        c.emitMessage = (payload, subId) => {
-            c.emit(payload.constructor.getMessageName(), payload, subId)
+        c.emitMessage = (payload) => {
+            c.emit(payload.constructor.getMessageName(), payload)
         }
 
         c.expect = (msgToExpect) => {
@@ -175,14 +178,14 @@ describe('StreamrClient', () => {
 
                 const sub = client.subscribe('stream1', () => {})
                 client.connect().then(() => {
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', async () => {
                         await client.disconnect()
                         await client.connect()
                         done()
                     })
-                    client.connection.emitMessage(new UnsubscribeResponse(sub.streamId))
+                    client.connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
             })
 
@@ -201,7 +204,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_last: 1,
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
                 return client.connect()
             })
@@ -243,7 +246,7 @@ describe('StreamrClient', () => {
                 connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                     resend_all: true,
                 }))
-                connection.emitMessage(new SubscribeResponse(sub.streamId))
+                connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
             })
 
             it('emits multiple resend requests as per multiple subscriptions', () => {
@@ -263,7 +266,7 @@ describe('StreamrClient', () => {
                     resend_last: 1,
                 }))
 
-                connection.emitMessage(new SubscribeResponse(sub1.streamId))
+                connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub1.streamId)))
             })
         })
 
@@ -279,12 +282,12 @@ describe('StreamrClient', () => {
             })
 
             it('removes the subscription', () => {
-                connection.emitMessage(new UnsubscribeResponse(sub.streamId))
+                connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
                 assert.deepEqual(client.getSubscriptions(sub.streamId), [])
             })
 
             it('sets Subscription state to unsubscribed', () => {
-                connection.emitMessage(new UnsubscribeResponse(sub.streamId))
+                connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
                 assert.equal(sub.getState(), Subscription.State.unsubscribed)
             })
 
@@ -296,7 +299,7 @@ describe('StreamrClient', () => {
 
                     it('calls connection.disconnect() when no longer subscribed to any streams', (done) => {
                         connection.disconnect = done
-                        connection.emitMessage(new UnsubscribeResponse(sub.streamId))
+                        connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
                     })
                 })
 
@@ -307,7 +310,7 @@ describe('StreamrClient', () => {
 
                     it('should not disconnect if autoDisconnect is set to false', () => {
                         connection.disconnect = sinon.stub().throws('Should not call disconnect!')
-                        connection.emitMessage(new UnsubscribeResponse(sub.streamId))
+                        connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
                     })
                 })
             })
@@ -328,7 +331,7 @@ describe('StreamrClient', () => {
                     stream: 'stream1',
                 }, counter)
 
-                connection.emitMessage(new SubscribeResponse('stream1'))
+                connection.emitMessage(new SubscribeResponse(new StreamAndPartition('stream1')))
                 connection.emitMessage(msg())
 
                 assert.equal(counter.callCount, 2)
@@ -371,7 +374,7 @@ describe('StreamrClient', () => {
                     done()
                 })
 
-                connection.emitMessage(new SubscribeResponse(sub2.streamId))
+                connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub2.streamId)))
                 connection.emitMessage(msg(sub2.streamId, 0, {}, sub2.id), sub2.id)
             })
 
@@ -399,16 +402,16 @@ describe('StreamrClient', () => {
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition, sub.id)
+                const resendResponse = new ResendResponseResending(new ResendResponseMessage(sub.streamId, sub.streamPartition, sub.id))
                 sub.on('resending', (event) => {
-                    assert.deepEqual(event, resendResponse)
+                    assert.deepEqual(event, resendResponse.payload)
                     done()
                 })
                 connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResending(sub.streamId, sub.streamPartition, 'unknown subid')
+                const resendResponse = new ResendResponseResending(new ResendResponseMessage(sub.streamId, sub.streamPartition, 'unknown subid'))
                 sub.on('resending', sinon.stub().throws())
                 connection.emitMessage(resendResponse)
             })
@@ -419,16 +422,16 @@ describe('StreamrClient', () => {
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition, sub.id)
+                const resendResponse = new ResendResponseNoResend(new ResendResponseMessage(sub.streamId, sub.streamPartition, sub.id))
                 sub.on('no_resend', (event) => {
-                    assert.deepEqual(event, resendResponse)
+                    assert.deepEqual(event, resendResponse.payload)
                     done()
                 })
                 connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseNoResend(sub.streamId, sub.streamPartition, 'unknown subid')
+                const resendResponse = new ResendResponseNoResend(new ResendResponseMessage(sub.streamId, sub.streamPartition, 'unknown subid'))
                 sub.on('no_resend', sinon.stub().throws())
                 connection.emitMessage(resendResponse)
             })
@@ -439,16 +442,16 @@ describe('StreamrClient', () => {
 
             it('emits event on associated subscription', (done) => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition, sub.id)
+                const resendResponse = new ResendResponseResent(new ResendResponseMessage(sub.streamId, sub.streamPartition, sub.id))
                 sub.on('resent', (event) => {
-                    assert.deepEqual(event, resendResponse)
+                    assert.deepEqual(event, resendResponse.payload)
                     done()
                 })
                 connection.emitMessage(resendResponse)
             })
             it('ignores messages for unknown subscriptions', () => {
                 const sub = setupSubscription('stream1')
-                const resendResponse = new ResendResponseResent(sub.streamId, sub.streamPartition, 'unknown subid')
+                const resendResponse = new ResendResponseResent(new ResendResponseMessage(sub.streamId, sub.streamPartition, 'unknown subid'))
                 sub.on('resent', sinon.stub().throws())
                 connection.emitMessage(resendResponse)
             })
@@ -459,14 +462,13 @@ describe('StreamrClient', () => {
 
             it('emits an error event on client', (done) => {
                 setupSubscription('stream1')
-                const errorResponse = new ErrorResponse('Test error')
-                connection.emitMessage(errorResponse)
+                const errorResponse = new ErrorResponse(new ErrorMessage('Test error'))
 
                 client.on('error', (err) => {
-                    assert.equal(err.message, errorResponse.errorMessage)
+                    assert.equal(err.message, errorResponse.payload.error)
                     done()
                 })
-                connection.emit('ErrorResponse', errorResponse)
+                connection.emitMessage(errorResponse)
             })
         })
 
@@ -574,7 +576,7 @@ describe('StreamrClient', () => {
             it('sets subscribed state on subsequent subscriptions without further subscribe requests', (done) => {
                 connection.expect(new SubscribeRequest('stream1'))
                 const sub = client.subscribe('stream1', () => {})
-                connection.emitMessage(new SubscribeResponse(sub.streamId))
+                connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
 
                 const sub2 = client.subscribe(sub.streamId, () => {})
                 sub2.on('subscribed', () => {
@@ -591,7 +593,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_all: true,
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
 
                 it('supports resend_from', () => {
@@ -601,7 +603,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_from: 5,
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
 
                 it('supports resend_last', () => {
@@ -611,7 +613,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_last: 5,
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
 
                 it('supports resend_from_time', () => {
@@ -622,7 +624,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_from_time: time,
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
 
                 it('supports resend_from_time given as a Date object', () => {
@@ -633,7 +635,7 @@ describe('StreamrClient', () => {
                     connection.expect(new ResendRequest(sub.streamId, sub.streamPartition, sub.id, {
                         resend_from_time: time.getTime(),
                     }))
-                    connection.emitMessage(new SubscribeResponse(sub.streamId))
+                    connection.emitMessage(new SubscribeResponse(new StreamAndPartition(sub.streamId)))
                 })
 
                 it('throws if resend_from_time is invalid', () => {
@@ -741,7 +743,7 @@ describe('StreamrClient', () => {
 
             sub.on('unsubscribed', handler)
             client.unsubscribe(sub)
-            connection.emitMessage(new UnsubscribeResponse(sub.streamId), sub.id)
+            connection.emitMessage(new UnsubscribeResponse(new StreamAndPartition(sub.streamId)))
             assert.equal(sub.getState(), Subscription.State.unsubscribed)
 
             client.unsubscribe(sub)

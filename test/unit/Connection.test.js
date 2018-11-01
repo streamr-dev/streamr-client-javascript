@@ -4,6 +4,7 @@ import sinon from 'sinon'
 import {
     MessageFromServer,
     UnicastMessage,
+    StreamMessage,
     Errors,
 } from 'streamr-client-protocol'
 
@@ -159,16 +160,16 @@ describe('Connection', () => {
 
         describe('message', () => {
             it('emits events named by messateTypeName and the MessageFromServer as an argument', (done) => {
-                conn.on('UnicastMessage', (message, subId) => {
+                conn.on('UnicastMessage', (message) => {
                     assert(message instanceof UnicastMessage)
-                    assert.equal(message.offset, 10)
-                    assert.equal(message.getParsedContent().hello, 'world')
-                    assert.equal(subId, 'subId')
+                    assert.equal(message.payload.offset, 10)
+                    assert.equal(message.payload.getParsedContent().hello, 'world')
+                    assert.equal(message.subId, 'subId')
                     done()
                 })
 
-                const message = new MessageFromServer(
-                    new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
+                const message = new UnicastMessage(
+                    new StreamMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
                         hello: 'world',
                     }),
                     'subId',
@@ -185,8 +186,8 @@ describe('Connection', () => {
                     done()
                 })
 
-                const message = new MessageFromServer(
-                    new UnicastMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
+                const message = new UnicastMessage(
+                    new StreamMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
                     'subId',
                 )
 

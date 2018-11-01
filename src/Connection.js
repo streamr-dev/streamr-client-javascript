@@ -57,11 +57,15 @@ class Connection extends EventEmitter {
         })
 
         this.socket.onmessage = (messageEvent) => {
+            let messageFromServer
             try {
-                const messageFromServer = MessageFromServer.deserialize(messageEvent.data)
-                this.emitMessage(messageFromServer.payload, messageFromServer.subId)
+                messageFromServer = MessageFromServer.deserialize(messageEvent.data)
             } catch (err) {
                 this.emit('error', err)
+            }
+
+            if (messageFromServer) {
+                this.emit(messageFromServer.constructor.getMessageName(), messageFromServer)
             }
         }
 
@@ -70,10 +74,6 @@ class Connection extends EventEmitter {
                 resolve()
             })
         })
-    }
-
-    emitMessage(payload, subId) {
-        this.emit(payload.constructor.getMessageName(), payload, subId)
     }
 
     disconnect() {
