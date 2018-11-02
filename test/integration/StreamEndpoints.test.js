@@ -71,7 +71,7 @@ describe('StreamEndpoints', () => {
         })
             .then((stream1) => {
                 assert(stream1)
-                // We mimic the fact that the token expired by setting it to some value unknown by the backend
+                // We mimic the token expiration by setting it to some value unknown by the backend
                 clientPrivateKey.session.sessionToken = 'invalid-token'
                 clientPrivateKey.createStream({
                     name: 'Login test 3b',
