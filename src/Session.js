@@ -16,8 +16,9 @@ export default class Session {
         Object.assign(this.options, client.options.auth)
 
         if (this.options.privateKey) {
-            this.account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
-            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => this.account.sign(d).signature, this.account.address)
+            const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
+            this.sign = (d) => account.sign(d).signature
+            this.loginFunction = async () => this._client.loginWithChallengeResponse(this.sign, account.address)
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
             const accounts = w3.eth.getAccounts()
@@ -25,8 +26,8 @@ export default class Session {
             if (!address) {
                 throw new Error('Cannot access account from provider')
             }
-            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) =>
-                w3.eth.personal.sign(d, this.address), this.account.address)
+            this.sign = (d) => w3.eth.personal.sign(d, address)
+            this.loginFunction = async () => this._client.loginWithChallengeResponse(this.sign, address)
         } else if (this.options.apiKey) {
             this.loginFunction = async () => this._client.loginWithApiKey({
                 apiKey: this.options.apiKey,
