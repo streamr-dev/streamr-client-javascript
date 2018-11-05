@@ -1,4 +1,3 @@
-import 'babel-polyfill' // Needed because of mocha
 import assert from 'assert'
 
 import StreamrClient from '../../src'
