@@ -6,6 +6,7 @@ export default class Session {
     constructor(client, options) {
         this._client = client
         this.options = options.auth || {}
+        this.state = Session.State.LOGGED_OUT
 
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
@@ -35,8 +36,20 @@ export default class Session {
         if (this.options.sessionToken && !requireNewToken) {
             return this.options.sessionToken
         }
-        const tokenObj = await this.loginFunction()
-        this.options.sessionToken = tokenObj.token
-        return tokenObj.token
+        if (this.state === Session.State.LOGGING_IN) {
+            return Promise.reject(new Error('Already logging in!'))
+        }
+        this.state = Session.State.LOGGING_IN
+        return this.loginFunction().then((tokenObj) => {
+            this.options.sessionToken = tokenObj.token
+            this.state = Session.State.LOGGED_IN
+            return tokenObj.token
+        })
     }
+}
+
+Session.State = {
+    LOGGED_OUT: 'logged out',
+    LOGGING_IN: 'logging in',
+    LOGGED_IN: 'logged in',
 }

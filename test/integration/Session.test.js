@@ -16,6 +16,19 @@ describe('Session', () => {
         ...opts,
     })
 
+    async function assertThrowsAsync(fn, regExp) {
+        let f = () => {}
+        try {
+            await fn()
+        } catch (e) {
+            f = () => {
+                throw e
+            }
+        } finally {
+            assert.throws(f, regExp)
+        }
+    }
+
     beforeAll(() => {
         clientApiKey = createClient({
             auth: {
@@ -48,5 +61,14 @@ describe('Session', () => {
             .then((sessionToken) => {
                 assert(sessionToken)
             }))
+    })
+
+    describe('Internal state', () => {
+        it('should throw when calling getSessionToken() while logging in', async () => {
+            await assertThrowsAsync(async () => Promise.all([
+                clientApiKey.session.getSessionToken(),
+                clientApiKey.session.getSessionToken(),
+            ]), /Error/)
+        })
     })
 })
