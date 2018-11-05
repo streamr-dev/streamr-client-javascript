@@ -5,7 +5,7 @@ const web3 = new Web3()
 export default class Session {
     constructor(client, options) {
         this._client = client
-        this.options = options.auth
+        this.options = options.auth || {}
 
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)

@@ -281,10 +281,10 @@ export default class StreamrClient extends EventEmitter {
         const sessionToken = await this.session.getSessionToken()
 
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, sessionToken, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
-                this._requestResend(sub, {
+                this._requestResend(sub, sessionToken, {
                     resend_from: from, resend_to: to,
                 })
             }
@@ -299,7 +299,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If connected, emit a subscribe request
         if (this.connection.state === Connection.State.CONNECTED) {
-            this._resendAndSubscribe(sub)
+            this._resendAndSubscribe(sub, sessionToken)
         } else if (this.options.autoConnect) {
             this.connect().catch(() => {}) // ignore
         }
@@ -380,28 +380,28 @@ export default class StreamrClient extends EventEmitter {
         }
     }
 
-    _resendAndSubscribe(sub) {
+    _resendAndSubscribe(sub, sessionToken) {
         if (sub.getState() !== Subscription.State.subscribing && !sub.resending) {
             sub.setState(Subscription.State.subscribing)
-            this._requestSubscribe(sub)
+            this._requestSubscribe(sub, sessionToken)
 
             // Once subscribed, ask for a resend
             sub.once('subscribed', () => {
                 if (sub.hasResendOptions()) {
-                    this._requestResend(sub)
+                    this._requestResend(sub, sessionToken)
                 }
             })
         }
     }
 
-    _requestSubscribe(sub) {
+    _requestSubscribe(sub, sessionToken) {
         const subs = this.subsByStream[sub.streamId]
 
         const subscribedSubs = subs.filter((it) => it.getState() === Subscription.State.subscribed)
 
         // If this is the first subscription for this stream, send a subscription request to the server
         if (!subs.subscribing && subscribedSubs.length === 0) {
-            const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey, sub.sessionToken)
+            const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey, sessionToken)
             debug('_requestSubscribe: subscribing client: %o', request)
             subs.subscribing = true
             this.connection.send(request)
@@ -420,7 +420,7 @@ export default class StreamrClient extends EventEmitter {
         this.connection.send(new UnsubscribeRequest(streamId))
     }
 
-    _requestResend(sub, resendOptions) {
+    _requestResend(sub, sessionToken, resendOptions) {
         sub.setResending(true)
 
         const request = new ResendRequest(
@@ -429,7 +429,7 @@ export default class StreamrClient extends EventEmitter {
             sub.id,
             resendOptions || sub.getEffectiveResendOptions(),
             sub.apiKey,
-            sub.sessionToken,
+            sessionToken,
         )
         debug('_requestResend: %o', request)
         this.connection.send(request)
