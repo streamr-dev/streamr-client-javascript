@@ -5,14 +5,7 @@ const web3 = new Web3()
 export default class Session {
     constructor(client) {
         this._client = client
-        this.options = {
-            privateKey: null,
-            provider: null,
-            apiKey: null,
-            username: null,
-            password: null,
-            sessionToken: null,
-        }
+        this.options = {}
         Object.assign(this.options, client.options.auth)
 
         if (this.options.privateKey) {
