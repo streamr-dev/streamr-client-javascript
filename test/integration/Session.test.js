@@ -37,15 +37,15 @@ describe('Session', () => {
     })
 
     describe('Token retrievals succeed', () => {
-        it('Can get token from API key', () => clientApiKey.session.getSessionToken()
+        it('should get token from API key', () => clientApiKey.session.getSessionToken()
             .then((sessionToken) => {
                 assert(sessionToken)
             }))
-        it('Can get token from private key', () => clientPrivateKey.session.getSessionToken()
+        it('should get token from private key', () => clientPrivateKey.session.getSessionToken()
             .then((sessionToken) => {
                 assert(sessionToken)
             }))
-        it('Can get token from username/password', () => clientUsernamePassword.session.getSessionToken()
+        it('should get token from username/password', () => clientUsernamePassword.session.getSessionToken()
             .then((sessionToken) => {
                 assert(sessionToken)
             }))

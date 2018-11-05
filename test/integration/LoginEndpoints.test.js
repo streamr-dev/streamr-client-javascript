@@ -48,7 +48,7 @@ describe('LoginEndpoints', () => {
     }
 
     describe('Challenge response', () => {
-        it('login should fail', async () => {
+        it('should fail to get a session token', async () => {
             await assertThrowsAsync(async () => client.sendChallengeResponse(
                 {
                     id: 'some-id',
@@ -58,9 +58,9 @@ describe('LoginEndpoints', () => {
                 'some-address',
             ), /Error/)
         })
-        it('login should pass and should receive a session token', () => {
+        it('should get a session token', () => {
             const account = web3.eth.accounts.create()
-            client.getChallenge(account.address)
+            return client.getChallenge(account.address)
                 .then((challenge) => {
                     assert(challenge.challenge)
                     const signatureObject = account.sign(challenge.challenge)
@@ -72,9 +72,9 @@ describe('LoginEndpoints', () => {
                         })
                 })
         })
-        it('login should pass using combined function', () => {
+        it('should get a session token with combined function', () => {
             const account = web3.eth.accounts.create()
-            client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)
+            return client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)
                 .then((sessionToken) => {
                     assert(sessionToken)
                     assert(sessionToken.token)
@@ -84,10 +84,10 @@ describe('LoginEndpoints', () => {
     })
 
     describe('API key login', () => {
-        it('login should fail', async () => {
+        it('should fail to get a session token', async () => {
             await assertThrowsAsync(async () => client.loginWithApiKey('apikey'), /Error/)
         })
-        it('login should pass', () => client.loginWithApiKey('tester1-api-key')
+        it('should get a session token', () => client.loginWithApiKey('tester1-api-key')
             .then((sessionToken) => {
                 assert(sessionToken)
                 assert(sessionToken.token)
@@ -96,10 +96,10 @@ describe('LoginEndpoints', () => {
     })
 
     describe('Username/password login', () => {
-        it('login should fail', async () => {
+        it('should fail to get a session token', async () => {
             await assertThrowsAsync(async () => client.loginWithUsernamePassword('username', 'password'), /Error/)
         })
-        it('login should pass', () => client.loginWithUsernamePassword('tester2@streamr.com', 'tester2')
+        it('should get a session token', () => client.loginWithUsernamePassword('tester2@streamr.com', 'tester2')
             .then((sessionToken) => {
                 assert(sessionToken)
                 assert(sessionToken.token)
