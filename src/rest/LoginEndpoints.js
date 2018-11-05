@@ -37,7 +37,8 @@ export async function sendChallengeResponse(challenge, signature, address) {
 
 export async function loginWithChallengeResponse(signingFunction, address) {
     const challenge = await this.getChallenge(address)
-    return this.sendChallengeResponse(challenge, signingFunction(challenge.challenge), address)
+    const signature = await signingFunction(challenge.challenge)
+    return this.sendChallengeResponse(challenge, signature, address)
 }
 
 export async function loginWithApiKey(apiKey) {
