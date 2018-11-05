@@ -29,14 +29,7 @@ export default class StreamrClient extends EventEmitter {
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
-            auth: {
-                privateKey: null,
-                provider: null,
-                apiKey: null,
-                username: null,
-                password: null,
-                sessionToken: null,
-            },
+            auth: {},
         }
         this.subsByStream = {}
         this.subById = {}
