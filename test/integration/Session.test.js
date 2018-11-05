@@ -65,6 +65,7 @@ describe('Session', () => {
 
     describe('Internal state', () => {
         it('should throw when calling getSessionToken() while logging in', async () => {
+            clientApiKey.session.options.sessionToken = undefined
             await assertThrowsAsync(async () => Promise.all([
                 clientApiKey.session.getSessionToken(),
                 clientApiKey.session.getSessionToken(),

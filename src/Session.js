@@ -10,8 +10,7 @@ export default class Session {
 
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
-            this.sign = (d) => account.sign(d).signature
-            this.loginFunction = async () => this._client.loginWithChallengeResponse(this.sign, account.address)
+            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
             const accounts = w3.eth.getAccounts()
@@ -19,8 +18,7 @@ export default class Session {
             if (!address) {
                 throw new Error('Cannot access account from provider')
             }
-            this.sign = (d) => w3.eth.personal.sign(d, address)
-            this.loginFunction = async () => this._client.loginWithChallengeResponse(this.sign, address)
+            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
         } else if (this.options.apiKey) {
             this.loginFunction = async () => this._client.loginWithApiKey(this.options.apiKey)
         } else if (this.options.username && this.options.password) {
