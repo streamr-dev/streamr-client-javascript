@@ -3,10 +3,9 @@ const Web3 = require('web3')
 const web3 = new Web3()
 
 export default class Session {
-    constructor(client) {
+    constructor(client, options) {
         this._client = client
-        this.options = {}
-        Object.assign(this.options, client.options.auth)
+        this.options = options.auth
 
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
