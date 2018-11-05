@@ -39,14 +39,6 @@ export default class StreamrClient extends EventEmitter {
 
         this.session = new Session(this, options)
 
-        // Backwards compatibility for the use of apiKey in code other than strict authentication by the Session
-        this.options.apiKey = this.options.auth.apiKey
-
-        // Backwards compatibility for option 'authKey' => 'apiKey'
-        if (this.options.authKey && !this.options.apiKey) {
-            this.options.apiKey = this.options.authKey
-        }
-
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
@@ -220,7 +212,7 @@ export default class StreamrClient extends EventEmitter {
         return this.subsByStream[streamId] || []
     }
 
-    async produceToStream(streamObjectOrId, data, apiKey = this.options.apiKey) {
+    async produceToStream(streamObjectOrId, data, apiKey = this.options.auth.apiKey) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
@@ -281,7 +273,7 @@ export default class StreamrClient extends EventEmitter {
         const sessionToken = await this.session.getSessionToken()
 
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.apiKey, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.auth.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
                 this._requestResend(sub, sessionToken, {
