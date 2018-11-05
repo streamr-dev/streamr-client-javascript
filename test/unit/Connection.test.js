@@ -15,7 +15,7 @@ describe('Connection', () => {
     beforeEach(() => {
         conn = new Connection({
             url: 'foo',
-        }, sinon.stub().throws(), {
+        }, {
             close: sinon.mock(),
         })
     })
