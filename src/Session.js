@@ -29,14 +29,9 @@ export default class Session {
             this.sign = (d) => w3.eth.personal.sign(d, address)
             this.loginFunction = async () => this._client.loginWithChallengeResponse(this.sign, address)
         } else if (this.options.apiKey) {
-            this.loginFunction = async () => this._client.loginWithApiKey({
-                apiKey: this.options.apiKey,
-            })
+            this.loginFunction = async () => this._client.loginWithApiKey(this.options.apiKey)
         } else if (this.options.username && this.options.password) {
-            this.loginFunction = async () => this._client.loginWithUsernamePassword({
-                username: this.options.username,
-                password: this.options.password,
-            })
+            this.loginFunction = async () => this._client.loginWithUsernamePassword(this.options.username, this.options.password)
         } else {
             this.loginFunction = async () => {
                 throw new Error('Need either "privateKey", "apiKey" or "username"+"password" to login.')

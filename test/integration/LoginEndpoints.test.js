@@ -25,9 +25,7 @@ describe('LoginEndpoints', () => {
     })
 
     describe('Challenge generation', () => {
-        it('should retrieve a challenge', () => client.getChallenge({
-            address: 'some-address',
-        })
+        it('should retrieve a challenge', () => client.getChallenge('some-address')
             .then((challenge) => {
                 assert(challenge)
                 assert(challenge.id)
@@ -51,28 +49,22 @@ describe('LoginEndpoints', () => {
 
     describe('Challenge response', () => {
         it('login should fail', async () => {
-            await assertThrowsAsync(async () => client.sendChallengeResponse({
-                challenge: {
+            await assertThrowsAsync(async () => client.sendChallengeResponse(
+                {
                     id: 'some-id',
                     challenge: 'some-challenge',
                 },
-                signature: 'some-sig',
-                address: 'some-address',
-            }), /Error/)
+                'some-sig',
+                'some-address',
+            ), /Error/)
         })
         it('login should pass and should receive a session token', () => {
             const account = web3.eth.accounts.create()
-            client.getChallenge({
-                address: account.address,
-            })
+            client.getChallenge(account.address)
                 .then((challenge) => {
                     assert(challenge.challenge)
                     const signatureObject = account.sign(challenge.challenge)
-                    client.sendChallengeResponse({
-                        challenge,
-                        signature: signatureObject.signature,
-                        address: account.address,
-                    })
+                    client.sendChallengeResponse(challenge, signatureObject.signature, account.address)
                         .then((sessionToken) => {
                             assert(sessionToken)
                             assert(sessionToken.token)
@@ -93,13 +85,9 @@ describe('LoginEndpoints', () => {
 
     describe('API key login', () => {
         it('login should fail', async () => {
-            await assertThrowsAsync(async () => client.loginWithApiKey({
-                apiKey: 'apikey',
-            }), /Error/)
+            await assertThrowsAsync(async () => client.loginWithApiKey('apikey'), /Error/)
         })
-        it('login should pass', () => client.loginWithApiKey({
-            apiKey: 'tester1-api-key',
-        })
+        it('login should pass', () => client.loginWithApiKey('tester1-api-key')
             .then((sessionToken) => {
                 assert(sessionToken)
                 assert(sessionToken.token)
@@ -109,15 +97,9 @@ describe('LoginEndpoints', () => {
 
     describe('Username/password login', () => {
         it('login should fail', async () => {
-            await assertThrowsAsync(async () => client.loginWithUsernamePassword({
-                username: 'username',
-                password: 'password',
-            }), /Error/)
+            await assertThrowsAsync(async () => client.loginWithUsernamePassword('username', 'password'), /Error/)
         })
-        it('login should pass', () => client.loginWithUsernamePassword({
-            username: 'tester2@streamr.com',
-            password: 'tester2',
-        })
+        it('login should pass', () => client.loginWithUsernamePassword('tester2@streamr.com', 'tester2')
             .then((sessionToken) => {
                 assert(sessionToken)
                 assert(sessionToken.token)

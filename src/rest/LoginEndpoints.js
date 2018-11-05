@@ -14,11 +14,8 @@ async function getSessionToken(url, props) {
     )
 }
 
-export async function getChallenge(props) {
-    if (!props || !props.address) {
-        throw new Error('Properties must contain "address" field!')
-    }
-    const url = `${this.options.restUrl}/login/challenge/${props.address}`
+export async function getChallenge(address) {
+    const url = `${this.options.restUrl}/login/challenge/${address}`
     return authFetch(
         url,
         undefined,
@@ -28,40 +25,34 @@ export async function getChallenge(props) {
     )
 }
 
-export async function sendChallengeResponse(props) {
-    if (!props || !props.challenge || !props.signature || !props.address) {
-        throw new Error('Properties must contain "challenge", "signature" and "address" fields!')
-    }
-
+export async function sendChallengeResponse(challenge, signature, address) {
     const url = `${this.options.restUrl}/login/response`
+    const props = {
+        challenge,
+        signature,
+        address,
+    }
     return getSessionToken(url, props)
 }
 
 export async function loginWithChallengeResponse(signingFunction, address) {
-    const challenge = await this.getChallenge({
-        address,
-    })
-    return this.sendChallengeResponse({
-        challenge,
-        signature: signingFunction(challenge.challenge),
-        address,
-    })
+    const challenge = await this.getChallenge(address)
+    return this.sendChallengeResponse(challenge, signingFunction(challenge.challenge), address)
 }
 
-export async function loginWithApiKey(props) {
-    if (!props || !props.apiKey) {
-        throw new Error('Properties must contain "apiKey" field!')
-    }
-
+export async function loginWithApiKey(apiKey) {
     const url = `${this.options.restUrl}/login/apikey`
+    const props = {
+        apiKey,
+    }
     return getSessionToken(url, props)
 }
 
-export async function loginWithUsernamePassword(props) {
-    if (!props || !props.username || !props.password) {
-        throw new Error('Properties must contain "username" and "password" fields!')
-    }
-
+export async function loginWithUsernamePassword(username, password) {
     const url = `${this.options.restUrl}/login/password`
+    const props = {
+        username,
+        password,
+    }
     return getSessionToken(url, props)
 }
