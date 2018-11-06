@@ -77,8 +77,8 @@ describe('StreamrClient', () => {
 
         it('client.subscribe with resend', (done) => {
             // This test needs some time because the write needs to have time to go to Cassandra
-            setTimeout(async () => {
-                const sub = await client.subscribe({
+            setTimeout(() => {
+                const sub = client.subscribe({
                     stream: createdStream.id,
                     resend_last: 1,
                 }, () => {
@@ -96,8 +96,8 @@ describe('StreamrClient', () => {
             // Make a new stream for this test to avoid conflicts
             client.getOrCreateStream({
                 name: `StreamrClient client.subscribe (realtime) - ${Date.now()}`,
-            }).then(async (stream) => {
-                const sub = await client.subscribe({
+            }).then((stream) => {
+                const sub = client.subscribe({
                     stream: stream.id,
                 }, (message) => {
                     assert.equal(message.id, id)

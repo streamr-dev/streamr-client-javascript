@@ -244,7 +244,7 @@ export default class StreamrClient extends EventEmitter {
         }
     }
 
-    async subscribe(optionsOrStreamId, callback, legacyOptions) {
+    subscribe(optionsOrStreamId, callback, legacyOptions) {
         if (!optionsOrStreamId) {
             throw new Error('subscribe: Invalid arguments: subscription options is required!')
         } else if (!callback) {
@@ -270,15 +270,13 @@ export default class StreamrClient extends EventEmitter {
             throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
-        const sessionToken = await this.session.getSessionToken()
-
         // Create the Subscription object and bind handlers
         const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.auth.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
-                this._requestResend(sub, sessionToken, {
+                this.session.getSessionToken().then((sessionToken) => this._requestResend(sub, sessionToken, {
                     resend_from: from, resend_to: to,
-                })
+                }))
             }
         })
         sub.on('done', () => {
@@ -291,7 +289,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If connected, emit a subscribe request
         if (this.connection.state === Connection.State.CONNECTED) {
-            this._resendAndSubscribe(sub, sessionToken)
+            this.session.getSessionToken().then((sessionToken) => this._resendAndSubscribe(sub, sessionToken))
         } else if (this.options.autoConnect) {
             this.connect().catch(() => {}) // ignore
         }
