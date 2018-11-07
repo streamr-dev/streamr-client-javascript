@@ -10,8 +10,6 @@ describe('StreamEndpoints', () => {
     const name = `StreamEndpoints-integration-${Date.now()}`
 
     let client
-    let clientPrivateKey
-    let clientUsernamePassword
     let createdStream
 
     const createClient = (opts = {}) => new StreamrClient({
@@ -28,17 +26,6 @@ describe('StreamEndpoints', () => {
                 apiKey: 'tester1-api-key',
             },
         })
-        clientPrivateKey = createClient({
-            auth: {
-                privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-            },
-        })
-        clientUsernamePassword = createClient({
-            auth: {
-                username: 'tester2@streamr.com',
-                password: 'tester2',
-            },
-        })
     })
 
     describe('Stream creation', () => {
@@ -49,35 +36,6 @@ describe('StreamEndpoints', () => {
                 createdStream = stream
                 assert(stream.id)
                 assert.equal(stream.name, name)
-            }))
-
-        it('createStream with private key', () => clientPrivateKey.createStream({
-            name: 'Login test 1',
-        })
-            .then((stream) => {
-                assert(stream.id)
-            }))
-
-        it('createStream with username/password', () => clientUsernamePassword.createStream({
-            name: 'Login test 2',
-        })
-            .then((stream) => {
-                assert(stream.id)
-            }))
-
-        it('createStream twice with token expiration', () => clientPrivateKey.createStream({
-            name: 'Login test 3a',
-        })
-            .then((stream1) => {
-                assert(stream1)
-                // We mimic the token expiration by setting it to some value unknown by the backend
-                clientPrivateKey.session.sessionToken = 'invalid-token'
-                clientPrivateKey.createStream({
-                    name: 'Login test 3b',
-                })
-                    .then((stream2) => {
-                        assert(stream2)
-                    })
             }))
 
         it('getOrCreate an existing Stream', () => client.getOrCreateStream({
