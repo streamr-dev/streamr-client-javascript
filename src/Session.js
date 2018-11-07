@@ -5,7 +5,7 @@ const web3 = new Web3()
 export default class Session {
     constructor(client, options) {
         this._client = client
-        this.options = options.auth || {}
+        this.options = options || {}
         this.state = Session.State.LOGGED_OUT
 
         if (this.options.privateKey) {

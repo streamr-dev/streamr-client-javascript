@@ -37,7 +37,15 @@ export default class StreamrClient extends EventEmitter {
 
         Object.assign(this.options, options || {})
 
-        this.session = new Session(this, options)
+        // Backwards compatibility for option 'authKey' => 'apiKey'
+        if (this.options.authKey && !this.options.apiKey) {
+            this.options.apiKey = this.options.authKey
+        }
+        if (this.options.apiKey) {
+            this.options.auth.apiKey = this.options.apiKey
+        }
+
+        this.session = new Session(this, options.auth)
 
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)

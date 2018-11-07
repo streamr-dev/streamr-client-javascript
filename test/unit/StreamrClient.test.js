@@ -836,5 +836,20 @@ describe('StreamrClient', () => {
             })
         })
     })
+
+    describe('Backwards compatibility for apiKey and authKey', () => {
+        it('sets auth.apiKey from authKey', () => {
+            const c = new StreamrClient({
+                authKey: 'authKey',
+            })
+            assert(c.options.auth.apiKey)
+        })
+        it('sets auth.apiKey from apiKey', () => {
+            const c = new StreamrClient({
+                apiKey: 'apiKey',
+            })
+            assert(c.options.auth.apiKey)
+        })
+    })
 })
 
