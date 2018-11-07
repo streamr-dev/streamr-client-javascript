@@ -34,11 +34,11 @@ export default class Session {
         if (this.options.sessionToken && !requireNewToken) {
             return this.options.sessionToken
         }
-        if (this.state === Session.State.LOGGING_IN) {
-            return Promise.reject(new Error('Already logging in!'))
+        if (this.state !== Session.State.LOGGING_IN) {
+            this.state = Session.State.LOGGING_IN
+            this.sessionTokenPromise = this.loginFunction()
         }
-        this.state = Session.State.LOGGING_IN
-        return this.loginFunction().then((tokenObj) => {
+        return this.sessionTokenPromise.then((tokenObj) => {
             this.options.sessionToken = tokenObj.token
             this.state = Session.State.LOGGED_IN
             return tokenObj.token

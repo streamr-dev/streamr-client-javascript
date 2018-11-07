@@ -7,6 +7,7 @@ describe('Session', () => {
     let clientApiKey
     let clientPrivateKey
     let clientUsernamePassword
+    let clientNone
 
     const createClient = (opts = {}) => new StreamrClient({
         url: config.websocketUrl,
@@ -15,19 +16,6 @@ describe('Session', () => {
         autoDisconnect: false,
         ...opts,
     })
-
-    async function assertThrowsAsync(fn, regExp) {
-        let f = () => {}
-        try {
-            await fn()
-        } catch (e) {
-            f = () => {
-                throw e
-            }
-        } finally {
-            assert.throws(f, regExp)
-        }
-    }
 
     beforeAll(() => {
         clientApiKey = createClient({
@@ -46,6 +34,9 @@ describe('Session', () => {
                 password: 'tester2',
             },
         })
+        clientNone = createClient({
+            auth: {},
+        })
     })
 
     describe('Token retrievals succeed', () => {
@@ -61,15 +52,38 @@ describe('Session', () => {
             .then((sessionToken) => {
                 assert(sessionToken)
             }))
+        it('should fail to get token with no authentication', (done) => clientNone.session.getSessionToken()
+            .catch((err) => {
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                done()
+            }))
     })
 
     describe('Internal state', () => {
-        it('should throw when calling getSessionToken() while logging in', async () => {
+        it('should return same value when calling getSessionToken() twice while logging in', () => {
             clientApiKey.session.options.sessionToken = undefined
-            await assertThrowsAsync(async () => Promise.all([
-                clientApiKey.session.getSessionToken(),
-                clientApiKey.session.getSessionToken(),
-            ]), /Error/)
+            const p1 = clientApiKey.session.getSessionToken()
+            const p2 = clientApiKey.session.getSessionToken()
+            return Promise.all([p1, p2]).then(([sessionToken1, sessionToken2]) => {
+                assert.equal(sessionToken1, sessionToken2)
+            })
+        })
+        it('should return different values when retrieving fresh session tokens twice sequentially', async () => {
+            clientApiKey.session.options.sessionToken = undefined
+            const sessionToken1 = await clientApiKey.session.getSessionToken(true)
+            const sessionToken2 = await clientApiKey.session.getSessionToken(true)
+            assert.notStrictEqual(sessionToken1, sessionToken2)
+        })
+        it('should fail both requests', (done) => {
+            const p1 = clientNone.session.getSessionToken()
+            const p2 = clientNone.session.getSessionToken()
+            p1.catch((err) => {
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+            })
+            p2.catch((err) => {
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                done()
+            })
         })
     })
 })
