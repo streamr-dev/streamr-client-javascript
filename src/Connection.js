@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import WebSocket from 'ws'
 
-import { MessageFromServer } from 'streamr-client-protocol'
+import { WebsocketResponse } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
 
@@ -57,15 +57,15 @@ class Connection extends EventEmitter {
         })
 
         this.socket.onmessage = (messageEvent) => {
-            let messageFromServer
+            let websocketResponse
             try {
-                messageFromServer = MessageFromServer.deserialize(messageEvent.data)
+                websocketResponse = WebsocketResponse.deserialize(messageEvent.data)
             } catch (err) {
                 this.emit('error', err)
             }
 
-            if (messageFromServer) {
-                this.emit(messageFromServer.constructor.getMessageName(), messageFromServer)
+            if (websocketResponse) {
+                this.emit(websocketResponse.constructor.getMessageName(), websocketResponse)
             }
         }
 

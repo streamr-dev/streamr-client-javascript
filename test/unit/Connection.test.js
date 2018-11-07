@@ -2,7 +2,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 
 import {
-    MessageFromServer,
+    WebsocketResponse,
     UnicastMessage,
     StreamMessage,
     Errors,
@@ -159,7 +159,7 @@ describe('Connection', () => {
         })
 
         describe('message', () => {
-            it('emits events named by messateTypeName and the MessageFromServer as an argument', (done) => {
+            it('emits events named by messateTypeName and the WebsocketResponse as an argument', (done) => {
                 conn.on('UnicastMessage', (message) => {
                     assert(message instanceof UnicastMessage)
                     assert.equal(message.payload.offset, 10)

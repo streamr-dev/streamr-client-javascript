@@ -420,7 +420,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _requestPublish(streamId, data, apiKey) {
-        const request = new PublishRequest(streamId, apiKey, data)
+        const request = new PublishRequest(streamId, apiKey, undefined, data)
         debug('_requestResend: %o', request)
         this.connection.send(request)
     }
