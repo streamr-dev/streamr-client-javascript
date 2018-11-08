@@ -14,6 +14,7 @@ import Subscription from './Subscription'
 import Stream from './rest/domain/Stream'
 import Connection from './Connection'
 import Session from './Session'
+import Signer from './Signer'
 import FailedToProduceError from './errors/FailedToProduceError'
 
 export default class StreamrClient extends EventEmitter {
@@ -46,6 +47,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         this.session = new Session(this, options.auth)
+        this.signer = (options.auth && options.auth.publishWithSignature) ? new Signer(options.auth) : undefined
 
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
@@ -439,7 +441,12 @@ export default class StreamrClient extends EventEmitter {
     _requestPublish(streamId, data, apiKey, sessionToken) {
         const request = new PublishRequest(streamId, apiKey, sessionToken, data)
         debug('_requestResend: %o', request)
-        this.connection.send(request)
+        if (this.signer) {
+            return this.signer.getSignedPublishRequest(request).then((signedRequest) => {
+                this.connection.send(signedRequest)
+            })
+        }
+        return this.connection.send(request)
     }
 
     handleError(msg) {

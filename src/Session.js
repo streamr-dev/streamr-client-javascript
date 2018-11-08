@@ -25,7 +25,7 @@ export default class Session {
             this.loginFunction = async () => this._client.loginWithUsernamePassword(this.options.username, this.options.password)
         } else {
             this.loginFunction = async () => {
-                throw new Error('Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                throw new Error('Need either "privateKey", "provider", "apiKey" or "username"+"password" to login.')
             }
         }
     }
