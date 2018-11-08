@@ -30,8 +30,16 @@ export default class Signer {
     }
 
     async getSignedPublishRequest(publishRequest) {
-        const payload = this.address + publishRequest.streamId + publishRequest.timestamp + publishRequest.getSerializedContent()
+        const payload = this.address + publishRequest.streamId + publishRequest.getTimestampAsNumber() + publishRequest.getSerializedContent()
         const signature = await this.sign(payload)
-        return new PublishRequest(publishRequest.streamId, publishRequest.apiKey, publishRequest.sessionToken, publishRequest.data, signature)
+        return new PublishRequest(
+            publishRequest.streamId,
+            publishRequest.apiKey,
+            publishRequest.sessionToken,
+            publishRequest.content,
+            publishRequest.timestamp,
+            publishRequest.partitionKey,
+            signature,
+        )
     }
 }
