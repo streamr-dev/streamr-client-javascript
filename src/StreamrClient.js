@@ -282,9 +282,9 @@ export default class StreamrClient extends EventEmitter {
         const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.auth.apiKey, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
-                this.session.getSessionToken().then((sessionToken) => this._requestResend(sub, sessionToken, {
+                this._requestResend(sub, {
                     resend_from: from, resend_to: to,
-                }))
+                })
             }
         })
         sub.on('done', () => {
@@ -297,7 +297,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If connected, emit a subscribe request
         if (this.connection.state === Connection.State.CONNECTED) {
-            this.session.getSessionToken().then((sessionToken) => this._resendAndSubscribe(sub, sessionToken))
+            this._resendAndSubscribe(sub)
         } else if (this.options.autoConnect) {
             this.connect().catch(() => {}) // ignore
         }
@@ -378,39 +378,41 @@ export default class StreamrClient extends EventEmitter {
         }
     }
 
-    _resendAndSubscribe(sub, sessionToken) {
+    _resendAndSubscribe(sub) {
         if (sub.getState() !== Subscription.State.subscribing && !sub.resending) {
             sub.setState(Subscription.State.subscribing)
-            this._requestSubscribe(sub, sessionToken)
+            this._requestSubscribe(sub)
 
             // Once subscribed, ask for a resend
             sub.once('subscribed', () => {
                 if (sub.hasResendOptions()) {
-                    this._requestResend(sub, sessionToken)
+                    this._requestResend(sub)
                 }
             })
         }
     }
 
-    _requestSubscribe(sub, sessionToken) {
+    _requestSubscribe(sub) {
         const subs = this.subsByStream[sub.streamId]
 
         const subscribedSubs = subs.filter((it) => it.getState() === Subscription.State.subscribed)
 
-        // If this is the first subscription for this stream, send a subscription request to the server
-        if (!subs.subscribing && subscribedSubs.length === 0) {
-            const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey, sessionToken)
-            debug('_requestSubscribe: subscribing client: %o', request)
-            subs.subscribing = true
-            this.connection.send(request)
-        } else if (subscribedSubs.length > 0) {
-            // If there already is a subscribed subscription for this stream, this new one will just join it immediately
-            debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
+        return this.session.getSessionToken().then((sessionToken) => {
+            // If this is the first subscription for this stream, send a subscription request to the server
+            if (!subs.subscribing && subscribedSubs.length === 0) {
+                const request = new SubscribeRequest(sub.streamId, undefined, sub.apiKey, sessionToken)
+                debug('_requestSubscribe: subscribing client: %o', request)
+                subs.subscribing = true
+                this.connection.send(request)
+            } else if (subscribedSubs.length > 0) {
+                // If there already is a subscribed subscription for this stream, this new one will just join it immediately
+                debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
 
-            setTimeout(() => {
-                sub.setState(Subscription.State.subscribed)
-            })
-        }
+                setTimeout(() => {
+                    sub.setState(Subscription.State.subscribed)
+                })
+            }
+        })
     }
 
     _requestUnsubscribe(streamId) {
@@ -418,19 +420,20 @@ export default class StreamrClient extends EventEmitter {
         this.connection.send(new UnsubscribeRequest(streamId))
     }
 
-    _requestResend(sub, sessionToken, resendOptions) {
+    _requestResend(sub, resendOptions) {
         sub.setResending(true)
-
-        const request = new ResendRequest(
-            sub.streamId,
-            sub.streamPartition,
-            sub.id,
-            resendOptions || sub.getEffectiveResendOptions(),
-            sub.apiKey,
-            sessionToken,
-        )
-        debug('_requestResend: %o', request)
-        this.connection.send(request)
+        return this.session.getSessionToken().then((sessionToken) => {
+            const request = new ResendRequest(
+                sub.streamId,
+                sub.streamPartition,
+                sub.id,
+                resendOptions || sub.getEffectiveResendOptions(),
+                sub.apiKey,
+                sessionToken,
+            )
+            debug('_requestResend: %o', request)
+            this.connection.send(request)
+        })
     }
 
     _requestPublish(streamId, data, apiKey, sessionToken) {

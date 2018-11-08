@@ -131,6 +131,7 @@ describe('StreamrClient', () => {
             autoConnect: false,
             autoDisconnect: false,
         }, connection)
+        client.session.getSessionToken = sinon.stub().resolves(undefined)
     })
 
     afterEach(() => {
@@ -239,7 +240,7 @@ describe('StreamrClient', () => {
                 assert.equal(sub.getState(), Subscription.State.subscribed)
             })
 
-            it('emits a resend request if resend options were given', () => {
+            it('emits a resend request if resend options were given', (done) => {
                 const sub = setupSubscription('stream1', false, {
                     resend_all: true,
                 })
@@ -247,6 +248,9 @@ describe('StreamrClient', () => {
                     resend_all: true,
                 }))
                 connection.emitMessage(new SubscribeResponse(sub.streamId))
+                setTimeout(() => {
+                    done()
+                }, 1000)
             })
 
             it('emits multiple resend requests as per multiple subscriptions', () => {
@@ -277,8 +281,10 @@ describe('StreamrClient', () => {
                 await client.connect()
                 sub = setupSubscription('stream1')
 
-                connection.expect(new UnsubscribeRequest(sub.streamId))
-                client.unsubscribe(sub)
+                sub.on('subscribed', () => {
+                    connection.expect(new UnsubscribeRequest(sub.streamId))
+                    client.unsubscribe(sub)
+                })
             })
 
             it('removes the subscription', () => {
@@ -803,7 +809,7 @@ describe('StreamrClient', () => {
 
             it('returns and resolves a promise', () => {
                 client.options.autoConnect = true
-                connection.expect(new PublishRequest('stream1', undefined, {
+                connection.expect(new PublishRequest('stream1', undefined, undefined, {
                     foo: 'bar',
                 }))
                 const promise = client.produceToStream('stream1', pubMsg)
@@ -818,7 +824,7 @@ describe('StreamrClient', () => {
 
                 // Produce 10 messages
                 for (let i = 0; i < 10; i++) {
-                    connection.expect(new PublishRequest('stream1', undefined, pubMsg))
+                    connection.expect(new PublishRequest('stream1', undefined, undefined, pubMsg))
                     // Messages will be queued until connected
                     client.produceToStream('stream1', pubMsg)
                 }
@@ -852,4 +858,3 @@ describe('StreamrClient', () => {
         })
     })
 })
-
