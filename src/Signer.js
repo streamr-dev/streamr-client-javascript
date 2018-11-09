@@ -4,6 +4,8 @@ const Web3 = require('web3')
 
 const web3 = new Web3()
 
+const SIGNATURE_TYPE_ETH = 1
+
 export default class Signer {
     constructor(options) {
         this.options = options || {}
@@ -25,13 +27,20 @@ export default class Signer {
         }
     }
 
-    async signData(data) {
-        return this.sign(data)
+    async signData(data, signatureType = SIGNATURE_TYPE_ETH) {
+        if (signatureType === SIGNATURE_TYPE_ETH) {
+            return this.sign(data)
+        }
+        throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    async getSignedPublishRequest(publishRequest) {
-        const payload = this.address + publishRequest.streamId + publishRequest.getTimestampAsNumber() + publishRequest.getSerializedContent()
-        const signature = await this.sign(payload)
+    async getSignedPublishRequest(publishRequest, signatureType = SIGNATURE_TYPE_ETH) {
+        const ts = publishRequest.getTimestampAsNumber()
+        if (!ts) {
+            throw new Error('Timestamp is required as part of the data to sign.')
+        }
+        const payload = this.address + publishRequest.streamId + ts + publishRequest.getSerializedContent()
+        const signature = await this.signData(payload, signatureType)
         return new PublishRequest(
             publishRequest.streamId,
             publishRequest.apiKey,
@@ -39,6 +48,7 @@ export default class Signer {
             publishRequest.content,
             publishRequest.timestamp,
             publishRequest.partitionKey,
+            signatureType,
             signature,
         )
     }

@@ -18,11 +18,20 @@ describe('Signer', () => {
         })
     })
 
-    describe('publish requests signing', () => {
-        it('should sign PublishRequest with appropriate fields', async () => {
-            const signer = new Signer({
+    describe('signing', () => {
+        let signer
+        beforeEach(() => {
+            signer = new Signer({
                 privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             })
+        })
+        it('should return correct signature', async () => {
+            const payload = 'data-to-sign'
+            const expectedSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
+            const signature = await signer.signData(payload)
+            assert.deepEqual(signature, expectedSignature)
+        })
+        it('should sign PublishRequest with appropriate fields', async () => {
             const streamId = 'streamId'
             const data = {
                 field: 'some-data',
@@ -33,6 +42,7 @@ describe('Signer', () => {
             assert(payload)
             const signature = await signer.signData(payload)
             const signedRequest = await signer.getSignedPublishRequest(request)
+            assert.deepEqual(1, signedRequest.signatureType)
             assert.deepEqual(signature, signedRequest.signature)
         })
     })
