@@ -36,16 +36,14 @@ export default class Session {
         }
         if (this.state !== Session.State.LOGGING_IN) {
             this.state = Session.State.LOGGING_IN
-            try {
-                this.sessionTokenPromise = this.loginFunction().then((tokenObj) => {
-                    this.options.sessionToken = tokenObj.token
-                    this.state = Session.State.LOGGED_IN
-                    return tokenObj.token
-                })
-            } catch (err) {
+            this.sessionTokenPromise = this.loginFunction().then((tokenObj) => {
+                this.options.sessionToken = tokenObj.token
+                this.state = Session.State.LOGGED_IN
+                return tokenObj.token
+            }).catch((err) => {
                 this.state = Session.State.LOGGED_OUT
                 throw err
-            }
+            })
         }
         return this.sessionTokenPromise
     }
