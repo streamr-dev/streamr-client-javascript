@@ -42,6 +42,7 @@ describe('Signer', () => {
             assert(payload)
             const signature = await signer.signData(payload)
             const signedRequest = await signer.getSignedPublishRequest(request)
+            assert.deepEqual(signer.address, signedRequest.publisherAddress)
             assert.deepEqual(1, signedRequest.signatureType)
             assert.deepEqual(signature, signedRequest.signature)
         })

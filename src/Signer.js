@@ -48,6 +48,7 @@ export default class Signer {
             publishRequest.content,
             publishRequest.timestamp,
             publishRequest.partitionKey,
+            this.address,
             signatureType,
             signature,
         )
