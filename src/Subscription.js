@@ -113,6 +113,8 @@ export default class Subscription extends EventEmitter {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
         }
 
+        // TODO: if msg.version === 29, should check msg.signatureType and verify the signature accordingly.
+
         // TODO: check this.options.resend_last ?
         // If resending, queue broadcasted messages
         if (this.resending && !isResend) {
