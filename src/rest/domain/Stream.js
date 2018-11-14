@@ -52,7 +52,7 @@ export default class Stream {
         )
     }
 
-    produce(data) {
-        return this._client.produceToStream(this.id, data)
+    produce(data, timestamp = undefined) {
+        return this._client.produceToStream(this.id, data, timestamp)
     }
 }

@@ -222,7 +222,7 @@ export default class StreamrClient extends EventEmitter {
         return this.subsByStream[streamId] || []
     }
 
-    async produceToStream(streamObjectOrId, data, apiKey = this.options.auth.apiKey) {
+    async produceToStream(streamObjectOrId, data, timestamp = undefined, apiKey = this.options.auth.apiKey) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
@@ -241,7 +241,7 @@ export default class StreamrClient extends EventEmitter {
 
         // If connected, emit a publish request
         if (this.isConnected()) {
-            this._requestPublish(streamId, data, apiKey, sessionToken)
+            this._requestPublish(streamId, data, timestamp, apiKey, sessionToken)
         } else if (this.options.autoConnect) {
             this.publishQueue.push([streamId, data, apiKey])
             this.connect().catch(() => {}) // ignore
@@ -438,8 +438,8 @@ export default class StreamrClient extends EventEmitter {
         })
     }
 
-    _requestPublish(streamId, data, apiKey, sessionToken) {
-        const request = new PublishRequest(streamId, apiKey, sessionToken, data)
+    _requestPublish(streamId, data, timestamp, apiKey, sessionToken) {
+        const request = new PublishRequest(streamId, apiKey, sessionToken, data, timestamp)
         debug('_requestResend: %o', request)
         if (this.signer) {
             return this.signer.getSignedPublishRequest(request).then((signedRequest) => {
