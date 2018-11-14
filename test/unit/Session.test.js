@@ -6,18 +6,38 @@ describe('Session', () => {
     let session
     let msg
 
+    beforeEach(() => {
+        session = new Session()
+        session.loginFunction = sinon.stub()
+        session.loginFunction.onCall(0).resolves({
+            token: 'session-token1',
+        })
+        session.loginFunction.onCall(1).resolves({
+            token: 'session-token2',
+        })
+    })
+
+    describe('getSessionToken', () => {
+        it('should set sessionToken', async () => {
+            await session.getSessionToken()
+            assert(session.loginFunction.calledOnce)
+            assert(session.options.sessionToken === 'session-token1')
+        })
+        it('should not call loginFunction if token set', async () => {
+            session.options.sessionToken = 'session-token1'
+            await session.getSessionToken()
+            assert(session.loginFunction.notCalled)
+        })
+        it('should call loginFunction if new token required', async () => {
+            session.options.sessionToken = 'expired-session-token'
+            await session.getSessionToken(true)
+            assert(session.loginFunction.calledOnce)
+            assert(session.options.sessionToken === 'session-token1')
+        })
+    })
+
     describe('Internal state', () => {
         describe('loginFunction resolves', () => {
-            beforeEach(() => {
-                session = new Session()
-                session.loginFunction = sinon.stub()
-                session.loginFunction.onCall(0).resolves({
-                    token: 'session-token1',
-                })
-                session.loginFunction.onCall(1).resolves({
-                    token: 'session-token2',
-                })
-            })
             it('should return same value when calling getSessionToken() twice while logging in', () => {
                 const p1 = session.getSessionToken()
                 const p2 = session.getSessionToken()
