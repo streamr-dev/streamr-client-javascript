@@ -2,21 +2,23 @@ import assert from 'assert'
 import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
+import Signer from '../../src/Signer'
 import config from './config'
 
 /**
  * These tests should be run in sequential order!
  */
-describe('StreamrClient', () => {
-    const name = `StreamrClient-integration-${Date.now()}`
+describe('Signer', () => {
+    const name = `Signer-integration-${Date.now()}`
 
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: config.websocketUrl,
+        url: `${config.websocketUrl}?version=29`,
         restUrl: config.restUrl,
         auth: {
             privateKey: '0x12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            publishWithSignature: true,
         },
         autoConnect: false,
         autoDisconnect: false,
@@ -58,24 +60,13 @@ describe('StreamrClient', () => {
                 name,
             }).then((stream) => {
                 createdStream = stream
-                assert(stream.id)
-                assert.equal(stream.name, name)
+                createdStream.produce({
+                    test: 'test1',
+                }, Date.now())
             })
         })
 
-        it('Stream.produce', () => createdStream.produce({
-            test: 'Stream.produce',
-        }))
-
-        it('client.produceToStream', () => client.produceToStream(createdStream.id, {
-            test: 'client.produceToStream',
-        }))
-
-        it('client.produceToStream with Stream object as arg', () => client.produceToStream(createdStream, {
-            test: 'client.produceToStream with Stream object as arg',
-        }))
-
-        it('client.subscribe with resend', (done) => {
+        it('should receive signature in UnicastMessage', (done) => {
             // This test needs some time because the write needs to have time to go to Cassandra
             setTimeout(() => {
                 const sub = client.subscribe({
@@ -87,29 +78,43 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
+                client.connection.on('UnicastMessage', (msg) => {
+                    const streamMessage = msg.payload
+                    assert.equal(streamMessage.parsedContent.test, 'test1')
+                    assert.equal(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
+                    Signer.verifyStreamMessage(streamMessage)
+                })
             }, 5000)
         }, 10000)
 
-        it('client.subscribe (realtime)', (done) => {
-            const id = Date.now()
-
-            // Make a new stream for this test to avoid conflicts
+        it('should receive signature in BroadcastMessage', (done) => {
             client.getOrCreateStream({
-                name: `StreamrClient client.subscribe (realtime) - ${Date.now()}`,
+                name: `Signer - ${Date.now()}`,
             }).then((stream) => {
                 const sub = client.subscribe({
                     stream: stream.id,
-                }, (message) => {
-                    assert.equal(message.id, id)
+                }, () => {
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
                         done()
                     })
                 })
+                const ts = Date.now()
                 sub.on('subscribed', () => {
                     stream.produce({
-                        id,
-                    })
+                        test: 'test2',
+                    }, ts)
+                })
+                client.connection.on('BroadcastMessage', (msg) => {
+                    const streamMessage = msg.payload
+                    assert.equal(streamMessage.parsedContent.test, 'test2')
+                    assert.equal(ts, streamMessage.timestamp)
+                    assert.equal(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
+                    Signer.verifyStreamMessage(streamMessage)
                 })
             })
         })
