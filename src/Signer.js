@@ -39,7 +39,7 @@ export default class Signer {
         if (!ts) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        const payload = this.address + publishRequest.streamId + ts + publishRequest.getSerializedContent()
+        const payload = this.address.toLowerCase() + publishRequest.streamId + ts + publishRequest.getSerializedContent()
         const signature = await this.signData(payload, signatureType)
         return new PublishRequest(
             publishRequest.streamId,
@@ -61,8 +61,10 @@ export default class Signer {
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
+    // TODO: should be used by the StreamrClient before calling Subscription.handleMessage but only if client required signature verification
+    // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
     static verifyStreamMessage(msg) {
-        const data = msg.publisherAddress + msg.streamId + msg.timestamp + msg.getSerializedContent()
+        const data = msg.publisherAddress.toLowerCase() + msg.streamId + msg.timestamp + msg.getSerializedContent()
         if (!this.verifySignature(data, msg.signature, msg.publisherAddress, msg.signatureType)) {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }
