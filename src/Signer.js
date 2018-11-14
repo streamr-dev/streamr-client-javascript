@@ -53,4 +53,18 @@ export default class Signer {
             signature,
         )
     }
+
+    static verifySignature(data, signature, address, signatureType = SIGNATURE_TYPE_ETH) {
+        if (signatureType === SIGNATURE_TYPE_ETH) {
+            return web3.eth.accounts.recover(data, signature).toLowerCase() === address.toLowerCase()
+        }
+        throw new Error(`Unrecognized signature type: ${signatureType}`)
+    }
+
+    static verifyStreamMessage(msg) {
+        const data = msg.publisherAddress + msg.streamId + msg.timestamp + msg.getSerializedContent()
+        if (!this.verifySignature(data, msg.signature, msg.publisherAddress, msg.signatureType)) {
+            throw new Error(`Invalid signature: ${msg.signature}`)
+        }
+    }
 }

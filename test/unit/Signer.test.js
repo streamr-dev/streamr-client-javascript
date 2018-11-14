@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { PublishRequest } from 'streamr-client-protocol'
+import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
 import Signer from '../../src/Signer'
 
 describe('Signer', () => {
@@ -45,6 +45,47 @@ describe('Signer', () => {
             assert.deepEqual(signer.address, signedRequest.publisherAddress)
             assert.deepEqual(1, signedRequest.signatureType)
             assert.deepEqual(signature, signedRequest.signature)
+        })
+        it('Should verify correct signature', async () => {
+            const streamId = 'streamId'
+            const data = {
+                field: 'some-data',
+            }
+            const timestamp = Date.now()
+            const signedRequest = await signer.getSignedPublishRequest(new PublishRequest(streamId, undefined, undefined, data, timestamp))
+            const streamMessage = new StreamMessage(
+                streamId,
+                0,
+                timestamp,
+                0,
+                0,
+                0,
+                StreamMessage.CONTENT_TYPES.JSON,
+                data,
+                1,
+                signedRequest.publisherAddress,
+                signedRequest.signature,
+            )
+            Signer.verifyStreamMessage(streamMessage)
+        })
+
+        it('Should throw if incorrect signature', async () => {
+            const streamMessage = new StreamMessage(
+                'streamId',
+                0,
+                Date.now(),
+                0,
+                0,
+                0,
+                StreamMessage.CONTENT_TYPES.JSON,
+                {
+                    field: 'some-data',
+                },
+                1,
+                '0xF915eD664e43C50eB7b9Ca7CfEB992703eDe55c4',
+                '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
+            )
+            assert.throws(() => Signer.verifyStreamMessage(streamMessage), Error)
         })
     })
 })
