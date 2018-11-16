@@ -45,7 +45,7 @@ describe('Session', () => {
         })
     })
 
-    describe('Token retrievals succeed', () => {
+    describe('Token retrievals', () => {
         it('should get token from API key', () => clientApiKey.session.getSessionToken()
             .then((sessionToken) => {
                 assert(sessionToken)

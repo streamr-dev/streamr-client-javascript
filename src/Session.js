@@ -13,12 +13,15 @@ export default class Session {
             this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
-            const accounts = w3.eth.getAccounts()
-            const address = accounts[0]
-            if (!address) {
-                throw new Error('Cannot access account from provider')
+            this.loginFunction = async () => {
+                const address = await w3.eth.getAccounts().then((accounts) => {
+                    if (!accounts[0]) {
+                        throw new Error('Cannot access account from provider')
+                    }
+                    return accounts[0]
+                })
+                return this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
             }
-            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
         } else if (this.options.apiKey) {
             this.loginFunction = async () => this._client.loginWithApiKey(this.options.apiKey)
         } else if (this.options.username && this.options.password) {
