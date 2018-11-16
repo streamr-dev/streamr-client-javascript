@@ -21,10 +21,11 @@
             }
         })
 
-        /* The first call to this function should trigger the login function to get a session token and
-        * a Metamask popup should appear to sign the challenge.
-        * The subsequent calls to this function should immediately create a stream without a Metamask popup by using
-        * the session token previously retrieved.
+        /*
+        The first call to this function should trigger the login function to get a session token and
+        a Metamask popup should appear to sign the challenge.
+        The subsequent calls to this function should immediately create a stream without a Metamask popup by using
+        the session token previously retrieved.
         */
         function createStream() {
             client.createStream({
@@ -33,12 +34,25 @@
                 log(`Created stream with id: ${stream.id}`)
             })
         }
+
+        /* 
+        If you need to get the session token. Overall first call with the above function triggers a Metamask popup.
+         */
+        function getSessionToken() {
+            client.session.getSessionToken().then((sessionToken) => {
+                log(`Session token: ${sessionToken}`)
+            })
+        }
     </script>
 </head>
 <body>
 <button id="create stream">Create stream</button>
 <script>
     document.getElementById('create stream').addEventListener('click', createStream)
+</script>
+<button id="get session token">Get session token</button>
+<script>
+    document.getElementById('get session token').addEventListener('click', getSessionToken)
 </script>
 </body>
 </html>
