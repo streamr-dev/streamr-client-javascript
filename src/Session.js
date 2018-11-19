@@ -14,12 +14,11 @@ export default class Session {
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
             this.loginFunction = async () => {
-                const address = await w3.eth.getAccounts().then((accounts) => {
-                    if (!accounts[0]) {
-                        throw new Error('Cannot access account from provider')
-                    }
-                    return accounts[0]
-                })
+                const accounts = await w3.eth.getAccounts()
+                const address = accounts[0]
+                if (!address) {
+                    throw new Error('Cannot access account from provider')
+                }
                 return this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
             }
         } else if (this.options.apiKey) {
