@@ -88,7 +88,7 @@ describe('StreamrClient', () => {
                     })
                 })
             }, 5000)
-        }, 10000)
+        }, 20000)
 
         it('client.subscribe (realtime)', (done) => {
             const id = Date.now()
