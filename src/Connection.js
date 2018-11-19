@@ -57,15 +57,11 @@ class Connection extends EventEmitter {
         })
 
         this.socket.onmessage = (messageEvent) => {
-            let websocketResponse
             try {
-                websocketResponse = WebsocketResponse.deserialize(messageEvent.data)
+                const websocketResponse = WebsocketResponse.deserialize(messageEvent.data)
+                this.emit(websocketResponse.constructor.getMessageName(), websocketResponse)
             } catch (err) {
                 this.emit('error', err)
-            }
-
-            if (websocketResponse) {
-                this.emit(websocketResponse.constructor.getMessageName(), websocketResponse)
             }
         }
 

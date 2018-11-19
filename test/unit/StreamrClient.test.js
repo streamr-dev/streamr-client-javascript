@@ -248,9 +248,6 @@ describe('StreamrClient', () => {
                     resend_all: true,
                 }))
                 connection.emitMessage(new SubscribeResponse(sub.streamId))
-                setTimeout(() => {
-                    done()
-                }, 1000)
             })
 
             it('emits multiple resend requests as per multiple subscriptions', () => {

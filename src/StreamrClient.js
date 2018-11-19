@@ -76,8 +76,7 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on('SubscribeResponse', (response) => {
             const subs = this.subsByStream[response.payload.streamId]
 
-            // The typeof array === 'object'
-            if (subs && typeof subs === 'object') {
+            if (Array.isArray(subs)) {
                 delete subs.subscribing
                 // Report subscribed to all non-resending Subscriptions for this stream
                 subs.filter((sub) => !sub.resending)
@@ -160,7 +159,7 @@ export default class StreamrClient extends EventEmitter {
             Object.keys(this.subsByStream)
                 .forEach((streamId) => {
                     const subs = this.subsByStream[streamId]
-                    if (subs && typeof subs === 'object') {
+                    if (Array.isArray(subs)) {
                         delete subs.subscribing
                     }
                     subs.forEach((sub) => {
