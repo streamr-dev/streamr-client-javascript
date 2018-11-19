@@ -81,7 +81,6 @@ Option | Default value | Description
 ------ | ------------- | -----------
 url | wss://www.streamr.com/api/v1/ws | Address of the Streamr websocket endpoint to connect to.
 restUrl | https://www.streamr.com/api/v1/ws | Base URL of the Streamr REST API.
-apiKey | null | Defined for backwards compatibility. Should use `auth.apiKey` instead.
 auth | {} | Object that can contain different information to authenticate. More details below.
 autoConnect | true | If set to `true`, the client connects automatically on the first call to `subscribe()`. Otherwise an explicit call to `connect()` is required.
 autoDisconnect | true  | If set to `true`, the client automatically disconnects when the last stream is unsubscribed. Otherwise the connection is left open and can be disconnected explicitly by calling `disconnect()`.
