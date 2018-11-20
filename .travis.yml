@@ -27,3 +27,5 @@ jobs:
     - npm run test-integration
     - docker logs streamr_dev_engine-and-editor
     - docker logs streamr_dev_data-api
+    - docker logs streamr_dev_broker
+    - docker logs streamr_dev_cassandra
