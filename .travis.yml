@@ -25,7 +25,5 @@ jobs:
     - "$TRAVIS_BUILD_DIR/streamr-docker-dev/streamr-docker-dev/bin.sh start 5"
     - while true; do http_code=$(curl -s -o /dev/null -I -w "%{http_code}" http://localhost:8890/); if [ $http_code = 404 ]; then echo "Data-api up and running"; break; else echo "Data API not receiving connections"; sleep 5; fi; done
     - npm run test-integration
-    - docker logs streamr_dev_engine-and-editor
     - docker logs streamr_dev_broker
-    - docker logs streamr_dev_cassandra
-    - docker logs streamr_dev_data-api
+    - docker logs streamr_dev_kafka
