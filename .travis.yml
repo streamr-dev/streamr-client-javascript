@@ -17,7 +17,7 @@ jobs:
   - stage: Integration tests
     script:
     - sudo /etc/init.d/mysql stop
-    - sudo streamr-docker-dev bind-ip
+    - "sudo $TRAVIS_BUILD_DIR/streamr-docker-dev/streamr-docker-dev/bin.sh bind-ip"
     - sudo sysctl fs.inotify.max_user_watches=524288; sudo sysctl -p
     - git clone https://github.com/streamr-dev/streamr-docker-dev.git
     - "$TRAVIS_BUILD_DIR/streamr-docker-dev/streamr-docker-dev/bin.sh start 4"
