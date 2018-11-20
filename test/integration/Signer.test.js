@@ -14,7 +14,7 @@ describe('Signer', () => {
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: `${config.websocketUrl}?version=29`,
+        url: `${config.websocketUrl}?payloadVersion=29`,
         restUrl: config.restUrl,
         auth: {
             privateKey: '0x12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
@@ -80,11 +80,12 @@ describe('Signer', () => {
                 })
                 client.connection.on('UnicastMessage', (msg) => {
                     const streamMessage = msg.payload
-                    assert.equal(streamMessage.parsedContent.test, 'test1')
-                    assert.equal(streamMessage.signatureType, 1)
+                    assert.strictEqual(streamMessage.parsedContent.test, 'test1')
+                    assert.strictEqual(streamMessage.signatureType, 1)
                     assert(streamMessage.publisherAddress)
                     assert(streamMessage.signature)
                     Signer.verifyStreamMessage(streamMessage)
+                    done()
                 })
             }, 5000)
         }, 10000)
@@ -109,12 +110,13 @@ describe('Signer', () => {
                 })
                 client.connection.on('BroadcastMessage', (msg) => {
                     const streamMessage = msg.payload
-                    assert.equal(streamMessage.parsedContent.test, 'test2')
-                    assert.equal(ts, streamMessage.timestamp)
-                    assert.equal(streamMessage.signatureType, 1)
+                    assert.strictEqual(streamMessage.parsedContent.test, 'test2')
+                    assert.strictEqual(ts, streamMessage.timestamp)
+                    assert.strictEqual(streamMessage.signatureType, 1)
                     assert(streamMessage.publisherAddress)
                     assert(streamMessage.signature)
                     Signer.verifyStreamMessage(streamMessage)
+                    done()
                 })
             })
         })
