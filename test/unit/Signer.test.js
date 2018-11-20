@@ -38,7 +38,7 @@ describe('Signer', () => {
             }
             const timestamp = Date.now()
             const request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
-            const payload = signer.address + streamId + request.getTimestampAsNumber() + request.getSerializedContent()
+            const payload = signer.address.toLowerCase() + streamId + request.getTimestampAsNumber() + request.getSerializedContent()
             assert(payload)
             const signature = await signer.signData(payload)
             const signedRequest = await signer.getSignedPublishRequest(request)
