@@ -13,12 +13,14 @@ export default class Session {
             this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => account.sign(d).signature, account.address)
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
-            const accounts = w3.eth.getAccounts()
-            const address = accounts[0]
-            if (!address) {
-                throw new Error('Cannot access account from provider')
+            this.loginFunction = async () => {
+                const accounts = await w3.eth.getAccounts()
+                const address = accounts[0]
+                if (!address) {
+                    throw new Error('Cannot access account from provider')
+                }
+                return this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
             }
-            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => w3.eth.personal.sign(d, address), address)
         } else if (this.options.apiKey) {
             this.loginFunction = async () => this._client.loginWithApiKey(this.options.apiKey)
         } else if (this.options.username && this.options.password) {
@@ -36,16 +38,14 @@ export default class Session {
         }
         if (this.state !== Session.State.LOGGING_IN) {
             this.state = Session.State.LOGGING_IN
-            try {
-                this.sessionTokenPromise = this.loginFunction().then((tokenObj) => {
-                    this.options.sessionToken = tokenObj.token
-                    this.state = Session.State.LOGGED_IN
-                    return tokenObj.token
-                })
-            } catch (err) {
+            this.sessionTokenPromise = this.loginFunction().then((tokenObj) => {
+                this.options.sessionToken = tokenObj.token
+                this.state = Session.State.LOGGED_IN
+                return tokenObj.token
+            }).catch((err) => {
                 this.state = Session.State.LOGGED_OUT
                 throw err
-            }
+            })
         }
         return this.sessionTokenPromise
     }

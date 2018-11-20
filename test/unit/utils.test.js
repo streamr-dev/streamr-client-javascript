@@ -54,8 +54,8 @@ describe('utils', () => {
         })
         it('should return normally when valid session token is passed after expired session token', async () => {
             session.getSessionToken = sinon.stub()
-            session.getSessionToken.onCall(0).returns('expired-session-token')
-            session.getSessionToken.onCall(1).returns('session-token')
+            session.getSessionToken.onCall(0).resolves('expired-session-token')
+            session.getSessionToken.onCall(1).resolves('session-token')
 
             const res = await authFetch(baseUrl + testUrl, session)
             assert(session.getSessionToken.calledTwice)
