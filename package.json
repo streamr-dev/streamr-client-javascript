@@ -17,7 +17,7 @@
     "eslint": "eslint src/** test/**",
     "test": "jest",
     "test-unit": "jest test/unit",
-    "test-integration": "jest test/integration"
+    "test-integration": "jest --detectOpenHandles test/integration"
   },
   "browser": {
     "http": "./src/shim/http-https.js",
