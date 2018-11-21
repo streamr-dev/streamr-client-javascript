@@ -6,7 +6,7 @@ import debug from 'debug'
 import StreamrClient from '../../src/StreamrClient'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import FailedToProduceError from '../../src/errors/FailedToProduceError'
+import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import InvalidJsonError from '../../src/errors/InvalidJsonError'
 
 const mockDebug = debug('mock')
@@ -892,7 +892,7 @@ describe('StreamrClient', () => {
         })
     })
 
-    describe('produceToStream', () => {
+    describe('publish', () => {
         const pubMsg = {
             foo: 'bar',
         }
@@ -908,7 +908,7 @@ describe('StreamrClient', () => {
                     authKey: null,
                     msg: '{"foo":"bar"}',
                 })
-                const promise = client.produceToStream('stream1', pubMsg)
+                const promise = client.publish('stream1', pubMsg)
                 assert(promise instanceof Promise)
                 return promise
             })
@@ -927,7 +927,7 @@ describe('StreamrClient', () => {
                         msg: JSON.stringify(pubMsg),
                     })
                     // Messages will be queued until connected
-                    client.produceToStream('stream1', pubMsg)
+                    client.publish('stream1', pubMsg)
                 }
 
                 client.connection.on('connected', done)
@@ -936,8 +936,8 @@ describe('StreamrClient', () => {
             it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
                 client.options.autoConnect = false
                 assert.equal(client.isConnected(), false)
-                client.produceToStream('stream1', pubMsg).catch((err) => {
-                    assert(err instanceof FailedToProduceError)
+                client.publish('stream1', pubMsg).catch((err) => {
+                    assert(err instanceof FailedToPublishError)
                     done()
                 })
             })

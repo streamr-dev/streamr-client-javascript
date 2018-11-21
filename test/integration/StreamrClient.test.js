@@ -92,16 +92,16 @@ describe('StreamrClient', () => {
             assert(client.isConnected())
         })
 
-        it('Stream.produce', () => createdStream.produce({
-            test: 'Stream.produce',
+        it('Stream.publish', () => createdStream.publish({
+            test: 'Stream.publish',
         }))
 
-        it('client.produceToStream', () => client.produceToStream(createdStream.id, {
-            test: 'client.produceToStream',
+        it('client.publish', () => client.publish(createdStream.id, {
+            test: 'client.publish',
         }))
 
-        it('client.produceToStream with Stream object as arg', () => client.produceToStream(createdStream, {
-            test: 'client.produceToStream with Stream object as arg',
+        it('client.publish with Stream object as arg', () => client.publish(createdStream, {
+            test: 'client.publish with Stream object as arg',
         }))
 
         it('client.subscribe with resend', (done) => {
@@ -137,7 +137,7 @@ describe('StreamrClient', () => {
                 })
 
                 sub.on('subscribed', () => {
-                    stream.produce({
+                    stream.publish({
                         id,
                     })
                 })
@@ -147,7 +147,7 @@ describe('StreamrClient', () => {
 
     describe('Stream configuration', () => {
         it('Stream.detectFields', (done) => {
-            client.produceToStream(createdStream.id, {
+            client.publish(createdStream.id, {
                 foo: 'bar',
                 count: 0,
             })

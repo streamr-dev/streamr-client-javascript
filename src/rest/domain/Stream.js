@@ -46,7 +46,7 @@ export default class Stream {
         return authFetch(`${this._client.options.restUrl}/streams/${this.id}/detectFields`, apiKey)
     }
 
-    produce(data, apiKey = this._client.options.apiKey) {
-        return this._client.produceToStream(this.id, data, apiKey)
+    publish(data, apiKey = this._client.options.apiKey) {
+        return this._client.publish(this.id, data, apiKey)
     }
 }
