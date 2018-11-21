@@ -19,7 +19,7 @@ jobs:
     - sudo /etc/init.d/mysql stop
     - sudo sysctl fs.inotify.max_user_watches=524288; sudo sysctl -p
     - git clone https://github.com/streamr-dev/streamr-docker-dev.git
-    - sudo ifconfig lo 10.200.10.1/24
+    - sudo ifconfig docker0 10.200.10.1/24
     - ifconfig
     - "$TRAVIS_BUILD_DIR/streamr-docker-dev/streamr-docker-dev/bin.sh start 4"
     - "$TRAVIS_BUILD_DIR/streamr-docker-dev/streamr-docker-dev/bin.sh start engine-and-editor"
