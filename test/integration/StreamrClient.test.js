@@ -3,6 +3,7 @@ import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
 import config from './config'
+import Signer from '../../src/Signer'
 
 /**
  * These tests should be run in sequential order!
@@ -13,10 +14,11 @@ describe('StreamrClient', () => {
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: config.websocketUrl,
+        url: `${config.websocketUrl}?payloadVersion=29`,
         restUrl: config.restUrl,
         auth: {
-            privateKey: '0x12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            publishWithSignature: true,
         },
         autoConnect: false,
         autoDisconnect: false,
@@ -77,6 +79,7 @@ describe('StreamrClient', () => {
 
         it('client.subscribe with resend', (done) => {
             // This test needs some time because the write needs to have time to go to Cassandra
+            let streamMessage
             setTimeout(() => {
                 const sub = client.subscribe({
                     stream: createdStream.id,
@@ -84,13 +87,22 @@ describe('StreamrClient', () => {
                 }, () => {
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
+                        assert.strictEqual(streamMessage.parsedContent.test, 'client.produceToStream with Stream object as arg')
+                        assert.strictEqual(streamMessage.signatureType, 1)
+                        assert(streamMessage.publisherAddress)
+                        assert(streamMessage.signature)
+                        Signer.verifyStreamMessage(streamMessage)
                         done()
                     })
+                })
+                client.connection.on('UnicastMessage', (msg) => {
+                    streamMessage = msg.payload
                 })
             }, 5000)
         }, 10000)
 
         it('client.subscribe (realtime)', (done) => {
+            let streamMessage
             const id = Date.now()
 
             // Make a new stream for this test to avoid conflicts
@@ -103,6 +115,11 @@ describe('StreamrClient', () => {
                     assert.equal(message.id, id)
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
+                        assert.strictEqual(streamMessage.parsedContent.id, id)
+                        assert.strictEqual(streamMessage.signatureType, 1)
+                        assert(streamMessage.publisherAddress)
+                        assert(streamMessage.signature)
+                        Signer.verifyStreamMessage(streamMessage)
                         done()
                     })
                 })
@@ -110,6 +127,9 @@ describe('StreamrClient', () => {
                     stream.produce({
                         id,
                     })
+                })
+                client.connection.on('BroadcastMessage', (msg) => {
+                    streamMessage = msg.payload
                 })
             })
         })
