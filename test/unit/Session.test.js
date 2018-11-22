@@ -8,6 +8,7 @@ describe('Session', () => {
 
     beforeEach(() => {
         session = new Session()
+        session.options.unauthenticated = false
         session.loginFunction = sinon.stub()
         session.loginFunction.onCall(0).resolves({
             token: 'session-token1',
@@ -55,6 +56,7 @@ describe('Session', () => {
         describe('loginFunction rejects', () => {
             beforeEach(() => {
                 session = new Session()
+                session.options.unauthenticated = false
                 msg = 'Error: Need either "privateKey", "provider", "apiKey" or "username"+"password" to login.'
                 session.loginFunction = sinon.stub().rejects(msg)
             })

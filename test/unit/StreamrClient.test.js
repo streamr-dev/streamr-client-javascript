@@ -131,7 +131,6 @@ describe('StreamrClient', () => {
             autoConnect: false,
             autoDisconnect: false,
         }, connection)
-        client.session.getSessionToken = sinon.stub().resolves(undefined)
     })
 
     afterEach(() => {
