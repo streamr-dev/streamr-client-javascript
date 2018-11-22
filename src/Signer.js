@@ -1,4 +1,4 @@
-import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
+import { PublishRequest } from 'streamr-client-protocol'
 
 const Web3 = require('web3')
 
