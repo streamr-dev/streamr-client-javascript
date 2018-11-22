@@ -64,7 +64,7 @@ describe('Session', () => {
             }))
         it('should fail to get token with no authentication', (done) => clientNone.session.getSessionToken()
             .catch((err) => {
-                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "provider", "apiKey" or "username"+"password" to login.')
                 done()
             }))
     })

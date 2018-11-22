@@ -803,6 +803,7 @@ describe('StreamrClient', () => {
         const pubMsg = {
             foo: 'bar',
         }
+        const ts = Date.now()
 
         describe('when connected', () => {
             beforeEach(() => client.connect())
@@ -811,8 +812,8 @@ describe('StreamrClient', () => {
                 client.options.autoConnect = true
                 connection.expect(new PublishRequest('stream1', undefined, undefined, {
                     foo: 'bar',
-                }))
-                const promise = client.produceToStream('stream1', pubMsg)
+                }, ts))
+                const promise = client.produceToStream('stream1', pubMsg, ts)
                 assert(promise instanceof Promise)
                 return promise
             })
@@ -824,9 +825,9 @@ describe('StreamrClient', () => {
 
                 // Produce 10 messages
                 for (let i = 0; i < 10; i++) {
-                    connection.expect(new PublishRequest('stream1', undefined, undefined, pubMsg))
+                    connection.expect(new PublishRequest('stream1', undefined, undefined, pubMsg, ts))
                     // Messages will be queued until connected
-                    client.produceToStream('stream1', pubMsg)
+                    client.produceToStream('stream1', pubMsg, ts)
                 }
 
                 connection.on('connected', done)

@@ -17,7 +17,7 @@ describe('Signer', () => {
         url: `${config.websocketUrl}?payloadVersion=29`,
         restUrl: config.restUrl,
         auth: {
-            privateKey: '0x12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             publishWithSignature: true,
         },
         autoConnect: false,

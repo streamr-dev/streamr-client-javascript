@@ -7,8 +7,8 @@ const web3 = new Web3()
 const SIGNATURE_TYPE_ETH = 1
 
 export default class Signer {
-    constructor(options) {
-        this.options = options || {}
+    constructor(options = {}) {
+        this.options = options
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
             this.address = account.address
@@ -39,7 +39,7 @@ export default class Signer {
         if (!ts) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        const payload = this.address.toLowerCase() + publishRequest.streamId + ts + publishRequest.getSerializedContent()
+        const payload = `${this.address.toLowerCase()}${publishRequest.streamId}${ts}${publishRequest.getSerializedContent()}`
         const signature = await this.signData(payload, signatureType)
         return new PublishRequest(
             publishRequest.streamId,
@@ -64,7 +64,7 @@ export default class Signer {
     // TODO: should be used by the StreamrClient before calling Subscription.handleMessage but only if client required signature verification
     // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
     static verifyStreamMessage(msg) {
-        const data = msg.publisherAddress.toLowerCase() + msg.streamId + msg.timestamp + msg.getSerializedContent()
+        const data = `${msg.publisherAddress.toLowerCase()}${msg.streamId}${msg.timestamp}${msg.getSerializedContent()}`
         if (!this.verifySignature(data, msg.signature, msg.publisherAddress, msg.signatureType)) {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }

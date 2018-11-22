@@ -46,6 +46,10 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
+        if (this.options.privateKey && !this.options.privateKey.startsWith('0x')) {
+            this.options.privateKey = `0x${this.options.privateKey}`
+        }
+
         this.session = new Session(this, options.auth)
         this.signer = (options.auth && options.auth.publishWithSignature) ? new Signer(options.auth) : undefined
 
@@ -221,7 +225,7 @@ export default class StreamrClient extends EventEmitter {
         return this.subsByStream[streamId] || []
     }
 
-    async produceToStream(streamObjectOrId, data, timestamp = undefined, apiKey = this.options.auth.apiKey) {
+    async produceToStream(streamObjectOrId, data, timestamp = Date.now(), apiKey = this.options.auth.apiKey) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
@@ -439,13 +443,11 @@ export default class StreamrClient extends EventEmitter {
 
     _requestPublish(streamId, data, timestamp, apiKey, sessionToken) {
         const request = new PublishRequest(streamId, apiKey, sessionToken, data, timestamp)
-        debug('_requestResend: %o', request)
-        if (this.signer) {
-            return this.signer.getSignedPublishRequest(request).then((signedRequest) => {
-                this.connection.send(signedRequest)
-            })
-        }
-        return this.connection.send(request)
+        const requestToSendPromise = this.signer ? this.signer.getSignedPublishRequest(request) : Promise.resolve(request)
+        return requestToSendPromise.then((requestToSend) => {
+            debug('_requestResend: %o', requestToSend)
+            return this.connection.send(requestToSend)
+        })
     }
 
     handleError(msg) {
