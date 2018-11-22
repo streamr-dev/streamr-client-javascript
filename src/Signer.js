@@ -77,4 +77,15 @@ export default class Signer {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }
     }
+
+    static createSigner(options, publishWithSignature) {
+        if (publishWithSignature === 'never') {
+            return undefined
+        } else if (publishWithSignature === 'auto' && !options.privateKey && !options.provider) {
+            return undefined
+        } else if (publishWithSignature === 'auto' || publishWithSignature === 'always') {
+            return new Signer(options)
+        }
+        throw new Error(`Unknown parameter value: ${publishWithSignature}`)
+    }
 }

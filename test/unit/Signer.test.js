@@ -17,6 +17,32 @@ describe('Signer', () => {
                 new Signer({})
             }, /Error/)
         })
+        it('Should return undefined when "never" option is set', () => {
+            assert.strictEqual(Signer.createSigner({}, 'never'), undefined)
+        })
+        it('Should return undefined when "auto" option is set with no private key or provider', () => {
+            assert.strictEqual(Signer.createSigner({}, 'auto'), undefined)
+        })
+        it('Should return a Signer when "auto" option is set with private key', () => {
+            const signer = Signer.createSigner({
+                privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            }, 'auto')
+            assert(signer instanceof Signer)
+        })
+        it('Should return a Signer when "always" option is set with private key', () => {
+            const signer = Signer.createSigner({
+                privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            }, 'always')
+            assert(signer instanceof Signer)
+        })
+        it('Should throw when "always" option is set with no private key or provider', () => {
+            assert.throws(() => Signer.createSigner({}, 'always'), /Error/)
+        })
+        it('Should throw when unknown option is set', () => {
+            assert.throws(() => Signer.createSigner({
+                privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            }, 'unknown'), /Error/)
+        })
     })
 
     describe('signing', () => {

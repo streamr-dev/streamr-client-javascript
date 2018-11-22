@@ -31,6 +31,7 @@ export default class StreamrClient extends EventEmitter {
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
             auth: {},
+            publishWithSignature: 'auto',
         }
         this.subsByStream = {}
         this.subById = {}
@@ -50,8 +51,8 @@ export default class StreamrClient extends EventEmitter {
             this.options.privateKey = `0x${this.options.privateKey}`
         }
 
-        this.session = new Session(this, options.auth)
-        this.signer = (options.auth && options.auth.publishWithSignature) ? new Signer(options.auth) : undefined
+        this.session = new Session(this, this.options.auth)
+        this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
 
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)

@@ -18,7 +18,6 @@ describe('StreamrClient', () => {
         restUrl: config.restUrl,
         auth: {
             privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-            publishWithSignature: true,
         },
         autoConnect: false,
         autoDisconnect: false,
@@ -91,7 +90,7 @@ describe('StreamrClient', () => {
                         assert.strictEqual(streamMessage.signatureType, 1)
                         assert(streamMessage.publisherAddress)
                         assert(streamMessage.signature)
-                        Signer.verifyStreamMessage(streamMessage)
+                        Signer.verifyStreamMessage(streamMessage, new Set([streamMessage.publisherAddress]))
                         done()
                     })
                 })
@@ -119,7 +118,7 @@ describe('StreamrClient', () => {
                         assert.strictEqual(streamMessage.signatureType, 1)
                         assert(streamMessage.publisherAddress)
                         assert(streamMessage.signature)
-                        Signer.verifyStreamMessage(streamMessage)
+                        Signer.verifyStreamMessage(streamMessage, new Set([streamMessage.publisherAddress]))
                         done()
                     })
                 })
