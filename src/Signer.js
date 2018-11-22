@@ -1,4 +1,4 @@
-import { PublishRequest } from 'streamr-client-protocol'
+import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
 
 const Web3 = require('web3')
 
@@ -39,7 +39,7 @@ export default class Signer {
         if (!ts) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        const payload = `${this.address.toLowerCase()}${publishRequest.streamId}${ts}${publishRequest.getSerializedContent()}`
+        const payload = Signer.getPayloadToSign(publishRequest.streamId, ts, this.address, publishRequest.getSerializedContent(), signatureType)
         const signature = await this.signData(payload, signatureType)
         return new PublishRequest(
             publishRequest.streamId,
@@ -54,6 +54,13 @@ export default class Signer {
         )
     }
 
+    static getPayloadToSign(streamId, timestamp, producerId, content, signatureType = SIGNATURE_TYPE_ETH) {
+        if (signatureType === SIGNATURE_TYPE_ETH) {
+            return `${streamId}${timestamp}${producerId.toLowerCase()}${content}`
+        }
+        throw new Error(`Unrecognized signature type: ${signatureType}`)
+    }
+
     static verifySignature(data, signature, address, signatureType = SIGNATURE_TYPE_ETH) {
         if (signatureType === SIGNATURE_TYPE_ETH) {
             return web3.eth.accounts.recover(data, signature).toLowerCase() === address.toLowerCase()
@@ -64,8 +71,8 @@ export default class Signer {
     // TODO: should be used by the StreamrClient before calling Subscription.handleMessage but only if client required signature verification
     // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
     static verifyStreamMessage(msg) {
-        const data = `${msg.publisherAddress.toLowerCase()}${msg.streamId}${msg.timestamp}${msg.getSerializedContent()}`
-        if (!this.verifySignature(data, msg.signature, msg.publisherAddress, msg.signatureType)) {
+        const payload = this.getPayloadToSign(msg.streamId, msg.timestamp, msg.publisherAddress, msg.getSerializedContent())
+        if (!this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)) {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }
     }
