@@ -1,4 +1,5 @@
 import assert from 'assert'
+import sinon from 'sinon'
 import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
 import Signer from '../../src/Signer'
 
@@ -38,8 +39,9 @@ describe('Signer', () => {
             }
             const timestamp = Date.now()
             const request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
-            const payload = streamId + request.getTimestampAsNumber() + signer.address.toLowerCase() + request.getSerializedContent()
-            assert(payload)
+            const expectedPayload = streamId + request.getTimestampAsNumber() + signer.address.toLowerCase() + request.getSerializedContent()
+            const payload = Signer.getPayloadToSign(streamId, request.getTimestampAsNumber(), signer.address, request.getSerializedContent())
+            assert.strictEqual(payload, expectedPayload)
             const signature = await signer.signData(payload)
             const signedRequest = await signer.getSignedPublishRequest(request)
             assert.deepEqual(signer.address, signedRequest.publisherAddress)
@@ -66,10 +68,11 @@ describe('Signer', () => {
                 signedRequest.publisherAddress,
                 signedRequest.signature,
             )
-            Signer.verifyStreamMessage(streamMessage)
+            Signer.verifyStreamMessage(streamMessage, new Set([signedRequest.publisherAddress]))
         })
 
         it('Should throw if incorrect signature', async () => {
+            const address = '0xF915eD664e43C50eB7b9Ca7CfEB992703eDe55c4'
             const streamMessage = new StreamMessage(
                 'streamId',
                 0,
@@ -82,10 +85,17 @@ describe('Signer', () => {
                     field: 'some-data',
                 },
                 1,
-                '0xF915eD664e43C50eB7b9Ca7CfEB992703eDe55c4',
+                address,
                 '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
             )
-            assert.throws(() => Signer.verifyStreamMessage(streamMessage), Error)
+            assert.throws(() => Signer.verifyStreamMessage(streamMessage, new Set([address])), Error)
+        })
+
+        it('Should throw if correct signature but not from a trusted publisher', async () => {
+            const streamMessage = new StreamMessage()
+            Signer.getPayloadToSign = sinon.stub().returns('')
+            Signer.verifySignature = sinon.stub().returns(true)
+            assert.throws(() => Signer.verifyStreamMessage(streamMessage, new Set()), Error)
         })
     })
 })

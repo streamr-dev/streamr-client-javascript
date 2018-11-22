@@ -70,9 +70,10 @@ export default class Signer {
 
     // TODO: should be used by the StreamrClient before calling Subscription.handleMessage but only if client required signature verification
     // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
-    static verifyStreamMessage(msg) {
+    static verifyStreamMessage(msg, trustedPublishers = new Set()) {
         const payload = this.getPayloadToSign(msg.streamId, msg.timestamp, msg.publisherAddress, msg.getSerializedContent())
-        if (!this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)) {
+        if (!this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)
+            || !trustedPublishers.has(msg.publisherAddress)) {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }
     }
