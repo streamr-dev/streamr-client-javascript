@@ -1,10 +1,33 @@
 import assert from 'assert'
 import sinon from 'sinon'
+import StreamrClient from '../../src'
+import config from '../integration/config'
 import Session from './../../src/Session'
 
 describe('Session', () => {
     let session
     let msg
+    let clientSessionToken
+    let clientNone
+
+    const createClient = (opts = {}) => new StreamrClient({
+        url: config.websocketUrl,
+        restUrl: config.restUrl,
+        autoConnect: false,
+        autoDisconnect: false,
+        ...opts,
+    })
+
+    beforeAll(() => {
+        clientSessionToken = createClient({
+            auth: {
+                sessionToken: 'session-token',
+            },
+        })
+        clientNone = createClient({
+            auth: {},
+        })
+    })
 
     beforeEach(() => {
         session = new Session()
@@ -16,6 +39,27 @@ describe('Session', () => {
         session.loginFunction.onCall(1).resolves({
             token: 'session-token2',
         })
+    })
+
+    describe('instantiation', () => {
+        it('should get token if set with a token', () => clientSessionToken.session.getSessionToken()
+            .then((sessionToken) => {
+                assert.strictEqual(sessionToken, clientSessionToken.session.options.sessionToken)
+            }))
+        it('should return undefined with no authentication', () => clientNone.session.getSessionToken()
+            .then((sessionToken) => {
+                assert.strictEqual(sessionToken, undefined)
+            }))
+        it('login function should throw if only session token provided', (done) => clientSessionToken.session.loginFunction()
+            .catch((err) => {
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                done()
+            }))
+        it('login function should throw if no authentication', (done) => clientNone.session.loginFunction()
+            .catch((err) => {
+                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
+                done()
+            }))
     })
 
     describe('getSessionToken', () => {

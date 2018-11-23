@@ -8,8 +8,6 @@ describe('Session', () => {
     let clientWrongApiKey
     let clientPrivateKey
     let clientUsernamePassword
-    let clientSessionToken
-    let clientNone
 
     const createClient = (opts = {}) => new StreamrClient({
         url: config.websocketUrl,
@@ -41,14 +39,6 @@ describe('Session', () => {
                 password: 'tester2',
             },
         })
-        clientSessionToken = createClient({
-            auth: {
-                sessionToken: 'session-token',
-            },
-        })
-        clientNone = createClient({
-            auth: {},
-        })
     })
 
     describe('Token retrievals', () => {
@@ -67,24 +57,6 @@ describe('Session', () => {
         it('should get token from username/password', () => clientUsernamePassword.session.getSessionToken()
             .then((sessionToken) => {
                 assert(sessionToken)
-            }))
-        it('should get token if set with a token', () => clientSessionToken.session.getSessionToken()
-            .then((sessionToken) => {
-                assert.strictEqual(sessionToken, clientSessionToken.session.options.sessionToken)
-            }))
-        it('should return undefined with no authentication', () => clientNone.session.getSessionToken()
-            .then((sessionToken) => {
-                assert.strictEqual(sessionToken, undefined)
-            }))
-        it('login function should throw if only session token provided', (done) => clientSessionToken.session.loginFunction()
-            .catch((err) => {
-                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
-                done()
-            }))
-        it('login function should throw if no authentication', (done) => clientNone.session.loginFunction()
-            .catch((err) => {
-                assert.equal(err.toString(), 'Error: Need either "privateKey", "apiKey" or "username"+"password" to login.')
-                done()
             }))
     })
 })
