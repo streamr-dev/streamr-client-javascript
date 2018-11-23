@@ -47,41 +47,21 @@ describe('Signer', () => {
 
     describe('signing', () => {
         let signer
-        beforeEach(() => {
+        let request
+        let signedRequest
+        let signedStreamMessage
+        beforeEach(async () => {
             signer = new Signer({
                 privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             })
-        })
-        it('should return correct signature', async () => {
-            const payload = 'data-to-sign'
-            const expectedSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
-            const signature = await signer.signData(payload)
-            assert.deepEqual(signature, expectedSignature)
-        })
-        it('should sign PublishRequest with appropriate fields', async () => {
             const streamId = 'streamId'
             const data = {
                 field: 'some-data',
             }
             const timestamp = Date.now()
-            const request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
-            const expectedPayload = streamId + request.getTimestampAsNumber() + signer.address.toLowerCase() + request.getSerializedContent()
-            const payload = Signer.getPayloadToSign(streamId, request.getTimestampAsNumber(), signer.address, request.getSerializedContent())
-            assert.strictEqual(payload, expectedPayload)
-            const signature = await signer.signData(payload)
-            const signedRequest = await signer.getSignedPublishRequest(request)
-            assert.deepEqual(signer.address, signedRequest.publisherAddress)
-            assert.deepEqual(1, signedRequest.signatureType)
-            assert.deepEqual(signature, signedRequest.signature)
-        })
-        it('Should verify correct signature', async () => {
-            const streamId = 'streamId'
-            const data = {
-                field: 'some-data',
-            }
-            const timestamp = Date.now()
-            const signedRequest = await signer.getSignedPublishRequest(new PublishRequest(streamId, undefined, undefined, data, timestamp))
-            const streamMessage = new StreamMessage(
+            request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
+            signedRequest = await signer.getSignedPublishRequest(request)
+            signedStreamMessage = new StreamMessage(
                 streamId,
                 0,
                 timestamp,
@@ -94,34 +74,34 @@ describe('Signer', () => {
                 signedRequest.publisherAddress,
                 signedRequest.signature,
             )
-            Signer.verifyStreamMessage(streamMessage, new Set([signedRequest.publisherAddress]))
+        })
+        it('should return correct signature', async () => {
+            const payload = 'data-to-sign'
+            const expectedSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
+            const signature = await signer.signData(payload)
+            assert.deepEqual(signature, expectedSignature)
+        })
+        it('should sign PublishRequest with appropriate fields', async () => {
+            const expectedPayload = request.streamId + request.getTimestampAsNumber() + signer.address.toLowerCase() + request.getSerializedContent()
+            const payload = Signer.getPayloadToSign(request.streamId, request.getTimestampAsNumber(), signer.address, request.getSerializedContent())
+            assert.strictEqual(payload, expectedPayload)
+            const signature = await signer.signData(payload)
+            assert.deepEqual(signer.address, signedRequest.publisherAddress)
+            assert.deepEqual(1, signedRequest.signatureType)
+            assert.deepEqual(signature, signedRequest.signature)
+        })
+        it('Should verify correct signature', () => {
+            Signer.verifyStreamMessage(signedStreamMessage, new Set([signedRequest.publisherAddress]))
         })
 
-        it('Should throw if incorrect signature', async () => {
-            const address = '0xF915eD664e43C50eB7b9Ca7CfEB992703eDe55c4'
-            const streamMessage = new StreamMessage(
-                'streamId',
-                0,
-                Date.now(),
-                0,
-                0,
-                0,
-                StreamMessage.CONTENT_TYPES.JSON,
-                {
-                    field: 'some-data',
-                },
-                1,
-                address,
-                '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
-            )
-            assert.throws(() => Signer.verifyStreamMessage(streamMessage, new Set([address])), Error)
+        it('Should throw if incorrect signature', () => {
+            const wrongStreamMessage = Object.assign({}, signedStreamMessage)
+            wrongStreamMessage.signature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
+            assert.throws(() => Signer.verifyStreamMessage(wrongStreamMessage, new Set([signedRequest.publisherAddress])), Error)
         })
 
-        it('Should throw if correct signature but not from a trusted publisher', async () => {
-            const streamMessage = new StreamMessage()
-            Signer.getPayloadToSign = sinon.stub().returns('')
-            Signer.verifySignature = sinon.stub().returns(true)
-            assert.throws(() => Signer.verifyStreamMessage(streamMessage, new Set()), Error)
+        it('Should throw if correct signature but not from a trusted publisher', () => {
+            assert.throws(() => Signer.verifyStreamMessage(signedStreamMessage, new Set()), Error)
         })
     })
 })
