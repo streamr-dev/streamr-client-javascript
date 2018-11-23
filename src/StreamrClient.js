@@ -16,6 +16,7 @@ import Connection from './Connection'
 import Session from './Session'
 import Signer from './Signer'
 import FailedToProduceError from './errors/FailedToProduceError'
+import SubscribedStream from './SubscribedStream'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -34,6 +35,7 @@ export default class StreamrClient extends EventEmitter {
             publishWithSignature: 'auto',
         }
         this.subsByStream = {}
+        this.subscribedStreams = {}
         this.subById = {}
         this.publishQueue = []
 
@@ -208,6 +210,9 @@ export default class StreamrClient extends EventEmitter {
         } else {
             this.subsByStream[sub.streamId].push(sub)
         }
+        if (!this.subscribedStreams[sub.streamId]) {
+            this.subscribedStreams[sub.streamId] = new SubscribedStream(this, sub.streamId)
+        }
     }
 
     _removeSubscription(sub) {
@@ -218,6 +223,7 @@ export default class StreamrClient extends EventEmitter {
 
             if (this.subsByStream[sub.streamId].length === 0) {
                 delete this.subsByStream[sub.streamId]
+                delete this.subscribedStreams[sub.streamId]
             }
         }
     }

@@ -23,7 +23,7 @@ describe('StreamEndpoints', () => {
     beforeAll(() => {
         client = createClient({
             auth: {
-                apiKey: 'tester1-api-key',
+                privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             },
         })
     })
@@ -56,6 +56,11 @@ describe('StreamEndpoints', () => {
                     assert.notEqual(newStream.id, createdStream.id)
                 })
         })
+    })
+
+    it('client.getStreamProducers should retrieve itself', async () => {
+        const producers = await client.getStreamProducers(createdStream.id)
+        assert.deepStrictEqual(producers, [client.signer.address])
     })
 
     describe('Stream.update', () => {

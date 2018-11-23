@@ -73,7 +73,7 @@ export default class Signer {
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
         const payload = this.getPayloadToSign(msg.streamId, msg.timestamp, msg.publisherAddress, msg.getSerializedContent())
         if (!this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)
-            || !trustedPublishers.has(msg.publisherAddress)) {
+            || !trustedPublishers.has(msg.publisherAddress.toLowerCase())) {
             throw new Error(`Invalid signature: ${msg.signature}`)
         }
     }

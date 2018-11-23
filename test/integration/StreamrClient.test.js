@@ -79,28 +79,34 @@ describe('StreamrClient', () => {
         it('client.subscribe with resend', (done) => {
             // This test needs some time because the write needs to have time to go to Cassandra
             let streamMessage
+            assert.strictEqual(client.subscribedStreams[createdStream.id], undefined)
             setTimeout(() => {
                 const sub = client.subscribe({
                     stream: createdStream.id,
                     resend_last: 1,
-                }, () => {
+                }, async () => {
+                    const producers = await client.subscribedStreams[createdStream.id].getProducers()
+                    assert.deepStrictEqual(producers, [client.signer.address.toLowerCase()])
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
-                        assert.strictEqual(streamMessage.parsedContent.test, 'client.produceToStream with Stream object as arg')
-                        assert.strictEqual(streamMessage.signatureType, 1)
-                        assert(streamMessage.publisherAddress)
-                        assert(streamMessage.signature)
-                        Signer.verifyStreamMessage(streamMessage, new Set([streamMessage.publisherAddress]))
+                        assert.strictEqual(client.subscribedStreams[createdStream.id], undefined)
                         done()
                     })
                 })
-                client.connection.on('UnicastMessage', (msg) => {
+                client.connection.on('UnicastMessage', async (msg) => {
                     streamMessage = msg.payload
+                    assert.strictEqual(streamMessage.parsedContent.test, 'client.produceToStream with Stream object as arg')
+                    assert.strictEqual(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
+                    const producers = await client.subscribedStreams[createdStream.id].getProducers()
+                    Signer.verifyStreamMessage(streamMessage, new Set(producers))
                 })
             }, 5000)
         }, 10000)
 
         it('client.subscribe (realtime)', (done) => {
+            let streamId
             let streamMessage
             const id = Date.now()
 
@@ -108,17 +114,13 @@ describe('StreamrClient', () => {
             client.getOrCreateStream({
                 name: `StreamrClient client.subscribe (realtime) - ${Date.now()}`,
             }).then((stream) => {
+                streamId = stream.id
                 const sub = client.subscribe({
                     stream: stream.id,
                 }, (message) => {
                     assert.equal(message.id, id)
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
-                        assert.strictEqual(streamMessage.parsedContent.id, id)
-                        assert.strictEqual(streamMessage.signatureType, 1)
-                        assert(streamMessage.publisherAddress)
-                        assert(streamMessage.signature)
-                        Signer.verifyStreamMessage(streamMessage, new Set([streamMessage.publisherAddress]))
                         done()
                     })
                 })
@@ -127,8 +129,14 @@ describe('StreamrClient', () => {
                         id,
                     })
                 })
-                client.connection.on('BroadcastMessage', (msg) => {
+                client.connection.on('BroadcastMessage', async (msg) => {
                     streamMessage = msg.payload
+                    assert.strictEqual(streamMessage.parsedContent.id, id)
+                    assert.strictEqual(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
+                    const producers = await client.subscribedStreams[streamId].getProducers()
+                    Signer.verifyStreamMessage(streamMessage, new Set(producers))
                 })
             })
         })
