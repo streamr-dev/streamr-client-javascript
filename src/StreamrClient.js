@@ -47,8 +47,8 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
-        if (this.options.privateKey && !this.options.privateKey.startsWith('0x')) {
-            this.options.privateKey = `0x${this.options.privateKey}`
+        if (this.options.auth.privateKey && !this.options.auth.privateKey.startsWith('0x')) {
+            this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
         }
 
         this.session = new Session(this, this.options.auth)

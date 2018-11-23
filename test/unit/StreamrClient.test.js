@@ -857,5 +857,13 @@ describe('StreamrClient', () => {
             })
             assert(c.options.auth.apiKey)
         })
+        it('sets private key with 0x prefix', () => {
+            const c = new StreamrClient({
+                auth: {
+                    privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+                },
+            })
+            assert(c.options.auth.privateKey.startsWith('0x'))
+        })
     })
 })
