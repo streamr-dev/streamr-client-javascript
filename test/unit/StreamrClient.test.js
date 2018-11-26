@@ -26,6 +26,7 @@ import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
 import FailedToProduceError from '../../src/errors/FailedToProduceError'
+import SubscribedStream from '../../src/SubscribedStream'
 
 const mockDebug = debug('mock')
 
@@ -591,6 +592,14 @@ describe('StreamrClient', () => {
                 })
             })
 
+            it('should add a new SubscribedStream', () => {
+                const streamId = 'streamId'
+                connection.expect(new SubscribeRequest(streamId))
+                client.subscribe(streamId, () => {})
+                const stream = client.subscribedStreams.streamId
+                assert(stream instanceof SubscribedStream)
+            })
+
             describe('with resend options', () => {
                 it('supports resend_all', () => {
                     const sub = setupSubscription('stream1', false, {
@@ -766,6 +775,17 @@ describe('StreamrClient', () => {
             assert.throws(() => {
                 client.unsubscribe(sub.streamId)
             })
+        })
+
+        it('should remove the SubscribedStream', (done) => {
+            client.subscribedStreams[sub.streamId] = new SubscribedStream(client, sub.streamId)
+            connection.expect(new UnsubscribeRequest(sub.streamId))
+            client.unsubscribe(sub)
+            sub.on('unsubscribed', () => {
+                assert.strictEqual(client.subscribedStreams[sub.streamId], undefined)
+                done()
+            })
+            client.connection.emitMessage(new UnsubscribeResponse(sub.streamId))
         })
     })
 
