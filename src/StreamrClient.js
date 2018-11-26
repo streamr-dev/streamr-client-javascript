@@ -33,6 +33,7 @@ export default class StreamrClient extends EventEmitter {
             autoDisconnect: true,
             auth: {},
             publishWithSignature: 'auto',
+            verifySignatures: 'auto',
         }
         this.subsByStream = {}
         this.subscribedStreams = {}
@@ -61,6 +62,10 @@ export default class StreamrClient extends EventEmitter {
 
         // Broadcast messages to all subs listening on stream
         this.connection.on('BroadcastMessage', (msg) => {
+            const stream = this.subscribedStreams[msg.payload.streamId]
+            if (stream && !stream.verifyStreamMessage(msg)) {
+                throw new Error('Invalid message signature')
+            }
             // Notify the Subscriptions for this stream. If this is not the message each individual Subscription
             // is expecting, they will either ignore it or request resend via gap event.
             const subs = this.subsByStream[msg.payload.streamId]
@@ -75,6 +80,10 @@ export default class StreamrClient extends EventEmitter {
 
         // Unicast messages to a specific subscription only
         this.connection.on('UnicastMessage', (msg) => {
+            const stream = this.subscribedStreams[msg.payload.streamId]
+            if (stream && !stream.verifyStreamMessage(msg)) {
+                throw new Error('Invalid message signature')
+            }
             if (msg.subId !== undefined && this.subById[msg.subId] !== undefined) {
                 this.subById[msg.subId].handleMessage(msg.payload, true)
             } else {

@@ -2,8 +2,8 @@ import assert from 'assert'
 import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
-import config from './config'
 import Signer from '../../src/Signer'
+import config from './config'
 
 /**
  * These tests should be run in sequential order!
