@@ -60,7 +60,7 @@ describe('StreamEndpoints', () => {
 
     it('client.getStreamProducers should retrieve itself', async () => {
         const producers = await client.getStreamProducers(createdStream.id)
-        assert.deepStrictEqual(producers, [client.signer.address])
+        assert.deepStrictEqual(producers, [client.signer.address.toLowerCase()])
     })
 
     describe('Stream.update', () => {

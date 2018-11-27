@@ -2,7 +2,6 @@ import assert from 'assert'
 import fetch from 'node-fetch'
 
 import StreamrClient from '../../src'
-import Signer from '../../src/Signer'
 import config from './config'
 
 /**
@@ -19,6 +18,7 @@ describe('StreamrClient', () => {
         auth: {
             privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
         },
+        verifySignatures: 'always',
         autoConnect: false,
         autoDisconnect: false,
         ...opts,
@@ -93,20 +93,17 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-                client.connection.on('UnicastMessage', async (msg) => {
+                client.connection.on('UnicastMessage', (msg) => {
                     streamMessage = msg.payload
-                    assert.strictEqual(streamMessage.parsedContent.test, 'client.produceToStream with Stream object as arg')
+                    assert.strictEqual(streamMessage.parsedContent.test, 'client.publish with Stream object as arg')
                     assert.strictEqual(streamMessage.signatureType, 1)
                     assert(streamMessage.publisherAddress)
                     assert(streamMessage.signature)
-                    const producers = await client.subscribedStreams[createdStream.id].getProducers()
-                    Signer.verifyStreamMessage(streamMessage, new Set(producers))
                 })
             }, 5000)
         }, 10000)
 
         it('client.subscribe (realtime)', (done) => {
-            let streamId
             let streamMessage
             const id = Date.now()
 
@@ -114,7 +111,6 @@ describe('StreamrClient', () => {
             client.getOrCreateStream({
                 name: `StreamrClient client.subscribe (realtime) - ${Date.now()}`,
             }).then((stream) => {
-                streamId = stream.id
                 const sub = client.subscribe({
                     stream: stream.id,
                 }, (message) => {
@@ -129,15 +125,13 @@ describe('StreamrClient', () => {
                         id,
                     })
                 })
-                client.connection.on('BroadcastMessage', async (msg) => {
-                    streamMessage = msg.payload
-                    assert.strictEqual(streamMessage.parsedContent.id, id)
-                    assert.strictEqual(streamMessage.signatureType, 1)
-                    assert(streamMessage.publisherAddress)
-                    assert(streamMessage.signature)
-                    const producers = await client.subscribedStreams[streamId].getProducers()
-                    Signer.verifyStreamMessage(streamMessage, new Set(producers))
-                })
+            })
+            client.connection.on('BroadcastMessage', (msg) => {
+                streamMessage = msg.payload
+                assert.strictEqual(streamMessage.parsedContent.id, id)
+                assert.strictEqual(streamMessage.signatureType, 1)
+                assert(streamMessage.publisherAddress)
+                assert(streamMessage.signature)
             })
         })
     })

@@ -1,3 +1,5 @@
+import Signer from './Signer'
+
 export default class SubscribedStream {
     constructor(client, streamId) {
         this._client = client
@@ -22,9 +24,9 @@ export default class SubscribedStream {
     }
 
     async verifyStreamMessage(msg) {
-        const producers = await this.getProducers()
         if (this.verifySignatures) {
-            return this._client.signer.verifyStreamMessage(msg, producers)
+            const producers = await this.getProducers()
+            return Signer.verifyStreamMessage(msg, new Set(producers))
         }
         return true
     }

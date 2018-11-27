@@ -53,6 +53,6 @@ export default class Stream {
     }
 
     publish(data, timestamp = Date.now()) {
-        return this._client.produceToStream(this.id, data, timestamp)
+        return this._client.publish(this.id, data, timestamp)
     }
 }

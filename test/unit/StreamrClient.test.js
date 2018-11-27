@@ -22,7 +22,7 @@ import {
 import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import FailedToProduceError from '../../src/errors/FailedToProduceError'
+import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import SubscribedStream from '../../src/SubscribedStream'
 
 const mockDebug = debug('mock')
@@ -322,22 +322,36 @@ describe('StreamrClient', () => {
         describe('BroadcastMessage', () => {
             beforeEach(() => client.connect())
 
-            it('should call the message handler of each subscription', () => {
+            it('should call the message handler of each subscription', (done) => {
                 connection.expect(new SubscribeRequest('stream1'))
 
                 const counter = sinon.stub()
+                counter.onFirstCall().returns(1)
+                counter.onSecondCall().returns(2)
 
                 client.subscribe({
                     stream: 'stream1',
-                }, counter)
+                }, () => {
+                    const c = counter()
+                    if (c === 2) {
+                        done()
+                    } else {
+                        assert.strictEqual(c, 1)
+                    }
+                })
                 client.subscribe({
                     stream: 'stream1',
-                }, counter)
+                }, () => {
+                    const c = counter()
+                    if (c === 2) {
+                        done()
+                    } else {
+                        assert.strictEqual(c, 1)
+                    }
+                })
 
                 connection.emitMessage(new SubscribeResponse('stream1'))
                 connection.emitMessage(msg())
-
-                assert.equal(counter.callCount, 2)
             })
 
             it('should not crash if messages are received for unknown streams', () => {

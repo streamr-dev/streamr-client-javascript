@@ -1,5 +1,4 @@
 import assert from 'assert'
-import sinon from 'sinon'
 import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
 import Signer from '../../src/Signer'
 
@@ -50,6 +49,7 @@ describe('Signer', () => {
         let request
         let signedRequest
         let signedStreamMessage
+        let wrongStreamMessage
         beforeEach(async () => {
             signer = new Signer({
                 privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
@@ -62,17 +62,13 @@ describe('Signer', () => {
             request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
             signedRequest = await signer.getSignedPublishRequest(request)
             signedStreamMessage = new StreamMessage(
-                streamId,
-                0,
-                timestamp,
-                0,
-                0,
-                0,
-                StreamMessage.CONTENT_TYPES.JSON,
-                data,
-                1,
-                signedRequest.publisherAddress,
-                signedRequest.signature,
+                streamId, 0, timestamp, 0, 0, 0, StreamMessage.CONTENT_TYPES.JSON,
+                data, 1, signedRequest.publisherAddress, signedRequest.signature,
+            )
+            wrongStreamMessage = new StreamMessage(
+                streamId, 0, timestamp, 0, 0, 0, StreamMessage.CONTENT_TYPES.JSON,
+                data, 1, signedRequest.publisherAddress,
+                '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
             )
         })
         it('should return correct signature', async () => {
@@ -91,17 +87,15 @@ describe('Signer', () => {
             assert.deepEqual(signature, signedRequest.signature)
         })
         it('Should verify correct signature', () => {
-            Signer.verifyStreamMessage(signedStreamMessage, new Set([signedRequest.publisherAddress]))
+            assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set([signedRequest.publisherAddress.toLowerCase()])), true)
         })
 
         it('Should throw if incorrect signature', () => {
-            const wrongStreamMessage = Object.assign({}, signedStreamMessage)
-            wrongStreamMessage.signature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
-            assert.throws(() => Signer.verifyStreamMessage(wrongStreamMessage, new Set([signedRequest.publisherAddress])), Error)
+            assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage, new Set([signedRequest.publisherAddress.toLowerCase()])), false)
         })
 
         it('Should throw if correct signature but not from a trusted publisher', () => {
-            assert.throws(() => Signer.verifyStreamMessage(signedStreamMessage, new Set()), Error)
+            assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set()), false)
         })
     })
 })

@@ -15,7 +15,7 @@ import Stream from './rest/domain/Stream'
 import Connection from './Connection'
 import Session from './Session'
 import Signer from './Signer'
-import FailedToProduceError from './errors/FailedToProduceError'
+import FailedToPublishError from './errors/FailedToPublishError'
 import SubscribedStream from './SubscribedStream'
 
 export default class StreamrClient extends EventEmitter {
@@ -60,9 +60,10 @@ export default class StreamrClient extends EventEmitter {
         this.connection = connection || new Connection(this.options)
 
         // Broadcast messages to all subs listening on stream
-        this.connection.on('BroadcastMessage', (msg) => {
+        this.connection.on('BroadcastMessage', async (msg) => {
             const stream = this.subscribedStreams[msg.payload.streamId]
-            if (stream && !stream.verifyStreamMessage(msg)) {
+            const valid = stream ? await stream.verifyStreamMessage(msg.payload) : true
+            if (!valid) {
                 throw new Error('Invalid message signature')
             }
             // Notify the Subscriptions for this stream. If this is not the message each individual Subscription
@@ -78,9 +79,10 @@ export default class StreamrClient extends EventEmitter {
         })
 
         // Unicast messages to a specific subscription only
-        this.connection.on('UnicastMessage', (msg) => {
+        this.connection.on('UnicastMessage', async (msg) => {
             const stream = this.subscribedStreams[msg.payload.streamId]
-            if (stream && !stream.verifyStreamMessage(msg)) {
+            const valid = stream ? await stream.verifyStreamMessage(msg.payload) : true
+            if (!valid) {
                 throw new Error('Invalid message signature')
             }
             if (msg.subId !== undefined && this.subById[msg.subId] !== undefined) {

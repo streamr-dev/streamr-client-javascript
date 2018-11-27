@@ -1,13 +1,14 @@
 import assert from 'assert'
 import sinon from 'sinon'
-import { StreamMessage } from 'streamr-client-protocol'
+import { PublishRequest, StreamMessage } from 'streamr-client-protocol'
 import StreamrClient from '../../src/StreamrClient'
 import SubscribedStream from '../../src/SubscribedStream'
+import Signer from '../../src/Signer'
 
 describe('SubscribedStream', () => {
     let client
     let stream
-    const producers = ['producer1', 'producer2', 'producer3']
+    const producers = ['0x9f93732db3a246b18805aa745dbd494e6784e811', 'producer2', 'producer3']
     describe('constructor', () => {
         it('should set verifySignatures to true', () => {
             client = new StreamrClient({
@@ -34,7 +35,6 @@ describe('SubscribedStream', () => {
     describe('signature verification', () => {
         beforeEach(() => {
             client = new StreamrClient()
-            client.signer = sinon.stub()
             client.getStreamProducers = sinon.stub()
             client.getStreamProducers.withArgs('streamId').resolves(producers)
             stream = new SubscribedStream(client, 'streamId')
@@ -55,22 +55,37 @@ describe('SubscribedStream', () => {
         })
         describe('verifyStreamMessage', () => {
             let msg
-            beforeEach(() => {
-                msg = new StreamMessage()
-                client.signer.verifyStreamMessage = sinon.stub()
-                client.signer.verifyStreamMessage.withArgs(msg, producers).returns(true)
+            beforeEach(async () => {
+                const signer = new Signer({
+                    privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+                })
+                const streamId = 'streamId'
+                const data = {
+                    field: 'some-data',
+                }
+                const timestamp = Date.now()
+                const request = new PublishRequest(streamId, undefined, undefined, data, timestamp)
+                const signedRequest = await signer.getSignedPublishRequest(request)
+                msg = new StreamMessage(
+                    streamId, 0, timestamp, 0, 0, 0, StreamMessage.CONTENT_TYPES.JSON,
+                    data, 1, signedRequest.publisherAddress, signedRequest.signature,
+                )
             })
             it('should return true', async () => {
+                const spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
                 stream.verifySignatures = true
                 const valid = await stream.verifyStreamMessage(msg)
                 assert.strictEqual(valid, true)
-                assert(client.signer.verifyStreamMessage.calledOnce)
+                assert(spiedVerifyStreamMessage.calledOnce)
+                spiedVerifyStreamMessage.restore()
             })
             it('should return true without verifying', async () => {
+                const spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
                 stream.verifySignatures = false
                 const valid = await stream.verifyStreamMessage(msg)
                 assert.strictEqual(valid, true)
-                assert(client.signer.verifyStreamMessage.notCalled)
+                assert(spiedVerifyStreamMessage.notCalled)
+                spiedVerifyStreamMessage.restore()
             })
         })
     })

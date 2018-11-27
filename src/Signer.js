@@ -11,7 +11,7 @@ export default class Signer {
         this.options = options
         if (this.options.privateKey) {
             const account = web3.eth.accounts.privateKeyToAccount(this.options.privateKey)
-            this.address = account.address
+            this.address = account.address.toLowerCase()
             this.sign = (d) => account.sign(d).signature
         } else if (this.options.provider) {
             const w3 = new Web3(this.options.provider)
@@ -72,10 +72,8 @@ export default class Signer {
     // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
         const payload = this.getPayloadToSign(msg.streamId, msg.timestamp, msg.publisherAddress, msg.getSerializedContent())
-        if (!this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)
-            || !trustedPublishers.has(msg.publisherAddress.toLowerCase())) {
-            throw new Error(`Invalid signature: ${msg.signature}`)
-        }
+        return this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)
+            && trustedPublishers.has(msg.publisherAddress.toLowerCase())
     }
 
     static createSigner(options, publishWithSignature) {
