@@ -18,7 +18,6 @@ describe('StreamrClient', () => {
         auth: {
             privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
         },
-        verifySignatures: 'always',
         autoConnect: false,
         autoDisconnect: false,
         ...opts,
@@ -57,10 +56,12 @@ describe('StreamrClient', () => {
             assert(client.isConnected())
             return client.createStream({
                 name,
+                requireSignedData: true,
             }).then((stream) => {
                 createdStream = stream
                 assert(stream.id)
                 assert.equal(stream.name, name)
+                assert.strictEqual(stream.requireSignedData, true)
             })
         })
 
@@ -85,7 +86,10 @@ describe('StreamrClient', () => {
                     stream: createdStream.id,
                     resend_last: 1,
                 }, async () => {
-                    const producers = await client.subscribedStreams[createdStream.id].getProducers()
+                    const subStream = client.subscribedStreams[createdStream.id]
+                    const producers = await subStream.getProducers()
+                    const requireVerification = await subStream.getVerifySignatures()
+                    assert.strictEqual(requireVerification, true)
                     assert.deepStrictEqual(producers, [client.signer.address.toLowerCase()])
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {

@@ -24,12 +24,12 @@ describe('SubscribedStream', () => {
             stream = new SubscribedStream(client, 'streamId')
             assert.strictEqual(stream.verifySignatures, false)
         })
-        it('should set verifySignatures to false', () => {
+        it('should set verifySignatures to undefined at construction', () => {
             client = new StreamrClient({
                 verifySignatures: 'auto',
             })
             stream = new SubscribedStream(client, 'streamId')
-            assert.strictEqual(stream.verifySignatures, stream.requireSignedData)
+            assert.strictEqual(stream.verifySignatures, undefined)
         })
     })
     describe('signature verification', () => {
@@ -51,6 +51,28 @@ describe('SubscribedStream', () => {
                 const retrievedProducers = await stream.getProducers()
                 assert(client.getStreamProducers.notCalled)
                 assert.deepStrictEqual(producers, retrievedProducers)
+            })
+        })
+        describe('getVerifySignatures', () => {
+            it('should set signature verification flag to true', async () => {
+                client.getStream = sinon.stub().resolves({
+                    requireSignedData: true,
+                })
+                assert.strictEqual(stream.verifySignatures, undefined)
+                const retrievedFlag = await stream.getVerifySignatures()
+                assert(client.getStream.calledOnce)
+                assert.strictEqual(retrievedFlag, true)
+                assert.strictEqual(stream.verifySignatures, true)
+            })
+            it('should set signature verification flag to false', async () => {
+                client.getStream = sinon.stub().resolves({
+                    requireSignedData: false,
+                })
+                assert.strictEqual(stream.verifySignatures, undefined)
+                const retrievedFlag = await stream.getVerifySignatures()
+                assert(client.getStream.calledOnce)
+                assert.strictEqual(retrievedFlag, false)
+                assert.strictEqual(stream.verifySignatures, false)
             })
         })
         describe('verifyStreamMessage', () => {

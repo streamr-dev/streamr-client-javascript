@@ -128,6 +128,7 @@ describe('StreamrClient', () => {
         client = new StreamrClient({
             autoConnect: false,
             autoDisconnect: false,
+            verifySignatures: 'never',
         }, connection)
     })
 
