@@ -96,7 +96,7 @@ export async function getStreamProducers(streamId) {
     return json.addresses
 }
 
-export function produceToStreamHttp(streamObjectOrId, data, requestOptions = {}, keepAlive = true) {
+export function publishHttp(streamObjectOrId, data, requestOptions = {}, keepAlive = true) {
     let streamId
     if (streamObjectOrId instanceof Stream) {
         streamId = streamObjectOrId.id

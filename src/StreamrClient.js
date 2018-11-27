@@ -56,7 +56,6 @@ export default class StreamrClient extends EventEmitter {
 
         this.session = new Session(this, this.options.auth)
         this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
-
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
@@ -166,7 +165,7 @@ export default class StreamrClient extends EventEmitter {
             const publishQueueCopy = this.publishQueue.slice(0)
             this.publishQueue = []
             publishQueueCopy.forEach((args) => {
-                this.produceToStream(...args)
+                this.publish(...args)
             })
         })
 
@@ -241,7 +240,7 @@ export default class StreamrClient extends EventEmitter {
         return this.subsByStream[streamId] || []
     }
 
-    async produceToStream(streamObjectOrId, data, timestamp = Date.now(), apiKey = this.options.auth.apiKey) {
+    async publish(streamObjectOrId, data, timestamp = Date.now(), apiKey = this.options.auth.apiKey) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
@@ -265,10 +264,10 @@ export default class StreamrClient extends EventEmitter {
             this.publishQueue.push([streamId, data, timestamp, apiKey])
             this.connect().catch(() => {}) // ignore
         } else {
-            throw new FailedToProduceError(
+            throw new FailedToPublishError(
                 streamId,
                 data,
-                'Wait for the "connected" event before calling produceToStream, or set autoConnect to true!',
+                'Wait for the "connected" event before calling publish, or set autoConnect to true!',
             )
         }
     }

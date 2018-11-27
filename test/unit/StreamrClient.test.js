@@ -9,15 +9,12 @@ import {
     UnsubscribeResponse,
     PublishRequest,
     StreamMessage,
-    StreamAndPartition,
     BroadcastMessage,
     UnicastMessage,
     ResendRequest,
-    ResendResponseMessage,
     ResendResponseResending,
     ResendResponseResent,
     ResendResponseNoResend,
-    ErrorMessage,
     ErrorResponse,
     Errors,
 } from 'streamr-client-protocol'
@@ -132,7 +129,6 @@ describe('StreamrClient', () => {
             autoConnect: false,
             autoDisconnect: false,
         }, connection)
-        client.session.getSessionToken = sinon.stub().resolves(undefined)
     })
 
     afterEach(() => {
@@ -819,7 +815,7 @@ describe('StreamrClient', () => {
         })
     })
 
-    describe('produceToStream', () => {
+    describe('publish', () => {
         const pubMsg = {
             foo: 'bar',
         }
@@ -833,7 +829,7 @@ describe('StreamrClient', () => {
                 connection.expect(new PublishRequest('stream1', undefined, undefined, {
                     foo: 'bar',
                 }, ts))
-                const promise = client.produceToStream('stream1', pubMsg, ts)
+                const promise = client.publish('stream1', pubMsg, ts)
                 assert(promise instanceof Promise)
                 return promise
             })
@@ -847,7 +843,7 @@ describe('StreamrClient', () => {
                 for (let i = 0; i < 10; i++) {
                     connection.expect(new PublishRequest('stream1', undefined, undefined, pubMsg, ts))
                     // Messages will be queued until connected
-                    client.produceToStream('stream1', pubMsg, ts)
+                    client.publish('stream1', pubMsg, ts)
                 }
 
                 connection.on('connected', done)
@@ -856,15 +852,15 @@ describe('StreamrClient', () => {
             it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
                 client.options.autoConnect = false
                 assert.equal(client.isConnected(), false)
-                client.produceToStream('stream1', pubMsg).catch((err) => {
-                    assert(err instanceof FailedToProduceError)
+                client.publish('stream1', pubMsg).catch((err) => {
+                    assert(err instanceof FailedToPublishError)
                     done()
                 })
             })
         })
     })
 
-    describe('Backwards compatibility for apiKey and authKey', () => {
+    describe('Fields set', () => {
         it('sets auth.apiKey from authKey', () => {
             const c = new StreamrClient({
                 authKey: 'authKey',
@@ -884,6 +880,10 @@ describe('StreamrClient', () => {
                 },
             })
             assert(c.options.auth.privateKey.startsWith('0x'))
+        })
+        it('sets unauthenticated', () => {
+            const c = new StreamrClient()
+            assert(c.session.options.unauthenticated)
         })
     })
 })

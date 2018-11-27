@@ -8,7 +8,6 @@ describe('Session', () => {
     let clientWrongApiKey
     let clientPrivateKey
     let clientUsernamePassword
-    let clientNone
 
     const createClient = (opts = {}) => new StreamrClient({
         url: config.websocketUrl,
@@ -39,9 +38,6 @@ describe('Session', () => {
                 username: 'tester2@streamr.com',
                 password: 'tester2',
             },
-        })
-        clientNone = createClient({
-            auth: {},
         })
     })
 
