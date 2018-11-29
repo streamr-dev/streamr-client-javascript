@@ -787,17 +787,6 @@ describe('StreamrClient', () => {
                 client.unsubscribe(sub.streamId)
             })
         })
-
-        it('should remove the SubscribedStream', (done) => {
-            client.subscribedStreams[sub.streamId] = new SubscribedStream(client, sub.streamId)
-            connection.expect(new UnsubscribeRequest(sub.streamId))
-            client.unsubscribe(sub)
-            sub.on('unsubscribed', () => {
-                assert.strictEqual(client.subscribedStreams[sub.streamId], undefined)
-                done()
-            })
-            client.connection.emitMessage(new UnsubscribeResponse(sub.streamId))
-        })
     })
 
     describe('disconnect()', () => {

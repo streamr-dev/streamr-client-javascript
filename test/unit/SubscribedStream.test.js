@@ -111,4 +111,34 @@ describe('SubscribedStream', () => {
             })
         })
     })
+    describe('subscriptions', () => {
+        let sub1
+        beforeEach(() => {
+            client = new StreamrClient()
+            stream = new SubscribedStream(client, 'streamId')
+            sub1 = {
+                id: 'sub1Id',
+            }
+        })
+        it('should add subscription to object', () => {
+            stream.addSubscription(sub1)
+            assert(stream.subscriptions[sub1.id] === sub1)
+        })
+        it('should remove subscription', () => {
+            stream.subscriptions[sub1.id] = sub1
+            stream.removeSubscription(sub1)
+            assert(stream.subscriptions[sub1.id] === undefined)
+        })
+        it('should get subscriptions array', () => {
+            stream.subscriptions[sub1.id] = sub1
+            const sub2 = {
+                id: 'sub2Id',
+            }
+            stream.subscriptions[sub2.id] = sub2
+            assert.deepStrictEqual(stream.getSubscriptions(), [sub1, sub2])
+        })
+        it('should return true', () => {
+            assert.strictEqual(stream.emptySubscriptionsSet(), true)
+        })
+    })
 })

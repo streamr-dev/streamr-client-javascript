@@ -4,6 +4,7 @@ export default class SubscribedStream {
     constructor(client, streamId) {
         this._client = client
         this.streamId = streamId
+        this.subscriptions = {}
         if (client.options.verifySignatures === 'always') {
             this.verifySignatures = true
         } else if (client.options.verifySignatures === 'never') {
@@ -37,5 +38,29 @@ export default class SubscribedStream {
             this.verifySignatures = stream.requireSignedData
         }
         return this.verifySignatures
+    }
+
+    getSubscriptions() {
+        return Object.values(this.subscriptions)
+    }
+
+    isSubscribing() {
+        return this.subscribing
+    }
+
+    setSubscribing(value) {
+        this.subscribing = value
+    }
+
+    emptySubscriptionsSet() {
+        return Object.keys(this.subscriptions).length === 0
+    }
+
+    addSubscription(sub) {
+        this.subscriptions[sub.id] = sub
+    }
+
+    removeSubscription(sub) {
+        delete this.subscriptions[sub.id]
     }
 }
