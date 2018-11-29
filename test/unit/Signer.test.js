@@ -13,6 +13,7 @@ describe('Signer', () => {
         })
         it('should throw when constructed with nothing', () => {
             assert.throws(() => {
+                // eslint-disable-next-line no-new
                 new Signer({})
             }, /Error/)
         })
@@ -68,12 +69,14 @@ describe('Signer', () => {
             wrongStreamMessage = new StreamMessage(
                 streamId, 0, timestamp, 0, 0, 0, StreamMessage.CONTENT_TYPES.JSON,
                 data, 1, signedRequest.publisherAddress,
-                '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
+                '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1' +
+                'c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c',
             )
         })
         it('should return correct signature', async () => {
             const payload = 'data-to-sign'
-            const expectedSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
+            const expectedSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3' +
+                'c5f1c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
             const signature = await signer.signData(payload)
             assert.deepEqual(signature, expectedSignature)
         })
