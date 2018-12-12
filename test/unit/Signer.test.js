@@ -93,11 +93,11 @@ describe('Signer', () => {
             assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set([signedRequest.publisherAddress.toLowerCase()])), true)
         })
 
-        it('Should throw if incorrect signature', () => {
+        it('Should return false if incorrect signature', () => {
             assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage, new Set([signedRequest.publisherAddress.toLowerCase()])), false)
         })
 
-        it('Should throw if correct signature but not from a trusted publisher', () => {
+        it('Should return false if correct signature but not from a trusted publisher', () => {
             assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set()), false)
         })
     })

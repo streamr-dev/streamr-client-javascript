@@ -17,10 +17,10 @@ export default class SubscribedStream {
     }
 
     async getProducers() {
-        if (!this.producers) {
-            this.producers = await this._client.getStreamProducers(this.streamId)
+        if (!this.producersPromise) {
+            this.producersPromise = this._client.getStreamProducers(this.streamId)
         }
-        return this.producers
+        return this.producersPromise
     }
 
     async verifyStreamMessage(msg) {
@@ -32,16 +32,23 @@ export default class SubscribedStream {
         return true
     }
 
+    async getStream() {
+        if (!this.streamPromise) {
+            this.streamPromise = this._client.getStream(this.streamId)
+        }
+        return this.streamPromise
+    }
+
     async getVerifySignatures() {
         if (this.verifySignatures === undefined) {
-            const stream = await this._client.getStream(this.streamId)
+            const stream = await this.getStream()
             this.verifySignatures = stream.requireSignedData
         }
         return this.verifySignatures
     }
 
     getSubscriptions() {
-        return Object.values(this.subscriptions)
+        return Object.values(this.subscriptions) || []
     }
 
     isSubscribing() {

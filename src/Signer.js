@@ -68,8 +68,6 @@ export default class Signer {
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    // TODO: should be used by the StreamrClient before calling Subscription.handleMessage but only if client required signature verification
-    // on that stream. Should also check that msg.publisherAddress is trusted (need to know set of authorized stream writers).
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
         const payload = this.getPayloadToSign(msg.streamId, msg.timestamp, msg.publisherAddress, msg.getSerializedContent())
         return this.verifySignature(payload, msg.signature, msg.publisherAddress, msg.signatureType)
