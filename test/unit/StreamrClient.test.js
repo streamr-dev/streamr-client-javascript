@@ -23,7 +23,6 @@ import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
-import SubscribedStream from '../../src/SubscribedStream'
 
 const mockDebug = debug('mock')
 
