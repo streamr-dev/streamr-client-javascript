@@ -603,14 +603,6 @@ describe('StreamrClient', () => {
                 })
             })
 
-            it('should add a new SubscribedStream', () => {
-                const streamId = 'streamId'
-                connection.expect(new SubscribeRequest(streamId))
-                client.subscribe(streamId, () => {})
-                const stream = client.subscribedStreams.streamId
-                assert(stream instanceof SubscribedStream)
-            })
-
             describe('with resend options', () => {
                 it('supports resend_all', () => {
                     const sub = setupSubscription('stream1', false, {
