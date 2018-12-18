@@ -98,7 +98,7 @@ describe('StreamEndpoints', () => {
                             done()
                         })
                     }, 5000)
-                })
+                }).catch((err) => { throw err })
             })
         }, 10000)
     })
