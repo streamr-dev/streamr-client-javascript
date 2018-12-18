@@ -16,6 +16,7 @@ import Connection from './Connection'
 import Session from './Session'
 import Signer from './Signer'
 import FailedToPublishError from './errors/FailedToPublishError'
+import InvalidSignatureError from './errors/InvalidSignatureError'
 import SubscribedStream from './SubscribedStream'
 
 export default class StreamrClient extends EventEmitter {
@@ -36,7 +37,6 @@ export default class StreamrClient extends EventEmitter {
             verifySignatures: 'auto',
         }
         this.subscribedStreams = {}
-        this.subById = {}
         this.publishQueue = []
 
         Object.assign(this.options, options || {})
@@ -68,7 +68,7 @@ export default class StreamrClient extends EventEmitter {
                     // is expecting, they will either ignore it or request resend via gap event.
                     stream.getSubscriptions().forEach((sub) => sub.handleMessage(msg.payload, false))
                 } else {
-                    const error = new Error('Invalid message signature')
+                    const error = new InvalidSignatureError(msg.payload)
                     stream.getSubscriptions().forEach((sub) => sub.handleError(error))
                 }
             } else {
@@ -78,17 +78,21 @@ export default class StreamrClient extends EventEmitter {
 
         // Unicast messages to a specific subscription only
         this.connection.on('UnicastMessage', async (msg) => {
-            if (msg.subId !== undefined && this.subById[msg.subId] !== undefined) {
-                const sub = this.subById[msg.subId]
-                const stream = this.subscribedStreams[msg.payload.streamId]
-                const valid = stream ? await stream.verifyStreamMessage(msg.payload) : true
-                if (valid) {
-                    sub.handleMessage(msg.payload, true)
+            const stream = this.subscribedStreams[msg.payload.streamId]
+            if (stream) {
+                const sub = stream.getSubscription(msg.subId)
+                if (sub) {
+                    const valid = await stream.verifyStreamMessage(msg.payload)
+                    if (valid) {
+                        sub.handleMessage(msg.payload, true)
+                    } else {
+                        sub.handleError(new InvalidSignatureError(msg.payload))
+                    }
                 } else {
-                    sub.handleError(new Error('Invalid message signature'))
+                    debug('WARN: subscription not found for stream: %s, sub: %s', msg.payload.streamId, msg.subId)
                 }
             } else {
-                debug('WARN: subscription not found for stream: %s, sub: %s', msg.payload.streamId, msg.subId)
+                debug('WARN: message received for stream with no subscriptions: %s', msg.payload.streamId)
             }
         })
 
@@ -117,24 +121,27 @@ export default class StreamrClient extends EventEmitter {
 
         // Route resending state messages to corresponding Subscriptions
         this.connection.on('ResendResponseResending', (response) => {
-            if (this.subById[response.payload.subId]) {
-                this.subById[response.payload.subId].emit('resending', response.payload)
+            const stream = this.subscribedStreams[response.payload.streamId]
+            if (stream && stream.getSubscription(response.payload.subId)) {
+                stream.getSubscription(response.payload.subId).emit('resending', response.payload)
             } else {
                 debug('resent: Subscription %d is gone already', response.payload.subId)
             }
         })
 
         this.connection.on('ResendResponseNoResend', (response) => {
-            if (this.subById[response.payload.subId]) {
-                this.subById[response.payload.subId].emit('no_resend', response.payload)
+            const stream = this.subscribedStreams[response.payload.streamId]
+            if (stream && stream.getSubscription(response.payload.subId)) {
+                stream.getSubscription(response.payload.subId).emit('no_resend', response.payload)
             } else {
                 debug('resent: Subscription %d is gone already', response.payload.subId)
             }
         })
 
         this.connection.on('ResendResponseResent', (response) => {
-            if (this.subById[response.payload.subId]) {
-                this.subById[response.payload.subId].emit('resent', response.payload)
+            const stream = this.subscribedStreams[response.payload.streamId]
+            if (stream && stream.getSubscription(response.payload.subId)) {
+                stream.getSubscription(response.payload.subId).emit('resent', response.payload)
             } else {
                 debug('resent: Subscription %d is gone already', response.payload.subId)
             }
@@ -201,7 +208,6 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _addSubscription(sub) {
-        this.subById[sub.id] = sub
         if (!this.subscribedStreams[sub.streamId]) {
             this.subscribedStreams[sub.streamId] = new SubscribedStream(this, sub.streamId)
         }
@@ -209,7 +215,6 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _removeSubscription(sub) {
-        delete this.subById[sub.id]
         const stream = this.subscribedStreams[sub.streamId]
         if (stream) {
             stream.removeSubscription(sub)
@@ -368,8 +373,6 @@ export default class StreamrClient extends EventEmitter {
 
     disconnect() {
         this.subscribedStreams = {}
-        this.subById = {}
-
         return this.connection.disconnect()
     }
 

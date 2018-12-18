@@ -16,7 +16,7 @@ export default class SubscribedStream {
         }
     }
 
-    async getProducers() {
+    getProducers() {
         if (!this.producersPromise) {
             this.producersPromise = this._client.getStreamProducers(this.streamId)
         }
@@ -45,6 +45,10 @@ export default class SubscribedStream {
             this.verifySignatures = stream.requireSignedData
         }
         return this.verifySignatures
+    }
+
+    getSubscription(subId) {
+        return this.subscriptions[subId]
     }
 
     getSubscriptions() {

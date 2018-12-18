@@ -156,21 +156,19 @@ describe('SubscribedStream', () => {
                 id: 'sub1Id',
             }
         })
-        it('should add subscription to object', () => {
+        it('should add and remove subscription correctly', () => {
+            assert(subscribedStream.getSubscription(sub1.id) === undefined)
             subscribedStream.addSubscription(sub1)
-            assert(subscribedStream.subscriptions[sub1.id] === sub1)
-        })
-        it('should remove subscription', () => {
-            subscribedStream.subscriptions[sub1.id] = sub1
+            assert(subscribedStream.getSubscription(sub1.id) === sub1)
             subscribedStream.removeSubscription(sub1)
-            assert(subscribedStream.subscriptions[sub1.id] === undefined)
+            assert(subscribedStream.getSubscription(sub1.id) === undefined)
         })
         it('should get subscriptions array', () => {
-            subscribedStream.subscriptions[sub1.id] = sub1
+            subscribedStream.addSubscription(sub1)
             const sub2 = {
                 id: 'sub2Id',
             }
-            subscribedStream.subscriptions[sub2.id] = sub2
+            subscribedStream.addSubscription(sub2)
             assert.deepStrictEqual(subscribedStream.getSubscriptions(), [sub1, sub2])
         })
         it('should return true', () => {
