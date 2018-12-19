@@ -33,13 +33,12 @@ describe('StreamEndpoints', () => {
         it('createStream', () => client.createStream({
             name,
             requireSignedData: true,
-        })
-            .then((stream) => {
-                createdStream = stream
-                assert(stream.id)
-                assert.equal(stream.name, name)
-                assert.strictEqual(stream.requireSignedData, true)
-            }))
+        }).then((stream) => {
+            createdStream = stream
+            assert(createdStream.id)
+            assert.equal(createdStream.name, name)
+            assert.strictEqual(createdStream.requireSignedData, true)
+        }))
 
         it('getOrCreate an existing Stream', () => client.getOrCreateStream({
             name,

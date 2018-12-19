@@ -60,9 +60,9 @@ describe('StreamrClient', () => {
                 requireSignedData: true,
             }).then((stream) => {
                 createdStream = stream
-                assert(stream.id)
-                assert.equal(stream.name, name)
-                assert.strictEqual(stream.requireSignedData, true)
+                assert(createdStream.id)
+                assert.equal(createdStream.name, name)
+                assert.strictEqual(createdStream.requireSignedData, true)
             })
         })
 
