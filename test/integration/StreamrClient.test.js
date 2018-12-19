@@ -63,7 +63,7 @@ describe('StreamrClient', () => {
                 assert(createdStream.id)
                 assert.equal(createdStream.name, name)
                 assert.strictEqual(createdStream.requireSignedData, true)
-            })
+            }).catch((err) => { throw err })
         })
 
         it('Stream.publish', () => createdStream.publish({
