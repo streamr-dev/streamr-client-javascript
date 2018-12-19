@@ -1,9 +1,8 @@
 import assert from 'assert'
 
+import Web3 from 'web3'
 import StreamrClient from '../../src'
 import config from './config'
-
-import Web3 from 'web3'
 
 describe('Session', () => {
     let clientApiKey
