@@ -1,5 +1,6 @@
 import assert from 'assert'
 import fetch from 'node-fetch'
+import Web3 from 'web3'
 
 import StreamrClient from '../../src'
 import config from './config'
@@ -16,7 +17,7 @@ describe('StreamrClient', () => {
         url: `${config.websocketUrl}?payloadVersion=29`,
         restUrl: config.restUrl,
         auth: {
-            privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+            privateKey: new Web3().eth.accounts.create().privateKey,
         },
         autoConnect: false,
         autoDisconnect: false,

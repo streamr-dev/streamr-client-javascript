@@ -3,6 +3,8 @@ import assert from 'assert'
 import StreamrClient from '../../src'
 import config from './config'
 
+import Web3 from 'web3'
+
 describe('Session', () => {
     let clientApiKey
     let clientWrongApiKey
@@ -30,7 +32,7 @@ describe('Session', () => {
         })
         clientPrivateKey = createClient({
             auth: {
-                privateKey: '348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+                privateKey: new Web3().eth.accounts.create().privateKey,
             },
         })
         clientUsernamePassword = createClient({
