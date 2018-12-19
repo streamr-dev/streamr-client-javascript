@@ -97,10 +97,10 @@ describe('StreamEndpoints', () => {
                             )
                             done()
                         })
-                    }, 5000)
+                    }, 10000)
                 }).catch((err) => { throw err })
             })
-        }, 10000)
+        }, 15000)
     })
 
     describe('Stream permissions', () => {

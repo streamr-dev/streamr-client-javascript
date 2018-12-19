@@ -105,8 +105,8 @@ describe('StreamrClient', () => {
                     assert(streamMessage.publisherAddress)
                     assert(streamMessage.signature)
                 })
-            }, 5000)
-        }, 10000)
+            }, 10000)
+        }, 15000)
 
         it('client.subscribe (realtime)', (done) => {
             let streamMessage
