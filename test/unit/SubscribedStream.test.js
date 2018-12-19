@@ -99,7 +99,7 @@ describe('SubscribedStream', () => {
                 })
             })
         })
-        describe('verifyStreamMessage', () => {
+        describe('verifyStreamMessage, signed message', () => {
             let msg
             let client
             let spiedVerifyStreamMessage
@@ -143,6 +143,40 @@ describe('SubscribedStream', () => {
             it('should return true without verifying with "never" verification mode even if stream requires signed data', async () => {
                 ({ client } = setupClientAndStream('never', true))
                 spiedExpectedCall = () => spiedVerifyStreamMessage.notCalled
+            })
+        })
+        describe('verifyStreamMessage, unsigned message', () => {
+            let msg
+            let client
+            let expectedValid
+            beforeEach(() => {
+                const streamId = 'streamId'
+                const data = {
+                    field: 'some-data',
+                }
+                const timestamp = Date.now()
+                msg = new StreamMessage(streamId, 0, timestamp, 0, 0, 0, StreamMessage.CONTENT_TYPES.JSON, data, 0)
+            })
+            afterEach(async () => {
+                subscribedStream = new SubscribedStream(client, 'streamId')
+                const valid = await subscribedStream.verifyStreamMessage(msg)
+                assert.strictEqual(valid, expectedValid)
+            })
+            it('should return false when "auto" verification and stream requires signed data', () => {
+                ({ client } = setupClientAndStream('auto', true))
+                expectedValid = false
+            })
+            it('should return true when "auto" verification and stream does not require signed data', () => {
+                ({ client } = setupClientAndStream('auto', false))
+                expectedValid = true
+            })
+            it('should return false when "always" verification even if stream does not require signed data', () => {
+                ({ client } = setupClientAndStream('always', false))
+                expectedValid = false
+            })
+            it('should return true when "never" verification even if stream requires signed data', () => {
+                ({ client } = setupClientAndStream('never', true))
+                expectedValid = true
             })
         })
     })

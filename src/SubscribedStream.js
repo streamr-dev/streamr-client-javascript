@@ -24,12 +24,11 @@ export default class SubscribedStream {
     }
 
     async verifyStreamMessage(msg) {
-        const requireVerification = await this.getVerifySignatures()
-        if (requireVerification) {
+        if (msg.signatureType && msg.signatureType !== 0) { // always verify in case the message is signed
             const publishers = await this.getPublishers()
             return Signer.verifyStreamMessage(msg, new Set(publishers))
         }
-        return true
+        return !(await this.getVerifySignatures())
     }
 
     async getStream() {
@@ -40,7 +39,7 @@ export default class SubscribedStream {
     }
 
     async getVerifySignatures() {
-        if (this.verifySignatures === undefined) {
+        if (this.verifySignatures === undefined) { // client.options.verifySignatures === 'auto'
             const stream = await this.getStream()
             this.verifySignatures = stream.requireSignedData
         }
