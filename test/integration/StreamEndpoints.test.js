@@ -38,7 +38,7 @@ describe('StreamEndpoints', () => {
             assert(createdStream.id)
             assert.equal(createdStream.name, name)
             assert.strictEqual(createdStream.requireSignedData, true)
-        })).catch((err) => { throw err })
+        }).catch((err) => { throw err }))
 
         it('getOrCreate an existing Stream', () => client.getOrCreateStream({
             name,
