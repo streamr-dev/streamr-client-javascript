@@ -54,9 +54,9 @@ export default class Signer {
         )
     }
 
-    static getPayloadToSign(streamId, timestamp, producerId, content, signatureType = SIGNATURE_TYPE_ETH) {
+    static getPayloadToSign(streamId, timestamp, publisherId, content, signatureType = SIGNATURE_TYPE_ETH) {
         if (signatureType === SIGNATURE_TYPE_ETH) {
-            return `${streamId}${timestamp}${producerId.toLowerCase()}${content}`
+            return `${streamId}${timestamp}${publisherId.toLowerCase()}${content}`
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }

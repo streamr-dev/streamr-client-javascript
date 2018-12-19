@@ -88,10 +88,10 @@ describe('StreamrClient', () => {
                     resend_last: 1,
                 }, async () => {
                     const subStream = client.subscribedStreams[createdStream.id]
-                    const producers = await subStream.getProducers()
+                    const publishers = await subStream.getPublishers()
                     const requireVerification = await subStream.getVerifySignatures()
                     assert.strictEqual(requireVerification, true)
-                    assert.deepStrictEqual(producers, [client.signer.address.toLowerCase()])
+                    assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
                         assert.strictEqual(client.subscribedStreams[createdStream.id], undefined)

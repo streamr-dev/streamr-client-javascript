@@ -16,18 +16,18 @@ export default class SubscribedStream {
         }
     }
 
-    getProducers() {
-        if (!this.producersPromise) {
-            this.producersPromise = this._client.getStreamProducers(this.streamId)
+    getPublishers() {
+        if (!this.publishersPromise) {
+            this.publishersPromise = this._client.getStreamPublishers(this.streamId)
         }
-        return this.producersPromise
+        return this.publishersPromise
     }
 
     async verifyStreamMessage(msg) {
         const requireVerification = await this.getVerifySignatures()
         if (requireVerification) {
-            const producers = await this.getProducers()
-            return Signer.verifyStreamMessage(msg, new Set(producers))
+            const publishers = await this.getPublishers()
+            return Signer.verifyStreamMessage(msg, new Set(publishers))
         }
         return true
     }

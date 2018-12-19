@@ -6,7 +6,7 @@ import Signer from '../../src/Signer'
 
 describe('SubscribedStream', () => {
     let subscribedStream
-    const producers = ['0x9f93732db3a246b18805aa745dbd494e6784e811', 'producer2', 'producer3']
+    const publishers = ['0x9f93732db3a246b18805aa745dbd494e6784e811', 'publisher2', 'publisher3']
 
     function setupClientAndStream(verifySignatures = 'auto', requireSignedData = true) {
         const client = {
@@ -14,8 +14,8 @@ describe('SubscribedStream', () => {
                 verifySignatures,
             },
         }
-        client.getStreamProducers = sinon.stub()
-        client.getStreamProducers.withArgs('streamId').resolves(producers)
+        client.getStreamPublishers = sinon.stub()
+        client.getStreamPublishers.withArgs('streamId').resolves(publishers)
         client.getStream = sinon.stub()
         const stream = {
             requireSignedData,
@@ -34,25 +34,25 @@ describe('SubscribedStream', () => {
                 ({ client, stream } = setupClientAndStream())
                 subscribedStream = new SubscribedStream(client, 'streamId')
             })
-            describe('getProducers', () => {
-                it('should use endpoint to retrieve producers', async () => {
-                    const retrievedProducers = await subscribedStream.getProducers()
-                    assert(client.getStreamProducers.calledOnce)
-                    assert.deepStrictEqual(producers, retrievedProducers)
-                    assert.deepStrictEqual(await subscribedStream.producersPromise, producers)
+            describe('getPublishers', () => {
+                it('should use endpoint to retrieve publishers', async () => {
+                    const retrievedPublishers = await subscribedStream.getPublishers()
+                    assert(client.getStreamPublishers.calledOnce)
+                    assert.deepStrictEqual(publishers, retrievedPublishers)
+                    assert.deepStrictEqual(await subscribedStream.publishersPromise, publishers)
                 })
-                it('should use stored producers and not the endpoint', async () => {
-                    subscribedStream.producersPromise = Promise.resolve(producers)
-                    const retrievedProducers = await subscribedStream.getProducers()
-                    assert(client.getStreamProducers.notCalled)
-                    assert.deepStrictEqual(producers, retrievedProducers)
+                it('should use stored publishers and not the endpoint', async () => {
+                    subscribedStream.publishersPromise = Promise.resolve(publishers)
+                    const retrievedPublishers = await subscribedStream.getPublishers()
+                    assert(client.getStreamPublishers.notCalled)
+                    assert.deepStrictEqual(publishers, retrievedPublishers)
                 })
                 it('should call getStreamProducers only once when multiple calls made simultaneously', () => {
-                    const p1 = subscribedStream.getProducers()
-                    const p2 = subscribedStream.getProducers()
-                    return Promise.all([p1, p2]).then(([producers1, producers2]) => {
-                        assert(client.getStreamProducers.calledOnce)
-                        assert.deepStrictEqual(producers1, producers2)
+                    const p1 = subscribedStream.getPublishers()
+                    const p2 = subscribedStream.getPublishers()
+                    return Promise.all([p1, p2]).then(([publishers1, publishers2]) => {
+                        assert(client.getStreamPublishers.calledOnce)
+                        assert.deepStrictEqual(publishers1, publishers2)
                     })
                 })
             })

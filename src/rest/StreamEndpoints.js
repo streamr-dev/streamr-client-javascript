@@ -90,8 +90,8 @@ export async function getOrCreateStream(props) {
     }
 }
 
-export async function getStreamProducers(streamId) {
-    const url = `${this.options.restUrl}/streams/${streamId}/producers`
+export async function getStreamPublishers(streamId) {
+    const url = `${this.options.restUrl}/streams/${streamId}/publishers`
     const json = await authFetch(url, this.session)
     return json.addresses.map((a) => a.toLowerCase())
 }
