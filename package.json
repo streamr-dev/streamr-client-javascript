@@ -1,6 +1,6 @@
 {
   "name": "streamr-client",
-  "version": "0.12.2",
+  "version": "1.0.0",
   "description": "JavaScript client library for Streamr",
   "repository": {
     "type": "git",
@@ -15,9 +15,9 @@
     "prepack": "npm run build",
     "dev": "webpack --progress --colors --watch",
     "eslint": "eslint src/** test/**",
-    "test": "jest",
-    "test-unit": "jest test/unit",
-    "test-integration": "jest --detectOpenHandles --maxWorkers=2 test/integration"
+    "test": "jest --detectOpenHandles",
+    "test-unit": "jest --detectOpenHandles --forceExit test/unit",
+    "test-integration": "jest --detectOpenHandles --forceExit --maxWorkers=1 test/integration"
   },
   "browser": {
     "http": "./src/shim/http-https.js",
