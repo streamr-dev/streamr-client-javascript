@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import Web3 from 'web3'
 import StreamrClient from '../../src'
 import config from './config'
