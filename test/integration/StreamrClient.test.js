@@ -52,14 +52,17 @@ describe('StreamrClient', () => {
     describe('Pub/Sub', () => {
         let createdStream
 
-        beforeAll(() => {
+        beforeAll((done) => {
             assert(client.isConnected())
-            return client.createStream({
+            client.createStream({
                 name,
             }).then((stream) => {
                 createdStream = stream
                 assert(stream.id)
                 assert.equal(stream.name, name)
+                done()
+            }).catch((error) => {
+                done(error)
             })
         })
 
