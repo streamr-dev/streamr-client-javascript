@@ -173,21 +173,12 @@ describe('Subscription', () => {
         describe('before messages have been received', () => {
             it('returns original resend options', () => {
                 const sub = new Subscription(msg.streamId, msg.streamPartition, 'apiKey', sinon.stub(), {
-                    resend_all: true,
+                    resend_from: 1,
                 })
-                assert.equal(sub.getEffectiveResendOptions().resend_all, true)
+                assert.equal(sub.getEffectiveResendOptions().resend_from, 1)
             })
         })
         describe('after messages have been received', () => {
-            it('transforms resend_all to resend_from', () => {
-                const sub = new Subscription(msg.streamId, msg.streamPartition, 'apiKey', sinon.stub(), {
-                    resend_all: true,
-                })
-                sub.handleMessage(msg)
-                assert.deepEqual(sub.getEffectiveResendOptions(), {
-                    resend_from: 2,
-                })
-            })
             it('updates resend_from', () => {
                 const sub = new Subscription(msg.streamId, msg.streamPartition, 'apiKey', sinon.stub(), {
                     resend_from: 1,

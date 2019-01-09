@@ -44,9 +44,6 @@ export default class Subscription extends EventEmitter {
 
         // Check that multiple resend options are not given
         let resendOptionCount = 0
-        if (this.options.resend_all) {
-            resendOptionCount += 1
-        }
         if (this.options.resend_from != null) {
             resendOptionCount += 1
         }
@@ -150,7 +147,7 @@ export default class Subscription extends EventEmitter {
     }
 
     hasResendOptions() {
-        return this.options.resend_all === true || this.options.resend_from >= 0 || this.options.resend_from_time >= 0 || this.options.resend_last > 0
+        return this.options.resend_from >= 0 || this.options.resend_from_time >= 0 || this.options.resend_last > 0
     }
 
     /**
@@ -158,14 +155,13 @@ export default class Subscription extends EventEmitter {
      * This function always returns the effective resend options:
      *
      * If messages have been received:
-     * - resend_all becomes resend_from
      * - resend_from becomes resend_from the latest received message
      * - resend_from_time becomes resend_from the latest received message
      * - resend_last stays the same
      */
     getEffectiveResendOptions() {
         if (this.hasReceivedMessages() && this.hasResendOptions()
-            && (this.options.resend_all || this.options.resend_from || this.options.resend_from_time)) {
+            && (this.options.resend_from || this.options.resend_from_time)) {
             return {
                 resend_from: this.lastReceivedOffset + 1,
             }

@@ -192,7 +192,7 @@ describe('StreamrClient', () => {
             it('should request resend according to sub.getEffectiveResendOptions()', () => {
                 const sub = client.subscribe({
                     stream: 'stream1',
-                    resend_all: true,
+                    resend_last: 1,
                 }, () => {})
 
                 connection.expect(new ControlLayer.SubscribeRequestV1(sub.streamId))
@@ -241,10 +241,10 @@ describe('StreamrClient', () => {
 
             it('emits a resend request if resend options were given', (done) => {
                 const sub = setupSubscription('stream1', false, {
-                    resend_all: true,
+                    resend_last: 1,
                 })
                 connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                    resend_all: true,
+                    resend_last: 1,
                 }))
                 connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 setTimeout(() => {
@@ -256,14 +256,14 @@ describe('StreamrClient', () => {
                 connection.expect(new ControlLayer.SubscribeRequestV1('stream1'))
 
                 const sub1 = client.subscribe({
-                    stream: 'stream1', resend_all: true,
+                    stream: 'stream1', resend_last: 2,
                 }, () => {})
                 const sub2 = client.subscribe({
                     stream: 'stream1', resend_last: 1,
                 }, () => {})
 
                 connection.expect(new ControlLayer.ResendRequestV0(sub1.streamId, sub1.streamPartition, sub1.id, {
-                    resend_all: true,
+                    resend_last: 2,
                 }))
                 connection.expect(new ControlLayer.ResendRequestV0(sub2.streamId, sub2.streamPartition, sub2.id, {
                     resend_last: 1,
@@ -605,16 +605,6 @@ describe('StreamrClient', () => {
             })
 
             describe('with resend options', () => {
-                it('supports resend_all', () => {
-                    const sub = setupSubscription('stream1', false, {
-                        resend_all: true,
-                    })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_all: true,
-                    }))
-                    connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
-                })
-
                 it('supports resend_from', () => {
                     const sub = setupSubscription('stream1', false, {
                         resend_from: 5,
@@ -669,7 +659,7 @@ describe('StreamrClient', () => {
                 it('throws if multiple resend options are given', () => {
                     assert.throws(() => {
                         client.subscribe({
-                            stream: 'stream1', apiKey: 'auth', resend_all: true, resend_last: 5,
+                            stream: 'stream1', apiKey: 'auth', resend_from: 1, resend_last: 5,
                         }, () => {})
                     })
                 })
