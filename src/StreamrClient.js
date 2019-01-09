@@ -432,15 +432,21 @@ export default class StreamrClient extends EventEmitter {
 
     _requestResend(sub, resendOptions) {
         sub.setResending(true)
+        const options = resendOptions || sub.getEffectiveResendOptions()
         return this.session.getSessionToken().then((sessionToken) => {
-            const request = new ControlLayer.ResendRequestV0(
-                sub.streamId,
-                sub.streamPartition,
-                sub.id,
-                resendOptions || sub.getEffectiveResendOptions(),
-                sub.apiKey,
-                sessionToken,
-            )
+            let request
+            if (options.resend_last > 0) {
+                request = new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
+            } else {
+                request = new ControlLayer.ResendRequestV0(
+                    sub.streamId,
+                    sub.streamPartition,
+                    sub.id,
+                    options,
+                    sub.apiKey,
+                    sessionToken,
+                )
+            }
             debug('_requestResend: %o', request)
             this.connection.send(request)
         })

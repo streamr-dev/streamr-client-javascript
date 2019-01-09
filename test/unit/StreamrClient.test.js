@@ -190,20 +190,19 @@ describe('StreamrClient', () => {
             })
 
             it('should request resend according to sub.getEffectiveResendOptions()', () => {
+                const nbToResend = 1
                 const sub = client.subscribe({
                     stream: 'stream1',
-                    resend_last: 1,
+                    resend_last: nbToResend,
                 }, () => {})
 
                 connection.expect(new ControlLayer.SubscribeRequestV1(sub.streamId))
 
                 connection.on('connected', () => {
                     sub.getEffectiveResendOptions = () => ({
-                        resend_last: 1,
+                        resend_last: nbToResend,
                     })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_last: 1,
-                    }))
+                    connection.expect(new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, nbToResend))
                     connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 })
                 return client.connect()
@@ -243,9 +242,7 @@ describe('StreamrClient', () => {
                 const sub = setupSubscription('stream1', false, {
                     resend_last: 1,
                 })
-                connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                    resend_last: 1,
-                }))
+                connection.expect(new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, 1))
                 connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 setTimeout(() => {
                     done()
@@ -262,12 +259,8 @@ describe('StreamrClient', () => {
                     stream: 'stream1', resend_last: 1,
                 }, () => {})
 
-                connection.expect(new ControlLayer.ResendRequestV0(sub1.streamId, sub1.streamPartition, sub1.id, {
-                    resend_last: 2,
-                }))
-                connection.expect(new ControlLayer.ResendRequestV0(sub2.streamId, sub2.streamPartition, sub2.id, {
-                    resend_last: 1,
-                }))
+                connection.expect(new ControlLayer.ResendLastRequestV1(sub1.streamId, sub1.streamPartition, sub1.id, 2))
+                connection.expect(new ControlLayer.ResendLastRequestV1(sub2.streamId, sub2.streamPartition, sub2.id, 1))
 
                 connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub1.streamId))
             })
@@ -619,9 +612,7 @@ describe('StreamrClient', () => {
                     const sub = setupSubscription('stream1', false, {
                         resend_last: 5,
                     })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_last: 5,
-                    }))
+                    connection.expect(new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, 5))
                     connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 })
 
