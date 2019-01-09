@@ -1,18 +1,18 @@
 import assert from 'assert'
 import sinon from 'sinon'
 
-import { StreamMessage, Errors } from 'streamr-client-protocol'
+import { MessageLayer, Errors } from 'streamr-client-protocol'
 
 import Subscription from '../../src/Subscription'
 
-const createMsg = (offset = 1, previousOffset = null, content = {}) => new StreamMessage(
+const createMsg = (offset = 1, previousOffset = null, content = {}) => new MessageLayer.StreamMessageV29(
     'streamId',
     0,
     Date.now(),
     0,
     offset,
     previousOffset,
-    StreamMessage.CONTENT_TYPES.JSON,
+    MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
     content,
 )
 

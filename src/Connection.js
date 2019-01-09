@@ -2,9 +2,19 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import WebSocket from 'ws'
 
-import { WebsocketResponse } from 'streamr-client-protocol'
+const Protocol = require('streamr-client-protocol')
 
 const debug = debugFactory('StreamrClient::Connection')
+
+const messageNameByType = {}
+messageNameByType[Protocol.ControlLayer.BroadcastMessage.TYPE] = 'BroadcastMessage'
+messageNameByType[Protocol.ControlLayer.UnicastMessage.TYPE] = 'UnicastMessage'
+messageNameByType[Protocol.ControlLayer.SubscribeResponse.TYPE] = 'SubscribeResponse'
+messageNameByType[Protocol.ControlLayer.UnsubscribeResponse.TYPE] = 'UnsubscribeResponse'
+messageNameByType[Protocol.ControlLayer.ResendResponseResending.TYPE] = 'ResendResponseResending'
+messageNameByType[Protocol.ControlLayer.ResendResponseResent.TYPE] = 'ResendResponseResent'
+messageNameByType[Protocol.ControlLayer.ResendResponseNoResend.TYPE] = 'ResendResponseNoResend'
+messageNameByType[Protocol.ControlLayer.ErrorResponse.TYPE] = 'ErrorResponse'
 
 class Connection extends EventEmitter {
     constructor(options, socket) {
@@ -13,6 +23,7 @@ class Connection extends EventEmitter {
             throw new Error('URL is not defined!')
         }
         this.options = options
+        this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=29`
         this.state = Connection.State.DISCONNECTED
         this.socket = socket
 
@@ -58,8 +69,8 @@ class Connection extends EventEmitter {
 
         this.socket.onmessage = (messageEvent) => {
             try {
-                const websocketResponse = WebsocketResponse.deserialize(messageEvent.data)
-                this.emit(websocketResponse.constructor.getMessageName(), websocketResponse)
+                const controlMessage = Protocol.ControlLayer.ControlMessageFactory.deserialize(messageEvent.data)
+                this.emit(messageNameByType[controlMessage.type], controlMessage)
             } catch (err) {
                 this.emit('error', err)
             }
@@ -88,9 +99,9 @@ class Connection extends EventEmitter {
         })
     }
 
-    send(websocketRequest) {
+    send(controlLayerRequest) {
         try {
-            this.socket.send(websocketRequest.serialize())
+            this.socket.send(controlLayerRequest.serialize())
         } catch (err) {
             this.emit('error', err)
         }

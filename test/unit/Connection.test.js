@@ -2,9 +2,9 @@ import assert from 'assert'
 import sinon from 'sinon'
 
 import {
-    UnicastMessage,
-    StreamMessage,
+    ControlLayer,
     Errors,
+    MessageLayer,
 } from 'streamr-client-protocol'
 
 import Connection from '../../src/Connection'
@@ -159,15 +159,15 @@ describe('Connection', () => {
         describe('message', () => {
             it('emits events named by messateTypeName and the WebsocketResponse as an argument', (done) => {
                 conn.on('UnicastMessage', (message) => {
-                    assert(message instanceof UnicastMessage)
+                    assert(message instanceof ControlLayer.UnicastMessage)
                     assert.equal(message.payload.offset, 10)
                     assert.equal(message.payload.getParsedContent().hello, 'world')
                     assert.equal(message.subId, 'subId')
                     done()
                 })
 
-                const message = new UnicastMessage(
-                    new StreamMessage('streamId', 0, Date.now(), 0, 10, 9, 27, {
+                const message = new ControlLayer.UnicastMessageV0(
+                    new MessageLayer.StreamMessageV28('streamId', 0, Date.now(), 0, 10, 9, 27, {
                         hello: 'world',
                     }),
                     'subId',
@@ -184,13 +184,8 @@ describe('Connection', () => {
                     done()
                 })
 
-                const message = new UnicastMessage(
-                    new StreamMessage('streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json'),
-                    'subId',
-                )
-
                 conn.socket.onmessage({
-                    data: message.serialize(),
+                    data: [0, 1, 'subId', [28, 'streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json']],
                 })
             })
         })

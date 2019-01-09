@@ -99,7 +99,9 @@ describe('StreamrClient', () => {
                     })
                 })
                 client.connection.on('UnicastMessage', (msg) => {
-                    streamMessage = msg.payload
+                    /* eslint-disable prefer-destructuring */
+                    streamMessage = msg.streamMessage
+                    /* eslint-enable prefer-destructuring */
                     assert.strictEqual(streamMessage.parsedContent.test, 'client.publish with Stream object as arg')
                     assert.strictEqual(streamMessage.signatureType, 1)
                     assert(streamMessage.publisherAddress)
@@ -132,7 +134,9 @@ describe('StreamrClient', () => {
                 })
             })
             client.connection.on('BroadcastMessage', (msg) => {
-                streamMessage = msg.payload
+                /* eslint-disable prefer-destructuring */
+                streamMessage = msg.streamMessage
+                /* eslint-enable prefer-destructuring */
                 assert.strictEqual(streamMessage.parsedContent.id, id)
                 assert.strictEqual(streamMessage.signatureType, 1)
                 assert(streamMessage.publisherAddress)
