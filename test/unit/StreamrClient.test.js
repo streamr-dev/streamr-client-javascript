@@ -570,7 +570,7 @@ describe('StreamrClient', () => {
                 connection.expect(new ControlLayer.SubscribeRequestV1('stream1'))
 
                 client.subscribe({
-                    stream: 'stream1', apiKey: 'auth',
+                    stream: 'stream1',
                 }, () => {})
             })
 
@@ -619,7 +619,7 @@ describe('StreamrClient', () => {
                 it('throws if multiple resend options are given', () => {
                     assert.throws(() => {
                         client.subscribe({
-                            stream: 'stream1', apiKey: 'auth', resend_from: 1, resend_last: 5,
+                            stream: 'stream1', resend_from: 1, resend_last: 5,
                         }, () => {})
                     })
                 })

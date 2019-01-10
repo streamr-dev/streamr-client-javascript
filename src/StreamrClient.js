@@ -227,7 +227,7 @@ export default class StreamrClient extends EventEmitter {
         return stream ? stream.getSubscriptions() : []
     }
 
-    async publish(streamObjectOrId, data, timestamp = Date.now(), apiKey = this.options.auth.apiKey) {
+    async publish(streamObjectOrId, data, timestamp = Date.now()) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
@@ -255,7 +255,7 @@ export default class StreamrClient extends EventEmitter {
             }
             this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
-            this.publishQueue.push([streamId, data, timestamp, apiKey])
+            this.publishQueue.push([streamId, data, timestamp])
             this.connect().catch(() => {}) // ignore
         } else {
             throw new FailedToPublishError(
@@ -293,7 +293,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, options.apiKey || this.options.auth.apiKey, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, callback, options)
         sub.on('gap', (from, to) => {
             if (!sub.resending) {
                 this._requestResend(sub, {

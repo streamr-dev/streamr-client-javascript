@@ -22,7 +22,7 @@ const msg = createMsg()
 describe('Subscription', () => {
     describe('handleMessage()', () => {
         it('calls the message handler', (done) => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', (content, receivedMsg) => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                 assert.deepEqual(content, msg.getParsedContent())
                 assert.equal(msg, receivedMsg)
                 done()
@@ -38,7 +38,7 @@ describe('Subscription', () => {
 
             const received = []
 
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', (content, receivedMsg) => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                 received.push(receivedMsg)
                 if (received.length === 5) {
                     assert.deepEqual(msgs, received)
@@ -51,7 +51,7 @@ describe('Subscription', () => {
 
         it('queues messages during resending', () => {
             const handler = sinon.stub()
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', handler)
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
             sub.setResending(true)
             sub.handleMessage(msg)
@@ -61,7 +61,7 @@ describe('Subscription', () => {
 
         it('always processes messages if isResend == true', () => {
             const handler = sinon.stub()
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', handler)
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
             sub.setResending(true)
             sub.handleMessage(msg, true)
@@ -70,7 +70,7 @@ describe('Subscription', () => {
 
         describe('duplicate handling', () => {
             it('ignores re-received messages', (done) => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', () => {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), () => {
                     done()
                 })
 
@@ -78,7 +78,7 @@ describe('Subscription', () => {
                 sub.handleMessage(msg)
             })
             it('ignores re-received messages even with resending flag', (done) => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', () => {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), () => {
                     done()
                 })
 
@@ -92,7 +92,7 @@ describe('Subscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', (from, to) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 0)
@@ -108,7 +108,7 @@ describe('Subscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(1, 4, 1, 3)
 
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', (from, to) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 0)
@@ -124,7 +124,7 @@ describe('Subscription', () => {
                 const msg1 = msg
                 const msg2 = createMsg(2, undefined, 1)
 
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', sinon.stub().throws())
 
                 sub.handleMessage(msg1)
@@ -134,7 +134,7 @@ describe('Subscription', () => {
                 const msg1 = msg
                 const msg2 = createMsg(1, 1, 1, 0)
 
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', sinon.stub().throws())
 
                 sub.handleMessage(msg1)
@@ -147,7 +147,7 @@ describe('Subscription', () => {
                 _bye: true,
             })
             const handler = sinon.stub()
-            const sub = new Subscription(byeMsg.getStreamId(), byeMsg.getStreamPartition(), 'apiKey', handler)
+            const sub = new Subscription(byeMsg.getStreamId(), byeMsg.getStreamPartition(), handler)
             sub.on('done', () => {
                 assert(handler.calledOnce)
                 done()
@@ -163,7 +163,6 @@ describe('Subscription', () => {
             const sub = new Subscription(
                 msg.getStreamId(),
                 msg.getStreamPartition(),
-                'apiKey',
                 sinon.stub().throws('Msg handler should not be called!'),
             )
             sub.on('error', (thrown) => {
@@ -174,7 +173,7 @@ describe('Subscription', () => {
         })
 
         it('marks the message as received if an InvalidJsonError occurs, and continue normally on next message', (done) => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', (content, receivedMsg) => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                 if (receivedMsg.getTimestamp() === 3) {
                     done()
                 }
@@ -201,7 +200,7 @@ describe('Subscription', () => {
         describe('before messages have been received', () => {
             it('returns original resend options', () => {
                 const ref = new MessageLayer.MessageRef(1, 0)
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub(), {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: ref,
                 })
                 assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_from, ref)
@@ -209,7 +208,7 @@ describe('Subscription', () => {
         })
         describe('after messages have been received', () => {
             it('updates resend_from', () => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub(), {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: new MessageLayer.MessageRef(1, 0),
                 })
                 sub.handleMessage(createMsg(10))
@@ -218,7 +217,7 @@ describe('Subscription', () => {
                 })
             })
             it('does not affect resend_last', () => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub(), {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_last: 10,
                 })
                 sub.handleMessage(msg)
@@ -231,12 +230,12 @@ describe('Subscription', () => {
 
     describe('setState()', () => {
         it('updates the state', () => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
             sub.setState(Subscription.State.subscribed)
             assert.equal(sub.getState(), Subscription.State.subscribed)
         })
         it('fires an event', (done) => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
             sub.on(Subscription.State.subscribed, done)
             sub.setState(Subscription.State.subscribed)
         })
@@ -246,7 +245,7 @@ describe('Subscription', () => {
         describe('resent', () => {
             it('processes queued messages', () => {
                 const handler = sinon.stub()
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', handler)
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
                 sub.setResending(true)
                 sub.handleMessage(msg)
@@ -260,7 +259,7 @@ describe('Subscription', () => {
         describe('no_resend', () => {
             it('processes queued messages', () => {
                 const handler = sinon.stub()
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', handler)
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
                 sub.setResending(true)
                 sub.handleMessage(msg)
