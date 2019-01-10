@@ -202,8 +202,10 @@ describe('Subscription', () => {
                 const ref = new MessageLayer.MessageRef(1, 0)
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: ref,
+                    resend_publisher: 'publisherId',
                 })
                 assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_from, ref)
+                assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_publisher, 'publisherId')
             })
         })
         describe('after messages have been received', () => {

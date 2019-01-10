@@ -603,8 +603,9 @@ describe('StreamrClient', () => {
                     const ref = new MessageLayer.MessageRef(5, 0)
                     const sub = setupSubscription('stream1', false, {
                         resend_from: ref,
+                        resend_publisher: 'publisherId',
                     })
-                    connection.expect(new ControlLayer.ResendFromRequestV1(sub.streamId, sub.streamPartition, sub.id, ref))
+                    connection.expect(new ControlLayer.ResendFromRequestV1(sub.streamId, sub.streamPartition, sub.id, ref, 'publisherId'))
                     connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 })
 
@@ -765,17 +766,20 @@ describe('StreamrClient', () => {
             foo: 'bar',
         }
         const ts = Date.now()
-        const streamMessage = new MessageLayer.StreamMessageV30(
-            ['stream1', 0, ts, 0, null], [null, null], 0,
-            MessageLayer.StreamMessage.CONTENT_TYPES.JSON, pubMsg, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
-        )
+        function getStreamMessage(streamId, timestamp, sequenceNumber, prevTimestamp) {
+            const prevSequenceNumber = sequenceNumber === 0 ? 0 : sequenceNumber - 1
+            return new MessageLayer.StreamMessageV30(
+                [streamId, 0, timestamp, sequenceNumber, null], [prevTimestamp, prevSequenceNumber], 0,
+                MessageLayer.StreamMessage.CONTENT_TYPES.JSON, pubMsg, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+            )
+        }
 
         describe('when connected', () => {
             beforeEach(() => client.connect())
 
             it('returns and resolves a promise', () => {
                 client.options.autoConnect = true
-                connection.expect(new ControlLayer.PublishRequestV1(streamMessage))
+                connection.expect(new ControlLayer.PublishRequestV1(getStreamMessage('stream1', ts, 0, null)))
                 const promise = client.publish('stream1', pubMsg, ts)
                 assert(promise instanceof Promise)
                 return promise
@@ -783,19 +787,47 @@ describe('StreamrClient', () => {
         })
 
         describe('when not connected', () => {
-            it('queues messages and sends them once connected', (done) => {
+            it('queues messages and sends them once connected (same timestamps)', (done) => {
                 client.options.autoConnect = true
 
                 // Produce 10 messages
                 for (let i = 0; i < 10; i++) {
-                    connection.expect(new ControlLayer.PublishRequestV1(streamMessage))
+                    const prevTs = i === 0 ? null : ts
+                    // messages with same timestamp should have increased sequence numbers
+                    connection.expect(new ControlLayer.PublishRequestV1(getStreamMessage('stream1', ts, i, prevTs)))
                     // Messages will be queued until connected
                     client.publish('stream1', pubMsg, ts)
                 }
 
                 connection.on('connected', done)
             })
+            it('queues messages and sends them once connected (different timestamps)', (done) => {
+                client.options.autoConnect = true
+                let prevTimestamp = null
+                // Produce 10 messages
+                for (let i = 0; i < 10; i++) {
+                    const timestamp = ts + i
+                    // messages with different timestamps should all have sequence number 0 and refer the previous timestamp
+                    connection.expect(new ControlLayer.PublishRequestV1(getStreamMessage('stream1', timestamp, 0, prevTimestamp)))
+                    // Messages will be queued until connected
+                    client.publish('stream1', pubMsg, timestamp)
+                    prevTimestamp = timestamp
+                }
 
+                connection.on('connected', done)
+            })
+            it('queues messages and sends them once connected (different streams)', (done) => {
+                client.options.autoConnect = true
+                // Produce 10 messages
+                for (let i = 0; i < 10; i++) {
+                    // messages with same timestamp on different streams should be unrelated: sequence number 0 and no previous reference
+                    connection.expect(new ControlLayer.PublishRequestV1(getStreamMessage(`stream${i}`, ts, 0, null)))
+                    // Messages will be queued until connected
+                    client.publish(`stream${i}`, pubMsg, ts)
+                }
+
+                connection.on('connected', done)
+            })
             it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
                 client.options.autoConnect = false
                 assert.equal(client.isConnected(), false)

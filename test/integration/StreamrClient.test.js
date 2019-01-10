@@ -103,6 +103,8 @@ describe('StreamrClient', () => {
                     streamMessage = msg.streamMessage
                     /* eslint-enable prefer-destructuring */
                     assert.strictEqual(streamMessage.getParsedContent().test, 'client.publish with Stream object as arg')
+                    assert(streamMessage.prevMsgRef.timestamp)
+                    assert.strictEqual(streamMessage.prevMsgRef.sequenceNumber, 0)
                     assert.strictEqual(streamMessage.signatureType, 1)
                     assert(streamMessage.getPublisherId())
                     assert(streamMessage.signature)
@@ -138,6 +140,8 @@ describe('StreamrClient', () => {
                 streamMessage = msg.streamMessage
                 /* eslint-enable prefer-destructuring */
                 assert.strictEqual(streamMessage.getParsedContent().id, id)
+                assert.strictEqual(streamMessage.prevMsgRef.timestamp, null)
+                assert.strictEqual(streamMessage.prevMsgRef.sequenceNumber, 0)
                 assert.strictEqual(streamMessage.signatureType, 1)
                 assert(streamMessage.getPublisherId())
                 assert(streamMessage.signature)

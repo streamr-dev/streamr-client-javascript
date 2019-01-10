@@ -16,6 +16,7 @@ import Signer from './Signer'
 import FailedToPublishError from './errors/FailedToPublishError'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import SubscribedStream from './SubscribedStream'
+import Publisher from './Publisher'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -35,7 +36,6 @@ export default class StreamrClient extends EventEmitter {
             verifySignatures: 'auto',
         }
         this.subscribedStreams = {}
-        this.publishQueue = []
 
         Object.assign(this.options, options || {})
 
@@ -53,6 +53,7 @@ export default class StreamrClient extends EventEmitter {
 
         this.session = new Session(this, this.options.auth)
         this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
+        this.publisher = new Publisher(this)
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
@@ -161,11 +162,7 @@ export default class StreamrClient extends EventEmitter {
                 })
 
             // Check pending publish requests
-            const publishQueueCopy = this.publishQueue.slice(0)
-            this.publishQueue = []
-            publishQueueCopy.forEach((args) => {
-                this.publish(...args)
-            })
+            this.publisher.sendPendingPublishRequests()
         })
 
         this.connection.on('disconnected', () => {
@@ -228,42 +225,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async publish(streamObjectOrId, data, timestamp = Date.now()) {
-        const sessionToken = await this.session.getSessionToken()
-        // Validate streamObjectOrId
-        let streamId
-        if (streamObjectOrId instanceof Stream) {
-            streamId = streamObjectOrId.id
-        } else if (typeof streamObjectOrId === 'string') {
-            streamId = streamObjectOrId
-        } else {
-            throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
-        }
-
-        // Validate data
-        if (typeof data !== 'object') {
-            throw new Error(`Message data must be an object! Was: ${data}`)
-        }
-
-        // If connected, emit a publish request
-        if (this.isConnected()) {
-            const streamMessage = new MessageLayer.StreamMessageV30(
-                [streamId, 0, timestamp, 0, null], [null, null], 0,
-                MessageLayer.StreamMessage.CONTENT_TYPES.JSON, data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
-            )
-            if (this.signer) {
-                await this.signer.signStreamMessage(streamMessage)
-            }
-            this._requestPublish(streamMessage, sessionToken)
-        } else if (this.options.autoConnect) {
-            this.publishQueue.push([streamId, data, timestamp])
-            this.connect().catch(() => {}) // ignore
-        } else {
-            throw new FailedToPublishError(
-                streamId,
-                data,
-                'Wait for the "connected" event before calling publish, or set autoConnect to true!',
-            )
-        }
+        return this.publisher.publish(streamObjectOrId, data, timestamp)
     }
 
     subscribe(optionsOrStreamId, callback, legacyOptions) {
@@ -438,22 +400,19 @@ export default class StreamrClient extends EventEmitter {
             if (options.resend_last > 0) {
                 request = new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
             } else if (options.resend_from && !options.resend_to) {
-                request = new ControlLayer.ResendFromRequestV1(sub.streamId, sub.streamPartition, sub.id, options.resend_from, null, sessionToken)
+                request = new ControlLayer.ResendFromRequestV1(
+                    sub.streamId, sub.streamPartition, sub.id, options.resend_from,
+                    options.resend_publisher || null, sessionToken,
+                )
             } else if (options.resend_from && options.resend_to) {
                 request = new ControlLayer.ResendRangeRequestV1(
-                    sub.streamId, sub.streamPartition, sub.id,
-                    options.resend_from, options.resend_to, null, sessionToken,
+                    sub.streamId, sub.streamPartition, sub.id, options.resend_from,
+                    options.resend_to, options.resend_publisher || null, sessionToken,
                 )
             }
             debug('_requestResend: %o', request)
             this.connection.send(request)
         })
-    }
-
-    _requestPublish(streamMessage, sessionToken) {
-        const request = new ControlLayer.PublishRequestV1(streamMessage, sessionToken)
-        debug('_requestResend: %o', request)
-        return this.connection.send(request)
     }
 
     handleError(msg) {

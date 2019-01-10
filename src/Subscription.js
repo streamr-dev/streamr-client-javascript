@@ -160,9 +160,13 @@ export default class Subscription extends EventEmitter {
     getEffectiveResendOptions() {
         if (this.hasReceivedMessages() && this.hasResendOptions()
             && (this.options.resend_from)) {
-            return {
+            const res = {
                 resend_from: this.lastReceivedMsgRef, // cannot know the first missing message so there will be a duplicate received
             }
+            if (this.options.resend_publisher) {
+                res.resend_publisher = this.options.resend_publisher
+            }
+            return res
         }
 
         // Pick resend options from the options
