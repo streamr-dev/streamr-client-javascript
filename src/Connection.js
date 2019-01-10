@@ -2,19 +2,19 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import WebSocket from 'ws'
 
-const Protocol = require('streamr-client-protocol')
+import { ControlLayer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
 
 const messageNameByType = {}
-messageNameByType[Protocol.ControlLayer.BroadcastMessage.TYPE] = 'BroadcastMessage'
-messageNameByType[Protocol.ControlLayer.UnicastMessage.TYPE] = 'UnicastMessage'
-messageNameByType[Protocol.ControlLayer.SubscribeResponse.TYPE] = 'SubscribeResponse'
-messageNameByType[Protocol.ControlLayer.UnsubscribeResponse.TYPE] = 'UnsubscribeResponse'
-messageNameByType[Protocol.ControlLayer.ResendResponseResending.TYPE] = 'ResendResponseResending'
-messageNameByType[Protocol.ControlLayer.ResendResponseResent.TYPE] = 'ResendResponseResent'
-messageNameByType[Protocol.ControlLayer.ResendResponseNoResend.TYPE] = 'ResendResponseNoResend'
-messageNameByType[Protocol.ControlLayer.ErrorResponse.TYPE] = 'ErrorResponse'
+messageNameByType[ControlLayer.BroadcastMessage.TYPE] = 'BroadcastMessage'
+messageNameByType[ControlLayer.UnicastMessage.TYPE] = 'UnicastMessage'
+messageNameByType[ControlLayer.SubscribeResponse.TYPE] = 'SubscribeResponse'
+messageNameByType[ControlLayer.UnsubscribeResponse.TYPE] = 'UnsubscribeResponse'
+messageNameByType[ControlLayer.ResendResponseResending.TYPE] = 'ResendResponseResending'
+messageNameByType[ControlLayer.ResendResponseResent.TYPE] = 'ResendResponseResent'
+messageNameByType[ControlLayer.ResendResponseNoResend.TYPE] = 'ResendResponseNoResend'
+messageNameByType[ControlLayer.ErrorResponse.TYPE] = 'ErrorResponse'
 
 class Connection extends EventEmitter {
     constructor(options, socket) {
@@ -23,7 +23,7 @@ class Connection extends EventEmitter {
             throw new Error('URL is not defined!')
         }
         this.options = options
-        this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=29`
+        this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
         this.state = Connection.State.DISCONNECTED
         this.socket = socket
 
@@ -69,7 +69,7 @@ class Connection extends EventEmitter {
 
         this.socket.onmessage = (messageEvent) => {
             try {
-                const controlMessage = Protocol.ControlLayer.ControlMessageFactory.deserialize(messageEvent.data)
+                const controlMessage = ControlLayer.ControlMessageFactory.deserialize(messageEvent.data)
                 this.emit(messageNameByType[controlMessage.type], controlMessage)
             } catch (err) {
                 this.emit('error', err)

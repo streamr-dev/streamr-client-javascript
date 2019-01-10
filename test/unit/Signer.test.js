@@ -80,26 +80,12 @@ describe('Signer', () => {
             assert.strictEqual(streamMessage.getPublisherId(), signer.address)
             assert.strictEqual(streamMessage.signatureType, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH)
         })
-        it('Should verify correct signature (V29)', () => {
-            const signedStreamMessage = new MessageLayer.StreamMessageV29(
-                streamId, 0, timestamp, 0, 0, 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                data, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH, signer.address, correctSignature,
-            )
-            assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set([signer.address.toLowerCase()])), true)
-        })
         it('Should verify correct signature (V30)', () => {
             const signedStreamMessage = new MessageLayer.StreamMessageV30(
                 [streamId, 0, timestamp, 0, signer.address], [timestamp - 10, 0], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
                 data, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH, correctSignature,
             )
             assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set([signer.address.toLowerCase()])), true)
-        })
-        it('Should return false if incorrect signature (V29)', () => {
-            const wrongStreamMessage = new MessageLayer.StreamMessageV29(
-                streamId, 0, timestamp, 0, 0, 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                data, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH, signer.address, wrongSignature,
-            )
-            assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage, new Set([signer.address.toLowerCase()])), false)
         })
         it('Should return false if incorrect signature (V30)', () => {
             const wrongStreamMessage = new MessageLayer.StreamMessageV30(
@@ -109,9 +95,9 @@ describe('Signer', () => {
             assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage, new Set([signer.address.toLowerCase()])), false)
         })
         it('Should return false if correct signature but not from a trusted publisher', () => {
-            const signedStreamMessage = new MessageLayer.StreamMessageV29(
-                streamId, 0, timestamp, 0, 0, 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                data, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH, signer.address, wrongSignature,
+            const signedStreamMessage = new MessageLayer.StreamMessageV30(
+                [streamId, 0, timestamp, 0, signer.address], [timestamp - 10, 0], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
+                data, MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH, correctSignature,
             )
             assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set()), false)
         })

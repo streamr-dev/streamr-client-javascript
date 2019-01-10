@@ -50,10 +50,11 @@ describe('StreamrClient', () => {
         return sub
     }
 
-    function msg(streamId = 'stream1', offset = 0, content = {}, subId) {
-        const streamMessage = new MessageLayer.StreamMessageV29(
-            streamId, 0, Date.now(), 0, offset, null,
-            MessageLayer.StreamMessage.CONTENT_TYPES.JSON, content,
+    function msg(streamId = 'stream1', content = {}, subId) {
+        const timestamp = Date.now()
+        const streamMessage = new MessageLayer.StreamMessageV30(
+            [streamId, 0, timestamp, 0, null], [timestamp - 100, 0], 0,
+            MessageLayer.StreamMessage.CONTENT_TYPES.JSON, content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
         )
         if (subId !== undefined) {
             return new ControlLayer.UnicastMessageV1(subId, streamMessage)
@@ -355,16 +356,16 @@ describe('StreamrClient', () => {
             })
 
             it('does not mutate messages', (done) => {
-                const sentMsg = {
+                const sentContent = {
                     foo: 'bar',
                 }
 
-                const sub = setupSubscription('stream1', true, {}, (receivedMsg) => {
-                    assert.deepEqual(sentMsg, receivedMsg)
+                const sub = setupSubscription('stream1', true, {}, (receivedContent) => {
+                    assert.deepEqual(sentContent, receivedContent)
                     done()
                 })
 
-                connection.emitMessage(msg(sub.streamId, 0, sentMsg))
+                connection.emitMessage(msg(sub.streamId, sentContent))
             })
         })
 
@@ -387,25 +388,25 @@ describe('StreamrClient', () => {
                 })
 
                 connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub2.streamId))
-                connection.emitMessage(msg(sub2.streamId, 0, {}, sub2.id), sub2.id)
+                connection.emitMessage(msg(sub2.streamId, {}, sub2.id), sub2.id)
             })
 
             it('ignores messages for unknown Subscriptions', () => {
                 const sub = setupSubscription('stream1', true, {}, sinon.stub().throws())
-                connection.emitMessage(msg(sub.streamId, 0, {}, 'unknown subId'), 'unknown subId')
+                connection.emitMessage(msg(sub.streamId, {}, 'unknown subId'), 'unknown subId')
             })
 
             it('does not mutate messages', (done) => {
-                const sentMsg = {
+                const sentContent = {
                     foo: 'bar',
                 }
 
-                const sub = setupSubscription('stream1', true, {}, (receivedMsg) => {
-                    assert.deepEqual(sentMsg, receivedMsg)
+                const sub = setupSubscription('stream1', true, {}, (receivedContent) => {
+                    assert.deepEqual(sentContent, receivedContent)
                     done()
                 })
 
-                connection.emitMessage(msg(sub.streamId, 1, sentMsg, sub.id), sub.id)
+                connection.emitMessage(msg(sub.streamId, sentContent, sub.id), sub.id)
             })
         })
 
@@ -599,12 +600,11 @@ describe('StreamrClient', () => {
 
             describe('with resend options', () => {
                 it('supports resend_from', () => {
+                    const ref = new MessageLayer.MessageRef(5, 0)
                     const sub = setupSubscription('stream1', false, {
-                        resend_from: 5,
+                        resend_from: ref,
                     })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_from: 5,
-                    }))
+                    connection.expect(new ControlLayer.ResendFromRequestV1(sub.streamId, sub.streamPartition, sub.id, ref))
                     connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
                 })
 
@@ -614,37 +614,6 @@ describe('StreamrClient', () => {
                     })
                     connection.expect(new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, 5))
                     connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
-                })
-
-                it('supports resend_from_time', () => {
-                    const time = Date.now()
-                    const sub = setupSubscription('stream1', false, {
-                        resend_from_time: time,
-                    })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_from_time: time,
-                    }))
-                    connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
-                })
-
-                it('supports resend_from_time given as a Date object', () => {
-                    const time = new Date()
-                    const sub = setupSubscription('stream1', false, {
-                        resend_from_time: time,
-                    })
-                    connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                        resend_from_time: time.getTime(),
-                    }))
-                    connection.emitMessage(new ControlLayer.SubscribeResponseV1(sub.streamId))
-                })
-
-                it('throws if resend_from_time is invalid', () => {
-                    assert.throws(() => {
-                        client.subscribe({
-                            stream: 'stream1',
-                            resend_from_time: 'invalid',
-                        }, () => {})
-                    })
                 })
 
                 it('throws if multiple resend options are given', () => {
@@ -660,23 +629,21 @@ describe('StreamrClient', () => {
                 describe('gap', () => {
                     it('sends resend request', () => {
                         const sub = setupSubscription('stream1')
-                        connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                            resend_from: 1,
-                            resend_to: 5,
-                        }))
+                        const fromRef = new MessageLayer.MessageRef(1, 0)
+                        const toRef = new MessageLayer.MessageRef(5, 0)
+                        connection.expect(new ControlLayer.ResendRangeRequestV1(sub.streamId, sub.streamPartition, sub.id, fromRef, toRef))
 
-                        sub.emit('gap', 1, 5)
+                        sub.emit('gap', fromRef, toRef)
                     })
 
                     it('does not send another resend request while resend is in progress', () => {
                         const sub = setupSubscription('stream1')
-                        connection.expect(new ControlLayer.ResendRequestV0(sub.streamId, sub.streamPartition, sub.id, {
-                            resend_from: 1,
-                            resend_to: 5,
-                        }))
+                        const fromRef = new MessageLayer.MessageRef(1, 0)
+                        const toRef = new MessageLayer.MessageRef(5, 0)
+                        connection.expect(new ControlLayer.ResendRangeRequestV1(sub.streamId, sub.streamPartition, sub.id, fromRef, toRef))
 
-                        sub.emit('gap', 1, 5)
-                        sub.emit('gap', 1, 10)
+                        sub.emit('gap', fromRef, toRef)
+                        sub.emit('gap', fromRef, new MessageLayer.MessageRef(10, 0))
                     })
                 })
 

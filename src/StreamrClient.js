@@ -437,14 +437,12 @@ export default class StreamrClient extends EventEmitter {
             let request
             if (options.resend_last > 0) {
                 request = new ControlLayer.ResendLastRequestV1(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
-            } else {
-                request = new ControlLayer.ResendRequestV0(
-                    sub.streamId,
-                    sub.streamPartition,
-                    sub.id,
-                    options,
-                    sub.apiKey,
-                    sessionToken,
+            } else if (options.resend_from && !options.resend_to) {
+                request = new ControlLayer.ResendFromRequestV1(sub.streamId, sub.streamPartition, sub.id, options.resend_from, null, sessionToken)
+            } else if (options.resend_from && options.resend_to) {
+                request = new ControlLayer.ResendRangeRequestV1(
+                    sub.streamId, sub.streamPartition, sub.id,
+                    options.resend_from, options.resend_to, null, sessionToken,
                 )
             }
             debug('_requestResend: %o', request)

@@ -14,7 +14,7 @@ describe('StreamrClient', () => {
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: `${config.websocketUrl}?payloadVersion=29`,
+        url: config.websocketUrl,
         restUrl: config.restUrl,
         auth: {
             privateKey: new Web3().eth.accounts.create().privateKey,
@@ -102,9 +102,9 @@ describe('StreamrClient', () => {
                     /* eslint-disable prefer-destructuring */
                     streamMessage = msg.streamMessage
                     /* eslint-enable prefer-destructuring */
-                    assert.strictEqual(streamMessage.parsedContent.test, 'client.publish with Stream object as arg')
+                    assert.strictEqual(streamMessage.getParsedContent().test, 'client.publish with Stream object as arg')
                     assert.strictEqual(streamMessage.signatureType, 1)
-                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.getPublisherId())
                     assert(streamMessage.signature)
                 })
             }, 10000)
@@ -137,9 +137,9 @@ describe('StreamrClient', () => {
                 /* eslint-disable prefer-destructuring */
                 streamMessage = msg.streamMessage
                 /* eslint-enable prefer-destructuring */
-                assert.strictEqual(streamMessage.parsedContent.id, id)
+                assert.strictEqual(streamMessage.getParsedContent().id, id)
                 assert.strictEqual(streamMessage.signatureType, 1)
-                assert(streamMessage.publisherAddress)
+                assert(streamMessage.getPublisherId())
                 assert(streamMessage.signature)
             })
         })

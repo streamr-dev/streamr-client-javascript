@@ -157,20 +157,24 @@ describe('Connection', () => {
         })
 
         describe('message', () => {
-            it('emits events named by messateTypeName and the WebsocketResponse as an argument', (done) => {
+            it('emits events named by messageTypeName and the ControlMessage as an argument', (done) => {
+                const timestamp = Date.now()
+                const content = {
+                    hello: 'world',
+                }
                 conn.on('UnicastMessage', (message) => {
                     assert(message instanceof ControlLayer.UnicastMessage)
-                    assert.equal(message.payload.offset, 10)
-                    assert.equal(message.payload.getParsedContent().hello, 'world')
+                    assert.equal(message.streamMessage.getTimestamp(), timestamp)
+                    assert.equal(message.streamMessage.getParsedContent().hello, 'world')
                     assert.equal(message.subId, 'subId')
                     done()
                 })
-
-                const message = new ControlLayer.UnicastMessageV0(
-                    new MessageLayer.StreamMessageV28('streamId', 0, Date.now(), 0, 10, 9, 27, {
-                        hello: 'world',
-                    }),
+                const message = new ControlLayer.UnicastMessageV1(
                     'subId',
+                    new MessageLayer.StreamMessageV30(
+                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
+                        content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+                    ),
                 )
 
                 conn.socket.onmessage({
@@ -185,7 +189,7 @@ describe('Connection', () => {
                 })
 
                 conn.socket.onmessage({
-                    data: [0, 1, 'subId', [28, 'streamId', 0, Date.now(), 0, 10, 9, 27, 'invalid json']],
+                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, null], [Date.now() - 100, 0], 0, 27, 'invalid json', 0]],
                 })
             })
         })
