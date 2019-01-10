@@ -7,7 +7,7 @@ import Subscription from '../../src/Subscription'
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
-    prevSequenceNumber = null, content = {},
+    prevSequenceNumber = 0, content = {},
 ) => new MessageLayer.StreamMessageV30(
     ['streamId', 0, timestamp, sequenceNumber, 'publisherId'],
     [prevTimestamp, prevSequenceNumber],
@@ -95,17 +95,44 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
                 sub.on('gap', (from, to) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
+                    assert.equal(from.sequenceNumber, 0)
                     assert.equal(to.timestamp, 3)
+                    assert.equal(to.sequenceNumber, 0)
                     done()
                 })
 
                 sub.handleMessage(msg1)
                 sub.handleMessage(msg4)
             })
+            it('emits "gap" if a gap is detected (same timestamp but different sequenceNumbers)', (done) => {
+                const msg1 = msg
+                const msg4 = createMsg(1, 4, 1, 3)
 
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                sub.on('gap', (from, to) => {
+                    assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
+                    assert.equal(from.sequenceNumber, 0)
+                    assert.equal(to.timestamp, 1)
+                    assert.equal(to.sequenceNumber, 3)
+                    done()
+                })
+
+                sub.handleMessage(msg1)
+                sub.handleMessage(msg4)
+            })
             it('does not emit "gap" if a gap is not detected', () => {
                 const msg1 = msg
                 const msg2 = createMsg(2, undefined, 1)
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
+                sub.on('gap', sinon.stub().throws())
+
+                sub.handleMessage(msg1)
+                sub.handleMessage(msg2)
+            })
+            it('does not emit "gap" if a gap is not detected (same timestamp but different sequenceNumbers)', () => {
+                const msg1 = msg
+                const msg2 = createMsg(1, 1, 1, 0)
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), 'apiKey', sinon.stub())
                 sub.on('gap', sinon.stub().throws())
