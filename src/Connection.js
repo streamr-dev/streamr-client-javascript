@@ -6,16 +6,6 @@ import { ControlLayer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
 
-const messageNameByType = {}
-messageNameByType[ControlLayer.BroadcastMessage.TYPE] = 'BroadcastMessage'
-messageNameByType[ControlLayer.UnicastMessage.TYPE] = 'UnicastMessage'
-messageNameByType[ControlLayer.SubscribeResponse.TYPE] = 'SubscribeResponse'
-messageNameByType[ControlLayer.UnsubscribeResponse.TYPE] = 'UnsubscribeResponse'
-messageNameByType[ControlLayer.ResendResponseResending.TYPE] = 'ResendResponseResending'
-messageNameByType[ControlLayer.ResendResponseResent.TYPE] = 'ResendResponseResent'
-messageNameByType[ControlLayer.ResendResponseNoResend.TYPE] = 'ResendResponseNoResend'
-messageNameByType[ControlLayer.ErrorResponse.TYPE] = 'ErrorResponse'
-
 class Connection extends EventEmitter {
     constructor(options, socket) {
         super()
@@ -69,8 +59,8 @@ class Connection extends EventEmitter {
 
         this.socket.onmessage = (messageEvent) => {
             try {
-                const controlMessage = ControlLayer.ControlMessageFactory.deserialize(messageEvent.data)
-                this.emit(messageNameByType[controlMessage.type], controlMessage)
+                const controlMessage = ControlLayer.ControlMessage.deserialize(messageEvent.data)
+                this.emit(controlMessage.type, controlMessage)
             } catch (err) {
                 this.emit('error', err)
             }

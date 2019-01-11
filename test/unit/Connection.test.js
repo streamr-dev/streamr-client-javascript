@@ -162,17 +162,17 @@ describe('Connection', () => {
                 const content = {
                     hello: 'world',
                 }
-                conn.on('UnicastMessage', (message) => {
+                conn.on(ControlLayer.UnicastMessage.TYPE, (message) => {
                     assert(message instanceof ControlLayer.UnicastMessage)
                     assert.equal(message.streamMessage.getTimestamp(), timestamp)
                     assert.equal(message.streamMessage.getParsedContent().hello, 'world')
                     assert.equal(message.subId, 'subId')
                     done()
                 })
-                const message = new ControlLayer.UnicastMessageV1(
+                const message = ControlLayer.UnicastMessage.create(
                     'subId',
                     new MessageLayer.StreamMessageV30(
-                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
+                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
                         content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
                     ),
                 )
@@ -189,7 +189,7 @@ describe('Connection', () => {
                 })
 
                 conn.socket.onmessage({
-                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, null], [Date.now() - 100, 0], 0, 27, 'invalid json', 0]],
+                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, null], [Date.now() - 100, 0], 27, 'invalid json', 0]],
                 })
             })
         })

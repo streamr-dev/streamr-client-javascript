@@ -48,9 +48,8 @@ export default class Publisher {
         if (this._client.isConnected()) {
             const sequenceNumber = this.getNextSequenceNumber(streamId, timestamp)
             const streamMessage = new MessageLayer.StreamMessageV30(
-                [streamId, 0, timestamp, sequenceNumber, this.publisherId],
-                [this.getPrevTimestamp(streamId), this.getPrevSequenceNumber(streamId)], 0,
-                MessageLayer.StreamMessage.CONTENT_TYPES.JSON, data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+                [streamId, 0, timestamp, sequenceNumber, this.publisherId], this.getPrevMsgRef(streamId),
+                MessageLayer.StreamMessage.CONTENT_TYPES.JSON, data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             this.publishedStreams[streamId].prevTimestamp = timestamp
             this.publishedStreams[streamId].prevSequenceNumber = sequenceNumber
@@ -70,6 +69,15 @@ export default class Publisher {
         }
     }
 
+    getPrevMsgRef(streamId) {
+        const prevTimestamp = this.getPrevTimestamp(streamId)
+        if (!prevTimestamp) {
+            return null
+        }
+        const prevSequenceNumber = this.getPrevSequenceNumber(streamId)
+        return [prevTimestamp, prevSequenceNumber]
+    }
+
     getPrevTimestamp(streamId) {
         return this.publishedStreams[streamId].prevTimestamp
     }
@@ -87,7 +95,7 @@ export default class Publisher {
     }
 
     _requestPublish(streamMessage, sessionToken) {
-        const request = new ControlLayer.PublishRequestV1(streamMessage, sessionToken)
+        const request = ControlLayer.PublishRequest.create(streamMessage, sessionToken)
         debug('_requestResend: %o', request)
         return this._client.connection.send(request)
     }

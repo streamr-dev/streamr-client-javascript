@@ -8,14 +8,13 @@ import Subscription from '../../src/Subscription'
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {},
-) => new MessageLayer.StreamMessageV30(
-    ['streamId', 0, timestamp, sequenceNumber, 'publisherId'],
-    [prevTimestamp, prevSequenceNumber],
-    0,
-    MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-    content,
-    MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
-)
+) => {
+    const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
+    return new MessageLayer.StreamMessageV30(
+        ['streamId', 0, timestamp, sequenceNumber, 'publisherId'], prevMsgRef,
+        MessageLayer.StreamMessage.CONTENT_TYPES.JSON, content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+    )
+}
 
 const msg = createMsg()
 

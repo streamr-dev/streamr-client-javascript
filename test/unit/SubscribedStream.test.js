@@ -114,7 +114,7 @@ describe('SubscribedStream', () => {
                 }
                 const timestamp = Date.now()
                 msg = new MessageLayer.StreamMessageV30(
-                    [streamId, 0, timestamp, 0, null], [null, null], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
+                    [streamId, 0, timestamp, 0, null], [null, null], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
                     data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
                 )
                 await signer.signStreamMessage(msg)
@@ -155,7 +155,7 @@ describe('SubscribedStream', () => {
                 }
                 const timestamp = Date.now()
                 msg = new MessageLayer.StreamMessageV30(
-                    [streamId, 0, timestamp, 0, null], [null, null], 0, MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
+                    [streamId, 0, timestamp, 0, null], [null, null], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
                     data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
                 )
             })

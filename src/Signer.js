@@ -1,5 +1,7 @@
 import { MessageLayer } from 'streamr-client-protocol'
 
+const { StreamMessage } = MessageLayer
+
 const Web3 = require('web3')
 const debug = require('debug')('StreamrClient::Signer')
 
@@ -28,14 +30,14 @@ export default class Signer {
         }
     }
 
-    async signData(data, signatureType = MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
+    async signData(data, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
+        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
             return this.sign(data)
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    async signStreamMessage(streamMessage, signatureType = MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
+    async signStreamMessage(streamMessage, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
         if (streamMessage.version !== 30) {
             throw new Error('Needs to be a StreamMessageV30')
         }
@@ -51,15 +53,15 @@ export default class Signer {
         /* eslint-enable no-param-reassign */
     }
 
-    static getPayloadToSign(streamId, timestamp, publisherId, content, signatureType = MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
+    static getPayloadToSign(streamId, timestamp, publisherId, content, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
+        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
             return `${streamId}${timestamp}${publisherId.toLowerCase()}${content}`
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    static verifySignature(data, signature, address, signatureType = MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === MessageLayer.StreamMessage.SIGNATURE_TYPES.ETH) {
+    static verifySignature(data, signature, address, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
+        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
             return web3.eth.accounts.recover(data, signature).toLowerCase() === address.toLowerCase()
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
@@ -67,8 +69,10 @@ export default class Signer {
 
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
         const payload = this.getPayloadToSign(msg.getStreamId(), msg.getTimestamp(), msg.getPublisherId(), msg.getSerializedContent())
-        return this.verifySignature(payload, msg.signature, msg.getPublisherId(), msg.signatureType)
+        const result = this.verifySignature(payload, msg.signature, msg.getPublisherId(), msg.signatureType)
             && trustedPublishers.has(msg.getPublisherId().toLowerCase())
+        debug('verifyStreamMessage: pass: %o, message: %o', result, msg)
+        return result
     }
 
     static createSigner(options, publishWithSignature) {
