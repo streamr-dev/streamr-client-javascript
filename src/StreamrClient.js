@@ -1,10 +1,22 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import {
-    ControlLayer,
-    Errors,
-} from 'streamr-client-protocol'
+import { ControlLayer, Errors } from 'streamr-client-protocol'
 
+const {
+    BroadcastMessage,
+    UnicastMessage,
+    SubscribeRequest,
+    SubscribeResponse,
+    UnsubscribeRequest,
+    UnsubscribeResponse,
+    ResendResponseResending,
+    ResendResponseNoResend,
+    ResendResponseResent,
+    ResendLastRequest,
+    ResendFromRequest,
+    ResendRangeRequest,
+    ErrorResponse,
+} = ControlLayer
 const debug = debugFactory('StreamrClient')
 
 import Subscription from './Subscription'
@@ -55,7 +67,7 @@ export default class StreamrClient extends EventEmitter {
         this.connection = connection || new Connection(this.options)
 
         // Broadcast messages to all subs listening on stream
-        this.connection.on(ControlLayer.BroadcastMessage.TYPE, async (msg) => {
+        this.connection.on(BroadcastMessage.TYPE, async (msg) => {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
             if (stream) {
                 const valid = await stream.verifyStreamMessage(msg.streamMessage)
@@ -73,7 +85,7 @@ export default class StreamrClient extends EventEmitter {
         })
 
         // Unicast messages to a specific subscription only
-        this.connection.on(ControlLayer.UnicastMessage.TYPE, async (msg) => {
+        this.connection.on(UnicastMessage.TYPE, async (msg) => {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
             if (stream) {
                 const sub = stream.getSubscription(msg.subId)
@@ -92,7 +104,7 @@ export default class StreamrClient extends EventEmitter {
             }
         })
 
-        this.connection.on(ControlLayer.SubscribeResponse.TYPE, (response) => {
+        this.connection.on(SubscribeResponse.TYPE, (response) => {
             const stream = this.subscribedStreams[response.streamId]
             if (stream) {
                 stream.setSubscribing(false)
@@ -102,7 +114,7 @@ export default class StreamrClient extends EventEmitter {
             debug('Client subscribed: streamId: %s, streamPartition: %s', response.streamId, response.streamPartition)
         })
 
-        this.connection.on(ControlLayer.UnsubscribeResponse.TYPE, (response) => {
+        this.connection.on(UnsubscribeResponse.TYPE, (response) => {
             debug('Client unsubscribed: streamId: %s, streamPartition: %s', response.streamId, response.streamPartition)
             const stream = this.subscribedStreams[response.streamId]
             if (stream) {
@@ -116,7 +128,7 @@ export default class StreamrClient extends EventEmitter {
         })
 
         // Route resending state messages to corresponding Subscriptions
-        this.connection.on(ControlLayer.ResendResponseResending.TYPE, (response) => {
+        this.connection.on(ResendResponseResending.TYPE, (response) => {
             const stream = this.subscribedStreams[response.streamId]
             if (stream && stream.getSubscription(response.subId)) {
                 stream.getSubscription(response.subId).emit('resending', [response.streamId, response.streamPartition, response.subId])
@@ -125,7 +137,7 @@ export default class StreamrClient extends EventEmitter {
             }
         })
 
-        this.connection.on(ControlLayer.ResendResponseNoResend.TYPE, (response) => {
+        this.connection.on(ResendResponseNoResend.TYPE, (response) => {
             const stream = this.subscribedStreams[response.streamId]
             if (stream && stream.getSubscription(response.subId)) {
                 stream.getSubscription(response.subId).emit('no_resend', [response.streamId, response.streamPartition, response.subId])
@@ -134,7 +146,7 @@ export default class StreamrClient extends EventEmitter {
             }
         })
 
-        this.connection.on(ControlLayer.ResendResponseResent.TYPE, (response) => {
+        this.connection.on(ResendResponseResent.TYPE, (response) => {
             const stream = this.subscribedStreams[response.streamId]
             if (stream && stream.getSubscription(response.subId)) {
                 stream.getSubscription(response.subId).emit('resent', [response.streamId, response.streamPartition, response.subId])
@@ -176,7 +188,7 @@ export default class StreamrClient extends EventEmitter {
                 })
         })
 
-        this.connection.on(ControlLayer.ErrorResponse.TYPE, (err) => {
+        this.connection.on(ErrorResponse.TYPE, (err) => {
             const errorObject = new Error(err.errorMessage)
             this.emit('error', errorObject)
             console.error(errorObject.message)
@@ -369,7 +381,7 @@ export default class StreamrClient extends EventEmitter {
         return this.session.getSessionToken().then((sessionToken) => {
             // If this is the first subscription for this stream, send a subscription request to the server
             if (!stream.isSubscribing() && subscribedSubs.length === 0) {
-                const request = ControlLayer.SubscribeRequest.create(sub.streamId, undefined, sessionToken)
+                const request = SubscribeRequest.create(sub.streamId, undefined, sessionToken)
                 debug('_requestSubscribe: subscribing client: %o', request)
                 stream.setSubscribing(true)
                 this.connection.send(request)
@@ -386,7 +398,7 @@ export default class StreamrClient extends EventEmitter {
 
     _requestUnsubscribe(streamId) {
         debug('Client unsubscribing stream %o', streamId)
-        this.connection.send(ControlLayer.UnsubscribeRequest.create(streamId))
+        this.connection.send(UnsubscribeRequest.create(streamId))
     }
 
     _requestResend(sub, resendOptions) {
@@ -395,14 +407,14 @@ export default class StreamrClient extends EventEmitter {
         return this.session.getSessionToken().then((sessionToken) => {
             let request
             if (options.resend_last > 0) {
-                request = ControlLayer.ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
+                request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
             } else if (options.resend_from && !options.resend_to) {
-                request = ControlLayer.ResendFromRequest.create(
+                request = ResendFromRequest.create(
                     sub.streamId, sub.streamPartition, sub.id, options.resend_from,
                     options.resend_publisher || null, sessionToken,
                 )
             } else if (options.resend_from && options.resend_to) {
-                request = ControlLayer.ResendRangeRequest.create(
+                request = ResendRangeRequest.create(
                     sub.streamId, sub.streamPartition, sub.id, options.resend_from,
                     options.resend_to, options.resend_publisher || null, sessionToken,
                 )

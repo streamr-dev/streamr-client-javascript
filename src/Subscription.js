@@ -2,6 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import { MessageLayer, Errors } from 'streamr-client-protocol'
 
+const { MessageRef } = MessageLayer
 const debug = debugFactory('StreamrClient::Subscription')
 
 let subId = 0
@@ -44,7 +45,7 @@ export default class Subscription extends EventEmitter {
         // Check that multiple resend options are not given
         let resendOptionCount = 0
         if (this.options.resend_from != null) {
-            if (!(this.options.resend_from instanceof MessageLayer.MessageRef)) {
+            if (!(this.options.resend_from instanceof MessageRef)) {
                 throw new Error(`resend_from option needs to be a MessageRef: ${this.options.resend_from}`)
             }
             resendOptionCount += 1
@@ -115,7 +116,7 @@ export default class Subscription extends EventEmitter {
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
             this.emit('gap', from, to)
         } else {
-            const messageRef = new MessageLayer.MessageRef(msg.messageId.timestamp, msg.messageId.sequenceNumber)
+            const messageRef = new MessageRef(msg.messageId.timestamp, msg.messageId.sequenceNumber)
             let res
             if (this.lastReceivedMsgRef != null) {
                 res = Subscription.compareMessageRefs(messageRef, this.lastReceivedMsgRef)
@@ -208,7 +209,7 @@ export default class Subscription extends EventEmitter {
          * gap detection will think a message was lost, and re-request the failing message.
          */
         if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.prevMsgRef)) {
-            this.lastReceivedMsgRef = new MessageLayer.MessageRef(err.streamMessage.timestamp, err.streamMessage.sequenceNumber)
+            this.lastReceivedMsgRef = new MessageRef(err.streamMessage.timestamp, err.streamMessage.sequenceNumber)
         }
         this.emit('error', err)
     }

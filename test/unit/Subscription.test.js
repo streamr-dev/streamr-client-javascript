@@ -1,18 +1,18 @@
 import assert from 'assert'
 import sinon from 'sinon'
-
 import { MessageLayer, Errors } from 'streamr-client-protocol'
-
 import Subscription from '../../src/Subscription'
+
+const { StreamMessage, StreamMessageV30, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {},
 ) => {
     const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
-    return new MessageLayer.StreamMessageV30(
+    return new StreamMessageV30(
         ['streamId', 0, timestamp, sequenceNumber, 'publisherId'], prevMsgRef,
-        MessageLayer.StreamMessage.CONTENT_TYPES.JSON, content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+        StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
     )
 }
 
@@ -198,7 +198,7 @@ describe('Subscription', () => {
     describe('getEffectiveResendOptions()', () => {
         describe('before messages have been received', () => {
             it('returns original resend options', () => {
-                const ref = new MessageLayer.MessageRef(1, 0)
+                const ref = new MessageRef(1, 0)
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: ref,
                     resend_publisher: 'publisherId',
@@ -210,11 +210,11 @@ describe('Subscription', () => {
         describe('after messages have been received', () => {
             it('updates resend_from', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
-                    resend_from: new MessageLayer.MessageRef(1, 0),
+                    resend_from: new MessageRef(1, 0),
                 })
                 sub.handleMessage(createMsg(10))
                 assert.deepEqual(sub.getEffectiveResendOptions(), {
-                    resend_from: new MessageLayer.MessageRef(10, 0),
+                    resend_from: new MessageRef(10, 0),
                 })
             })
             it('does not affect resend_last', () => {

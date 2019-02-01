@@ -4,6 +4,8 @@ import { MessageLayer } from 'streamr-client-protocol'
 import SubscribedStream from '../../src/SubscribedStream'
 import Signer from '../../src/Signer'
 
+const { StreamMessage, StreamMessageV30 } = MessageLayer
+
 describe('SubscribedStream', () => {
     let subscribedStream
     const publishers = ['0x9f93732db3a246b18805aa745dbd494e6784e811', 'publisher2', 'publisher3']
@@ -113,9 +115,9 @@ describe('SubscribedStream', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = new MessageLayer.StreamMessageV30(
-                    [streamId, 0, timestamp, 0, null], [null, null], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                    data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+                msg = new StreamMessageV30(
+                    [streamId, 0, timestamp, 0, null], [null, null], StreamMessage.CONTENT_TYPES.JSON,
+                    data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
                 await signer.signStreamMessage(msg)
                 spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
@@ -154,9 +156,9 @@ describe('SubscribedStream', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = new MessageLayer.StreamMessageV30(
-                    [streamId, 0, timestamp, 0, null], [null, null], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                    data, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+                msg = new StreamMessageV30(
+                    [streamId, 0, timestamp, 0, null], [null, null], StreamMessage.CONTENT_TYPES.JSON,
+                    data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
             })
             afterEach(async () => {

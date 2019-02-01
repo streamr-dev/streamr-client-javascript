@@ -1,13 +1,10 @@
 import assert from 'assert'
 import sinon from 'sinon'
-
-import {
-    ControlLayer,
-    Errors,
-    MessageLayer,
-} from 'streamr-client-protocol'
-
+import { ControlLayer, Errors, MessageLayer } from 'streamr-client-protocol'
 import Connection from '../../src/Connection'
+
+const { UnicastMessage } = ControlLayer
+const { StreamMessage, StreamMessageV30 } = MessageLayer
 
 describe('Connection', () => {
     let conn
@@ -162,18 +159,18 @@ describe('Connection', () => {
                 const content = {
                     hello: 'world',
                 }
-                conn.on(ControlLayer.UnicastMessage.TYPE, (message) => {
-                    assert(message instanceof ControlLayer.UnicastMessage)
+                conn.on(UnicastMessage.TYPE, (message) => {
+                    assert(message instanceof UnicastMessage)
                     assert.equal(message.streamMessage.getTimestamp(), timestamp)
                     assert.equal(message.streamMessage.getParsedContent().hello, 'world')
                     assert.equal(message.subId, 'subId')
                     done()
                 })
-                const message = ControlLayer.UnicastMessage.create(
+                const message = UnicastMessage.create(
                     'subId',
-                    new MessageLayer.StreamMessageV30(
-                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], MessageLayer.StreamMessage.CONTENT_TYPES.JSON,
-                        content, MessageLayer.StreamMessage.SIGNATURE_TYPES.NONE,
+                    new StreamMessageV30(
+                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], StreamMessage.CONTENT_TYPES.JSON,
+                        content, StreamMessage.SIGNATURE_TYPES.NONE,
                     ),
                 )
 
