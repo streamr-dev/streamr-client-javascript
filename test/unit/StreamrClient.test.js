@@ -6,7 +6,6 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import FailedToPublishError from '../../src/errors/FailedToPublishError'
 
 const {
     BroadcastMessage,
@@ -15,7 +14,6 @@ const {
     SubscribeResponse,
     UnsubscribeRequest,
     UnsubscribeResponse,
-    PublishRequest,
     ResendLastRequest,
     ResendFromRequest,
     ResendRangeRequest,
@@ -761,88 +759,6 @@ describe('StreamrClient', () => {
             const sub = setupSubscription('stream1')
             await client.pause()
             assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
-        })
-    })
-
-    describe('publish', () => {
-        const pubMsg = {
-            foo: 'bar',
-        }
-        const ts = Date.now()
-        function getStreamMessage(streamId, timestamp, sequenceNumber, prevTimestamp) {
-            let prevMsgRef = null
-            if (prevTimestamp) {
-                const prevSequenceNumber = sequenceNumber === 0 ? 0 : sequenceNumber - 1
-                prevMsgRef = [prevTimestamp, prevSequenceNumber]
-            }
-            return new StreamMessageV30(
-                [streamId, 0, timestamp, sequenceNumber, null], prevMsgRef,
-                StreamMessage.CONTENT_TYPES.JSON, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE,
-            )
-        }
-
-        describe('when connected', () => {
-            beforeEach(() => client.connect())
-
-            it('returns and resolves a promise', () => {
-                client.options.autoConnect = true
-                connection.expect(PublishRequest.create(getStreamMessage('stream1', ts, 0, null)))
-                const promise = client.publish('stream1', pubMsg, ts)
-                assert(promise instanceof Promise)
-                return promise
-            })
-        })
-
-        describe('when not connected', () => {
-            it('queues messages and sends them once connected (same timestamps)', (done) => {
-                client.options.autoConnect = true
-
-                // Produce 10 messages
-                for (let i = 0; i < 10; i++) {
-                    const prevTs = i === 0 ? null : ts
-                    // messages with same timestamp should have increased sequence numbers
-                    connection.expect(PublishRequest.create(getStreamMessage('stream1', ts, i, prevTs)))
-                    // Messages will be queued until connected
-                    client.publish('stream1', pubMsg, ts)
-                }
-
-                connection.on('connected', done)
-            })
-            it('queues messages and sends them once connected (different timestamps)', (done) => {
-                client.options.autoConnect = true
-                let prevTimestamp = null
-                // Produce 10 messages
-                for (let i = 0; i < 10; i++) {
-                    const timestamp = ts + i
-                    // messages with different timestamps should all have sequence number 0 and refer the previous timestamp
-                    connection.expect(PublishRequest.create(getStreamMessage('stream1', timestamp, 0, prevTimestamp)))
-                    // Messages will be queued until connected
-                    client.publish('stream1', pubMsg, timestamp)
-                    prevTimestamp = timestamp
-                }
-
-                connection.on('connected', done)
-            })
-            it('queues messages and sends them once connected (different streams)', (done) => {
-                client.options.autoConnect = true
-                // Produce 10 messages
-                for (let i = 0; i < 10; i++) {
-                    // messages with same timestamp on different streams should be unrelated: sequence number 0 and no previous reference
-                    connection.expect(PublishRequest.create(getStreamMessage(`stream${i}`, ts, 0, null)))
-                    // Messages will be queued until connected
-                    client.publish(`stream${i}`, pubMsg, ts)
-                }
-
-                connection.on('connected', done)
-            })
-            it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
-                client.options.autoConnect = false
-                assert.equal(client.isConnected(), false)
-                client.publish('stream1', pubMsg).catch((err) => {
-                    assert(err instanceof FailedToPublishError)
-                    done()
-                })
-            })
         })
     })
 
