@@ -41,11 +41,10 @@ export default class Signer {
         if (streamMessage.version !== 30) {
             throw new Error('Needs to be a StreamMessageV30')
         }
-        const ts = streamMessage.getTimestamp()
-        if (!ts) {
+        if (!streamMessage.getTimestamp()) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        const payload = Signer.getPayloadToSign(streamMessage.getStreamId(), ts, this.address, streamMessage.getSerializedContent(), signatureType)
+        const payload = Signer.getPayloadToSign(streamMessage, this.address, signatureType)
         /* eslint-disable no-param-reassign */
         streamMessage.signature = await this.signData(payload, signatureType)
         streamMessage.signatureType = signatureType
@@ -53,9 +52,14 @@ export default class Signer {
         /* eslint-enable no-param-reassign */
     }
 
-    static getPayloadToSign(streamId, timestamp, publisherId, content, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
+    static getPayloadToSign(msg, address = msg.getPublisherId(), signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
         if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
-            return `${streamId}${timestamp}${publisherId.toLowerCase()}${content}`
+            if (msg.version === 30) {
+                return `${msg.getStreamId()}${msg.getStreamPartition()}${msg.getTimestamp()}${msg.messageId.sequenceNumber}` +
+                    `${address.toLowerCase()}${msg.getSerializedContent()}`
+            }
+            // verification of messages signed by old clients
+            return `${msg.getStreamId()}${msg.getTimestamp()}${msg.getPublisherId().toLowerCase()}${msg.getSerializedContent()}`
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
@@ -68,7 +72,7 @@ export default class Signer {
     }
 
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
-        const payload = this.getPayloadToSign(msg.getStreamId(), msg.getTimestamp(), msg.getPublisherId(), msg.getSerializedContent())
+        const payload = this.getPayloadToSign(msg)
         const result = this.verifySignature(payload, msg.signature, msg.getPublisherId(), msg.signatureType)
             && trustedPublishers.has(msg.getPublisherId().toLowerCase())
         debug('verifyStreamMessage: pass: %o, message: %o', result, msg)
