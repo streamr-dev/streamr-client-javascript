@@ -1,7 +1,6 @@
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import sha256 from 'js-sha256'
 import debugFactory from 'debug'
-import { authFetch } from './rest/utils'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 

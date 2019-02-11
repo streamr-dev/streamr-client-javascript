@@ -22,7 +22,7 @@ const {
     ResendResponseNoResend,
     ErrorResponse,
 } = ControlLayer
-const { StreamMessage, StreamMessageV30, MessageRef } = MessageLayer
+const { StreamMessage, MessageRef } = MessageLayer
 const mockDebug = debug('mock')
 
 describe('StreamrClient', () => {
@@ -62,7 +62,7 @@ describe('StreamrClient', () => {
 
     function msg(streamId = 'stream1', content = {}, subId) {
         const timestamp = Date.now()
-        const streamMessage = new StreamMessageV30(
+        const streamMessage = StreamMessage.create(
             [streamId, 0, timestamp, 0, null], [timestamp - 100, 0],
             StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
         )

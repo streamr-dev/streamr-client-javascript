@@ -4,7 +4,7 @@ import { ControlLayer, Errors, MessageLayer } from 'streamr-client-protocol'
 import Connection from '../../src/Connection'
 
 const { UnicastMessage } = ControlLayer
-const { StreamMessage, StreamMessageV30 } = MessageLayer
+const { StreamMessage } = MessageLayer
 
 describe('Connection', () => {
     let conn
@@ -168,7 +168,7 @@ describe('Connection', () => {
                 })
                 const message = UnicastMessage.create(
                     'subId',
-                    new StreamMessageV30(
+                    StreamMessage.create(
                         ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], StreamMessage.CONTENT_TYPES.JSON,
                         content, StreamMessage.SIGNATURE_TYPES.NONE,
                     ),

@@ -3,14 +3,14 @@ import sinon from 'sinon'
 import { MessageLayer, Errors } from 'streamr-client-protocol'
 import Subscription from '../../src/Subscription'
 
-const { StreamMessage, StreamMessageV30, MessageRef } = MessageLayer
+const { StreamMessage, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {}, publisherId = 'publisherId',
 ) => {
     const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
-    return new StreamMessageV30(
+    return StreamMessage.create(
         ['streamId', 0, timestamp, sequenceNumber, publisherId], prevMsgRef,
         StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
     )

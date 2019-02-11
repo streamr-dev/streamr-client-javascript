@@ -4,7 +4,7 @@ import { MessageLayer } from 'streamr-client-protocol'
 import SubscribedStream from '../../src/SubscribedStream'
 import Signer from '../../src/Signer'
 
-const { StreamMessage, StreamMessageV30 } = MessageLayer
+const { StreamMessage } = MessageLayer
 
 describe('SubscribedStream', () => {
     let subscribedStream
@@ -115,7 +115,7 @@ describe('SubscribedStream', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = new StreamMessageV30(
+                msg = StreamMessage.create(
                     [streamId, 0, timestamp, 0, null], [null, null], StreamMessage.CONTENT_TYPES.JSON,
                     data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
@@ -156,7 +156,7 @@ describe('SubscribedStream', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = new StreamMessageV30(
+                msg = StreamMessage.create(
                     [streamId, 0, timestamp, 0, null], [null, null], StreamMessage.CONTENT_TYPES.JSON,
                     data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
