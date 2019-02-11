@@ -766,13 +766,13 @@ describe('StreamrClient', () => {
         it('sets auth.apiKey from authKey', () => {
             const c = new StreamrClient({
                 authKey: 'authKey',
-            })
+            }, createConnectionMock())
             assert(c.options.auth.apiKey)
         })
         it('sets auth.apiKey from apiKey', () => {
             const c = new StreamrClient({
                 apiKey: 'apiKey',
-            })
+            }, createConnectionMock())
             assert(c.options.auth.apiKey)
         })
         it('sets private key with 0x prefix', () => {
@@ -780,11 +780,11 @@ describe('StreamrClient', () => {
                 auth: {
                     privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
                 },
-            })
+            }, createConnectionMock())
             assert(c.options.auth.privateKey.startsWith('0x'))
         })
         it('sets unauthenticated', () => {
-            const c = new StreamrClient()
+            const c = new StreamrClient({}, createConnectionMock())
             assert(c.session.options.unauthenticated)
         })
     })

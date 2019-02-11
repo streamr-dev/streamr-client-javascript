@@ -43,7 +43,7 @@ export default class Publisher {
     }
 
     async getUsername() {
-        const userInfo = await authFetch('/api/v1/users/me', this._client.session)
+        const userInfo = await this._client.getUserInfo()
         return userInfo.username
     }
 

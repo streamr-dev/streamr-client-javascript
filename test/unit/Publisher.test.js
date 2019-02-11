@@ -19,6 +19,9 @@ describe('Publisher', () => {
                         privateKey: account.privateKey,
                     },
                 },
+                getUserInfo: sinon.stub().resolves({
+                    username: 'username',
+                }),
             }
             const publisher = new Publisher(client)
             const publisherId = await publisher.getPublisherId()
@@ -31,9 +34,11 @@ describe('Publisher', () => {
                         apiKey: 'apiKey',
                     },
                 },
+                getUserInfo: sinon.stub().resolves({
+                    username: 'username',
+                }),
             }
             const publisher = new Publisher(client)
-            publisher.getUsername = sinon.stub().resolves('username')
             const publisherId = await publisher.getPublisherId()
             assert.strictEqual(publisherId, hashedUsername)
         })
@@ -44,6 +49,9 @@ describe('Publisher', () => {
                         username: 'username',
                     },
                 },
+                getUserInfo: sinon.stub().resolves({
+                    username: 'username',
+                }),
             }
             const publisher = new Publisher(client)
             const publisherId = await publisher.getPublisherId()
@@ -56,9 +64,11 @@ describe('Publisher', () => {
                         sessionToken: 'session-token',
                     },
                 },
+                getUserInfo: sinon.stub().resolves({
+                    username: 'username',
+                }),
             }
             const publisher = new Publisher(client)
-            publisher.getUsername = sinon.stub().resolves('username')
             const publisherId = await publisher.getPublisherId()
             assert.strictEqual(publisherId, hashedUsername)
         })

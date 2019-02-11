@@ -265,10 +265,10 @@ export default class StreamrClient extends EventEmitter {
 
         // Create the Subscription object and bind handlers
         const sub = new Subscription(options.stream, options.partition || 0, callback, options)
-        sub.on('gap', (from, to) => {
+        sub.on('gap', (from, to, publisherId) => {
             if (!sub.resending) {
                 this._requestResend(sub, {
-                    resend_from: from, resend_to: to,
+                    resend_from: from, resend_to: to, resend_publisher: publisherId,
                 })
             }
         })

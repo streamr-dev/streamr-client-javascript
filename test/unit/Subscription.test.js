@@ -7,11 +7,11 @@ const { StreamMessage, StreamMessageV30, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
-    prevSequenceNumber = 0, content = {},
+    prevSequenceNumber = 0, content = {}, publisherId = 'publisherId',
 ) => {
     const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
     return new StreamMessageV30(
-        ['streamId', 0, timestamp, sequenceNumber, 'publisherId'], prevMsgRef,
+        ['streamId', 0, timestamp, sequenceNumber, publisherId], prevMsgRef,
         StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
     )
 }
@@ -92,13 +92,24 @@ describe('Subscription', () => {
                 const msg4 = createMsg(4, undefined, 3)
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-                sub.on('gap', (from, to) => {
+                sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 0)
                     assert.equal(to.timestamp, 3)
                     assert.equal(to.sequenceNumber, 0)
+                    assert.equal(publisherId, 'publisherId')
                     done()
                 })
+
+                sub.handleMessage(msg1)
+                sub.handleMessage(msg4)
+            })
+            it('does not emit "gap" if different publishers', () => {
+                const msg1 = msg
+                const msg4 = createMsg(4, undefined, 3, 0, {}, 'anotherPublisherId')
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                sub.on('gap', sinon.stub().throws())
 
                 sub.handleMessage(msg1)
                 sub.handleMessage(msg4)
@@ -108,11 +119,12 @@ describe('Subscription', () => {
                 const msg4 = createMsg(1, 4, 1, 3)
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-                sub.on('gap', (from, to) => {
+                sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 0)
                     assert.equal(to.timestamp, 1)
                     assert.equal(to.sequenceNumber, 3)
+                    assert.equal(publisherId, 'publisherId')
                     done()
                 })
 
@@ -211,10 +223,12 @@ describe('Subscription', () => {
             it('updates resend_from', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: new MessageRef(1, 0),
+                    resend_publisher: 'publisherId',
                 })
                 sub.handleMessage(createMsg(10))
                 assert.deepEqual(sub.getEffectiveResendOptions(), {
                     resend_from: new MessageRef(10, 0),
+                    resend_publisher: 'publisherId',
                 })
             })
             it('does not affect resend_last', () => {
