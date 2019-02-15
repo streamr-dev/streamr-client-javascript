@@ -1,5 +1,6 @@
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import sha256 from 'js-sha256'
+import randomstring from 'randomstring'
 import debugFactory from 'debug'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
@@ -17,6 +18,7 @@ export default class Publisher {
         this.auth = this._client.options.auth
         this.publishQueue = []
         this.publishedStreams = {}
+        this.msgChainId = randomstring.generate(20)
     }
 
     async getPublisherId() {
@@ -86,7 +88,7 @@ export default class Publisher {
 
             const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
             const streamMessage = StreamMessage.create(
-                [streamId, streamPartition, timestamp, sequenceNumber, publisherId], this.getPrevMsgRef(key),
+                [streamId, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
                 StreamMessage.CONTENT_TYPES.JSON, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             this.publishedStreams[key].prevTimestamp = timestamp

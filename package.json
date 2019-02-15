@@ -66,6 +66,7 @@
     "murmurhash-native": "^3.3.0",
     "node-fetch": "^2.1.2",
     "querystring": "^0.2.0",
+    "randomstring": "^1.1.5",
     "streamr-client-protocol": "^2.0.0-beta.1",
     "web3": "^1.0.0-beta.36",
     "webpack-node-externals": "^1.7.2",

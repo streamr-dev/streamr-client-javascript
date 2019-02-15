@@ -89,10 +89,10 @@ export default class Subscription extends EventEmitter {
      * Gap check: If the msg contains the previousMsgRef, and we know the lastReceivedMsgRef,
      * and the previousMsgRef is larger than what has been received, we have a gap!
      */
-    checkForGap(previousMsgRef, publisherId) {
+    checkForGap(previousMsgRef, key) {
         return previousMsgRef != null &&
-            this.lastReceivedMsgRef[publisherId] !== undefined &&
-            Subscription.compareMessageRefs(previousMsgRef, this.lastReceivedMsgRef[publisherId]) === 1
+            this.lastReceivedMsgRef[key] !== undefined &&
+            Subscription.compareMessageRefs(previousMsgRef, this.lastReceivedMsgRef[key]) === 1
     }
 
     handleMessage(msg, isResend = false) {
@@ -103,33 +103,35 @@ export default class Subscription extends EventEmitter {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
         }
 
+        const key = msg.getPublisherId() + msg.messageId.msgChainId
+
         // TODO: check this.options.resend_last ?
         // If resending, queue broadcast messages
         if (this.resending && !isResend) {
             this.queue.push(msg)
-        } else if (this.checkForGap(msg.prevMsgRef, msg.getPublisherId()) && !this.resending) {
+        } else if (this.checkForGap(msg.prevMsgRef, key) && !this.resending) {
             // Queue the message to be processed after resend
             this.queue.push(msg)
 
-            const from = this.lastReceivedMsgRef[msg.getPublisherId()] // cannot know the first missing message so there will be a duplicate received
+            const from = this.lastReceivedMsgRef[key] // cannot know the first missing message so there will be a duplicate received
             const to = msg.prevMsgRef
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
-            this.emit('gap', from, to, msg.getPublisherId())
+            this.emit('gap', from, to, msg.getPublisherId(), msg.messageId.msgChainId)
         } else {
             const messageRef = new MessageRef(msg.messageId.timestamp, msg.messageId.sequenceNumber)
             let res
-            if (this.lastReceivedMsgRef[msg.getPublisherId()] !== undefined) {
-                res = Subscription.compareMessageRefs(messageRef, this.lastReceivedMsgRef[msg.getPublisherId()])
+            if (this.lastReceivedMsgRef[key] !== undefined) {
+                res = Subscription.compareMessageRefs(messageRef, this.lastReceivedMsgRef[key])
             }
             if (res && (res === -1 || res === 0)) {
                 // Prevent double-processing of messages for any reason
                 debug(
                     'Sub %s already received message: %o, lastReceivedMsgRef: %d. Ignoring message.', this.id, messageRef,
-                    this.lastReceivedMsgRef[msg.getPublisherId()],
+                    this.lastReceivedMsgRef[key],
                 )
             } else {
                 // Normal case where prevMsgRef == null || lastReceivedMsgRef == null || prevMsgRef === lastReceivedMsgRef
-                this.lastReceivedMsgRef[msg.getPublisherId()] = messageRef
+                this.lastReceivedMsgRef[key] = messageRef
                 this.callback(msg.getParsedContent(), msg)
                 if (msg.isByeMessage()) {
                     this.emit('done')
@@ -162,12 +164,14 @@ export default class Subscription extends EventEmitter {
      * - resend_last stays the same
      */
     getEffectiveResendOptions() {
-        if (this.hasReceivedMessagesFrom(this.options.resend_publisher) && this.hasResendOptions()
+        const key = this.options.resend_publisher + this.options.resend_msg_chain_id
+        if (this.hasReceivedMessagesFrom(key) && this.hasResendOptions()
             && (this.options.resend_from)) {
             return {
                 // cannot know the first missing message so there will be a duplicate received
-                resend_from: this.lastReceivedMsgRef[this.options.resend_publisher],
+                resend_from: this.lastReceivedMsgRef[key],
                 resend_publisher: this.options.resend_publisher,
+                resend_msg_chain_id: this.options.resend_msg_chain_id,
             }
         }
 
@@ -181,8 +185,8 @@ export default class Subscription extends EventEmitter {
         return result
     }
 
-    hasReceivedMessagesFrom(publisherId) {
-        return this.lastReceivedMsgRef[publisherId] !== undefined
+    hasReceivedMessagesFrom(key) {
+        return this.lastReceivedMsgRef[key] !== undefined
     }
 
     getState() {
@@ -210,8 +214,8 @@ export default class Subscription extends EventEmitter {
          * gap detection will think a message was lost, and re-request the failing message.
          */
         if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.prevMsgRef)) {
-            const publisherId = err.streamMessage.getPublisherId()
-            this.lastReceivedMsgRef[publisherId] = new MessageRef(err.streamMessage.timestamp, err.streamMessage.sequenceNumber)
+            const key = err.streamMessage.getPublisherId() + err.streamMessage.messageId.msgChainId
+            this.lastReceivedMsgRef[key] = new MessageRef(err.streamMessage.timestamp, err.streamMessage.sequenceNumber)
         }
         this.emit('error', err)
     }

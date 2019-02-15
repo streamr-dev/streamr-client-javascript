@@ -63,7 +63,7 @@ describe('StreamrClient', () => {
     function msg(streamId = 'stream1', content = {}, subId) {
         const timestamp = Date.now()
         const streamMessage = StreamMessage.create(
-            [streamId, 0, timestamp, 0, null], [timestamp - 100, 0],
+            [streamId, 0, timestamp, 0, null, null], [timestamp - 100, 0],
             StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
         )
         if (subId !== undefined) {
@@ -605,8 +605,9 @@ describe('StreamrClient', () => {
                     const sub = setupSubscription('stream1', false, {
                         resend_from: ref,
                         resend_publisher: 'publisherId',
+                        resend_msg_chain_id: '1',
                     })
-                    connection.expect(ResendFromRequest.create(sub.streamId, sub.streamPartition, sub.id, ref, 'publisherId'))
+                    connection.expect(ResendFromRequest.create(sub.streamId, sub.streamPartition, sub.id, ref, 'publisherId', '1'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 })
 
@@ -633,19 +634,25 @@ describe('StreamrClient', () => {
                         const sub = setupSubscription('stream1')
                         const fromRef = new MessageRef(1, 0)
                         const toRef = new MessageRef(5, 0)
-                        connection.expect(ResendRangeRequest.create(sub.streamId, sub.streamPartition, sub.id, fromRef, toRef))
+                        connection.expect(ResendRangeRequest.create(
+                            sub.streamId, sub.streamPartition, sub.id,
+                            fromRef, toRef, 'publisherId', 'msgChainId',
+                        ))
 
-                        sub.emit('gap', fromRef, toRef)
+                        sub.emit('gap', fromRef, toRef, 'publisherId', 'msgChainId')
                     })
 
                     it('does not send another resend request while resend is in progress', () => {
                         const sub = setupSubscription('stream1')
                         const fromRef = new MessageRef(1, 0)
                         const toRef = new MessageRef(5, 0)
-                        connection.expect(ResendRangeRequest.create(sub.streamId, sub.streamPartition, sub.id, fromRef, toRef))
+                        connection.expect(ResendRangeRequest.create(
+                            sub.streamId, sub.streamPartition, sub.id,
+                            fromRef, toRef, 'publisherId', 'msgChainId',
+                        ))
 
-                        sub.emit('gap', fromRef, toRef)
-                        sub.emit('gap', fromRef, new MessageRef(10, 0))
+                        sub.emit('gap', fromRef, toRef, 'publisherId', 'msgChainId')
+                        sub.emit('gap', fromRef, new MessageRef(10, 0), 'publisherId', 'msgChainId')
                     })
                 })
 

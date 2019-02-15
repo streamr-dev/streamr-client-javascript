@@ -7,11 +7,11 @@ const { StreamMessage, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
-    prevSequenceNumber = 0, content = {}, publisherId = 'publisherId',
+    prevSequenceNumber = 0, content = {}, publisherId = 'publisherId', msgChainId = '1',
 ) => {
     const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
     return StreamMessage.create(
-        ['streamId', 0, timestamp, sequenceNumber, publisherId], prevMsgRef,
+        ['streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId], prevMsgRef,
         StreamMessage.CONTENT_TYPES.JSON, content, StreamMessage.SIGNATURE_TYPES.NONE,
     )
 }
@@ -214,9 +214,11 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: ref,
                     resend_publisher: 'publisherId',
+                    resend_msg_chain_id: '1',
                 })
                 assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_from, ref)
                 assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_publisher, 'publisherId')
+                assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_msg_chain_id, '1')
             })
         })
         describe('after messages have been received', () => {
@@ -224,11 +226,13 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     resend_from: new MessageRef(1, 0),
                     resend_publisher: 'publisherId',
+                    resend_msg_chain_id: '1',
                 })
                 sub.handleMessage(createMsg(10))
                 assert.deepEqual(sub.getEffectiveResendOptions(), {
                     resend_from: new MessageRef(10, 0),
                     resend_publisher: 'publisherId',
+                    resend_msg_chain_id: '1',
                 })
             })
             it('does not affect resend_last', () => {

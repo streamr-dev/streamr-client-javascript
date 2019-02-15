@@ -265,10 +265,10 @@ export default class StreamrClient extends EventEmitter {
 
         // Create the Subscription object and bind handlers
         const sub = new Subscription(options.stream, options.partition || 0, callback, options)
-        sub.on('gap', (from, to, publisherId) => {
+        sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {
                 this._requestResend(sub, {
-                    resend_from: from, resend_to: to, resend_publisher: publisherId,
+                    resend_from: from, resend_to: to, resend_publisher: publisherId, resend_msg_chain_id: msgChainId,
                 })
             }
         })
@@ -411,12 +411,12 @@ export default class StreamrClient extends EventEmitter {
             } else if (options.resend_from && !options.resend_to) {
                 request = ResendFromRequest.create(
                     sub.streamId, sub.streamPartition, sub.id, options.resend_from,
-                    options.resend_publisher || null, sessionToken,
+                    options.resend_publisher || null, options.resend_msg_chain_id || '', sessionToken,
                 )
             } else if (options.resend_from && options.resend_to) {
                 request = ResendRangeRequest.create(
                     sub.streamId, sub.streamPartition, sub.id, options.resend_from,
-                    options.resend_to, options.resend_publisher || null, sessionToken,
+                    options.resend_to, options.resend_publisher || null, options.resend_msg_chain_id || '', sessionToken,
                 )
             }
             debug('_requestResend: %o', request)

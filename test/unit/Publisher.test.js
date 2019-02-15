@@ -144,7 +144,7 @@ describe('Publisher', () => {
 
         function getPublishRequest(streamId, timestamp, sequenceNumber, prevMsgRef) {
             const streamMessage = StreamMessage.create(
-                [streamId, 0, timestamp, sequenceNumber, hashedUsername], prevMsgRef,
+                [streamId, 0, timestamp, sequenceNumber, hashedUsername, publisher.msgChainId], prevMsgRef,
                 StreamMessage.CONTENT_TYPES.JSON, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             return PublishRequest.create(streamMessage, 'session-token')
