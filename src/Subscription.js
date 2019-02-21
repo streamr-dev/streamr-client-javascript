@@ -92,7 +92,7 @@ export default class Subscription extends EventEmitter {
     checkForGap(previousMsgRef, key) {
         return previousMsgRef != null &&
             this.lastReceivedMsgRef[key] !== undefined &&
-            Subscription.compareMessageRefs(previousMsgRef, this.lastReceivedMsgRef[key]) === 1
+            previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
     handleMessage(msg, isResend = false) {
@@ -118,10 +118,10 @@ export default class Subscription extends EventEmitter {
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
             this.emit('gap', from, to, msg.getPublisherId(), msg.messageId.msgChainId)
         } else {
-            const messageRef = new MessageRef(msg.messageId.timestamp, msg.messageId.sequenceNumber)
+            const messageRef = msg.getMessageRef()
             let res
             if (this.lastReceivedMsgRef[key] !== undefined) {
-                res = Subscription.compareMessageRefs(messageRef, this.lastReceivedMsgRef[key])
+                res = messageRef.compareTo(this.lastReceivedMsgRef[key])
             }
             if (res && (res === -1 || res === 0)) {
                 // Prevent double-processing of messages for any reason
@@ -177,9 +177,9 @@ export default class Subscription extends EventEmitter {
 
         // Pick resend options from the options
         const result = {}
-        Object.keys(this.options).forEach((key) => {
-            if (key.startsWith('resend_')) {
-                result[key] = this.options[key]
+        Object.keys(this.options).forEach((option) => {
+            if (option.startsWith('resend_')) {
+                result[option] = this.options[option]
             }
         })
         return result
@@ -215,22 +215,8 @@ export default class Subscription extends EventEmitter {
          */
         if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.prevMsgRef)) {
             const key = err.streamMessage.getPublisherId() + err.streamMessage.messageId.msgChainId
-            this.lastReceivedMsgRef[key] = new MessageRef(err.streamMessage.timestamp, err.streamMessage.sequenceNumber)
+            this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
         }
         this.emit('error', err)
-    }
-
-    static compareMessageRefs(messageRef1, messageRef2) {
-        if (messageRef1.timestamp < messageRef2.timestamp) {
-            return -1
-        } else if (messageRef1.timestamp > messageRef2.timestamp) {
-            return 1
-        }
-        if (messageRef1.sequenceNumber < messageRef2.sequenceNumber) {
-            return -1
-        } else if (messageRef1.sequenceNumber > messageRef2.sequenceNumber) {
-            return 1
-        }
-        return 0
     }
 }
