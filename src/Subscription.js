@@ -123,7 +123,7 @@ export default class Subscription extends EventEmitter {
             if (this.lastReceivedMsgRef[key] !== undefined) {
                 res = messageRef.compareTo(this.lastReceivedMsgRef[key])
             }
-            if (res && (res === -1 || res === 0)) {
+            if (res <= 0) {
                 // Prevent double-processing of messages for any reason
                 debug(
                     'Sub %s already received message: %o, lastReceivedMsgRef: %d. Ignoring message.', this.id, messageRef,

@@ -44,8 +44,10 @@ export default class Publisher {
     }
 
     async getUsername() {
-        const userInfo = await this._client.getUserInfo()
-        return userInfo.username
+        if (!this.usernamePromise) {
+            this.usernamePromise = this._client.getUserInfo().then((userInfo) => userInfo.username)
+        }
+        return this.usernamePromise
     }
 
     getNextSequenceNumber(key, timestamp) {

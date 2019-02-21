@@ -1,6 +1,7 @@
 import { MessageLayer } from 'streamr-client-protocol'
 
 const { StreamMessage } = MessageLayer
+const { SIGNATURE_TYPES } = StreamMessage
 
 const Web3 = require('web3')
 const debug = require('debug')('StreamrClient::Signer')
@@ -30,14 +31,14 @@ export default class Signer {
         }
     }
 
-    async signData(data, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
+    async signData(data, signatureType = SIGNATURE_TYPES.ETH) {
+        if (signatureType === SIGNATURE_TYPES.ETH_LEGACY || signatureType === SIGNATURE_TYPES.ETH) {
             return this.sign(data)
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    async signStreamMessage(streamMessage, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
+    async signStreamMessage(streamMessage, signatureType = SIGNATURE_TYPES.ETH) {
         if (streamMessage.version !== 30) {
             throw new Error('Needs to be a StreamMessageV30')
         }
@@ -52,27 +53,26 @@ export default class Signer {
         /* eslint-enable no-param-reassign */
     }
 
-    static getPayloadToSign(msg, address = msg.getPublisherId(), signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
-            if (msg.version === 30) {
-                return `${msg.getStreamId()}${msg.getStreamPartition()}${msg.getTimestamp()}${msg.messageId.sequenceNumber}` +
-                    `${address.toLowerCase()}${msg.getSerializedContent()}`
-            }
+    static getPayloadToSign(msg, address = msg.getPublisherId(), signatureType = SIGNATURE_TYPES.ETH) {
+        if (signatureType === SIGNATURE_TYPES.ETH) {
+            return `${msg.getStreamId()}${msg.getStreamPartition()}${msg.getTimestamp()}${msg.messageId.sequenceNumber}` +
+                `${address.toLowerCase()}${msg.messageId.msgChainId}${msg.getSerializedContent()}`
+        } else if (signatureType === SIGNATURE_TYPES.ETH_LEGACY) {
             // verification of messages signed by old clients
             return `${msg.getStreamId()}${msg.getTimestamp()}${msg.getPublisherId().toLowerCase()}${msg.getSerializedContent()}`
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
-    static verifySignature(data, signature, address, signatureType = StreamMessage.SIGNATURE_TYPES.ETH) {
-        if (signatureType === StreamMessage.SIGNATURE_TYPES.ETH) {
+    static verifySignature(data, signature, address, signatureType = SIGNATURE_TYPES.ETH) {
+        if (signatureType === SIGNATURE_TYPES.ETH_LEGACY || signatureType === SIGNATURE_TYPES.ETH) {
             return web3.eth.accounts.recover(data, signature).toLowerCase() === address.toLowerCase()
         }
         throw new Error(`Unrecognized signature type: ${signatureType}`)
     }
 
     static verifyStreamMessage(msg, trustedPublishers = new Set()) {
-        const payload = this.getPayloadToSign(msg)
+        const payload = this.getPayloadToSign(msg, msg.getPublisherId(), msg.signatureType)
         const result = this.verifySignature(payload, msg.signature, msg.getPublisherId(), msg.signatureType)
             && trustedPublishers.has(msg.getPublisherId().toLowerCase())
         debug('verifyStreamMessage: pass: %o, message: %o', result, msg)
