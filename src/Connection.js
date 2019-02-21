@@ -13,7 +13,6 @@ class Connection extends EventEmitter {
             throw new Error('URL is not defined!')
         }
         this.options = options
-        this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
         this.state = Connection.State.DISCONNECTED
         this.socket = socket
 

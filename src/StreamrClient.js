@@ -34,7 +34,7 @@ export default class StreamrClient extends EventEmitter {
         // Default options
         this.options = {
             // The server to connect to
-            url: 'wss://www.streamr.com/api/v1/ws?controlLayerVersion=0&messageLayerVersion=29',
+            url: 'wss://www.streamr.com/api/v1/ws?controlLayerVersion=1&messageLayerVersion=30',
             restUrl: 'https://www.streamr.com/api/v1',
             // Automatically connect on first subscribe
             autoConnect: true,
