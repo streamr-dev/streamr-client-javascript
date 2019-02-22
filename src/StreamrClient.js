@@ -25,7 +25,9 @@ import Session from './Session'
 import Signer from './Signer'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import SubscribedStream from './SubscribedStream'
-import Publisher from './Publisher'
+import Stream from './rest/domain/Stream'
+import FailedToPublishError from './errors/FailedToPublishError'
+import MessageCreationUtil from './MessageCreationUtil'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -60,9 +62,9 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
         }
 
+        this.publishQueue = []
         this.session = new Session(this, this.options.auth)
         this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
-        this.publisher = new Publisher(this)
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
@@ -171,7 +173,11 @@ export default class StreamrClient extends EventEmitter {
                 })
 
             // Check pending publish requests
-            this.publisher.sendPendingPublishRequests()
+            const publishQueueCopy = this.publishQueue.slice(0)
+            this.publishQueue = []
+            publishQueueCopy.forEach((args) => {
+                this.publish(...args).catch((err) => { throw err })
+            })
         })
 
         this.connection.on('disconnected', () => {
@@ -233,8 +239,48 @@ export default class StreamrClient extends EventEmitter {
         return stream ? stream.getSubscriptions() : []
     }
 
-    async publish(streamObjectOrId, data, timestamp = Date.now()) {
-        return this.publisher.publish(streamObjectOrId, data, timestamp)
+    _getMessageCreationUtil() {
+        if (!this.msgCreationUtil) {
+            this.msgCreationUtil = new MessageCreationUtil(this.options.auth, this.signer, this.getUserInfo())
+        }
+        return this.msgCreationUtil
+    }
+
+    getMessageChainId() {
+        return this._getMessageCreationUtil().msgChainId
+    }
+
+    async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
+        const sessionToken = await this.session.getSessionToken()
+        // Validate streamObjectOrId
+        let streamId
+        if (streamObjectOrId instanceof Stream) {
+            streamId = streamObjectOrId.id
+        } else if (typeof streamObjectOrId === 'string') {
+            streamId = streamObjectOrId
+        } else {
+            throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
+        }
+
+        // Validate data
+        if (typeof data !== 'object') {
+            throw new Error(`Message data must be an object! Was: ${data}`)
+        }
+
+        // If connected, emit a publish request
+        if (this.isConnected()) {
+            const stream = await this.getStream(streamId)
+            const streamMessage = await this._getMessageCreationUtil().createStreamMessage(stream, data, timestamp, partitionKey)
+            return this._requestPublish(streamMessage, sessionToken)
+        } else if (this.options.autoConnect) {
+            this.publishQueue.push([streamId, data, timestamp, partitionKey])
+            return this.connect().catch(() => {}) // ignore
+        }
+        throw new FailedToPublishError(
+            streamId,
+            data,
+            'Wait for the "connected" event before calling publish, or set autoConnect to true!',
+        )
     }
 
     subscribe(optionsOrStreamId, callback, legacyOptions) {
@@ -422,6 +468,12 @@ export default class StreamrClient extends EventEmitter {
             debug('_requestResend: %o', request)
             this.connection.send(request)
         })
+    }
+
+    _requestPublish(streamMessage, sessionToken) {
+        const request = ControlLayer.PublishRequest.create(streamMessage, sessionToken)
+        debug('_requestResend: %o', request)
+        return this.connection.send(request)
     }
 
     handleError(msg) {

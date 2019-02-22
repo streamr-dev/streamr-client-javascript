@@ -6,6 +6,7 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
+import FailedToPublishError from '../../src/errors/FailedToPublishError'
 
 const {
     BroadcastMessage,
@@ -133,6 +134,13 @@ describe('StreamrClient', () => {
             autoDisconnect: false,
             verifySignatures: 'never',
         }, connection)
+        client.getUserInfo = sinon.stub().resolves({
+            username: 'username',
+        })
+        client.getStream = sinon.stub().resolves({
+            id: 'streamId',
+            partitions: 1,
+        })
     })
 
     afterEach(() => {
@@ -735,6 +743,43 @@ describe('StreamrClient', () => {
         it('throws if Subscription is of wrong type', () => {
             assert.throws(() => {
                 client.unsubscribe(sub.streamId)
+            })
+        })
+    })
+
+    describe('publish', () => {
+        const pubMsg = {
+            foo: 'bar',
+        }
+        const hashedUsername = '16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
+        function getPublishRequest(streamId, timestamp, sequenceNumber, prevMsgRef) {
+            const streamMessage = StreamMessage.create(
+                [streamId, 0, timestamp, sequenceNumber, hashedUsername, client.getMessageChainId()], prevMsgRef,
+                StreamMessage.CONTENT_TYPES.JSON, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            )
+            return ControlLayer.PublishRequest.create(streamMessage, undefined)
+        }
+
+        it('queues messages and sends them once connected', (done) => {
+            client.options.autoConnect = true
+            client.options.auth.username = 'username'
+            const ts = Date.now()
+            let prevMsgRef = null
+            for (let i = 0; i < 10; i++) {
+                connection.expect(getPublishRequest('streamId', ts, i, prevMsgRef))
+                client.publish('streamId', pubMsg, ts)
+                prevMsgRef = [ts, i]
+            }
+            connection.on('connected', () => {
+                done()
+            })
+        })
+
+        it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
+            client.options.autoConnect = false
+            client.publish('stream1', pubMsg).catch((err) => {
+                assert(err instanceof FailedToPublishError)
+                done()
             })
         })
     })
