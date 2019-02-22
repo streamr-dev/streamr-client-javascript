@@ -166,11 +166,17 @@ Name | Description
 stream    | Stream id to subscribe to
 apiKey   | User key or stream key that authorizes the subscription. If defined, overrides the client's `apiKey`.
 partition | Partition number to subscribe to. Defaults to the default partition (0).
-resend_all | Set to `true` if you want all the messages for the stream resent from the earliest available message.
-resend_last | Resend the previous `N` messages.
-resend_from | Resend from a specific message number.
-resend_from_time | Resend from a specific Date (or millisecond timestamp).
-resend_to | Can be used in conjunction with `resend_from` to limit the end of the resend. By default it is the newest message.
+resend | Object defining the resend options that are specified below.
+
+#### Resend options
+
+Name | Description
+---- | -----------
+last | Resend the previous `N` messages.
+from | Resend from a specific message reference. This option must be an object that defines a `timestamp` and can optionally define a `sequenceNumber`.
+to | Can be used in conjunction with `from` to limit the end of the resend. By default it is the newest message. This option must be an object that defines a `timestamp` and can optionally define a `sequenceNumber`.
+publisherId | Can be used in conjunction with `from` or both `from` and `to`. Limits the resend to messages produced only by `publisherId`.
+msgChainId | Can be used in conjunction with `from` or both `from` and `to`. `publisherId` must be defined. Limits the resend to messages produced only by `publisherId` using a specific `msgChainId`.
 
 ### Binding to events
 

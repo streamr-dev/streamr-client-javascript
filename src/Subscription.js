@@ -1,8 +1,7 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { MessageLayer, Errors } from 'streamr-client-protocol'
+import { Errors } from 'streamr-client-protocol'
 
-const { MessageRef } = MessageLayer
 const debug = debugFactory('StreamrClient::Subscription')
 
 let subId = 0
@@ -44,14 +43,14 @@ export default class Subscription extends EventEmitter {
 
         // Check that multiple resend options are not given
         let resendOptionCount = 0
-        if (this.options.resend_from != null) {
-            if (!(this.options.resend_from instanceof MessageRef)) {
-                throw new Error(`resend_from option needs to be a MessageRef: ${this.options.resend_from}`)
-            }
+        if (this.options.from != null) {
             resendOptionCount += 1
         }
-        if (this.options.resend_last != null) {
+        if (this.options.last != null) {
             resendOptionCount += 1
+        }
+        if (this.options.msgChainId != null && typeof this.options.publisherId === 'undefined') {
+            throw new Error('publisherId must be defined as well if msgChainId is defined.')
         }
         if (resendOptionCount > 1) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(options)}`)
@@ -114,9 +113,17 @@ export default class Subscription extends EventEmitter {
             this.queue.push(msg)
 
             const from = this.lastReceivedMsgRef[key] // cannot know the first missing message so there will be a duplicate received
+            const fromObject = {
+                timestamp: from.timestamp,
+                sequenceNumber: from.sequenceNumber,
+            }
             const to = msg.prevMsgRef
+            const toObject = {
+                timestamp: to.timestamp,
+                sequenceNumber: to.sequenceNumber,
+            }
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
-            this.emit('gap', from, to, msg.getPublisherId(), msg.messageId.msgChainId)
+            this.emit('gap', fromObject, toObject, msg.getPublisherId(), msg.messageId.msgChainId)
         } else {
             const messageRef = msg.getMessageRef()
             let res
@@ -152,7 +159,7 @@ export default class Subscription extends EventEmitter {
     }
 
     hasResendOptions() {
-        return this.options.resend_from || this.options.resend_last > 0
+        return this.options.from || this.options.last > 0
     }
 
     /**
@@ -160,29 +167,24 @@ export default class Subscription extends EventEmitter {
      * This function always returns the effective resend options:
      *
      * If messages have been received:
-     * - resend_from becomes resend_from the latest received message
-     * - resend_last stays the same
+     * - 'from' option becomes 'from' option the latest received message
+     * - 'last' option stays the same
      */
     getEffectiveResendOptions() {
-        const key = this.options.resend_publisher + this.options.resend_msg_chain_id
+        const key = this.options.publisherId + this.options.msgChainId
         if (this.hasReceivedMessagesFrom(key) && this.hasResendOptions()
-            && (this.options.resend_from)) {
+            && (this.options.from)) {
             return {
                 // cannot know the first missing message so there will be a duplicate received
-                resend_from: this.lastReceivedMsgRef[key],
-                resend_publisher: this.options.resend_publisher,
-                resend_msg_chain_id: this.options.resend_msg_chain_id,
+                from: {
+                    timestamp: this.lastReceivedMsgRef[key].timestamp,
+                    sequenceNumber: this.lastReceivedMsgRef[key].sequenceNumber,
+                },
+                publisherId: this.options.publisherId,
+                msgChainId: this.options.msgChainId,
             }
         }
-
-        // Pick resend options from the options
-        const result = {}
-        Object.keys(this.options).forEach((option) => {
-            if (option.startsWith('resend_')) {
-                result[option] = this.options[option]
-            }
-        })
-        return result
+        return this.options
     }
 
     hasReceivedMessagesFrom(key) {

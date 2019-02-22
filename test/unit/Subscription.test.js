@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import { MessageLayer, Errors } from 'streamr-client-protocol'
 import Subscription from '../../src/Subscription'
 
-const { StreamMessage, MessageRef } = MessageLayer
+const { StreamMessage } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
@@ -210,38 +210,51 @@ describe('Subscription', () => {
     describe('getEffectiveResendOptions()', () => {
         describe('before messages have been received', () => {
             it('returns original resend options', () => {
-                const ref = new MessageRef(1, 0)
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
-                    resend_from: ref,
-                    resend_publisher: 'publisherId',
-                    resend_msg_chain_id: '1',
+                    from: {
+                        timestamp: 1,
+                        sequenceNumber: 0,
+                    },
+                    publisherId: 'publisherId',
+                    msgChainId: '1',
                 })
-                assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_from, ref)
-                assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_publisher, 'publisherId')
-                assert.deepStrictEqual(sub.getEffectiveResendOptions().resend_msg_chain_id, '1')
+                assert.deepStrictEqual(sub.getEffectiveResendOptions(), {
+                    from: {
+                        timestamp: 1,
+                        sequenceNumber: 0,
+                    },
+                    publisherId: 'publisherId',
+                    msgChainId: '1',
+                })
             })
         })
         describe('after messages have been received', () => {
-            it('updates resend_from', () => {
+            it('updates resend.from', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
-                    resend_from: new MessageRef(1, 0),
-                    resend_publisher: 'publisherId',
-                    resend_msg_chain_id: '1',
+                    from: {
+                        timestamp: 1,
+                        sequenceNumber: 0,
+                    },
+                    publisherId: 'publisherId',
+                    msgChainId: '1',
                 })
                 sub.handleMessage(createMsg(10))
-                assert.deepEqual(sub.getEffectiveResendOptions(), {
-                    resend_from: new MessageRef(10, 0),
-                    resend_publisher: 'publisherId',
-                    resend_msg_chain_id: '1',
+                assert.deepStrictEqual(sub.getEffectiveResendOptions(), {
+                    from: {
+                        timestamp: 10,
+                        sequenceNumber: 0,
+                    },
+                    publisherId: 'publisherId',
+                    msgChainId: '1',
                 })
             })
-            it('does not affect resend_last', () => {
+            it('does not affect resend.last', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
-                    resend_last: 10,
+                    last: 10,
                 })
                 sub.handleMessage(msg)
                 assert.deepEqual(sub.getEffectiveResendOptions(), {
-                    resend_last: 10,
+                    last: 10,
                 })
             })
         })

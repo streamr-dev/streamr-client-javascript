@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { ControlLayer, Errors } from 'streamr-client-protocol'
+import { MessageLayer, ControlLayer, Errors } from 'streamr-client-protocol'
 
 const {
     BroadcastMessage,
@@ -310,11 +310,11 @@ export default class StreamrClient extends EventEmitter {
         }
 
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, callback, options)
+        const sub = new Subscription(options.stream, options.partition || 0, callback, options.resend)
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {
                 this._requestResend(sub, {
-                    resend_from: from, resend_to: to, resend_publisher: publisherId, resend_msg_chain_id: msgChainId,
+                    from, to, publisherId, msgChainId,
                 })
             }
         })
@@ -452,17 +452,18 @@ export default class StreamrClient extends EventEmitter {
         const options = resendOptions || sub.getEffectiveResendOptions()
         return this.session.getSessionToken().then((sessionToken) => {
             let request
-            if (options.resend_last > 0) {
-                request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.resend_last, sessionToken)
-            } else if (options.resend_from && !options.resend_to) {
+            if (options.last > 0) {
+                request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.last, sessionToken)
+            } else if (options.from && !options.to) {
                 request = ResendFromRequest.create(
-                    sub.streamId, sub.streamPartition, sub.id, options.resend_from,
-                    options.resend_publisher || null, options.resend_msg_chain_id || '', sessionToken,
+                    sub.streamId, sub.streamPartition, sub.id, new MessageLayer.MessageRef(options.from.timestamp, options.from.sequenceNumber),
+                    options.publisherId || null, options.msgChainId || '', sessionToken,
                 )
-            } else if (options.resend_from && options.resend_to) {
+            } else if (options.from && options.to) {
                 request = ResendRangeRequest.create(
-                    sub.streamId, sub.streamPartition, sub.id, options.resend_from,
-                    options.resend_to, options.resend_publisher || null, options.resend_msg_chain_id || '', sessionToken,
+                    sub.streamId, sub.streamPartition, sub.id, new MessageLayer.MessageRef(options.from.timestamp, options.from.sequenceNumber),
+                    new MessageLayer.MessageRef(options.to.timestamp, options.to.sequenceNumber),
+                    options.publisherId || null, options.msgChainId || '', sessionToken,
                 )
             }
             debug('_requestResend: %o', request)

@@ -85,7 +85,9 @@ describe('StreamrClient', () => {
             setTimeout(() => {
                 const sub = client.subscribe({
                     stream: createdStream.id,
-                    resend_last: 1,
+                    resend: {
+                        last: 1,
+                    },
                 }, async () => {
                     const subStream = client.subscribedStreams[createdStream.id]
                     const publishers = await subStream.getPublishers()

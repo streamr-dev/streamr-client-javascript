@@ -203,14 +203,16 @@ describe('StreamrClient', () => {
                 const nbToResend = 1
                 const sub = client.subscribe({
                     stream: 'stream1',
-                    resend_last: nbToResend,
+                    resend: {
+                        last: nbToResend,
+                    },
                 }, () => {})
 
                 connection.expect(SubscribeRequest.create(sub.streamId))
 
                 connection.on('connected', () => {
                     sub.getEffectiveResendOptions = () => ({
-                        resend_last: nbToResend,
+                        last: nbToResend,
                     })
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
@@ -250,7 +252,9 @@ describe('StreamrClient', () => {
 
             it('emits a resend request if resend options were given', (done) => {
                 const sub = setupSubscription('stream1', false, {
-                    resend_last: 1,
+                    resend: {
+                        last: 1,
+                    },
                 })
                 connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 1))
                 connection.emitMessage(SubscribeResponse.create(sub.streamId))
@@ -263,10 +267,16 @@ describe('StreamrClient', () => {
                 connection.expect(SubscribeRequest.create('stream1'))
 
                 const sub1 = client.subscribe({
-                    stream: 'stream1', resend_last: 2,
+                    stream: 'stream1',
+                    resend: {
+                        last: 2,
+                    },
                 }, () => {})
                 const sub2 = client.subscribe({
-                    stream: 'stream1', resend_last: 1,
+                    stream: 'stream1',
+                    resend: {
+                        last: 1,
+                    },
                 }, () => {})
 
                 connection.expect(ResendLastRequest.create(sub1.streamId, sub1.streamPartition, sub1.id, 2))
@@ -608,20 +618,27 @@ describe('StreamrClient', () => {
             })
 
             describe('with resend options', () => {
-                it('supports resend_from', () => {
+                it('supports resend.from', () => {
                     const ref = new MessageRef(5, 0)
                     const sub = setupSubscription('stream1', false, {
-                        resend_from: ref,
-                        resend_publisher: 'publisherId',
-                        resend_msg_chain_id: '1',
+                        resend: {
+                            from: {
+                                timestamp: ref.timestamp,
+                                sequenceNumber: ref.sequenceNumber,
+                            },
+                            publisherId: 'publisherId',
+                            msgChainId: '1',
+                        },
                     })
                     connection.expect(ResendFromRequest.create(sub.streamId, sub.streamPartition, sub.id, ref, 'publisherId', '1'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 })
 
-                it('supports resend_last', () => {
+                it('supports resend.last', () => {
                     const sub = setupSubscription('stream1', false, {
-                        resend_last: 5,
+                        resend: {
+                            last: 5,
+                        },
                     })
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
@@ -630,7 +647,14 @@ describe('StreamrClient', () => {
                 it('throws if multiple resend options are given', () => {
                     assert.throws(() => {
                         client.subscribe({
-                            stream: 'stream1', resend_from: 1, resend_last: 5,
+                            stream: 'stream1',
+                            resend: {
+                                from: {
+                                    timestamp: 1,
+                                    sequenceNumber: 0,
+                                },
+                                last: 5,
+                            },
                         }, () => {})
                     })
                 })
@@ -646,8 +670,15 @@ describe('StreamrClient', () => {
                             sub.streamId, sub.streamPartition, sub.id,
                             fromRef, toRef, 'publisherId', 'msgChainId',
                         ))
-
-                        sub.emit('gap', fromRef, toRef, 'publisherId', 'msgChainId')
+                        const fromRefObject = {
+                            timestamp: fromRef.timestamp,
+                            sequenceNumber: fromRef.sequenceNumber,
+                        }
+                        const toRefObject = {
+                            timestamp: toRef.timestamp,
+                            sequenceNumber: toRef.sequenceNumber,
+                        }
+                        sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
                     })
 
                     it('does not send another resend request while resend is in progress', () => {
@@ -658,9 +689,19 @@ describe('StreamrClient', () => {
                             sub.streamId, sub.streamPartition, sub.id,
                             fromRef, toRef, 'publisherId', 'msgChainId',
                         ))
-
-                        sub.emit('gap', fromRef, toRef, 'publisherId', 'msgChainId')
-                        sub.emit('gap', fromRef, new MessageRef(10, 0), 'publisherId', 'msgChainId')
+                        const fromRefObject = {
+                            timestamp: fromRef.timestamp,
+                            sequenceNumber: fromRef.sequenceNumber,
+                        }
+                        const toRefObject = {
+                            timestamp: toRef.timestamp,
+                            sequenceNumber: toRef.sequenceNumber,
+                        }
+                        sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
+                        sub.emit('gap', fromRefObject, {
+                            timestamp: 10,
+                            sequenceNumber: 0,
+                        }, 'publisherId', 'msgChainId')
                     })
                 })
 
