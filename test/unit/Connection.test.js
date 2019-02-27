@@ -169,7 +169,7 @@ describe('Connection', () => {
                 const message = UnicastMessage.create(
                     'subId',
                     StreamMessage.create(
-                        ['streamId', 0, timestamp, 0, null], [timestamp - 100, 0], StreamMessage.CONTENT_TYPES.JSON,
+                        ['streamId', 0, timestamp, 0, '', ''], [timestamp - 100, 0], StreamMessage.CONTENT_TYPES.JSON,
                         content, StreamMessage.SIGNATURE_TYPES.NONE,
                     ),
                 )
@@ -186,7 +186,7 @@ describe('Connection', () => {
                 })
 
                 conn.socket.onmessage({
-                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, null], [Date.now() - 100, 0], 27, 'invalid json', 0]],
+                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, '', ''], [Date.now() - 100, 0], 27, 'invalid json', 0]],
                 })
             })
         })

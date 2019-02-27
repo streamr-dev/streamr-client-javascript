@@ -32,7 +32,7 @@ describe('Subscription', () => {
         it('calls the callback once for each message in order', (done) => {
             const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
                 timestamp,
-                timestamp === 1 ? null : timestamp - 1,
+                timestamp === 1 ? 0 : timestamp - 1,
             ))
 
             const received = []

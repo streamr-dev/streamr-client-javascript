@@ -73,7 +73,7 @@ describe('Signer', () => {
         })
         it('should sign StreamMessageV30 correctly', async () => {
             const streamMessage = new StreamMessageV30(
-                [streamId, 0, timestamp, 0, null, 'chain-id'], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
+                [streamId, 0, timestamp, 0, '', 'chain-id'], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
                 data, StreamMessage.SIGNATURE_TYPES.ETH, null,
             )
             const payload = streamMessage.getStreamId() + streamMessage.getStreamPartition() + streamMessage.getTimestamp() +
@@ -102,14 +102,14 @@ describe('Signer', () => {
         })
         it('Should return false if incorrect signature (V30)', () => {
             const wrongStreamMessage = new StreamMessageV30(
-                [streamId, 0, timestamp, 0, signer.address], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
+                [streamId, 0, timestamp, 0, signer.address, ''], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
                 data, StreamMessage.SIGNATURE_TYPES.ETH, wrongSignature,
             )
             assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage, new Set([signer.address.toLowerCase()])), false)
         })
         it('Should return false if correct signature but not from a trusted publisher', () => {
             const signedStreamMessage = new StreamMessageV30(
-                [streamId, 0, timestamp, 0, signer.address], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
+                [streamId, 0, timestamp, 0, signer.address, ''], [timestamp - 10, 0], StreamMessage.CONTENT_TYPES.JSON,
                 data, StreamMessage.SIGNATURE_TYPES.ETH, correctSignatureV30,
             )
             assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage, new Set()), false)
