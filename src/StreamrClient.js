@@ -68,6 +68,8 @@ export default class StreamrClient extends EventEmitter {
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
+        this.msgCreationUtil = new MessageCreationUtil(this.options.auth, this.signer, this.getUserInfo().catch((err) => this.emit('error', err)))
+
         // Broadcast messages to all subs listening on stream
         this.connection.on(BroadcastMessage.TYPE, async (msg) => {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
@@ -176,7 +178,10 @@ export default class StreamrClient extends EventEmitter {
             const publishQueueCopy = this.publishQueue.slice(0)
             this.publishQueue = []
             publishQueueCopy.forEach((args) => {
-                this.publish(...args).catch((err) => { throw err })
+                this.publish(...args).catch((err) => {
+                    debug(`Error: ${err}`)
+                    this.emit(err)
+                })
             })
         })
 
@@ -239,17 +244,6 @@ export default class StreamrClient extends EventEmitter {
         return stream ? stream.getSubscriptions() : []
     }
 
-    _getMessageCreationUtil() {
-        if (!this.msgCreationUtil) {
-            this.msgCreationUtil = new MessageCreationUtil(this.options.auth, this.signer, this.getUserInfo())
-        }
-        return this.msgCreationUtil
-    }
-
-    getMessageChainId() {
-        return this._getMessageCreationUtil().msgChainId
-    }
-
     async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
@@ -270,7 +264,7 @@ export default class StreamrClient extends EventEmitter {
         // If connected, emit a publish request
         if (this.isConnected()) {
             const stream = await this.getStream(streamId)
-            const streamMessage = await this._getMessageCreationUtil().createStreamMessage(stream, data, timestamp, partitionKey)
+            const streamMessage = await this.msgCreationUtil.createStreamMessage(stream, data, timestamp, partitionKey)
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
             this.publishQueue.push([streamId, data, timestamp, partitionKey])

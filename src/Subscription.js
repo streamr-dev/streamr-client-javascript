@@ -35,25 +35,20 @@ export default class Subscription extends EventEmitter {
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.callback = callback
-        this.options = options || {}
+        this.resendOptions = options || {}
         this.queue = []
         this.state = Subscription.State.unsubscribed
         this.resending = false
         this.lastReceivedMsgRef = {}
 
-        // Check that multiple resend options are not given
-        let resendOptionCount = 0
-        if (this.options.from != null) {
-            resendOptionCount += 1
+        if (this.resendOptions.from != null && this.resendOptions.last != null) {
+            throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
         }
-        if (this.options.last != null) {
-            resendOptionCount += 1
-        }
-        if (this.options.msgChainId != null && typeof this.options.publisherId === 'undefined') {
+        if (this.resendOptions.msgChainId != null && typeof this.resendOptions.publisherId === 'undefined') {
             throw new Error('publisherId must be defined as well if msgChainId is defined.')
         }
-        if (resendOptionCount > 1) {
-            throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(options)}`)
+        if (this.resendOptions.from == null && this.resendOptions.to != null) {
+            throw new Error('"from" must be defined as well if "to" is defined.')
         }
 
         /** * Message handlers ** */
@@ -159,7 +154,7 @@ export default class Subscription extends EventEmitter {
     }
 
     hasResendOptions() {
-        return this.options.from || this.options.last > 0
+        return this.resendOptions.from || this.resendOptions.last > 0
     }
 
     /**
@@ -171,20 +166,20 @@ export default class Subscription extends EventEmitter {
      * - 'last' option stays the same
      */
     getEffectiveResendOptions() {
-        const key = this.options.publisherId + this.options.msgChainId
+        const key = this.resendOptions.publisherId + this.resendOptions.msgChainId
         if (this.hasReceivedMessagesFrom(key) && this.hasResendOptions()
-            && (this.options.from)) {
+            && (this.resendOptions.from)) {
             return {
                 // cannot know the first missing message so there will be a duplicate received
                 from: {
                     timestamp: this.lastReceivedMsgRef[key].timestamp,
                     sequenceNumber: this.lastReceivedMsgRef[key].sequenceNumber,
                 },
-                publisherId: this.options.publisherId,
-                msgChainId: this.options.msgChainId,
+                publisherId: this.resendOptions.publisherId,
+                msgChainId: this.resendOptions.msgChainId,
             }
         }
-        return this.options
+        return this.resendOptions
     }
 
     hasReceivedMessagesFrom(key) {

@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
 import debug from 'debug'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
-import StreamrClient from '../../src'
+import StubbedStreamrClient from '../unit/StubbedStreamrClient'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
@@ -129,18 +129,11 @@ describe('StreamrClient', () => {
     beforeEach(() => {
         clearAsync()
         connection = createConnectionMock()
-        client = new StreamrClient({
+        client = new StubbedStreamrClient({
             autoConnect: false,
             autoDisconnect: false,
             verifySignatures: 'never',
         }, connection)
-        client.getUserInfo = sinon.stub().resolves({
-            username: 'username',
-        })
-        client.getStream = sinon.stub().resolves({
-            id: 'streamId',
-            partitions: 1,
-        })
     })
 
     afterEach(() => {
@@ -795,7 +788,7 @@ describe('StreamrClient', () => {
         const hashedUsername = '16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
         function getPublishRequest(streamId, timestamp, sequenceNumber, prevMsgRef) {
             const streamMessage = StreamMessage.create(
-                [streamId, 0, timestamp, sequenceNumber, hashedUsername, client.getMessageChainId()], prevMsgRef,
+                [streamId, 0, timestamp, sequenceNumber, hashedUsername, client.msgCreationUtil.msgChainId], prevMsgRef,
                 StreamMessage.CONTENT_TYPES.JSON, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             return ControlLayer.PublishRequest.create(streamMessage, undefined)
@@ -857,19 +850,19 @@ describe('StreamrClient', () => {
 
     describe('Fields set', () => {
         it('sets auth.apiKey from authKey', () => {
-            const c = new StreamrClient({
+            const c = new StubbedStreamrClient({
                 authKey: 'authKey',
             }, createConnectionMock())
             assert(c.options.auth.apiKey)
         })
         it('sets auth.apiKey from apiKey', () => {
-            const c = new StreamrClient({
+            const c = new StubbedStreamrClient({
                 apiKey: 'apiKey',
             }, createConnectionMock())
             assert(c.options.auth.apiKey)
         })
         it('sets private key with 0x prefix', () => {
-            const c = new StreamrClient({
+            const c = new StubbedStreamrClient({
                 auth: {
                     privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
                 },
@@ -877,7 +870,7 @@ describe('StreamrClient', () => {
             assert(c.options.auth.privateKey.startsWith('0x'))
         })
         it('sets unauthenticated', () => {
-            const c = new StreamrClient({}, createConnectionMock())
+            const c = new StubbedStreamrClient({}, createConnectionMock())
             assert(c.session.options.unauthenticated)
         })
     })

@@ -16,7 +16,7 @@ export default class SubscribedStream {
         }
     }
 
-    async getPublishers() {
+    getPublishers() {
         if (!this.publishersPromise) {
             this.publishersPromise = this._client.getStreamPublishers(this.streamId)
         }
