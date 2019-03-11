@@ -6,12 +6,7 @@ import FakeProvider from 'web3-fake-provider'
 import StreamrClient from '../../src'
 import config from './config'
 
-/**
- * These tests should be run in sequential order!
- */
 describe('StreamrClient', () => {
-    const name = `StreamrClient-integration-${Date.now()}`
-
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
@@ -24,6 +19,27 @@ describe('StreamrClient', () => {
         autoDisconnect: false,
         ...opts,
     })
+
+    const createStream = () => {
+        const name = `StreamrClient-integration-${Date.now()}`
+        console.log(`createStream: ${name}`)
+        assert(client.isConnected())
+        console.log('Calling client.createStream and returning Promise')
+        return client.createStream({
+            name,
+            requireSignedData: true,
+        }).then((stream) => {
+            console.log(`then handler: created stream ${stream.id} ${stream.name}`)
+            assert(stream.id)
+            assert.equal(stream.name, name)
+            assert.strictEqual(stream.requireSignedData, true)
+            console.log('then handler: done')
+            return stream
+        }).catch((err) => {
+            console.log('caught exception!')
+            throw err
+        })
+    }
 
     beforeAll(() => Promise.all([
         fetch(config.restUrl),
@@ -52,103 +68,91 @@ describe('StreamrClient', () => {
     })
 
     describe('Pub/Sub', () => {
-        let createdStream
-
-        beforeAll((done) => {
-            console.log('Executing Pub/Sub beforeAll')
-            assert(client.isConnected())
-            console.log('Calling client.createStream and returning Promise')
-            client.createStream({
-                name,
-                requireSignedData: true,
-            }).then((stream) => {
-                console.log(`then handler: created stream ${stream.id}`)
-                createdStream = stream
-                assert(createdStream.id)
-                assert.equal(createdStream.name, name)
-                assert.strictEqual(createdStream.requireSignedData, true)
-                console.log('then handler: done')
-                done()
-            }).catch((err) => {
-                console.log('caught exception!')
-                done(err)
-            })
-        })
-
-        it('Stream.publish', () => {
+        it('Stream.publish', async () => {
             console.log('Trying to publish')
-            createdStream.publish({
+            const stream = await createStream()
+            stream.publish({
                 test: 'Stream.publish',
             })
         })
 
-        it('client.publish', () => client.publish(createdStream.id, {
+        it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
             test: 'client.publish',
-        }))
+        })))
 
-        it('client.publish with Stream object as arg', () => client.publish(createdStream, {
-            test: 'client.publish with Stream object as arg',
-        }))
+        it('client.publish with Stream object as arg', async () => {
+            const stream = await createStream()
+            client.publish(stream, {
+                test: 'client.publish with Stream object as arg',
+            })
+        })
 
         it('client.subscribe with resend', (done) => {
-            // This test needs some time because the write needs to have time to go to Cassandra
-            let streamMessage
-            assert.strictEqual(client.subscribedStreams[createdStream.id], undefined)
-            setTimeout(() => {
-                const sub = client.subscribe({
-                    stream: createdStream.id,
-                    resend_last: 1,
-                }, async () => {
-                    const subStream = client.subscribedStreams[createdStream.id]
-                    const publishers = await subStream.getPublishers()
-                    const requireVerification = await subStream.getVerifySignatures()
-                    assert.strictEqual(requireVerification, true)
-                    assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
-                    client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
-                        assert.strictEqual(client.subscribedStreams[createdStream.id], undefined)
-                        done()
+            createStream().then((stream) => {
+                // Publish message
+                client.publish(stream.id, {
+                    test: 'client.subscribe with resend',
+                })
+
+                // Check that we're not subscribed yet
+                assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+
+                // Add delay: this test needs some time to allow the message to be written to Cassandra
+                setTimeout(() => {
+                    const sub = client.subscribe({
+                        stream: stream.id,
+                        resend_last: 1,
+                    }, async (parsedContent, streamMessage) => {
+                        // Check message content
+                        assert.strictEqual(parsedContent.test, 'client.subscribe with resend')
+
+                        // Check signature stuff
+                        const subStream = client.subscribedStreams[stream.id]
+                        const publishers = await subStream.getPublishers()
+                        const requireVerification = await subStream.getVerifySignatures()
+                        assert.strictEqual(requireVerification, true)
+                        assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
+                        assert.strictEqual(streamMessage.signatureType, 1)
+                        assert(streamMessage.publisherAddress)
+                        assert(streamMessage.signature)
+
+                        // All good, unsubscribe
+                        client.unsubscribe(sub)
+                        sub.on('unsubscribed', () => {
+                            assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                            done()
+                        })
                     })
-                })
-                client.connection.on('UnicastMessage', (msg) => {
-                    streamMessage = msg.payload
-                    assert.strictEqual(streamMessage.parsedContent.test, 'client.publish with Stream object as arg')
-                    assert.strictEqual(streamMessage.signatureType, 1)
-                    assert(streamMessage.publisherAddress)
-                    assert(streamMessage.signature)
-                })
-            }, 10000)
+                }, 10000)
+            })
         }, 15000)
 
         it('client.subscribe (realtime)', (done) => {
-            let streamMessage
             const id = Date.now()
-
-            // Make a new stream for this test to avoid conflicts
-            client.getOrCreateStream({
-                name: `StreamrClient client.subscribe (realtime) - ${Date.now()}`,
-            }).then((stream) => {
+            createStream().then((stream) => {
                 const sub = client.subscribe({
                     stream: stream.id,
-                }, (message) => {
-                    assert.equal(message.id, id)
+                }, (parsedContent, streamMessage) => {
+                    assert.equal(parsedContent.id, id)
+
+                    // Check signature stuff
+                    assert.strictEqual(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
+
+                    // All good, unsubscribe
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
                         done()
                     })
                 })
+
+                // Publish after subscribed
                 sub.on('subscribed', () => {
                     stream.publish({
                         id,
                     })
                 })
-            })
-            client.connection.on('BroadcastMessage', (msg) => {
-                streamMessage = msg.payload
-                assert.strictEqual(streamMessage.parsedContent.id, id)
-                assert.strictEqual(streamMessage.signatureType, 1)
-                assert(streamMessage.publisherAddress)
-                assert(streamMessage.signature)
             })
         })
     })
