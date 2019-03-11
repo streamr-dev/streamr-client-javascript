@@ -41,7 +41,7 @@ describe('StreamrClient', () => {
         })
     }
 
-    beforeAll(() => Promise.all([
+    beforeEach(() => Promise.all([
         fetch(config.restUrl),
         fetch(config.websocketUrl.replace('ws://', 'http://')),
     ])
@@ -59,7 +59,7 @@ describe('StreamrClient', () => {
             }
         }))
 
-    afterAll((done) => {
+    afterEach((done) => {
         if (client && client.isConnected()) {
             client.disconnect().then(done)
         } else {
@@ -68,24 +68,17 @@ describe('StreamrClient', () => {
     })
 
     describe('Pub/Sub', () => {
-        it('Stream.publish', async () => {
-            console.log('Trying to publish')
-            const stream = await createStream()
-            stream.publish({
-                test: 'Stream.publish',
-            })
-        })
+        it('Stream.publish', () => createStream().then((stream) => stream.publish({
+            test: 'Stream.publish',
+        })))
 
         it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
             test: 'client.publish',
         })))
 
-        it('client.publish with Stream object as arg', async () => {
-            const stream = await createStream()
-            client.publish(stream, {
-                test: 'client.publish with Stream object as arg',
-            })
-        })
+        it('client.publish with Stream object as arg', () => createStream().then((stream) => client.publish(stream, {
+            test: 'client.publish with Stream object as arg',
+        })))
 
         it('client.subscribe with resend', (done) => {
             createStream().then((stream) => {
