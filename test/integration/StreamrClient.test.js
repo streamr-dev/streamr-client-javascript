@@ -41,23 +41,26 @@ describe('StreamrClient', () => {
         })
     }
 
-    beforeEach(() => Promise.all([
-        fetch(config.restUrl),
-        fetch(config.websocketUrl.replace('ws://', 'http://')),
-    ])
-        .then(() => {
-            client = createClient()
-            return client.connect()
-        })
-        .catch((e) => {
-            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
-                throw new Error('Integration testing requires that engine-and-editor ' +
-                    'and data-api ("entire stack") are running in the background. ' +
-                    'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-            } else {
-                throw e
-            }
-        }))
+    beforeEach((done) => {
+        Promise.all([
+            fetch(config.restUrl),
+            fetch(config.websocketUrl.replace('ws://', 'http://')),
+        ])
+            .then(() => {
+                client = createClient()
+                client.on('connected', done)
+                client.connect()
+            })
+            .catch((e) => {
+                if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+                    throw new Error('Integration testing requires that engine-and-editor ' +
+                        'and data-api ("entire stack") are running in the background. ' +
+                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+                } else {
+                    throw e
+                }
+            })
+    })
 
     afterEach((done) => {
         if (client && client.isConnected()) {
