@@ -54,11 +54,11 @@ describe('StreamrClient', () => {
     describe('Pub/Sub', () => {
         let createdStream
 
-        beforeAll(() => {
+        beforeAll((done) => {
             console.log('Executing Pub/Sub beforeAll')
             assert(client.isConnected())
             console.log('Calling client.createStream and returning Promise')
-            return client.createStream({
+            client.createStream({
                 name,
                 requireSignedData: true,
             }).then((stream) => {
@@ -68,9 +68,10 @@ describe('StreamrClient', () => {
                 assert.equal(createdStream.name, name)
                 assert.strictEqual(createdStream.requireSignedData, true)
                 console.log('then handler: done')
+                done()
             }).catch((err) => {
                 console.log('caught exception!')
-                throw err
+                done(err)
             })
         })
 
