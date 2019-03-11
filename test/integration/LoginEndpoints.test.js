@@ -1,10 +1,9 @@
 import assert from 'assert'
 
-import StreamrClient from '../../src'
-import config from './config'
-
 import Web3 from 'web3'
 import FakeProvider from 'web3-fake-provider'
+import StreamrClient from '../../src'
+import config from './config'
 
 const web3 = new Web3(new FakeProvider())
 
