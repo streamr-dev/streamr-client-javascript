@@ -1,6 +1,7 @@
 import assert from 'assert'
 import fetch from 'node-fetch'
 import Web3 from 'web3'
+import FakeProvider from 'web3-fake-provider'
 
 import StreamrClient from '../../src'
 import config from './config'
@@ -14,10 +15,10 @@ describe('StreamrClient', () => {
     let client
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: `${config.websocketUrl}?payloadVersion=29`,
+        url: `${config.websocketUrl}?controlLayerVersion=0&messageLayerVersion=29`,
         restUrl: config.restUrl,
         auth: {
-            privateKey: new Web3().eth.accounts.create().privateKey,
+            privateKey: new Web3(new FakeProvider()).eth.accounts.create().privateKey,
         },
         autoConnect: false,
         autoDisconnect: false,

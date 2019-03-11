@@ -3,9 +3,10 @@ import assert from 'assert'
 import StreamrClient from '../../src'
 import config from './config'
 
-const Web3 = require('web3')
+import Web3 from 'web3'
+import FakeProvider from 'web3-fake-provider'
 
-const web3 = new Web3()
+const web3 = new Web3(new FakeProvider())
 
 describe('LoginEndpoints', () => {
     let client
