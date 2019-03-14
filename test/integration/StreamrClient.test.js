@@ -7,6 +7,9 @@ import StreamrClient from '../../src'
 import config from './config'
 
 describe('StreamrClient', () => {
+    let client
+
+    // These tests will take time, especially on Travis
     jest.setTimeout(15 * 1000)
 
     const createClient = (opts = {}) => new StreamrClient({
@@ -20,7 +23,7 @@ describe('StreamrClient', () => {
         ...opts,
     })
 
-    const createStream = (client) => {
+    const createStream = () => {
         const name = `StreamrClient-integration-${Date.now()}`
         console.log(`createStream: ${name}`)
         assert(client.isConnected())
@@ -41,7 +44,7 @@ describe('StreamrClient', () => {
         })
     }
 
-    const ensureConnected = (client) => new Promise((resolve) => {
+    const ensureConnected = () => new Promise((resolve) => {
         client.on('connected', resolve)
         client.connect()
     })
@@ -49,7 +52,10 @@ describe('StreamrClient', () => {
     beforeEach(() => Promise.all([
         fetch(config.restUrl),
         fetch(config.websocketUrl.replace('ws://', 'http://')),
-    ]).catch((e) => {
+    ]).then(() => {
+        client = createClient()
+        return ensureConnected()
+    }).catch((e) => {
         if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
             throw new Error('Integration testing requires that engine-and-editor ' +
                         'and data-api ("entire stack") are running in the background. ' +
@@ -59,80 +65,68 @@ describe('StreamrClient', () => {
         }
     }))
 
-    describe('Pub/Sub', () => {
-        it('client.publish', () => {
-            const client = createClient()
-            return ensureConnected(client).then(() => createStream(client)).then((stream) => client.publish(stream.id, {
-                test: 'client.publish',
-            })).then(() => {
-                client.disconnect()
-            })
-        })
+    afterEach(() => {
+        if (client && client.isConnected()) {
+            client.disconnect()
+        }
+    })
 
-        it('Stream.publish', () => {
-            const client = createClient()
-            return ensureConnected(client).then(() => createStream(client)).then((stream) => stream.publish({
-                test: 'Stream.publish',
-            })).then(() => {
-                client.disconnect()
-            })
-        })
+    describe('Pub/Sub', () => {
+        it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
+            test: 'client.publish',
+        })))
+
+        it('Stream.publish', () => createStream().then((stream) => stream.publish({
+            test: 'Stream.publish',
+        })))
 
         it('client.publish with Stream object as arg', () => {
-            const client = createClient()
-            return ensureConnected(client).then(() => createStream(client)).then((stream) => client.publish(stream, {
+            createStream().then((stream) => client.publish(stream, {
                 test: 'client.publish with Stream object as arg',
-            })).then(() => {
-                client.disconnect()
-            })
+            }))
         })
 
-        it('client.subscribe with resend', (done) => {
-            const client = createClient()
-            return ensureConnected(client).then(() => createStream(client)).then((stream) => {
-                // Publish message
-                client.publish(stream.id, {
-                    test: 'client.subscribe with resend',
-                })
+        it('client.subscribe with resend', (done) => createStream().then((stream) => {
+            // Publish message
+            client.publish(stream.id, {
+                test: 'client.subscribe with resend',
+            })
 
-                // Check that we're not subscribed yet
-                assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+            // Check that we're not subscribed yet
+            assert.strictEqual(client.subscribedStreams[stream.id], undefined)
 
-                // Add delay: this test needs some time to allow the message to be written to Cassandra
-                setTimeout(() => {
-                    const sub = client.subscribe({
-                        stream: stream.id,
-                        resend_last: 1,
-                    }, async (parsedContent, streamMessage) => {
-                        // Check message content
-                        assert.strictEqual(parsedContent.test, 'client.subscribe with resend')
+            // Add delay: this test needs some time to allow the message to be written to Cassandra
+            setTimeout(() => {
+                const sub = client.subscribe({
+                    stream: stream.id,
+                    resend_last: 1,
+                }, async (parsedContent, streamMessage) => {
+                    // Check message content
+                    assert.strictEqual(parsedContent.test, 'client.subscribe with resend')
 
-                        // Check signature stuff
-                        const subStream = client.subscribedStreams[stream.id]
-                        const publishers = await subStream.getPublishers()
-                        const requireVerification = await subStream.getVerifySignatures()
-                        assert.strictEqual(requireVerification, true)
-                        assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
-                        assert.strictEqual(streamMessage.signatureType, 1)
-                        assert(streamMessage.publisherAddress)
-                        assert(streamMessage.signature)
+                    // Check signature stuff
+                    const subStream = client.subscribedStreams[stream.id]
+                    const publishers = await subStream.getPublishers()
+                    const requireVerification = await subStream.getVerifySignatures()
+                    assert.strictEqual(requireVerification, true)
+                    assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
+                    assert.strictEqual(streamMessage.signatureType, 1)
+                    assert(streamMessage.publisherAddress)
+                    assert(streamMessage.signature)
 
-                        // All good, unsubscribe
-                        client.unsubscribe(sub)
-                        sub.on('unsubscribed', () => {
-                            assert.strictEqual(client.subscribedStreams[stream.id], undefined)
-                            client.disconnect()
-                            done()
-                        })
+                    // All good, unsubscribe
+                    client.unsubscribe(sub)
+                    sub.on('unsubscribed', () => {
+                        assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                        done()
                     })
-                }, 10000)
-            })
-        })
+                })
+            }, 10000)
+        }))
 
         it('client.subscribe (realtime)', (done) => {
-            const client = createClient()
             const id = Date.now()
-            ensureConnected(client).then(() => createStream(client)).then((stream) => {
+            createStream().then((stream) => {
                 const sub = client.subscribe({
                     stream: stream.id,
                 }, (parsedContent, streamMessage) => {
