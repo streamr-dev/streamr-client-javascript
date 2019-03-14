@@ -39,7 +39,7 @@ describe('StreamrClient', () => {
         })
     }
 
-    const ensureConnected = (client) => new Promise((resolve, reject) => {
+    const ensureConnected = (client) => new Promise((resolve) => {
         client.on('connected', resolve)
         client.connect()
     })
@@ -62,9 +62,11 @@ describe('StreamrClient', () => {
     describe('Pub/Sub', () => {
         it('client.publish', () => {
             const client = createClient()
-            return ensureConnected(client).then(createStream).then((stream) => client.publish(stream.id, {
+            return ensureConnected(client).then(() => createStream(client)).then((stream) => client.publish(stream.id, {
                 test: 'client.publish',
-            }))
+            })).then(() => {
+                client.disconnect()
+            })
         })
 
         /*
