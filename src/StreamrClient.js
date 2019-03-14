@@ -230,6 +230,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async publish(streamObjectOrId, data, timestamp = Date.now(), apiKey = this.options.auth.apiKey) {
+        console.log(`called publish with ${streamObjectOrId}`)
         const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
