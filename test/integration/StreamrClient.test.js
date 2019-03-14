@@ -8,6 +8,7 @@ import config from './config'
 
 describe('StreamrClient', () => {
     let client
+    let stream
 
     // These tests will take time, especially on Travis
     jest.setTimeout(15 * 1000)
@@ -23,25 +24,23 @@ describe('StreamrClient', () => {
         ...opts,
     })
 
-    const createStream = () => {
+    const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
         console.log(`createStream: ${name}`)
         assert(client.isConnected())
         console.log('Calling client.createStream and returning Promise')
-        return client.createStream({
+
+        const s = await client.createStream({
             name,
             requireSignedData: true,
-        }).then((stream) => {
-            console.log(`then handler: created stream ${stream.id} ${stream.name}`)
-            assert(stream.id)
-            assert.equal(stream.name, name)
-            assert.strictEqual(stream.requireSignedData, true)
-            console.log('then handler: done')
-            return stream
-        }).catch((err) => {
-            console.log('caught exception!')
-            throw err
         })
+
+        console.log(`then handler: created stream ${s.id} ${s.name}`)
+        assert(s.id)
+        assert.equal(s.name, name)
+        assert.strictEqual(s.requireSignedData, true)
+        console.log('then handler: done')
+        return s
     }
 
     const ensureConnected = () => new Promise((resolve) => {
@@ -49,21 +48,26 @@ describe('StreamrClient', () => {
         client.connect()
     })
 
-    beforeEach(() => Promise.all([
-        fetch(config.restUrl),
-        fetch(config.websocketUrl.replace('ws://', 'http://')),
-    ]).then(() => {
-        client = createClient()
-        return ensureConnected()
-    }).catch((e) => {
-        if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
-            throw new Error('Integration testing requires that engine-and-editor ' +
-                        'and data-api ("entire stack") are running in the background. ' +
-                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-        } else {
-            throw e
+    beforeEach(async () => {
+        try {
+            await Promise.all([
+                fetch(config.restUrl),
+                fetch(config.websocketUrl.replace('ws://', 'http://')),
+            ])
+        } catch (e) {
+            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+                throw new Error('Integration testing requires that engine-and-editor ' +
+                    'and data-api ("entire stack") are running in the background. ' +
+                    'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+            } else {
+                throw e
+            }
         }
-    }))
+
+        client = createClient()
+        await ensureConnected()
+        stream = await createStream()
+    })
 
     afterEach(() => {
         if (client && client.isConnected()) {
@@ -72,21 +76,21 @@ describe('StreamrClient', () => {
     })
 
     describe('Pub/Sub', () => {
-        it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
+        it('client.publish', () => client.publish(stream.id, {
             test: 'client.publish',
-        })))
+        }))
 
-        it('Stream.publish', () => createStream().then((stream) => stream.publish({
+        it('Stream.publish', () => stream.publish({
             test: 'Stream.publish',
-        })))
+        }))
 
         it('client.publish with Stream object as arg', () => {
-            createStream().then((stream) => client.publish(stream, {
+            client.publish(stream, {
                 test: 'client.publish with Stream object as arg',
-            }))
+            })
         })
 
-        it('client.subscribe with resend', (done) => createStream().then((stream) => {
+        it('client.subscribe with resend', (done) => {
             // Publish message
             client.publish(stream.id, {
                 test: 'client.subscribe with resend',
@@ -122,33 +126,31 @@ describe('StreamrClient', () => {
                     })
                 })
             }, 10000)
-        }))
+        })
 
         it('client.subscribe (realtime)', (done) => {
             const id = Date.now()
-            createStream().then((stream) => {
-                const sub = client.subscribe({
-                    stream: stream.id,
-                }, (parsedContent, streamMessage) => {
-                    assert.equal(parsedContent.id, id)
+            const sub = client.subscribe({
+                stream: stream.id,
+            }, (parsedContent, streamMessage) => {
+                assert.equal(parsedContent.id, id)
 
-                    // Check signature stuff
-                    assert.strictEqual(streamMessage.signatureType, 1)
-                    assert(streamMessage.publisherAddress)
-                    assert(streamMessage.signature)
+                // Check signature stuff
+                assert.strictEqual(streamMessage.signatureType, 1)
+                assert(streamMessage.publisherAddress)
+                assert(streamMessage.signature)
 
-                    // All good, unsubscribe
-                    client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
-                        done()
-                    })
+                // All good, unsubscribe
+                client.unsubscribe(sub)
+                sub.on('unsubscribed', () => {
+                    done()
                 })
+            })
 
-                // Publish after subscribed
-                sub.on('subscribed', () => {
-                    stream.publish({
-                        id,
-                    })
+            // Publish after subscribed
+            sub.on('subscribed', () => {
+                stream.publish({
+                    id,
                 })
             })
         })
