@@ -6,8 +6,6 @@ import FakeProvider from 'web3-fake-provider'
 import StreamrClient from '../../src'
 import config from './config'
 
-const DEFAULT_TIMEOUT = 15 * 1000
-
 describe('StreamrClient', () => {
     jest.setTimeout(15 * 1000)
 
@@ -69,7 +67,7 @@ describe('StreamrClient', () => {
             })).then(() => {
                 client.disconnect()
             })
-        }, DEFAULT_TIMEOUT)
+        })
 
         it('Stream.publish', () => {
             const client = createClient()
@@ -78,7 +76,7 @@ describe('StreamrClient', () => {
             })).then(() => {
                 client.disconnect()
             })
-        }, DEFAULT_TIMEOUT)
+        })
 
         it('client.publish with Stream object as arg', () => {
             const client = createClient()
@@ -87,7 +85,7 @@ describe('StreamrClient', () => {
             })).then(() => {
                 client.disconnect()
             })
-        }, DEFAULT_TIMEOUT)
+        })
 
         it('client.subscribe with resend', (done) => {
             const client = createClient()
@@ -129,7 +127,7 @@ describe('StreamrClient', () => {
                     })
                 }, 10000)
             })
-        }, DEFAULT_TIMEOUT)
+        })
 
         it('client.subscribe (realtime)', (done) => {
             const client = createClient()
@@ -159,6 +157,6 @@ describe('StreamrClient', () => {
                     })
                 })
             })
-        }, DEFAULT_TIMEOUT)
+        })
     })
 })
