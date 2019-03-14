@@ -6,7 +6,11 @@ import FakeProvider from 'web3-fake-provider'
 import StreamrClient from '../../src'
 import config from './config'
 
+const DEFAULT_TIMEOUT = 15 * 1000
+
 describe('StreamrClient', () => {
+    jest.setTimeout(15 * 1000)
+
     const createClient = (opts = {}) => new StreamrClient({
         url: `${config.websocketUrl}?controlLayerVersion=0&messageLayerVersion=29`,
         restUrl: config.restUrl,
@@ -65,19 +69,29 @@ describe('StreamrClient', () => {
             })).then(() => {
                 client.disconnect()
             })
-        }, 15 * 1000)
+        }, DEFAULT_TIMEOUT)
 
-        /*
-        it('Stream.publish', () => createStream().then((stream) => stream.publish({
-            test: 'Stream.publish',
-        })))
+        it('Stream.publish', () => {
+            const client = createClient()
+            return ensureConnected(client).then(() => createStream(client)).then((stream) => stream.publish({
+                test: 'Stream.publish',
+            })).then(() => {
+                client.disconnect()
+            })
+        }, DEFAULT_TIMEOUT)
 
-        it('client.publish with Stream object as arg', () => createStream().then((stream) => client.publish(stream, {
-            test: 'client.publish with Stream object as arg',
-        })))
+        it('client.publish with Stream object as arg', () => {
+            const client = createClient()
+            return ensureConnected(client).then(() => createStream(client)).then((stream) => client.publish(stream, {
+                test: 'client.publish with Stream object as arg',
+            })).then(() => {
+                client.disconnect()
+            })
+        }, DEFAULT_TIMEOUT)
 
         it('client.subscribe with resend', (done) => {
-            createStream().then((stream) => {
+            const client = createClient()
+            return ensureConnected(client).then(() => createStream(client)).then((stream) => {
                 // Publish message
                 client.publish(stream.id, {
                     test: 'client.subscribe with resend',
@@ -109,16 +123,18 @@ describe('StreamrClient', () => {
                         client.unsubscribe(sub)
                         sub.on('unsubscribed', () => {
                             assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                            client.disconnect()
                             done()
                         })
                     })
                 }, 10000)
             })
-        }, 15000)
+        }, DEFAULT_TIMEOUT)
 
         it('client.subscribe (realtime)', (done) => {
+            const client = createClient()
             const id = Date.now()
-            createStream().then((stream) => {
+            ensureConnected(client).then(() => createStream(client)).then((stream) => {
                 const sub = client.subscribe({
                     stream: stream.id,
                 }, (parsedContent, streamMessage) => {
@@ -143,7 +159,6 @@ describe('StreamrClient', () => {
                     })
                 })
             })
-        })
-        */
+        }, DEFAULT_TIMEOUT)
     })
 })
