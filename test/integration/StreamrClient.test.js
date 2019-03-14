@@ -71,16 +71,12 @@ describe('StreamrClient', () => {
     })
 
     describe('Pub/Sub', () => {
-        it('Stream.publish', () => createStream().then((stream) => {
-            assert(stream.id)
-            console.log(stream.id)
-            return stream.publish({
-                test: 'Stream.publish',
-            })
-        }))
-
         it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
             test: 'client.publish',
+        })))
+
+        it('Stream.publish', () => createStream().then((stream) => stream.publish({
+            test: 'Stream.publish',
         })))
 
         it('client.publish with Stream object as arg', () => createStream().then((stream) => client.publish(stream, {
