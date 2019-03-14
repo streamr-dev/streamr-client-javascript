@@ -7,8 +7,6 @@ import StreamrClient from '../../src'
 import config from './config'
 
 describe('StreamrClient', () => {
-    let client
-
     const createClient = (opts = {}) => new StreamrClient({
         url: `${config.websocketUrl}?controlLayerVersion=0&messageLayerVersion=29`,
         restUrl: config.restUrl,
@@ -20,7 +18,7 @@ describe('StreamrClient', () => {
         ...opts,
     })
 
-    const createStream = () => {
+    const createStream = (client) => {
         const name = `StreamrClient-integration-${Date.now()}`
         console.log(`createStream: ${name}`)
         assert(client.isConnected())
@@ -41,41 +39,35 @@ describe('StreamrClient', () => {
         })
     }
 
-    beforeEach((done) => {
-        Promise.all([
-            fetch(config.restUrl),
-            fetch(config.websocketUrl.replace('ws://', 'http://')),
-        ])
-            .then(() => {
-                client = createClient()
-                console.log(`created a client with address: ${client.signer.address}`)
-                client.on('connected', done)
-                client.connect()
-            })
-            .catch((e) => {
-                if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
-                    throw new Error('Integration testing requires that engine-and-editor ' +
-                        'and data-api ("entire stack") are running in the background. ' +
-                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-                } else {
-                    throw e
-                }
-            })
+    const ensureConnected = (client) => new Promise((resolve, reject) => {
+        client.on('connected', resolve)
+        client.connect()
     })
 
-    afterEach((done) => {
-        if (client && client.isConnected()) {
-            client.disconnect().then(done)
-        } else {
-            done()
-        }
+    beforeEach(() => {
+        return Promise.all([
+            fetch(config.restUrl),
+            fetch(config.websocketUrl.replace('ws://', 'http://')),
+        ]).catch((e) => {
+            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+                throw new Error('Integration testing requires that engine-and-editor ' +
+                        'and data-api ("entire stack") are running in the background. ' +
+                        'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+            } else {
+                throw e
+            }
+        })
     })
 
     describe('Pub/Sub', () => {
-        it('client.publish', () => createStream().then((stream) => client.publish(stream.id, {
-            test: 'client.publish',
-        })))
+        it('client.publish', () => {
+            const client = createClient()
+            return ensureConnected(client).then(createStream).then((stream) => client.publish(stream.id, {
+                test: 'client.publish',
+            }))
+        })
 
+        /*
         it('Stream.publish', () => createStream().then((stream) => stream.publish({
             test: 'Stream.publish',
         })))
@@ -152,5 +144,6 @@ describe('StreamrClient', () => {
                 })
             })
         })
+        */
     })
 })
