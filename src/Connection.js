@@ -90,7 +90,6 @@ class Connection extends EventEmitter {
 
     send(websocketRequest) {
         try {
-            console.log(`sending: ${websocketRequest.serialize()}`)
             this.socket.send(websocketRequest.serialize())
         } catch (err) {
             this.emit('error', err)
