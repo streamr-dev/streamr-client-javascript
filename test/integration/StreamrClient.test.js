@@ -26,20 +26,16 @@ describe('StreamrClient', () => {
 
     const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
-        console.log(`createStream: ${name}`)
         assert(client.isConnected())
-        console.log('Calling client.createStream and returning Promise')
 
         const s = await client.createStream({
             name,
             requireSignedData: true,
         })
 
-        console.log(`then handler: created stream ${s.id} ${s.name}`)
         assert(s.id)
         assert.equal(s.name, name)
         assert.strictEqual(s.requireSignedData, true)
-        console.log('then handler: done')
         return s
     }
 
