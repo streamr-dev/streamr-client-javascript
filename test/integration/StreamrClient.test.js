@@ -48,6 +48,7 @@ describe('StreamrClient', () => {
         ])
             .then(() => {
                 client = createClient()
+                console.log(`created a client with address: ${client.signer.address}`)
                 client.on('connected', done)
                 client.connect()
             })

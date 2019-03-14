@@ -17,7 +17,7 @@
     "eslint": "eslint src/** test/**",
     "test": "jest --detectOpenHandles",
     "test-unit": "jest --detectOpenHandles --forceExit test/unit",
-    "test-integration": "jest --detectOpenHandles --forceExit --maxWorkers=1 test/integration"
+    "test-integration": "jest --detectOpenHandles --forceExit --runInBand test/integration"
   },
   "browser": {
     "http": "./src/shim/http-https.js",
