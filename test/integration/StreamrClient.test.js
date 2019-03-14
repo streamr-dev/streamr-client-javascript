@@ -44,20 +44,18 @@ describe('StreamrClient', () => {
         client.connect()
     })
 
-    beforeEach(() => {
-        return Promise.all([
-            fetch(config.restUrl),
-            fetch(config.websocketUrl.replace('ws://', 'http://')),
-        ]).catch((e) => {
-            if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
-                throw new Error('Integration testing requires that engine-and-editor ' +
+    beforeEach(() => Promise.all([
+        fetch(config.restUrl),
+        fetch(config.websocketUrl.replace('ws://', 'http://')),
+    ]).catch((e) => {
+        if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
+            throw new Error('Integration testing requires that engine-and-editor ' +
                         'and data-api ("entire stack") are running in the background. ' +
                         'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
-            } else {
-                throw e
-            }
-        })
-    })
+        } else {
+            throw e
+        }
+    }))
 
     describe('Pub/Sub', () => {
         it('client.publish', () => {
@@ -67,7 +65,7 @@ describe('StreamrClient', () => {
             })).then(() => {
                 client.disconnect()
             })
-        })
+        }, 15 * 1000)
 
         /*
         it('Stream.publish', () => createStream().then((stream) => stream.publish({
