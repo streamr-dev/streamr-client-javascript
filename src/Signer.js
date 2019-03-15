@@ -3,10 +3,12 @@ import { MessageLayer } from 'streamr-client-protocol'
 const { StreamMessage } = MessageLayer
 const { SIGNATURE_TYPES } = StreamMessage
 
-const Web3 = require('web3')
+import Web3 from 'web3'
+import FakeProvider from 'web3-fake-provider'
+
 const debug = require('debug')('StreamrClient::Signer')
 
-const web3 = new Web3()
+const web3 = new Web3(new FakeProvider())
 
 export default class Signer {
     constructor(options = {}) {
