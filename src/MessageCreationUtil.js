@@ -1,12 +1,13 @@
 import sha256 from 'js-sha256'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
+import FakeProvider from 'web3-fake-provider'
 
 const murmur = require('murmurhash-native').murmurHash
 const Web3 = require('web3')
 
 const { StreamMessage } = MessageLayer
-const web3 = new Web3()
+const web3 = new Web3(new FakeProvider())
 
 export default class MessageCreationUtil {
     constructor(auth, signer, userInfoPromise) {

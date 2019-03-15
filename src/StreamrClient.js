@@ -256,14 +256,9 @@ export default class StreamrClient extends EventEmitter {
             throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
         }
 
-        // Validate data
-        if (typeof data !== 'object') {
-            throw new Error(`Message data must be an object! Was: ${data}`)
-        }
-
         // If connected, emit a publish request
         if (this.isConnected()) {
-            const stream = await this.getStream(streamId)
+            const stream = (streamObjectOrId instanceof Stream) ? streamObjectOrId : await this.getStream(streamId)
             const streamMessage = await this.msgCreationUtil.createStreamMessage(stream, data, timestamp, partitionKey)
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
