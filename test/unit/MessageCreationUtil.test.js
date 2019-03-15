@@ -1,8 +1,7 @@
 import assert from 'assert'
 import sinon from 'sinon'
-import Web3 from 'web3'
+import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
-import FakeProvider from 'web3-fake-provider'
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 
 const { StreamMessage } = MessageLayer
@@ -11,11 +10,11 @@ describe('MessageCreationUtil', () => {
     const hashedUsername = '16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
     describe('getPublisherId', () => {
         it('use address', async () => {
-            const account = new Web3(new FakeProvider()).eth.accounts.create()
+            const wallet = ethers.Wallet.createRandom()
             const client = {
                 options: {
                     auth: {
-                        privateKey: account.privateKey,
+                        privateKey: wallet.privateKey,
                     },
                 },
                 getUserInfo: sinon.stub().resolves({
@@ -24,7 +23,7 @@ describe('MessageCreationUtil', () => {
             }
             const msgCreationUtil = new MessageCreationUtil(client.options.auth, undefined, client.getUserInfo())
             const publisherId = await msgCreationUtil.getPublisherId()
-            assert.strictEqual(publisherId, account.address)
+            assert.strictEqual(publisherId, wallet.address)
         })
         it('use hash of username', async () => {
             const client = {

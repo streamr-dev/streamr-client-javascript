@@ -1,13 +1,11 @@
 import sha256 from 'js-sha256'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
-import FakeProvider from 'web3-fake-provider'
+import { ethers } from 'ethers'
 
 const murmur = require('murmurhash-native').murmurHash
-const Web3 = require('web3')
 
 const { StreamMessage } = MessageLayer
-const web3 = new Web3(new FakeProvider())
 
 export default class MessageCreationUtil {
     constructor(auth, signer, userInfoPromise) {
@@ -28,12 +26,10 @@ export default class MessageCreationUtil {
     async getPublisherId() {
         if (!this.publisherId) {
             if (this.auth.privateKey !== undefined) {
-                this.publisherId = web3.eth.accounts.privateKeyToAccount(this.auth.privateKey).address
+                this.publisherId = ethers.utils.computeAddress(this.auth.privateKey)
             } else if (this.auth.provider !== undefined) {
-                const w3 = new Web3(this.auth.provider)
-                const accounts = await w3.eth.getAccounts()
-                /* eslint-disable prefer-destructuring */
-                this.publisherId = accounts[0]
+                const provider = new ethers.providers.Web3Provider(this.auth.provider)
+                this.publisherId = provider.getSigner().address
             } else if (this.auth.apiKey !== undefined) {
                 this.publisherId = sha256(await this.getUsername())
             } else if (this.auth.username !== undefined) {
