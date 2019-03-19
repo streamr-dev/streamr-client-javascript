@@ -56,8 +56,11 @@ export default class StreamrClient extends EventEmitter {
             this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
         } else {
             const queryObj = qs.parse(parts[1])
-            if (!(queryObj.controlLayerVersion && queryObj.messageLayerVersion)) {
-                this.options.url = `${this.options.url}&controlLayerVersion=1&messageLayerVersion=30`
+            if (!queryObj.controlLayerVersion) {
+                this.options.url = `${this.options.url}&controlLayerVersion=1`
+            }
+            if (!queryObj.messageLayerVersion) {
+                this.options.url = `${this.options.url}&messageLayerVersion=30`
             }
         }
 
