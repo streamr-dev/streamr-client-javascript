@@ -36,7 +36,7 @@ export default class StreamrClient extends EventEmitter {
         // Default options
         this.options = {
             // The server to connect to
-            url: 'wss://www.streamr.com/api/v1/ws?controlLayerVersion=1&messageLayerVersion=30',
+            url: 'wss://www.streamr.com/api/v1/ws',
             restUrl: 'https://www.streamr.com/api/v1',
             // Automatically connect on first subscribe
             autoConnect: true,
@@ -49,6 +49,10 @@ export default class StreamrClient extends EventEmitter {
         this.subscribedStreams = {}
 
         Object.assign(this.options, options || {})
+
+        if (!this.options.url.endsWith('?controlLayerVersion=1&messageLayerVersion=30')) {
+            this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
+        }
 
         // Backwards compatibility for option 'authKey' => 'apiKey'
         if (this.options.authKey && !this.options.apiKey) {
