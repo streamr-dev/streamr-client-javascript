@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
+import qs from 'qs'
 import { MessageLayer, ControlLayer, Errors } from 'streamr-client-protocol'
 
 const {
@@ -50,8 +51,14 @@ export default class StreamrClient extends EventEmitter {
 
         Object.assign(this.options, options || {})
 
-        if (!this.options.url.endsWith('?controlLayerVersion=1&messageLayerVersion=30')) {
+        const parts = this.options.url.split('?')
+        if (parts.length === 1) { // there is no query string
             this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
+        } else {
+            const queryObj = qs.parse(parts[1])
+            if (!(queryObj.controlLayerVersion && queryObj.messageLayerVersion)) {
+                this.options.url = `${this.options.url}&controlLayerVersion=1&messageLayerVersion=30`
+            }
         }
 
         // Backwards compatibility for option 'authKey' => 'apiKey'
