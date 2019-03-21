@@ -12,7 +12,7 @@ export default class Session {
         } else if (typeof this.options.provider !== 'undefined') {
             const provider = new ethers.providers.Web3Provider(this.options.provider)
             const signer = provider.getSigner()
-            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => signer.signMessage(d), signer.address)
+            this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => signer.signMessage(d), await signer.getAddress())
         } else if (typeof this.options.apiKey !== 'undefined') {
             this.loginFunction = async () => this._client.loginWithApiKey(this.options.apiKey)
         } else if (typeof this.options.username !== 'undefined' && typeof this.options.password !== 'undefined') {
