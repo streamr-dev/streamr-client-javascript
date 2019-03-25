@@ -207,11 +207,7 @@ describe('Subscription', () => {
         })
 
         it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', (done) => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
-                if (receivedMsg.getTimestamp() === 3) {
-                    done()
-                }
-            })
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
 
             sub.on('gap', (from, to, publisherId) => {
                 assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
