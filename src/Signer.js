@@ -15,12 +15,10 @@ export default class Signer {
             this.address = wallet.address
             this.sign = (d) => wallet.signMessage(d)
         } else if (this.options.provider) {
-            this.sign = async (d) => {
-                const provider = new ethers.providers.Web3Provider(this.options.provider)
-                const signer = provider.getSigner()
-                this.address = signer.address
-                return signer.signMessage(d)
-            }
+            const provider = new ethers.providers.Web3Provider(this.options.provider)
+            const signer = provider.getSigner()
+            this.address = signer.address
+            this.sign = async (d) => signer.signMessage(d)
         } else {
             throw new Error('Need either "privateKey" or "provider".')
         }

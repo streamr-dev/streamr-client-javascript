@@ -3,7 +3,10 @@ import { MessageLayer } from 'streamr-client-protocol'
 import Signer from '../../src/Signer'
 
 const { StreamMessage, StreamMessageV30, StreamMessageV29 } = MessageLayer
-
+/*
+The StreamrClient accepts private keys with or without the '0x' prefix and adds the prefix if it's absent. Since
+we are testing the Signer which is internal, we use private keys with the '0x' prefix.
+ */
 describe('Signer', () => {
     describe('construction', () => {
         it('should sign when constructed with private key', async () => {
