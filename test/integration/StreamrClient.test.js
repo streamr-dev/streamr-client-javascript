@@ -7,23 +7,36 @@ import config from './config'
 
 const { StreamMessage } = MessageLayer
 
+const createClient = (opts = {}) => new StreamrClient({
+    url: config.websocketUrl,
+    restUrl: config.restUrl,
+    auth: {
+        privateKey: ethers.Wallet.createRandom().privateKey,
+    },
+    autoConnect: false,
+    autoDisconnect: false,
+    ...opts,
+})
+
+describe('StreamrClient Connection', () => {
+    it('can reconnect after disconnect', async (done) => {
+        const client = createClient()
+        client.on('error', done)
+        await client.connect()
+        client.once('disconnected', async () => {
+            await client.connect()
+            done()
+        })
+        client.disconnect()
+    })
+})
+
 describe('StreamrClient', () => {
     let client
     let stream
 
     // These tests will take time, especially on Travis
     jest.setTimeout(15 * 1000)
-
-    const createClient = (opts = {}) => new StreamrClient({
-        url: config.websocketUrl,
-        restUrl: config.restUrl,
-        auth: {
-            privateKey: ethers.Wallet.createRandom().privateKey,
-        },
-        autoConnect: false,
-        autoDisconnect: false,
-        ...opts,
-    })
 
     const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
