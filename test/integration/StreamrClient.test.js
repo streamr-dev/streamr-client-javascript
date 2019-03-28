@@ -2,6 +2,7 @@ import assert from 'assert'
 import fetch from 'node-fetch'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
+import uniqueId from 'lodash/uniqueId'
 import StreamrClient from '../../src'
 import config from './config'
 
@@ -169,6 +170,49 @@ describe('StreamrClient', () => {
                 })
             }, 10000)
         })
+
+        it.only('client.subscribe with resend last 2', async (done) => {
+            const stream2 = await client.createStream({
+                name: uniqueId(),
+            })
+            const message1 = {
+                test: 'message1',
+            }
+            const message2 = {
+                test: 'message2',
+            }
+            const message3 = {
+                test: 'message3',
+            }
+            // Publish message
+            await stream2.publish(message1)
+            await stream2.publish(message2)
+
+            const messages = []
+            const expectedMessages = [message2, message3]
+            setTimeout(async () => {
+                await stream2.publish(message3)
+                const sub = client.subscribe({
+                    stream: stream2.id,
+                    resend: {
+                        last: 2,
+                    },
+                }, (parsedContent) => {
+                    console.log(parsedContent)
+                    messages.push(parsedContent)
+                    if (messages.length === 2) {
+                        // wait a moment to make sure more messages don't arrive
+                        setTimeout(() => {
+                            sub.once('unsubscribed', () => {
+                                expect(messages).toEqual(expectedMessages)
+                                done()
+                            })
+                            client.unsubscribe(sub)
+                        }, 1000)
+                    }
+                })
+            }, 1000)
+        }, 20000)
 
         it('client.subscribe (realtime)', (done) => {
             const id = Date.now()
