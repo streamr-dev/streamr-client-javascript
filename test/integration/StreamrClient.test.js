@@ -22,12 +22,15 @@ describe('StreamrClient Connection', () => {
     it('can reconnect after disconnect', async (done) => {
         const client = createClient()
         client.on('error', done)
-        await client.connect()
         client.once('disconnected', async () => {
             await client.connect()
+            await client.disconnect()
             done()
         })
-        client.disconnect()
+        client.once('connected', async () => {
+            await client.disconnect()
+        })
+        await client.connect()
     })
 })
 
