@@ -326,7 +326,9 @@ export default class StreamrClient extends EventEmitter {
         if (this.connection.state === Connection.State.CONNECTED) {
             this._resendAndSubscribe(sub)
         } else if (this.options.autoConnect) {
-            this.connect().catch(() => {}) // ignore
+            if (this.connection.state === Connection.State.DISCONNECTED) {
+                this.connect()
+            }
         }
 
         return sub
