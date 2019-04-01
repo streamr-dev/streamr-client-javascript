@@ -34,6 +34,19 @@ describe('StreamrClient Connection', () => {
             await client.connect()
         })
 
+        it('rejects on connect without autoconnect', async (done) => {
+            const client = createClient({
+                url: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+
+            await client.connect().catch(async (error) => {
+                expect(error).toBeTruthy()
+                done()
+            })
+        })
+
         it('emits error with autoconnect', (done) => {
             const client = createClient({
                 url: 'asdasd',
@@ -56,11 +69,23 @@ describe('StreamrClient Connection', () => {
                 autoDisconnect: false,
             })
             client.once('error', async (error) => {
-                await client.disconnect()
                 expect(error).toBeTruthy()
                 done()
             })
             await client.connect()
+        })
+
+        it('rejects on connect without autoconnect', async (done) => {
+            const client = createClient({
+                restUrl: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+
+            await client.connect().catch(async (error) => {
+                expect(error).toBeTruthy()
+                done()
+            })
         })
 
         it('emits error with autoconnect', (done) => {
