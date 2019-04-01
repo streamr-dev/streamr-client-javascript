@@ -15,7 +15,7 @@
     "prepack": "npm run build",
     "dev": "webpack --progress --colors --watch",
     "eslint": "eslint src/** test/**",
-    "test": "jest --detectOpenHandles",
+    "test": "npm run eslint && jest --detectOpenHandles",
     "test-unit": "jest --detectOpenHandles --forceExit test/unit",
     "test-integration": "jest --detectOpenHandles --forceExit --runInBand test/integration"
   },
