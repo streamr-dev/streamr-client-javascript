@@ -54,7 +54,6 @@ describe('StreamrClient Connection', () => {
                 autoDisconnect: true,
             })
             client.once('error', async (error) => {
-                await client.disconnect()
                 expect(error).toBeTruthy()
                 done()
             })
@@ -95,7 +94,6 @@ describe('StreamrClient Connection', () => {
                 autoDisconnect: true,
             })
             client.once('error', async (error) => {
-                await client.disconnect()
                 expect(error).toBeTruthy()
                 done()
             })
@@ -186,8 +184,8 @@ describe('StreamrClient Connection', () => {
         })
         client.once('disconnected', () => {
             client.connect()
-            client.once('connected', () => {
-                client.disconnect()
+            client.once('connected', async () => {
+                await client.disconnect()
                 done()
             })
         })
