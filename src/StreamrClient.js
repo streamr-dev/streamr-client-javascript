@@ -87,7 +87,10 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(BroadcastMessage.TYPE, (msg) => {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
             if (stream) {
-                stream.getSubscriptions().forEach((sub) => sub.handleBroadcastMessage(msg.streamMessage, stream.verifyStreamMessage(msg.streamMessage)))
+                stream.getSubscriptions().forEach((sub) => sub.handleBroadcastMessage(
+                    msg.streamMessage,
+                    stream.verifyStreamMessage(msg.streamMessage),
+                ))
             } else {
                 debug('WARN: message received for stream with no subscriptions: %s', msg.streamMessage.getStreamId())
             }

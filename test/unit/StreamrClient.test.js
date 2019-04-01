@@ -383,7 +383,6 @@ describe('StreamrClient', () => {
                 sub.handleResentMessage = sinon.stub().throws()
                 connection.emitMessage(msg(sub.streamId, {}, 'unknown subId'), 'unknown subId')
             })
-
         })
 
         describe('ResendResponseResending', () => {
