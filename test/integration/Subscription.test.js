@@ -118,7 +118,6 @@ describe('Subscription', () => {
                 await wait(0)
                 expect(subscriptionEvents).toEqual([
                     'subscribed',
-                    'resending',
                     'no_resend',
                 ])
                 done()
