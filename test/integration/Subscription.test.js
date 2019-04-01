@@ -15,6 +15,7 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 const throwError = (error) => { throw error }
+const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
 
 const RESEND_ALL = {
     from: {
@@ -36,13 +37,13 @@ describe('Subscription', () => {
     }
 
     async function teardown() {
-        if (stream) {
-            await stream.delete()
-            stream = undefined
-        }
         if (subscription) {
             await client.unsubscribe(subscription)
             subscription = undefined
+        }
+        if (stream) {
+            await stream.delete()
+            stream = undefined
         }
         if (client && client.isConnected()) {
             await client.disconnect()
@@ -57,6 +58,7 @@ describe('Subscription', () => {
      */
 
     function createMonitoredSubscription(opts = {}) {
+        if (!client) { throw new Error('No client') }
         const events = []
         subscription = client.subscribe({
             stream: stream.id,
@@ -68,9 +70,18 @@ describe('Subscription', () => {
         subscription.on('subscribed', () => events.push('subscribed'))
         subscription.on('resending', () => events.push('resending'))
         subscription.on('resent', () => events.push('resent'))
+        subscription.on('no_resend', () => events.push('no_resend'))
         subscription.on('unsubscribed', () => events.push('unsubscribed'))
         subscription.on('error', () => events.push('unsubscribed'))
         return events
+    }
+
+    async function publishMessage() {
+        const message = {
+            message: uniqueId(),
+        }
+        await stream.publish(message)
+        return message
     }
 
     beforeEach(async () => {
@@ -97,6 +108,44 @@ describe('Subscription', () => {
             })
 
             await client.connect()
+        })
+    })
+
+    describe('resending/no_resend events', () => {
+        it('fires events in correct order', async (done) => {
+            const subscriptionEvents = createMonitoredSubscription()
+            subscription.on('no_resend', async () => {
+                await wait(0)
+                expect(subscriptionEvents).toEqual([
+                    'subscribed',
+                    'resending',
+                    'no_resend',
+                ])
+                done()
+            })
+
+            await client.connect()
+        })
+    })
+
+    describe('resending/resent events', () => {
+        it('fires events in correct order', async (done) => {
+            await client.connect()
+            const message1 = await publishMessage()
+            const message2 = await publishMessage()
+            await wait(2000) // wait for messages to (probably) land in storage
+            const subscriptionEvents = createMonitoredSubscription()
+            subscription.on('resent', async () => {
+                await wait(500) // wait in case messages appear after resent event
+                expect(subscriptionEvents).toEqual([
+                    'subscribed',
+                    'resending',
+                    message1,
+                    message2,
+                    'resent',
+                ])
+                done()
+            })
         })
     })
 })
