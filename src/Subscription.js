@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import { Errors } from 'streamr-client-protocol'
+import InvalidSignatureError from './errors/InvalidSignatureError'
 
 const debug = debugFactory('StreamrClient::Subscription')
 
@@ -57,22 +58,6 @@ export default class Subscription extends EventEmitter {
             this.setResending(false)
         })
 
-        this.on('no_resend', (response) => {
-            debug('Sub %s no_resend: %o', this.id, response)
-            this.setResending(false)
-            this.checkQueue()
-        })
-
-        this.on('resent', (response) => {
-            debug('Sub %s resent: %o', this.id, response)
-            this.setResending(false)
-            this.checkQueue()
-        })
-
-        this.on('connected', () => {
-
-        })
-
         this.on('disconnected', () => {
             this.setState(Subscription.State.unsubscribed)
             this.setResending(false)
@@ -89,12 +74,70 @@ export default class Subscription extends EventEmitter {
             previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
-    handleMessage(msg, isResend = false) {
+    handleBroadcastMessage(msg, verificationPromise) {
+        return this._handleMessage(msg, verificationPromise, false)
+    }
+
+    handleResentMessage(msg, verificationPromise) {
+        if (!this.resending) {
+            throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
+        } else {
+            const handleMessagePromise = this._handleMessage(msg, verificationPromise, true)
+            this._lastMessageHandlerPromise = handleMessagePromise
+            return handleMessagePromise
+        }
+    }
+
+    handleResending(response) {
+        if (!this.resending) {
+            throw new Error(`There should be no resend in progress, but received ResendResponseResending message ${response.serialize()}`)
+        }
+        this.emit('resending', response)
+    }
+
+    handleResent(response) {
+        if (!this.resending) {
+            throw new Error(`There should be no resend in progress, but received ResendResponseResent message ${response.serialize()}`)
+        }
+        // Delay event emission until the last message in the resend has been handled
+        if (this._lastMessageHandlerPromise) {
+            this._lastMessageHandlerPromise.then(() => {
+                this.emit('resent', response)
+                this._finishResend()
+            })
+        } else {
+            throw new Error('Attempting to handle ResendResponseResent, but no messages have been received!')
+        }
+    }
+
+    handleNoResend(response) {
+        if (!this.resending) {
+            throw new Error(`There should be no resend in progress, but received ResendResponseNoResend message ${response.serialize()}`)
+        }
+        this.emit('no_resend', response)
+        this._finishResend()
+    }
+
+    _finishResend() {
+        this._lastMessageHandlerPromise = null
+        this.setResending(false)
+        this.checkQueue()
+    }
+
+    async _handleMessage(msg, verificationPromise, isResend = false) {
         if (msg.version !== 30) {
             throw new Error(`Can handle only StreamMessageV30, not version ${msg.version}`)
         }
         if (msg.prevMsgRef == null) {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
+        }
+
+        // Make sure the verification is done before proceeding
+        const valid = await verificationPromise
+        if (!valid) {
+            const err = new InvalidSignatureError(msg)
+            this.handleError(err)
+            throw err
         }
 
         const key = msg.getPublisherId() + msg.messageId.msgChainId
@@ -149,7 +192,8 @@ export default class Subscription extends EventEmitter {
             const originalQueue = this.queue
             this.queue = []
 
-            originalQueue.forEach((msg) => this.handleMessage(msg, false))
+            // Queued messages are already verified, so pass true as the verificationPromise
+            originalQueue.forEach((msg) => this._handleMessage(msg, true, false))
         }
     }
 

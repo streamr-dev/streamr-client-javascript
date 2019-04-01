@@ -1,6 +1,7 @@
 import assert from 'assert'
 import sinon from 'sinon'
-import { MessageLayer, Errors } from 'streamr-client-protocol'
+import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
+
 import Subscription from '../../src/Subscription'
 
 const { StreamMessage } = MessageLayer
@@ -19,70 +20,72 @@ const createMsg = (
 const msg = createMsg()
 
 describe('Subscription', () => {
-    describe('handleMessage()', () => {
-        it('calls the message handler', (done) => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
-                assert.deepEqual(content, msg.getParsedContent())
-                assert.equal(msg, receivedMsg)
-                done()
-            })
-            sub.handleMessage(msg)
-        })
-
-        it('calls the callback once for each message in order', (done) => {
-            const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
-                timestamp,
-                timestamp === 1 ? 0 : timestamp - 1,
-            ))
-
-            const received = []
-
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
-                received.push(receivedMsg)
-                if (received.length === 5) {
-                    assert.deepEqual(msgs, received)
-                    done()
-                }
+    describe('message handling', () => {
+        describe('handleBroadcastMessage()', () => {
+            it('calls the message handler', () => {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                    assert.deepEqual(content, msg.getParsedContent())
+                    assert.equal(msg, receivedMsg)
+                })
+                return sub.handleBroadcastMessage(msg, sinon.stub().resolves())
             })
 
-            msgs.forEach((m) => sub.handleMessage(m))
+            it('calls the callback once for each message in order', () => {
+                const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
+                    timestamp,
+                    timestamp === 1 ? 0 : timestamp - 1,
+                ))
+
+                const received = []
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                    received.push(receivedMsg)
+                    if (received.length === 5) {
+                        assert.deepEqual(msgs, received)
+                    }
+                })
+
+                return Promise.all(msgs.map((m) => sub.handleBroadcastMessage(m, sinon.stub().resolves())))
+            })
+
+            it('queues messages during resending', async () => {
+                const handler = sinon.stub()
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+
+                sub.setResending(true)
+                await sub.handleBroadcastMessage(msg, sinon.stub().resolves())
+                assert.equal(handler.callCount, 0)
+                assert.equal(sub.queue.length, 1)
+            })
         })
 
-        it('queues messages during resending', () => {
-            const handler = sinon.stub()
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+        describe('handleResentMessage()', () => {
+            it('processes messages if resending is true', async () => {
+                const handler = sinon.stub()
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
-            sub.setResending(true)
-            sub.handleMessage(msg)
-            assert.equal(handler.callCount, 0)
-            assert.equal(sub.queue.length, 1)
-        })
-
-        it('always processes messages if isResend == true', () => {
-            const handler = sinon.stub()
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
-
-            sub.setResending(true)
-            sub.handleMessage(msg, true)
-            assert.equal(handler.callCount, 1)
+                sub.setResending(true)
+                await sub.handleResentMessage(msg, sinon.stub().resolves())
+                assert.equal(handler.callCount, 1)
+            })
         })
 
         describe('duplicate handling', () => {
-            it('ignores re-received messages', (done) => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), () => {
-                    done()
-                })
+            it('ignores re-received messages', async () => {
+                const handler = sinon.stub()
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
-                sub.handleMessage(msg)
-                sub.handleMessage(msg)
+                await sub.handleBroadcastMessage(msg, sinon.stub().resolves())
+                await sub.handleBroadcastMessage(msg, sinon.stub().resolves())
+                assert.equal(handler.callCount, 1)
             })
-            it('ignores re-received messages even with resending flag', (done) => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), () => {
-                    done()
-                })
+            it('ignores re-received messages if they come from resend', async () => {
+                const handler = sinon.stub()
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+                sub.setResending(true)
 
-                sub.handleMessage(msg)
-                sub.handleMessage(msg, true)
+                await sub.handleBroadcastMessage(msg, sinon.stub().resolves())
+                await sub.handleResentMessage(msg, sinon.stub().resolves())
             })
         })
 
@@ -101,8 +104,8 @@ describe('Subscription', () => {
                     done()
                 })
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg4)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves())
             })
             it('does not emit "gap" if different publishers', () => {
                 const msg1 = msg
@@ -111,8 +114,8 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', sinon.stub().throws())
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg4)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves())
             })
             it('emits "gap" if a gap is detected (same timestamp but different sequenceNumbers)', (done) => {
                 const msg1 = msg
@@ -128,8 +131,8 @@ describe('Subscription', () => {
                     done()
                 })
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg4)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves())
             })
             it('does not emit "gap" if a gap is not detected', () => {
                 const msg1 = msg
@@ -138,8 +141,8 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', sinon.stub().throws())
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg2)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
+                sub.handleBroadcastMessage(msg2, sinon.stub().resolves())
             })
             it('does not emit "gap" if a gap is not detected (same timestamp but different sequenceNumbers)', () => {
                 const msg1 = msg
@@ -148,8 +151,8 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', sinon.stub().throws())
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg2)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
+                sub.handleBroadcastMessage(msg2, sinon.stub().resolves())
             })
         })
 
@@ -164,7 +167,7 @@ describe('Subscription', () => {
                 done()
             })
 
-            sub.handleMessage(byeMsg)
+            sub.handleBroadcastMessage(byeMsg, sinon.stub().resolves())
         })
     })
 
@@ -196,17 +199,17 @@ describe('Subscription', () => {
             const msg3 = createMsg(3, undefined, 2)
 
             // Receive msg1 successfully
-            sub.handleMessage(msg1)
+            sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
 
             // Get notified of an invalid message
             const err = new Errors.InvalidJsonError(msg.getStreamId(), 'invalid json', 'test error msg', createMsg(2, undefined, 1))
             sub.handleError(err)
 
             // Receive msg3 successfully
-            sub.handleMessage(msg3)
+            sub.handleBroadcastMessage(msg3, sinon.stub().resolves())
         })
 
-        it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', (done) => {
+        it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', async (done) => {
             const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
 
             sub.on('gap', (from, to, publisherId) => {
@@ -222,14 +225,14 @@ describe('Subscription', () => {
             const msg4 = createMsg(4, undefined, 3)
 
             // Receive msg1 successfully
-            sub.handleMessage(msg1)
+            await sub.handleBroadcastMessage(msg1, sinon.stub().resolves())
 
             // Get notified of invalid msg3 (msg2 is missing)
             const err = new Errors.InvalidJsonError(msg.getStreamId(), 'invalid json', 'test error msg', createMsg(3, undefined, 2))
             sub.handleError(err)
 
             // Receive msg4 and should emit gap
-            sub.handleMessage(msg4)
+            sub.handleBroadcastMessage(msg4, sinon.stub().resolves())
         })
     })
 
@@ -255,7 +258,7 @@ describe('Subscription', () => {
             })
         })
         describe('after messages have been received', () => {
-            it('updates resend.from', () => {
+            it('updates resend.from', async () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     from: {
                         timestamp: 1,
@@ -264,7 +267,7 @@ describe('Subscription', () => {
                     publisherId: 'publisherId',
                     msgChainId: '1',
                 })
-                sub.handleMessage(createMsg(10))
+                await sub.handleBroadcastMessage(createMsg(10), sinon.stub().resolves())
                 assert.deepStrictEqual(sub.getEffectiveResendOptions(), {
                     from: {
                         timestamp: 10,
@@ -278,7 +281,7 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                     last: 10,
                 })
-                sub.handleMessage(msg)
+                sub.handleBroadcastMessage(msg, sinon.stub().resolves())
                 assert.deepEqual(sub.getEffectiveResendOptions(), {
                     last: 10,
                 })
@@ -299,33 +302,66 @@ describe('Subscription', () => {
         })
     })
 
-    describe('event handling', () => {
-        describe('resent', () => {
-            it('processes queued messages', () => {
-                const handler = sinon.stub()
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+    describe('handleResending()', () => {
+        it('emits the resending event', (done) => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            sub.on('resending', () => done())
+            sub.setResending(true)
+            sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'subId'))
+        })
+    })
 
-                sub.setResending(true)
-                sub.handleMessage(msg)
-                assert.equal(handler.callCount, 0)
-
-                sub.emit('resent')
-                assert.equal(handler.callCount, 1)
-            })
+    describe('handleResent()', () => {
+        it('arms the Subscription to emit the resent event on last message (message handler completes BEFORE resent)', async (done) => {
+            const handler = sinon.stub()
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+            sub.on('resent', () => done())
+            sub.setResending(true)
+            await sub.handleResentMessage(msg, sinon.stub().resolves())
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
         })
 
-        describe('no_resend', () => {
-            it('processes queued messages', () => {
-                const handler = sinon.stub()
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+        it('arms the Subscription to emit the resent event on last message (message handler completes AFTER resent)', async (done) => {
+            const handler = sinon.stub()
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+            sub.on('resent', () => done())
+            sub.setResending(true)
+            sub.handleResentMessage(msg, sinon.stub().resolves())
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
+        })
 
-                sub.setResending(true)
-                sub.handleMessage(msg)
-                assert.equal(handler.callCount, 0)
+        it('processes queued messages', async () => {
+            const handler = sinon.stub()
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
 
-                sub.emit('no_resend')
-                assert.equal(handler.callCount, 1)
-            })
+            sub.setResending(true)
+            await sub.handleBroadcastMessage(createMsg(2), sinon.stub().resolves())
+            assert.equal(handler.callCount, 0)
+
+            await sub.handleResentMessage(createMsg(1), sinon.stub().resolves())
+            await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
+            assert.equal(handler.callCount, 1)
+        })
+    })
+
+    describe('handleNoResend()', () => {
+        it('emits the no_resend event', (done) => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            sub.on('no_resend', () => done())
+            sub.setResending(true)
+            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
+        })
+
+        it('processes queued messages', async () => {
+            const handler = sinon.stub()
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+
+            sub.setResending(true)
+            await sub.handleBroadcastMessage(createMsg(2), sinon.stub().resolves())
+            assert.equal(handler.callCount, 0)
+
+            await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
+            assert.equal(handler.callCount, 1)
         })
     })
 })
