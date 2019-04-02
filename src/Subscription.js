@@ -13,6 +13,8 @@ function generateSubscriptionId() {
     return id.toString()
 }
 
+const RESEND_TIMEOUT = 5000
+
 export default class Subscription extends EventEmitter {
     static get State() {
         return {
@@ -196,6 +198,14 @@ export default class Subscription extends EventEmitter {
             }
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
             this.emit('gap', fromObject, toObject, msg.getPublisherId(), msg.messageId.msgChainId)
+
+            const gap = setInterval(() => {
+                if (this.lastReceivedMsgRef[key].compareTo(to) === -1) {
+                    this.emit('gap', fromObject, toObject, msg.getPublisherId(), msg.messageId.msgChainId)
+                } else {
+                    clearInterval(gap)
+                }
+            }, RESEND_TIMEOUT)
         } else {
             const messageRef = msg.getMessageRef()
             let res

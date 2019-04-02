@@ -241,6 +241,43 @@ describe('Subscription', () => {
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
                 sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
             })
+
+            it('emits second "gap" after the first one if no missing message is received in between', (done) => {
+                const msg1 = msg
+                const msg4 = createMsg(4, undefined, 3)
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                sub.on('gap', (from, to, publisherId) => {
+                    sub.on('gap', (from2, to2, publisherId2) => {
+                        assert.deepStrictEqual(from, from2)
+                        assert.deepStrictEqual(to, to2)
+                        assert.deepStrictEqual(publisherId, publisherId2)
+                        done()
+                    })
+                })
+
+                sub.handleMessage(msg1)
+                sub.handleMessage(msg4)
+            }, 7000)
+
+            it('does not emit second "gap" after the first one if the missing messages are received in between', (done) => {
+                const msg1 = msg
+                const msg2 = createMsg(2, undefined, 1)
+                const msg3 = createMsg(3, undefined, 2)
+                const msg4 = createMsg(4, undefined, 3)
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                sub.on('gap', () => {
+                    sub.handleMessage(msg2)
+                    sub.handleMessage(msg3)
+                    sub.on('gap', sinon.stub().throws())
+                    setTimeout(done, 7000)
+                })
+
+                sub.handleMessage(msg1)
+                sub.handleMessage(msg4)
+            }, 8000)
+
             it('does not emit "gap" if different publishers', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3, 0, {}, 'anotherPublisherId')
