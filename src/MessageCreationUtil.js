@@ -1,15 +1,23 @@
 import crypto from 'crypto'
+import NodeCache from 'node-cache'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
+import Stream from './rest/domain/Stream'
 
 const { StreamMessage } = MessageLayer
 
 export default class MessageCreationUtil {
-    constructor(auth, signer, userInfoPromise) {
+    constructor(auth, signer, userInfoPromise, getStreamFunction) {
         this.auth = auth
         this._signer = signer
         this.userInfoPromise = userInfoPromise
+        this.getStreamFunction = getStreamFunction
+        this.ongoingRequests = {}
+        this.cachedStreams = new NodeCache({
+            stdTTL: 60 * 30, // in seconds
+            checkperiod: 0, // no periodic check to delete expired keys
+        })
         this.publishedStreams = {}
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
@@ -20,6 +28,23 @@ export default class MessageCreationUtil {
             this.usernamePromise = this.userInfoPromise.then((userInfo) => userInfo.username)
         }
         return this.usernamePromise
+    }
+
+    async getStream(streamId) {
+        if (!this.cachedStreams.get(streamId)) {
+            if (!this.ongoingRequests[streamId]) {
+                this.ongoingRequests[streamId] = this.getStreamFunction(streamId)
+            }
+            const stream = await this.ongoingRequests[streamId]
+            const success = this.cachedStreams.set(streamId, {
+                id: stream.id,
+                partitions: stream.partitions,
+            })
+            if (!success) {
+                throw new Error(`Could not store stream with id ${streamId} in local cache.`)
+            }
+        }
+        return this.cachedStreams.get(streamId)
     }
 
     async getPublisherId() {
@@ -69,11 +94,14 @@ export default class MessageCreationUtil {
         return this.publishedStreams[key].prevSequenceNumber
     }
 
-    async createStreamMessage(stream, data, timestamp = Date.now(), partitionKey = null) {
+    async createStreamMessage(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
         // Validate data
         if (typeof data !== 'object') {
             throw new Error(`Message data must be an object! Was: ${data}`)
         }
+
+        const stream = (streamObjectOrId instanceof Stream) ? streamObjectOrId : await this.getStream(streamObjectOrId)
+
         const streamPartition = this.computeStreamPartition(stream.partitions, partitionKey)
         const publisherId = await this.getPublisherId()
 
