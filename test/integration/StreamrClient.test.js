@@ -51,15 +51,28 @@ describe('StreamrClient Connection', () => {
                 'connecting',
                 'connected',
                 'disconnecting',
-                'disconnected',
+                'disconnected', // should disconnect before re-connecting
                 'connecting',
                 'connected',
             ])
-            done()
+            // ensure 'Connection lost. Attempting to reconnect' doesn't happen
+            const onConnecting = () => {
+                done(new Error('should not be connecting'))
+            }
+
+            client.once('connecting', onConnecting)
+
+            await client.disconnect()
+
+            setTimeout(() => {
+                client.off('connecting', onConnecting)
+                expect(client.isConnected()).toBeFalse()
+                done()
+            }, 2000)
         })
 
         disconnected = client.disconnect()
-    })
+    }, 10000)
 })
 
 describe('StreamrClient', () => {
