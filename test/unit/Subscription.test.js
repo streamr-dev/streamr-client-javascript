@@ -19,6 +19,16 @@ const createMsg = (
 
 const msg = createMsg()
 
+const assertRejects = async (promise) => {
+    let thrown
+    try {
+        await promise
+    } catch (err) {
+        thrown = err
+    }
+    assert(thrown != null)
+}
+
 describe('Subscription', () => {
     describe('message handling', () => {
         describe('handleBroadcastMessage()', () => {
@@ -340,7 +350,18 @@ describe('Subscription', () => {
 
             await sub.handleResentMessage(createMsg(1), sinon.stub().resolves())
             await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
-            assert.equal(handler.callCount, 1)
+            assert.equal(handler.callCount, 2) // 2 because queue is also processed before promise resolves
+        })
+
+        it('cleans up the resend if event handler throws', async () => {
+            const handler = sinon.stub()
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+            sub.on('resent', sinon.stub().throws('test error'))
+            sub.setResending(true)
+            await sub.handleResentMessage(msg, sinon.stub().resolves())
+
+            await assertRejects(sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId')))
+            assert(!sub.isResending())
         })
     })
 
@@ -362,6 +383,14 @@ describe('Subscription', () => {
 
             await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
             assert.equal(handler.callCount, 1)
+        })
+
+        it('cleans up the resend if event handler throws', async () => {
+            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            sub.on('no_resend', sinon.stub().throws('test error'))
+            sub.setResending(true)
+            await assertRejects(sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId')))
+            assert(!sub.isResending())
         })
     })
 })

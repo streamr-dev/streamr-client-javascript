@@ -74,11 +74,13 @@ export default class Subscription extends EventEmitter {
             previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
-    handleBroadcastMessage(msg, verificationPromise) {
+    // all the handleXXX methods should return promise for consistency
+
+    async handleBroadcastMessage(msg, verificationPromise) {
         return this._handleMessage(msg, verificationPromise, false)
     }
 
-    handleResentMessage(msg, verificationPromise) {
+    async handleResentMessage(msg, verificationPromise) {
         if (!this.resending) {
             throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
         } else {
@@ -88,34 +90,40 @@ export default class Subscription extends EventEmitter {
         }
     }
 
-    handleResending(response) {
+    async handleResending(response) {
         if (!this.resending) {
             throw new Error(`There should be no resend in progress, but received ResendResponseResending message ${response.serialize()}`)
         }
         this.emit('resending', response)
     }
 
-    handleResent(response) {
+    async handleResent(response) {
         if (!this.resending) {
             throw new Error(`There should be no resend in progress, but received ResendResponseResent message ${response.serialize()}`)
         }
-        // Delay event emission until the last message in the resend has been handled
-        if (this._lastMessageHandlerPromise) {
-            this._lastMessageHandlerPromise.then(() => {
-                this.emit('resent', response)
-                this._finishResend()
-            })
-        } else {
+        if (!this._lastMessageHandlerPromise) {
             throw new Error('Attempting to handle ResendResponseResent, but no messages have been received!')
         }
+
+        // Delay event emission until the last message in the resend has been handled
+        return this._lastMessageHandlerPromise.then(() => {
+            try {
+                this.emit('resent', response)
+            } finally {
+                this._finishResend()
+            }
+        })
     }
 
-    handleNoResend(response) {
+    async handleNoResend(response) {
         if (!this.resending) {
             throw new Error(`There should be no resend in progress, but received ResendResponseNoResend message ${response.serialize()}`)
         }
-        this.emit('no_resend', response)
-        this._finishResend()
+        try {
+            this.emit('no_resend', response)
+        } finally {
+            this._finishResend()
+        }
     }
 
     _finishResend() {
