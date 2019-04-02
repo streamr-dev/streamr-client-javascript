@@ -34,6 +34,32 @@ describe('StreamrClient Connection', () => {
             })
         })
     })
+
+    it('can connect during disconnect', async (done) => {
+        const client = createClient()
+        const connectionEventSpy = jest.spyOn(client.connection, 'emit')
+        let disconnected
+
+        await client.connect()
+
+        client.connection.once('disconnecting', async () => {
+            const connected = client.connect()
+            await disconnected // ensure original disconnect() actually resolved
+            await connected
+            const eventNames = connectionEventSpy.mock.calls.map(([eventName]) => eventName)
+            expect(eventNames).toEqual([
+                'connecting',
+                'connected',
+                'disconnecting',
+                'disconnected',
+                'connecting',
+                'connected',
+            ])
+            done()
+        })
+
+        disconnected = client.disconnect()
+    })
 })
 
 describe('StreamrClient', () => {
