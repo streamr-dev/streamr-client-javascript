@@ -13,7 +13,6 @@ export default class MessageCreationUtil {
         this._signer = signer
         this.userInfoPromise = userInfoPromise
         this.getStreamFunction = getStreamFunction
-        this.ongoingRequests = {}
         this.cachedStreams = new NodeCache({
             stdTTL: 60 * 30, // in seconds
             checkperiod: 0, // no periodic check to delete expired keys
@@ -32,16 +31,14 @@ export default class MessageCreationUtil {
 
     async getStream(streamId) {
         if (!this.cachedStreams.get(streamId)) {
-            if (!this.ongoingRequests[streamId]) {
-                this.ongoingRequests[streamId] = this.getStreamFunction(streamId)
-            }
-            const stream = await this.ongoingRequests[streamId]
-            const success = this.cachedStreams.set(streamId, {
+            const streamPromise = this.getStreamFunction(streamId).then((stream) => ({
                 id: stream.id,
                 partitions: stream.partitions,
-            })
+            }))
+            const success = this.cachedStreams.set(streamId, streamPromise)
             if (!success) {
-                throw new Error(`Could not store stream with id ${streamId} in local cache.`)
+                console.warn(`Could not store stream with id ${streamId} in local cache.`)
+                return streamPromise
             }
         }
         return this.cachedStreams.get(streamId)
