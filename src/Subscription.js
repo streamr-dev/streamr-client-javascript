@@ -76,15 +76,15 @@ export default class Subscription extends EventEmitter {
 
     // all the handleXXX methods should return promise for consistency
 
-    async handleBroadcastMessage(msg, verificationPromise) {
-        return this._handleMessage(msg, verificationPromise, false)
+    async handleBroadcastMessage(msg, verifyFn) {
+        return this._handleMessage(msg, verifyFn, false)
     }
 
-    async handleResentMessage(msg, verificationPromise) {
+    async handleResentMessage(msg, verifyFn) {
         if (!this.resending) {
             throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
         } else {
-            const handleMessagePromise = this._handleMessage(msg, verificationPromise, true)
+            const handleMessagePromise = this._handleMessage(msg, verifyFn, true)
             this._lastMessageHandlerPromise = handleMessagePromise
             return handleMessagePromise
         }
@@ -106,11 +106,11 @@ export default class Subscription extends EventEmitter {
         }
 
         // Delay event emission until the last message in the resend has been handled
-        return this._lastMessageHandlerPromise.then(() => {
+        await this._lastMessageHandlerPromise.then(async () => {
             try {
                 this.emit('resent', response)
             } finally {
-                this._finishResend()
+                await this._finishResend()
             }
         })
     }
@@ -122,17 +122,17 @@ export default class Subscription extends EventEmitter {
         try {
             this.emit('no_resend', response)
         } finally {
-            this._finishResend()
+            await this._finishResend()
         }
     }
 
-    _finishResend() {
+    async _finishResend() {
         this._lastMessageHandlerPromise = null
         this.setResending(false)
-        this.checkQueue()
+        await this.checkQueue()
     }
 
-    async _handleMessage(msg, verificationPromise, isResend = false) {
+    async _handleMessage(msg, verifyFn, isResend = false) {
         if (msg.version !== 30) {
             throw new Error(`Can handle only StreamMessageV30, not version ${msg.version}`)
         }
@@ -141,7 +141,7 @@ export default class Subscription extends EventEmitter {
         }
 
         // Make sure the verification is done before proceeding
-        const valid = await verificationPromise
+        const valid = await verifyFn()
         if (!valid) {
             const err = new InvalidSignatureError(msg)
             this.handleError(err)
@@ -193,7 +193,7 @@ export default class Subscription extends EventEmitter {
         }
     }
 
-    checkQueue() {
+    async checkQueue() {
         if (this.queue.length) {
             debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId)
 
@@ -201,7 +201,8 @@ export default class Subscription extends EventEmitter {
             this.queue = []
 
             // Queued messages are already verified, so pass true as the verificationPromise
-            originalQueue.forEach((msg) => this._handleMessage(msg, true, false))
+            const promises = originalQueue.map((msg) => this._handleMessage(msg, () => true, false))
+            await Promise.all(promises)
         }
     }
 

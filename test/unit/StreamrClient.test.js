@@ -349,11 +349,29 @@ describe('StreamrClient', () => {
                 const msg1 = msg()
                 connection.emitMessage(msg1)
 
-                sinon.assert.calledWithMatch(sub.handleBroadcastMessage, msg1.streamMessage, sinon.match.instanceOf(Promise))
+                sinon.assert.calledWithMatch(sub.handleBroadcastMessage, msg1.streamMessage, sinon.match.func)
             })
 
             it('should not crash if messages are received for unknown streams', () => {
                 connection.emitMessage(msg('unexpected-stream'))
+            })
+
+            it('should ensure that the promise returned by the verification function is cached and returned for all handlers', (done) => {
+                let firstResult
+                sub.handleBroadcastMessage = (message, verifyFn) => {
+                    firstResult = verifyFn()
+                    assert(firstResult instanceof Promise)
+                    assert.strictEqual(firstResult, verifyFn())
+                }
+                const sub2 = setupSubscription('stream1')
+                sub2.handleBroadcastMessage = (message, verifyFn) => {
+                    const secondResult = verifyFn()
+                    assert(secondResult instanceof Promise)
+                    assert.strictEqual(firstResult, secondResult)
+                    done()
+                }
+                const msg1 = msg()
+                connection.emitMessage(msg1)
             })
         })
 
@@ -376,12 +394,23 @@ describe('StreamrClient', () => {
                 const msg1 = msg(sub.streamId, {}, sub.id)
                 connection.emitMessage(msg1, sub.id)
 
-                sinon.assert.calledWithMatch(sub.handleResentMessage, msg1.streamMessage, sinon.match.instanceOf(Promise))
+                sinon.assert.calledWithMatch(sub.handleResentMessage, msg1.streamMessage, sinon.match.func)
             })
 
             it('ignores messages for unknown Subscriptions', () => {
                 sub.handleResentMessage = sinon.stub().throws()
                 connection.emitMessage(msg(sub.streamId, {}, 'unknown subId'), 'unknown subId')
+            })
+
+            it('should ensure that the promise returned by the verification function is cached', (done) => {
+                sub.handleResentMessage = (message, verifyFn) => {
+                    const firstResult = verifyFn()
+                    assert(firstResult instanceof Promise)
+                    assert.strictEqual(firstResult, verifyFn())
+                    done()
+                }
+                const msg1 = msg(sub.streamId, {}, sub.id)
+                connection.emitMessage(msg1, sub.id)
             })
         })
 

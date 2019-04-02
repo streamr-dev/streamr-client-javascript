@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
+import once from 'once'
 import { ControlLayer, Errors } from 'streamr-client-protocol'
 
 const {
@@ -87,10 +88,8 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(BroadcastMessage.TYPE, (msg) => {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
             if (stream) {
-                stream.getSubscriptions().forEach((sub) => sub.handleBroadcastMessage(
-                    msg.streamMessage,
-                    stream.verifyStreamMessage(msg.streamMessage),
-                ))
+                const verifyFn = once(() => stream.verifyStreamMessage(msg.streamMessage)) // ensure verification occurs only once
+                stream.getSubscriptions().forEach((sub) => sub.handleBroadcastMessage(msg.streamMessage, verifyFn))
             } else {
                 debug('WARN: message received for stream with no subscriptions: %s', msg.streamMessage.getStreamId())
             }
@@ -102,7 +101,10 @@ export default class StreamrClient extends EventEmitter {
             if (stream) {
                 const sub = stream.getSubscription(msg.subId)
                 if (sub) {
-                    sub.handleResentMessage(msg.streamMessage, stream.verifyStreamMessage(msg.streamMessage))
+                    sub.handleResentMessage(
+                        msg.streamMessage,
+                        once(() => stream.verifyStreamMessage(msg.streamMessage)), // ensure verification occurs only once
+                    )
                 } else {
                     debug('WARN: subscription not found for stream: %s, sub: %s', msg.streamMessage.getStreamId(), msg.subId)
                 }
