@@ -47,6 +47,7 @@ export default class StreamrClient extends EventEmitter {
             auth: {},
             publishWithSignature: 'auto',
             verifySignatures: 'auto',
+            maxPublishQueueSize: 10000,
         }
         this.subscribedStreams = {}
 
@@ -272,6 +273,13 @@ export default class StreamrClient extends EventEmitter {
             const streamMessage = await this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey)
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
+            if (this.publishQueue.length >= this.options.maxPublishQueueSize) {
+                throw new FailedToPublishError(
+                    streamId,
+                    data,
+                    `publishQueue exceeded maxPublishQueueSize=${this.options.maxPublishQueueSize}`,
+                )
+            }
             this.publishQueue.push([streamId, data, timestamp, partitionKey])
             return this.ensureConnected()
         }
