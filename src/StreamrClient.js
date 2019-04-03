@@ -189,11 +189,13 @@ export default class StreamrClient extends EventEmitter {
             // Check pending publish requests
             const publishQueueCopy = this.publishQueue.slice(0)
             this.publishQueue = []
-            publishQueueCopy.forEach((args) => {
-                this.publish(...args).catch((err) => {
-                    debug(`Error: ${err}`)
-                    this.emit(err)
-                })
+            publishQueueCopy.forEach(([streamId, data, timestamp, partitionKey, resolve, reject]) => {
+                this.publish(streamId, data, timestamp, partitionKey).then(resolve)
+                    .catch((err) => {
+                        debug(`Error: ${err}`)
+                        this.emit(err)
+                        reject(err)
+                    })
             })
         })
 
