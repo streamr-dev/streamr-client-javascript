@@ -47,6 +47,12 @@ export default class Session {
         }
         return this.sessionTokenPromise
     }
+
+    async logout() {
+        await this._client.logoutEndpoint()
+        this.options.sessionToken = undefined
+        this.state = Session.State.LOGGED_OUT
+    }
 }
 
 Session.State = {
