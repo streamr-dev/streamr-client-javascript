@@ -47,9 +47,7 @@ describe('Subscription', () => {
                 })
 
                 describe('when message verification returns false', () => {
-                    it('does not call the message handler', async () => {
-                        return sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))
-                    })
+                    it('does not call the message handler', async () => sub.handleBroadcastMessage(msg, sinon.stub().resolves(false)))
 
                     it('prints to standard error stream', async () => {
                         await sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))
@@ -94,7 +92,6 @@ describe('Subscription', () => {
                         return sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
                     })
                 })
-
             })
 
             it('calls the callback once for each message in order', () => {
@@ -153,10 +150,8 @@ describe('Subscription', () => {
                 })
 
                 describe('when message verification returns false', () => {
-                    it('does not call the message handler', async () => {
-                        return sub.handleResentMessage(msg, sinon.stub()
-                            .resolves(false))
-                    })
+                    it('does not call the message handler', async () => sub.handleResentMessage(msg, sinon.stub()
+                        .resolves(false)))
 
                     it('prints to standard error stream', async () => {
                         await sub.handleResentMessage(msg, sinon.stub()
@@ -482,16 +477,29 @@ describe('Subscription', () => {
             assert.equal(handler.callCount, 2) // 2 == 1 resent message + 1 queued message
         })
 
-        it('cleans up the resend if event handler throws', async () => {
-            const handler = sinon.stub()
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
-            const error = new Error('test error, ignore')
-            sub.on('resent', sinon.stub().throws(error))
-            sub.setResending(true)
-            await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+        describe('on error', () => {
+            let stdError
 
-            await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
-            assert(!sub.isResending())
+            beforeEach(() => {
+                stdError = console.error
+                console.error = sinon.stub()
+            })
+
+            afterEach(() => {
+                console.error = stdError
+            })
+
+            it('cleans up the resend if event handler throws', async () => {
+                const handler = sinon.stub()
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+                const error = new Error('test error, ignore')
+                sub.on('resent', sinon.stub().throws(error))
+                sub.setResending(true)
+                await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+
+                await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
+                assert(!sub.isResending())
+            })
         })
     })
 
@@ -515,13 +523,27 @@ describe('Subscription', () => {
             assert.equal(handler.callCount, 1)
         })
 
-        it('cleans up the resend if event handler throws', async () => {
-            const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            const error = new Error('test error, ignore')
-            sub.on('no_resend', sinon.stub().throws(error))
-            sub.setResending(true)
-            await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
-            assert(!sub.isResending())
+        describe('on error', () => {
+            let stdError
+
+            beforeEach(() => {
+                stdError = console.error
+                console.error = sinon.stub()
+            })
+
+            afterEach(() => {
+                console.error = stdError
+            })
+
+            it('cleans up the resend if event handler throws', async () => {
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                const error = new Error('test error, ignore')
+                sub.on('no_resend', sinon.stub()
+                    .throws(error))
+                sub.setResending(true)
+                await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
+                assert(!sub.isResending())
+            })
         })
     })
 })

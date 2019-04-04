@@ -360,7 +360,7 @@ describe('StreamrClient', () => {
                 let firstResult
                 sub.handleBroadcastMessage = (message, verifyFn) => {
                     firstResult = verifyFn()
-                    assert(firstResult instanceof Promise)
+                    assert(firstResult instanceof Promise, `firstResult is: ${firstResult}`)
                     assert.strictEqual(firstResult, verifyFn())
                 }
                 const sub2 = setupSubscription('stream1')

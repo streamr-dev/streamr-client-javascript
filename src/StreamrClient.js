@@ -89,6 +89,7 @@ export default class StreamrClient extends EventEmitter {
             const stream = this.subscribedStreams[msg.streamMessage.getStreamId()]
             if (stream) {
                 const verifyFn = once(() => stream.verifyStreamMessage(msg.streamMessage)) // ensure verification occurs only once
+                // sub.handleBroadcastMessage never rejects: on any error it emits an 'error' event on the Subscription
                 stream.getSubscriptions().forEach((sub) => sub.handleBroadcastMessage(msg.streamMessage, verifyFn))
             } else {
                 debug('WARN: message received for stream with no subscriptions: %s', msg.streamMessage.getStreamId())
@@ -101,6 +102,7 @@ export default class StreamrClient extends EventEmitter {
             if (stream) {
                 const sub = stream.getSubscription(msg.subId)
                 if (sub) {
+                    // sub.handleResentMessage never rejects: on any error it emits an 'error' event on the Subscription
                     sub.handleResentMessage(
                         msg.streamMessage,
                         once(() => stream.verifyStreamMessage(msg.streamMessage)), // ensure verification occurs only once

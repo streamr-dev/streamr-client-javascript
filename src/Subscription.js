@@ -133,7 +133,6 @@ export default class Subscription extends EventEmitter {
                 }
             })
         })
-
     }
 
     async handleNoResend(response) {
