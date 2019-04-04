@@ -119,7 +119,7 @@ describe('StreamrClient Connection', () => {
                 // wait for possible reconnections
                 setTimeout(() => {
                     client.off('connecting', onConnecting)
-                    expect(client.isConnected()).toBeFalse()
+                    expect(client.isConnected()).toBe(false)
                     done()
                 }, 2000)
             })
