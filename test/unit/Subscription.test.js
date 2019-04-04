@@ -4,6 +4,7 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 
 import Subscription from '../../src/Subscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
+import VerificationFailedError from '../../src/errors/VerificationFailedError'
 
 const { StreamMessage } = MessageLayer
 
@@ -31,9 +32,69 @@ describe('Subscription', () => {
                 return sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
             })
 
-            it('does not call the message handler if message verification fails', async () => {
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub().throws('should not be called!'))
-                await expect(sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))).rejects.toThrow(InvalidSignatureError)
+            describe('on error', () => {
+                let stdError
+                let sub
+
+                beforeEach(() => {
+                    sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub().throws('should not be called!'))
+                    stdError = console.error
+                    console.error = sinon.stub()
+                })
+
+                afterEach(() => {
+                    console.error = stdError
+                })
+
+                describe('when message verification returns false', () => {
+                    it('does not call the message handler', async () => {
+                        return sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))
+                    })
+
+                    it('prints to standard error stream', async () => {
+                        await sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))
+                        assert(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError)))
+                    })
+
+                    it('emits an error event', async (done) => {
+                        sub.on('error', (err) => {
+                            assert(err instanceof InvalidSignatureError)
+                            done()
+                        })
+                        return sub.handleBroadcastMessage(msg, sinon.stub().resolves(false))
+                    })
+                })
+
+                describe('when message verification throws', () => {
+                    it('emits an error event', async (done) => {
+                        const error = new Error('test error')
+                        sub.on('error', (err) => {
+                            assert(err instanceof VerificationFailedError)
+                            assert.strictEqual(err.cause, error)
+                            done()
+                        })
+                        return sub.handleBroadcastMessage(msg, sinon.stub().throws(error))
+                    })
+                })
+
+                describe('when message handler throws', () => {
+                    it('emits an error event', async (done) => {
+                        sub.on('error', (err) => {
+                            assert.strictEqual(err.name, 'should not be called!')
+                            done()
+                        })
+                        return sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
+                    })
+
+                    it('prints to standard error stream', async (done) => {
+                        sub.on('error', (err) => {
+                            assert.strictEqual(err.name, 'should not be called!')
+                            done()
+                        })
+                        return sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
+                    })
+                })
+
             })
 
             it('calls the callback once for each message in order', () => {
@@ -73,6 +134,78 @@ describe('Subscription', () => {
                 sub.setResending(true)
                 await sub.handleResentMessage(msg, sinon.stub().resolves(true))
                 assert.equal(handler.callCount, 1)
+            })
+
+            describe('on error', () => {
+                let stdError
+                let sub
+
+                beforeEach(() => {
+                    sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub()
+                        .throws('should not be called!'))
+                    sub.setResending(true)
+                    stdError = console.error
+                    console.error = sinon.stub()
+                })
+
+                afterEach(() => {
+                    console.error = stdError
+                })
+
+                describe('when message verification returns false', () => {
+                    it('does not call the message handler', async () => {
+                        return sub.handleResentMessage(msg, sinon.stub()
+                            .resolves(false))
+                    })
+
+                    it('prints to standard error stream', async () => {
+                        await sub.handleResentMessage(msg, sinon.stub()
+                            .resolves(false))
+                        assert(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError)))
+                    })
+
+                    it('emits an error event', async (done) => {
+                        sub.on('error', (err) => {
+                            assert(err instanceof InvalidSignatureError)
+                            done()
+                        })
+                        return sub.handleResentMessage(msg, sinon.stub()
+                            .resolves(false))
+                    })
+                })
+
+                describe('when message verification throws', () => {
+                    it('emits an error event', async (done) => {
+                        const error = new Error('test error')
+                        sub.on('error', (err) => {
+                            assert(err instanceof VerificationFailedError)
+                            assert.strictEqual(err.cause, error)
+                            done()
+                        })
+                        return sub.handleResentMessage(msg, sinon.stub()
+                            .throws(error))
+                    })
+                })
+
+                describe('when message handler throws', () => {
+                    it('emits an error event', async (done) => {
+                        sub.on('error', (err) => {
+                            assert.strictEqual(err.name, 'should not be called!')
+                            done()
+                        })
+                        return sub.handleResentMessage(msg, sinon.stub()
+                            .resolves(true))
+                    })
+
+                    it('prints to standard error stream', async (done) => {
+                        sub.on('error', (err) => {
+                            assert.strictEqual(err.name, 'should not be called!')
+                            done()
+                        })
+                        return sub.handleResentMessage(msg, sinon.stub()
+                            .resolves(true))
+                    })
+                })
             })
         })
 
@@ -352,12 +485,12 @@ describe('Subscription', () => {
         it('cleans up the resend if event handler throws', async () => {
             const handler = sinon.stub()
             const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), handler)
-            const error = new Error('test error')
+            const error = new Error('test error, ignore')
             sub.on('resent', sinon.stub().throws(error))
             sub.setResending(true)
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
 
-            await expect(sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))).rejects.toThrow(error)
+            await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
             assert(!sub.isResending())
         })
     })
@@ -384,10 +517,10 @@ describe('Subscription', () => {
 
         it('cleans up the resend if event handler throws', async () => {
             const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            const error = new Error('test error')
+            const error = new Error('test error, ignore')
             sub.on('no_resend', sinon.stub().throws(error))
             sub.setResending(true)
-            await expect(sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))).rejects.toThrow(error)
+            await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
             assert(!sub.isResending())
         })
     })

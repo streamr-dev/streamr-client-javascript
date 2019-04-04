@@ -2,6 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import { Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
+import VerificationFailedError from './errors/VerificationFailedError'
 
 const debug = debugFactory('StreamrClient::Subscription')
 
@@ -74,56 +75,78 @@ export default class Subscription extends EventEmitter {
             previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
-    // all the handleXXX methods should return promise for consistency
+    async _catchAndEmitErrors(fn) {
+        try {
+            return await fn()
+        } catch (err) {
+            console.error(err)
+            this.emit('error', err)
+            // Swallow rejection
+            return Promise.resolve()
+        }
+    }
+
+    // All the handle* methods should:
+    // - return a promise for consistency
+    // - swallow exceptions and emit them as 'error' events
 
     async handleBroadcastMessage(msg, verifyFn) {
-        return this._handleMessage(msg, verifyFn, false)
+        return this._catchAndEmitErrors(() => this._handleMessage(msg, verifyFn, false))
     }
 
     async handleResentMessage(msg, verifyFn) {
-        if (!this.resending) {
-            throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
-        } else {
-            const handleMessagePromise = this._handleMessage(msg, verifyFn, true)
-            this._lastMessageHandlerPromise = handleMessagePromise
-            return handleMessagePromise
-        }
-    }
-
-    async handleResending(response) {
-        if (!this.resending) {
-            throw new Error(`There should be no resend in progress, but received ResendResponseResending message ${response.serialize()}`)
-        }
-        this.emit('resending', response)
-    }
-
-    async handleResent(response) {
-        if (!this.resending) {
-            throw new Error(`There should be no resend in progress, but received ResendResponseResent message ${response.serialize()}`)
-        }
-        if (!this._lastMessageHandlerPromise) {
-            throw new Error('Attempting to handle ResendResponseResent, but no messages have been received!')
-        }
-
-        // Delay event emission until the last message in the resend has been handled
-        await this._lastMessageHandlerPromise.then(async () => {
-            try {
-                this.emit('resent', response)
-            } finally {
-                await this._finishResend()
+        return this._catchAndEmitErrors(() => {
+            if (!this.resending) {
+                throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
+            } else {
+                const handleMessagePromise = this._handleMessage(msg, verifyFn, true)
+                this._lastMessageHandlerPromise = handleMessagePromise
+                return handleMessagePromise
             }
         })
     }
 
+    async handleResending(response) {
+        return this._catchAndEmitErrors(() => {
+            if (!this.resending) {
+                throw new Error(`There should be no resend in progress, but received ResendResponseResending message ${response.serialize()}`)
+            }
+            this.emit('resending', response)
+        })
+    }
+
+    async handleResent(response) {
+        return this._catchAndEmitErrors(async () => {
+            if (!this.resending) {
+                throw new Error(`There should be no resend in progress, but received ResendResponseResent message ${response.serialize()}`)
+            }
+            if (!this._lastMessageHandlerPromise) {
+                throw new Error('Attempting to handle ResendResponseResent, but no messages have been received!')
+            }
+
+            // Delay event emission until the last message in the resend has been handled
+            await this._lastMessageHandlerPromise.then(async () => {
+                try {
+                    this.emit('resent', response)
+                } finally {
+                    await this._finishResend()
+                }
+            })
+        })
+
+    }
+
     async handleNoResend(response) {
-        if (!this.resending) {
-            throw new Error(`There should be no resend in progress, but received ResendResponseNoResend message ${response.serialize()}`)
-        }
-        try {
-            this.emit('no_resend', response)
-        } finally {
-            await this._finishResend()
-        }
+        return this._catchAndEmitErrors(async () => {
+            if (!this.resending) {
+                throw new Error(`There should be no resend in progress, but received ResendResponseNoResend message ${response.serialize()}`)
+            }
+            try {
+                this.emit('no_resend', response)
+            } finally {
+                await this._finishResend()
+            }
+        })
     }
 
     async _finishResend() {
@@ -140,12 +163,16 @@ export default class Subscription extends EventEmitter {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
         }
 
-        // Make sure the verification is done before proceeding
-        const valid = await verifyFn()
+        // Make sure the verification is successful before proceeding
+        let valid
+        try {
+            valid = await verifyFn()
+        } catch (cause) {
+            throw new VerificationFailedError(msg, cause)
+        }
+
         if (!valid) {
-            const err = new InvalidSignatureError(msg)
-            this.handleError(err)
-            throw err
+            throw new InvalidSignatureError(msg)
         }
 
         const key = msg.getPublisherId() + msg.messageId.msgChainId
