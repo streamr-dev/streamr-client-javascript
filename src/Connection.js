@@ -34,10 +34,7 @@ class Connection extends EventEmitter {
         }
         if (this.state === Connection.State.DISCONNECTING) {
             return new Promise((resolve) => {
-                this.once('disconnected', async () => {
-                    await this.connect()
-                    resolve()
-                })
+                this.once('disconnected', () => resolve(this.connect()))
             })
         }
         if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
@@ -92,10 +89,7 @@ class Connection extends EventEmitter {
         }
         if (this.state === Connection.State.CONNECTING) {
             return new Promise((resolve) => {
-                this.once('connected', async () => {
-                    await this.disconnect()
-                    resolve()
-                })
+                this.once('connected', () => resolve(this.disconnect()))
             })
         }
 
