@@ -29,6 +29,7 @@ import SubscribedStream from './SubscribedStream'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
+import { waitFor } from './utils'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -340,7 +341,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.connection.state !== Connection.State.CONNECTING) {
             return this.connect()
         }
-        return this.waitFor('connected')
+        return waitFor(this, 'connected')
     }
 
     async ensureDisconnected() {
@@ -348,29 +349,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.connection.state !== Connection.State.DISCONNECTING) {
             return this.disconnect()
         }
-        return this.waitFor('disconnected')
-    }
-
-    /**
-     * Converts a .once event listener into a promise.
-     * Rejects if an 'error' event is received before resolving.
-     */
-
-    waitFor(event) {
-        return new Promise((resolve, reject) => {
-            let onError
-            const onEvent = (value) => {
-                this.off('error', onError)
-                resolve(value)
-            }
-            onError = (error) => {
-                this.off(event, onEvent)
-                reject(error)
-            }
-
-            this.once(event, onEvent)
-            this.once('error', onError)
-        })
+        return waitFor(this, 'disconnected')
     }
 
     unsubscribe(sub) {
