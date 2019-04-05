@@ -16,6 +16,7 @@ export default class MessageCreationUtil {
         this.cachedStreams = new NodeCache({
             stdTTL: 60 * 30, // in seconds
             checkperiod: 0, // no periodic check to delete expired keys
+            useClones: false,
         })
         this.publishedStreams = {}
         this.msgChainId = randomstring.generate(20)
