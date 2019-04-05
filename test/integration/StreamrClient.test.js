@@ -186,17 +186,17 @@ describe('StreamrClient', () => {
     describe('Pub/Sub', () => {
         it('client.publish', () => client.publish(stream.id, {
             test: 'client.publish',
-        }))
+        }), TIMEOUT)
 
         it('Stream.publish', () => stream.publish({
             test: 'Stream.publish',
-        }))
+        }), TIMEOUT)
 
         it('client.publish with Stream object as arg', () => {
             client.publish(stream, {
                 test: 'client.publish.Stream.object',
             })
-        })
+        }, TIMEOUT)
 
         it('client.subscribe with resend from', (done) => {
             // Publish message
