@@ -270,10 +270,10 @@ export default class StreamrClient extends EventEmitter {
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
             this.publishQueue.push([streamId, data, timestamp, partitionKey])
-            if (this.connection.state === Connection.State.DISCONNECTED) {
-                return this.connect()
+            if (this.connection.state === Connection.State.CONNECTING) {
+                return new Promise((resolve) => this.connection.once('connected', resolve))
             }
-            return new Promise((resolve) => this.connection.once('connected', resolve))
+            return this.connect()
         }
 
         throw new FailedToPublishError(
@@ -327,12 +327,10 @@ export default class StreamrClient extends EventEmitter {
         this._addSubscription(sub)
 
         // If connected, emit a subscribe request
-        if (this.connection.state === Connection.State.CONNECTED) {
+        if (this.isConnected()) {
             this._resendAndSubscribe(sub)
-        } else if (this.options.autoConnect) {
-            if (this.connection.state === Connection.State.DISCONNECTED) {
-                this.connect()
-            }
+        } else if (this.options.autoConnect && this.connection.state !== Connection.State.CONNECTING) {
+            this.connect()
         }
 
         return sub
