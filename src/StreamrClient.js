@@ -336,22 +336,6 @@ export default class StreamrClient extends EventEmitter {
         return sub
     }
 
-    async ensureConnected() {
-        if (this.isConnected()) { return Promise.resolve() }
-        if (this.connection.state !== Connection.State.CONNECTING) {
-            return this.connect()
-        }
-        return waitFor(this, 'connected')
-    }
-
-    async ensureDisconnected() {
-        if (this.connection.state === Connection.State.DISCONNECTED) { return Promise.resolve() }
-        if (this.connection.state !== Connection.State.DISCONNECTING) {
-            return this.disconnect()
-        }
-        return waitFor(this, 'disconnected')
-    }
-
     unsubscribe(sub) {
         if (!sub || !sub.streamId) {
             throw new Error('unsubscribe: please give a Subscription object as an argument!')
@@ -390,6 +374,18 @@ export default class StreamrClient extends EventEmitter {
         return this.connection.state === Connection.State.CONNECTED
     }
 
+    isConnecting() {
+        return this.connection.state === Connection.State.CONNECTING
+    }
+
+    isDisconnecting() {
+        return this.connection.state === Connection.State.DISCONNECTING
+    }
+
+    isDisconnected() {
+        return this.connection.state === Connection.State.DISCONNECTED
+    }
+
     reconnect() {
         return this.connect()
     }
@@ -416,6 +412,34 @@ export default class StreamrClient extends EventEmitter {
 
     logout() {
         return this.session.logout()
+    }
+
+    /**
+     * Starts new connection if disconnected.
+     * Waits for connection if connecting.
+     * No-op if already connected.
+     */
+
+    async ensureConnected() {
+        if (this.isConnected()) { return Promise.resolve() }
+        if (this.isConnecting()) {
+            return waitFor(this, 'connected')
+        }
+        return this.connect()
+    }
+
+    /**
+     * Starts disconnection if connected.
+     * Waits for disconnection if disconnecting.
+     * No-op if already disconnected.
+     */
+
+    async ensureDisconnected() {
+        if (this.isDisconnected()) { return Promise.resolve() }
+        if (this.isDisconnecting()) {
+            return waitFor(this, 'disconnected')
+        }
+        return this.disconnect()
     }
 
     _checkAutoDisconnect() {

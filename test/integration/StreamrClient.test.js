@@ -63,14 +63,14 @@ describe('StreamrClient Connection', () => {
             await client.ensureDisconnected()
             await client.connect()
             await client.ensureDisconnected()
-            expect(client.isConnected()).toBeFalsy()
+            expect(client.isDisconnected()).toBeTruthy()
         })
 
         it('does not error if disconnecting', async (done) => {
             const client = createClient()
             client.connection.once('disconnecting', async () => {
                 await client.ensureDisconnected()
-                expect(client.isConnected()).toBeFalsy()
+                expect(client.isDisconnected()).toBeTruthy()
                 done()
             })
             await client.connect()
@@ -81,7 +81,7 @@ describe('StreamrClient Connection', () => {
             const client = createClient()
             client.connection.once('connecting', async () => {
                 await client.ensureDisconnected()
-                expect(client.isConnected()).toBeFalsy()
+                expect(client.isDisconnected()).toBeTruthy()
                 done()
             })
             await client.connect()
