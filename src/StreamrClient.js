@@ -272,10 +272,7 @@ export default class StreamrClient extends EventEmitter {
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
             this.publishQueue.push([streamId, data, timestamp, partitionKey])
-            if (this.connection.state === Connection.State.CONNECTING) {
-                return new Promise((resolve) => this.connection.once('connected', resolve))
-            }
-            return this.connect()
+            return this.ensureConnected()
         }
 
         throw new FailedToPublishError(
@@ -331,11 +328,49 @@ export default class StreamrClient extends EventEmitter {
         // If connected, emit a subscribe request
         if (this.isConnected()) {
             this._resendAndSubscribe(sub)
-        } else if (this.options.autoConnect && this.connection.state !== Connection.State.CONNECTING) {
-            this.connect()
+        } else if (this.options.autoConnect) {
+            this.ensureConnected()
         }
 
         return sub
+    }
+
+    async ensureConnected() {
+        if (this.isConnected()) { return Promise.resolve() }
+        if (this.connection.state !== Connection.State.CONNECTING) {
+            return this.connect()
+        }
+        return this.waitFor('connected')
+    }
+
+    async ensureDisconnected() {
+        if (this.connection.state === Connection.State.DISCONNECTED) { return Promise.resolve() }
+        if (this.connection.state !== Connection.State.DISCONNECTING) {
+            return this.disconnect()
+        }
+        return this.waitFor('disconnected')
+    }
+
+    /**
+     * Converts a .once event listener into a promise.
+     * Rejects if an 'error' event is received before resolving.
+     */
+
+    waitFor(event) {
+        return new Promise((resolve, reject) => {
+            let onError
+            const onEvent = (value) => {
+                this.off('error', onError)
+                resolve(value)
+            }
+            onError = (error) => {
+                this.off(event, onEvent)
+                reject(error)
+            }
+
+            this.once(event, onEvent)
+            this.once('error', onError)
+        })
     }
 
     unsubscribe(sub) {
