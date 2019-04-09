@@ -189,14 +189,7 @@ export default class StreamrClient extends EventEmitter {
             // Check pending publish requests
             const publishQueueCopy = this.publishQueue.slice(0)
             this.publishQueue = []
-            publishQueueCopy.forEach(([streamId, data, timestamp, partitionKey, resolve, reject]) => {
-                this.publish(streamId, data, timestamp, partitionKey).then(resolve)
-                    .catch((err) => {
-                        debug(`Error: ${err}`)
-                        this.emit(err)
-                        reject(err)
-                    })
-            })
+            publishQueueCopy.forEach((publishFn) => publishFn())
         })
 
         this.connection.on('disconnected', () => {
@@ -282,8 +275,16 @@ export default class StreamrClient extends EventEmitter {
                     `publishQueue exceeded maxPublishQueueSize=${this.options.maxPublishQueueSize}`,
                 )
             }
-            this.publishQueue.push([streamId, data, timestamp, partitionKey])
-            return this.ensureConnected()
+            return new Promise((resolve, reject) => {
+                this.publishQueue.push(async () => (
+                    this.publish(streamId, data, timestamp, partitionKey)
+                        .then(resolve, (err) => {
+                            debug(`Error: ${err}`)
+                            this.emit('error', err)
+                            reject(err)
+                        })
+                ))
+            })
         }
 
         throw new FailedToPublishError(
