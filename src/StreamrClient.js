@@ -30,6 +30,8 @@ import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
 
+const STORAGE_DELAY = 5000
+
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
         super()
@@ -413,6 +415,9 @@ export default class StreamrClient extends EventEmitter {
             sub.once('subscribed', () => {
                 if (sub.hasResendOptions()) {
                     this._requestResend(sub)
+                    const secondResend = setTimeout(() => this._requestResend(sub), STORAGE_DELAY)
+                    sub.once('message received', () => clearTimeout(secondResend))
+                    sub.once('no_resend', () => clearTimeout(secondResend))
                 }
             })
         }

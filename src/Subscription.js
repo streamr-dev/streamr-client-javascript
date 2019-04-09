@@ -178,6 +178,8 @@ export default class Subscription extends EventEmitter {
 
         const key = msg.getPublisherId() + msg.messageId.msgChainId
 
+        this.emit('message received')
+
         // TODO: check this.options.resend_last ?
         // If resending, queue broadcast messages
         if (this.resending && !isResend) {
