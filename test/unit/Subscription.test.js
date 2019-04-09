@@ -256,8 +256,8 @@ describe('Subscription', () => {
                     })
                 })
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg4)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
             }, 7000)
 
             it('does not emit second "gap" after the first one if the missing messages are received in between', (done) => {
@@ -268,14 +268,14 @@ describe('Subscription', () => {
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', () => {
-                    sub.handleMessage(msg2)
-                    sub.handleMessage(msg3)
+                    sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
+                    sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true))
                     sub.on('gap', sinon.stub().throws())
                     setTimeout(done, 7000)
                 })
 
-                sub.handleMessage(msg1)
-                sub.handleMessage(msg4)
+                sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
             }, 8000)
 
             it('does not emit "gap" if different publishers', () => {
