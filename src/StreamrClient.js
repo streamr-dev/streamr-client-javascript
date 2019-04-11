@@ -30,8 +30,6 @@ import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
 
-const STORAGE_DELAY = 5000
-
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
         super()
@@ -48,6 +46,8 @@ export default class StreamrClient extends EventEmitter {
             auth: {},
             publishWithSignature: 'auto',
             verifySignatures: 'auto',
+            storageDelay: 5000,
+            resendTimeout: 5000,
         }
         this.subscribedStreams = {}
 
@@ -310,7 +310,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, callback, options.resend)
+        const sub = new Subscription(options.stream, options.partition || 0, callback, options.resend, this.options.resendTimeout)
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {
                 this._requestResend(sub, {
@@ -412,12 +412,19 @@ export default class StreamrClient extends EventEmitter {
             this._requestSubscribe(sub)
 
             // Once subscribed, ask for a resend
-            sub.once('subscribed', () => {
+            sub.once('subscribed', async () => {
                 if (sub.hasResendOptions()) {
-                    this._requestResend(sub)
-                    const secondResend = setTimeout(() => this._requestResend(sub), STORAGE_DELAY)
-                    sub.once('message received', () => clearTimeout(secondResend))
+                    await this._requestResend(sub)
+                    // the requested messages might not have been stored yet, so retry if no answer after 'storageDelay' seconds
+                    const secondResend = setTimeout(() => this._requestResend(sub), this.options.storageDelay)
+                    // once a message is received, gap filling in Subscription.js will check if this satisfies the resend and request
+                    // another resend if it doesn't. So we can anyway clear this resend request.
+                    sub.once('message received', () => {
+                        clearTimeout(secondResend)
+                    })
                     sub.once('no_resend', () => clearTimeout(secondResend))
+                    sub.once('unsubscribed', () => clearTimeout(secondResend))
+                    sub.once('error', () => clearTimeout(secondResend))
                 }
             })
         }

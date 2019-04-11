@@ -131,6 +131,8 @@ describe('StreamrClient', () => {
         return c
     }
 
+    const STORAGE_DELAY = 1000
+
     beforeEach(() => {
         clearAsync()
         connection = createConnectionMock()
@@ -138,6 +140,7 @@ describe('StreamrClient', () => {
             autoConnect: false,
             autoDisconnect: false,
             verifySignatures: 'never',
+            storageDelay: STORAGE_DELAY,
         }, connection)
     })
 
@@ -216,10 +219,10 @@ describe('StreamrClient', () => {
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     // sending second resend last request since no answer to the first request was received
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend))
-                    setTimeout(done, 6000)
+                    setTimeout(done, STORAGE_DELAY + 1000)
                 })
                 return client.connect()
-            }, 7000)
+            }, STORAGE_DELAY + 2000)
         })
 
         describe('disconnected', () => {
@@ -257,13 +260,15 @@ describe('StreamrClient', () => {
                         last: 1,
                     },
                 })
+                sub.once('subscribed', () => {
+                    setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 500)
+                    setTimeout(done, STORAGE_DELAY + 1000)
+                })
                 connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 1))
                 connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                connection.emitMessage(msg(sub.streamId, {}, sub.id))
-                setTimeout(done, 1000)
-            })
+            }, STORAGE_DELAY + 2000)
 
-            it('emits multiple resend requests as per multiple subscriptions. No second resends if ResendResponseNoResend are received.', () => {
+            it('emits multiple resend requests as per multiple subscriptions. No second resends if ResendResponseNoResend are received.', (done) => {
                 connection.expect(SubscribeRequest.create('stream1'))
 
                 const sub1 = client.subscribe({
@@ -279,13 +284,19 @@ describe('StreamrClient', () => {
                     },
                 }, () => {})
 
+                sub1.once('subscribed', () => {
+                    setTimeout(() => connection.emitMessage(ResendResponseNoResend.create(sub1.streamId, 0, sub1.id)), 500)
+                })
+                sub2.once('subscribed', () => {
+                    setTimeout(() => connection.emitMessage(ResendResponseNoResend.create(sub2.streamId, 0, sub2.id)), 500)
+                })
+
                 connection.expect(ResendLastRequest.create(sub1.streamId, sub1.streamPartition, sub1.id, 2))
                 connection.expect(ResendLastRequest.create(sub2.streamId, sub2.streamPartition, sub2.id, 1))
 
                 connection.emitMessage(SubscribeResponse.create(sub1.streamId))
-                connection.emitMessage(ResendResponseNoResend.create(sub1.streamId, 0, sub1.id))
-                connection.emitMessage(ResendResponseNoResend.create(sub2.streamId, 0, sub2.id))
-            })
+                setTimeout(done, STORAGE_DELAY + 2000)
+            }, STORAGE_DELAY + 3000)
         })
 
         describe('UnsubscribeResponse', () => {
@@ -610,7 +621,7 @@ describe('StreamrClient', () => {
             })
 
             describe('with resend options', () => {
-                it('supports resend.from', () => {
+                it('supports resend.from', (done) => {
                     const ref = new MessageRef(5, 0)
                     const sub = setupSubscription('stream1', false, {
                         resend: {
@@ -622,21 +633,27 @@ describe('StreamrClient', () => {
                             msgChainId: '1',
                         },
                     })
+                    sub.once('subscribed', () => {
+                        setTimeout(() => connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, sub.id)), 500)
+                        setTimeout(done, STORAGE_DELAY + 1000)
+                    })
                     connection.expect(ResendFromRequest.create(sub.streamId, sub.streamPartition, sub.id, ref.toArray(), 'publisherId', '1'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, sub.id))
-                })
+                }, STORAGE_DELAY + 2000)
 
-                it('supports resend.last', () => {
+                it('supports resend.last', (done) => {
                     const sub = setupSubscription('stream1', false, {
                         resend: {
                             last: 5,
                         },
                     })
+                    sub.once('subscribed', () => {
+                        setTimeout(() => connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, sub.id)), 500)
+                        setTimeout(done, STORAGE_DELAY + 1000)
+                    })
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, sub.id))
-                })
+                }, STORAGE_DELAY + 2000)
 
                 it('sends 2 ResendLastRequests if no StreamMessage and no ResendResponseNoResend received after some delay', (done) => {
                     const sub = setupSubscription('stream1', false, {
@@ -647,8 +664,8 @@ describe('StreamrClient', () => {
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
-                    setTimeout(done, 6000)
-                }, 7000)
+                    setTimeout(done, STORAGE_DELAY + 1000)
+                }, STORAGE_DELAY + 2000)
 
                 it('throws if multiple resend options are given', () => {
                     assert.throws(() => {
