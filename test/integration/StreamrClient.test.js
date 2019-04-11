@@ -89,6 +89,16 @@ describe('StreamrClient Connection', () => {
                 done()
             })
         })
+    })
+
+    it('can disconnect before connected', async (done) => {
+        const client = createClient()
+        client.once('error', done)
+        client.connect()
+        await client.disconnect()
+        done()
+    })
+
     describe('ensureConnected', () => {
         it('connects the client', async () => {
             const client = createClient()
@@ -158,14 +168,6 @@ describe('StreamrClient Connection', () => {
         })
     })
 
-    it('can disconnect before connected', async (done) => {
-        const client = createClient()
-        client.once('error', done)
-        client.connect()
-        await client.disconnect()
-        done()
-    })
-
     describe('connect during disconnect', () => {
         let client
         async function teardown() {
@@ -187,7 +189,7 @@ describe('StreamrClient Connection', () => {
 
         it('can reconnect after disconnect', (done) => {
             client = createClient()
-            client.on('error', done)
+            client.once('error', done)
             client.connect()
             client.once('connected', () => {
                 client.disconnect()
@@ -196,6 +198,7 @@ describe('StreamrClient Connection', () => {
                 client.connect()
                 client.once('connected', async () => {
                     await client.disconnect()
+                    client.off('error', done)
                     done()
                 })
             })
@@ -206,6 +209,7 @@ describe('StreamrClient Connection', () => {
             client.once('error', done)
             client.connect()
             await client.disconnect()
+            client.off('error', done)
             done()
         })
 
