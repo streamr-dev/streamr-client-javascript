@@ -29,6 +29,7 @@ import SubscribedStream from './SubscribedStream'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
+import { waitFor } from './utils'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -48,6 +49,7 @@ export default class StreamrClient extends EventEmitter {
             verifySignatures: 'auto',
             storageDelay: 5000,
             resendTimeout: 5000,
+            maxPublishQueueSize: 10000,
         }
         this.subscribedStreams = {}
 
@@ -88,6 +90,8 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth, this.signer, this.getUserInfo().catch((err) => this.emit('error', err)),
             (streamId) => this.getStream(streamId).catch((err) => this.emit('error', err)),
         )
+
+        this.on('error', () => this.ensureDisconnected())
 
         // Broadcast messages to all subs listening on stream
         this.connection.on(BroadcastMessage.TYPE, (msg) => {
@@ -189,12 +193,7 @@ export default class StreamrClient extends EventEmitter {
             // Check pending publish requests
             const publishQueueCopy = this.publishQueue.slice(0)
             this.publishQueue = []
-            publishQueueCopy.forEach((args) => {
-                this.publish(...args).catch((err) => {
-                    debug(`Error: ${err}`)
-                    this.emit(err)
-                })
-            })
+            publishQueueCopy.forEach((publishFn) => publishFn())
         })
 
         this.connection.on('disconnected', () => {
@@ -273,9 +272,32 @@ export default class StreamrClient extends EventEmitter {
             const streamMessage = await this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey)
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
-            this.publishQueue.push([streamId, data, timestamp, partitionKey])
-            return this.connect().catch(() => {}) // ignore
+            if (this.publishQueue.length >= this.options.maxPublishQueueSize) {
+                throw new FailedToPublishError(
+                    streamId,
+                    data,
+                    `publishQueue exceeded maxPublishQueueSize=${this.options.maxPublishQueueSize}`,
+                )
+            }
+
+            const published = new Promise((resolve, reject) => {
+                this.publishQueue.push(async () => {
+                    try {
+                        await this.publish(streamId, data, timestamp, partitionKey)
+                    } catch (err) {
+                        debug(`Error: ${err}`)
+                        this.emit('error', err)
+                        reject(err)
+                        return
+                    }
+                    resolve()
+                })
+            })
+            // be sure to trigger connection *after* queueing publish
+            await this.ensureConnected() // await to ensure connection error fails publish
+            return published
         }
+
         throw new FailedToPublishError(
             streamId,
             data,
@@ -327,10 +349,10 @@ export default class StreamrClient extends EventEmitter {
         this._addSubscription(sub)
 
         // If connected, emit a subscribe request
-        if (this.connection.state === Connection.State.CONNECTED) {
+        if (this.isConnected()) {
             this._resendAndSubscribe(sub)
         } else if (this.options.autoConnect) {
-            this.connect().catch(() => {}) // ignore
+            this.ensureConnected()
         }
 
         return sub
@@ -374,6 +396,18 @@ export default class StreamrClient extends EventEmitter {
         return this.connection.state === Connection.State.CONNECTED
     }
 
+    isConnecting() {
+        return this.connection.state === Connection.State.CONNECTING
+    }
+
+    isDisconnecting() {
+        return this.connection.state === Connection.State.DISCONNECTING
+    }
+
+    isDisconnected() {
+        return this.connection.state === Connection.State.DISCONNECTED
+    }
+
     reconnect() {
         return this.connect()
     }
@@ -396,6 +430,38 @@ export default class StreamrClient extends EventEmitter {
     disconnect() {
         this.subscribedStreams = {}
         return this.connection.disconnect()
+    }
+
+    logout() {
+        return this.session.logout()
+    }
+
+    /**
+     * Starts new connection if disconnected.
+     * Waits for connection if connecting.
+     * No-op if already connected.
+     */
+
+    async ensureConnected() {
+        if (this.isConnected()) { return Promise.resolve() }
+        if (this.isConnecting()) {
+            return waitFor(this, 'connected')
+        }
+        return this.connect()
+    }
+
+    /**
+     * Starts disconnection if connected.
+     * Waits for disconnection if disconnecting.
+     * No-op if already disconnected.
+     */
+
+    async ensureDisconnected() {
+        if (this.isDisconnected()) { return Promise.resolve() }
+        if (this.isDisconnecting()) {
+            return waitFor(this, 'disconnected')
+        }
+        return this.disconnect()
     }
 
     _checkAutoDisconnect() {

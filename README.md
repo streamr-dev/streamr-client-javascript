@@ -86,6 +86,7 @@ publishWithSignature | 'auto' | Determines if data points published to streams a
 verifySignatures | 'auto' | Determines under which conditions signed and unsigned data points are accepted or rejected. 'always' accepts only signed and verified data points. 'never' accepts all data points. 'auto' verifies all signed data points before accepting them and accepts unsigned data points only for streams not supposed to contain signed data.
 autoConnect | true | If set to `true`, the client connects automatically on the first call to `subscribe()`. Otherwise an explicit call to `connect()` is required.
 autoDisconnect | true  | If set to `true`, the client automatically disconnects when the last stream is unsubscribed. Otherwise the connection is left open and can be disconnected explicitly by calling `disconnect()`.
+maxPublishQueueSize | 10000 | Only in effect when `autoConnect = true`. Controls the maximum number of messages to retain in internal queue when client has disconnected and is reconnecting to Streamr.
 
 ### Authentication options
 
@@ -146,9 +147,11 @@ streamMessage | The whole [StreamMessage](https://github.com/streamr-dev/streamr
 
 Name | Description
 ---- | -----------
-connect() | Connects to the server, and also subscribes to any streams for which `subscribe()` has been called before calling `connect()`.
-disconnect() | Disconnects from the server, clearing all subscriptions.
+connect() | Connects to the server, and also subscribes to any streams for which `subscribe()` has been called before calling `connect()`. Returns a Promise. Rejects if already connected or connecting.
+disconnect() | Disconnects from the server, clearing all subscriptions. Returns a Promise.  Rejects if already disconnected or disconnecting.
 pause() | Disconnects from the server without clearing subscriptions.
+ensureConnected() | Safely connects if not connected. Returns a promise. Resolves immediately if already connected. Only rejects if an error occurs during connection.
+ensureDisconnected() | Safely disconnects if not disconnected. Returns a promise. Resolves immediately if already disconnected. Only rejects if an error occurs during disconnection.
 
 #### Managing subscriptions
 
@@ -172,7 +175,7 @@ createStream(properties) | Creates a Stream with the given properties. For more 
 getOrCreateStream(properties) | Gets a Stream with the id or name given in `properties`, or creates it if one is not found.
 publish(streamId, message) | Publishes a new message (data point) to the given Stream.
 
-#### Listening to state changes of the client 
+#### Listening to state changes of the client
 
 on(eventName, function) | Binds a `function` to an event called `eventName`
 once(eventName, function) | Binds a `function` to an event called `eventName`. It gets called once and then removed.
@@ -263,8 +266,8 @@ subscribed | | Fired when a subscription request is acknowledged by the server.
 unsubscribed | | Fired when an unsubscription is acknowledged by the server.
 resending | [ResendResponseResending](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_resending/ResendResponseResendingV1.js) | Fired when the subscription starts resending. Followed by the `resent` event to mark completion of the resend after resent messages have been processed by the message handler function.
 resent | [ResendResponseResent](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_resent/ResendResponseResentV1.js) | Fired after `resending` when the subscription has finished resending.
-no_resend | [ResendResponseNoResend](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_no_resend/ResendResponseNoResendV1.js) | This will occur instead of the `resending` - `resent` sequence in case there were no messages to resend. 
-error | Error object | Reports errors, for example problems with message content 
+no_resend | [ResendResponseNoResend](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_no_resend/ResendResponseNoResendV1.js) | This will occur instead of the `resending` - `resent` sequence in case there were no messages to resend.
+error | Error object | Reports errors, for example problems with message content
 
 ### Logging
 
