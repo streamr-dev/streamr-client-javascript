@@ -275,16 +275,23 @@ export default class StreamrClient extends EventEmitter {
                     `publishQueue exceeded maxPublishQueueSize=${this.options.maxPublishQueueSize}`,
                 )
             }
-            return new Promise((resolve, reject) => {
-                this.publishQueue.push(async () => (
-                    this.publish(streamId, data, timestamp, partitionKey)
-                        .then(resolve, (err) => {
-                            debug(`Error: ${err}`)
-                            this.emit('error', err)
-                            reject(err)
-                        })
-                ))
+
+            const published = new Promise((resolve, reject) => {
+                this.publishQueue.push(async () => {
+                    try {
+                        await this.publish(streamId, data, timestamp, partitionKey)
+                    } catch (err) {
+                        debug(`Error: ${err}`)
+                        this.emit('error', err)
+                        reject(err)
+                        return
+                    }
+                    resolve()
+                })
             })
+            // be sure to trigger connection *after* queueing publish
+            await this.ensureConnected() // await to ensure connection error fails publish
+            return published
         }
 
         throw new FailedToPublishError(
