@@ -50,6 +50,7 @@ export default class StreamrClient extends EventEmitter {
             retryResendAfter: 5000,
             gapFillTimeout: 5000,
             maxPublishQueueSize: 10000,
+            groupKeys: {},
         }
         this.subscribedStreams = {}
 
@@ -93,7 +94,7 @@ export default class StreamrClient extends EventEmitter {
                 this.options.auth, this.signer, this.getUserInfo()
                     .catch((err) => this.emit('error', err)),
                 (streamId) => this.getStream(streamId)
-                    .catch((err) => this.emit('error', err)),
+                    .catch((err) => this.emit('error', err)), this.options.groupKeys,
             )
         }
 
@@ -265,7 +266,7 @@ export default class StreamrClient extends EventEmitter {
         return stream ? stream.getSubscriptions() : []
     }
 
-    async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
+    async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null, groupKey) {
         if (this.session.isUnauthenticated()) {
             throw new Error('Need to be authenticated to publish.')
         }
@@ -281,7 +282,7 @@ export default class StreamrClient extends EventEmitter {
 
         const [sessionToken, streamMessage] = await Promise.all([
             this.session.getSessionToken(),
-            this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey),
+            this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey, groupKey),
         ])
 
         if (this.isConnected()) {
@@ -363,7 +364,7 @@ export default class StreamrClient extends EventEmitter {
         return options
     }
 
-    subscribe(optionsOrStreamId, callback, legacyOptions) {
+    subscribe(optionsOrStreamId, callback, legacyOptions, groupKey) {
         const options = this._validateParameters(optionsOrStreamId, callback)
 
         // Backwards compatibility for giving an options object as third argument
@@ -373,8 +374,15 @@ export default class StreamrClient extends EventEmitter {
             throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
+        if (groupKey) {
+            this.options.groupKeys[options.stream] = groupKey
+        }
+
         // Create the Subscription object and bind handlers
-        const sub = new Subscription(options.stream, options.partition || 0, callback, options.resend, this.options.gapFillTimeout)
+        const sub = new Subscription(
+            options.stream, options.partition || 0, callback, options.resend,
+            this.options.gapFillTimeout, this.options.groupKeys[options.stream],
+        )
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {
                 this._requestResend(sub, {

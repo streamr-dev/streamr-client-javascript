@@ -1,10 +1,13 @@
+import crypto from 'crypto'
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { Errors } from 'streamr-client-protocol'
+import ethers from 'ethers'
+import { MessageLayer, Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
 
 const debug = debugFactory('StreamrClient::Subscription')
+const { StreamMessage } = MessageLayer
 
 let subId = 0
 function generateSubscriptionId() {
@@ -16,7 +19,7 @@ function generateSubscriptionId() {
 const DEFAULT_GAPFILL_TIMEOUT = 5000
 
 class Subscription extends EventEmitter {
-    constructor(streamId, streamPartition, callback, options, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT) {
+    constructor(streamId, streamPartition, callback, options, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT, groupKey) {
         super()
 
         if (!streamId) {
@@ -37,7 +40,7 @@ class Subscription extends EventEmitter {
         this.lastReceivedMsgRef = {}
         this.gaps = {}
         this.gapFillTimeout = gapFillTimeout
-
+        this.groupKey = groupKey
         if (this.resendOptions.from != null && this.resendOptions.last != null) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
         }
@@ -233,7 +236,7 @@ class Subscription extends EventEmitter {
             } else {
                 // Normal case where prevMsgRef == null || lastReceivedMsgRef == null || prevMsgRef === lastReceivedMsgRef
                 this.lastReceivedMsgRef[key] = messageRef
-                this.callback(msg.getParsedContent(), msg)
+                this.callback(this.getContent(msg), msg)
                 if (msg.isByeMessage()) {
                     this.emit('done')
                 }
@@ -319,6 +322,31 @@ class Subscription extends EventEmitter {
             this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
         }
         this.emit('error', err)
+    }
+
+    getContent(msg) {
+        if (msg.contentType === StreamMessage.CONTENT_TYPES.JSON) {
+            if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NONE) {
+                return msg.getParsedContent()
+            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
+                return JSON.parse(Subscription.decrypt(msg.getSerializedContent(), this.groupKey))
+            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
+                const plaintext = Subscription.decrypt(msg.getSerializedContent(), this.groupKey)
+                this.groupKey = plaintext.slice(0, 32)
+                return JSON.parse(plaintext.slice(32))
+            }
+            throw new Error(`Unsupported encryption type for JSON content type: ${msg.encryptionType}`)
+        } else {
+            // TODO: Support other types (Group key request, response and reset)
+            throw new Error(`Unsupported content type: ${msg.contentType}`)
+        }
+    }
+
+    static decrypt(ciphertext, groupKey) {
+        // 34 = 2 + 2*16, for '0x' prefix and 2 chars per byte in 16 bytes IV
+        const iv = ethers.utils.arrayify(ciphertext.slice(0, 34))
+        const decipher = crypto.createDecipheriv('aes-256-ctr', groupKey, iv)
+        return decipher.update(ciphertext.slice(34), 'hex', 'utf8') + decipher.final('utf8')
     }
 }
 

@@ -8,7 +8,7 @@ import Stream from './rest/domain/Stream'
 const { StreamMessage } = MessageLayer
 
 export default class MessageCreationUtil {
-    constructor(auth, signer, userInfoPromise, getStreamFunction) {
+    constructor(auth, signer, userInfoPromise, getStreamFunction, groupKeys = {}) {
         this.auth = auth
         this._signer = signer
         this.userInfoPromise = userInfoPromise
@@ -19,6 +19,7 @@ export default class MessageCreationUtil {
             useClones: false,
         })
         this.publishedStreams = {}
+        this.groupKeys = groupKeys
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
     }
@@ -92,7 +93,7 @@ export default class MessageCreationUtil {
         return this.publishedStreams[key].prevSequenceNumber
     }
 
-    async createStreamMessage(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
+    async createStreamMessage(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null, groupKey) {
         // Validate data
         if (typeof data !== 'object') {
             throw new Error(`Message data must be an object! Was: ${data}`)
@@ -111,10 +112,26 @@ export default class MessageCreationUtil {
             }
         }
 
+        let encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
+        let content = data
+        if (groupKey && this.groupKeys[stream.id]) {
+            encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
+            const plaintext = groupKey + JSON.stringify(data)
+            content = MessageCreationUtil.encrypt(plaintext, this.groupKeys[stream.id])
+            this.groupKeys[stream.id] = groupKey
+        } else if (groupKey) {
+            this.groupKeys[stream.id] = groupKey
+        }
+
+        if (this.groupKeys[stream.id]) {
+            encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
+            content = MessageCreationUtil.encrypt(JSON.stringify(data), this.groupKeys[stream.id])
+        }
+
         const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
         const streamMessage = StreamMessage.create(
             [stream.id, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
-            StreamMessage.CONTENT_TYPES.JSON, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            StreamMessage.CONTENT_TYPES.JSON, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
@@ -145,5 +162,11 @@ export default class MessageCreationUtil {
             // Fallback to random partition if no key
             return Math.floor(Math.random() * partitionCount)
         }
+    }
+
+    static encrypt(data, groupKey) {
+        const iv = crypto.randomBytes(16) // always need a fresh IV when using CTR mode
+        const cipher = crypto.createCipheriv('aes-256-ctr', groupKey, iv)
+        return ethers.utils.hexlify(iv) + cipher.update(data, 'utf8', 'hex') + cipher.final('hex')
     }
 }
