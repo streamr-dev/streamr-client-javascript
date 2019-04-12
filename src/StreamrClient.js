@@ -523,28 +523,29 @@ export default class StreamrClient extends EventEmitter {
         this.connection.send(UnsubscribeRequest.create(streamId))
     }
 
-    _requestResend(sub, resendOptions) {
+    async _requestResend(sub, resendOptions) {
         sub.setResending(true)
         const options = resendOptions || sub.getEffectiveResendOptions()
-        return this.session.getSessionToken().then((sessionToken) => {
-            let request
-            if (options.last > 0) {
-                request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.last, sessionToken)
-            } else if (options.from && !options.to) {
-                request = ResendFromRequest.create(
-                    sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
-                    options.publisherId || null, options.msgChainId || '', sessionToken,
-                )
-            } else if (options.from && options.to) {
-                request = ResendRangeRequest.create(
-                    sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
-                    [options.to.timestamp, options.to.sequenceNumber],
-                    options.publisherId || null, options.msgChainId || '', sessionToken,
-                )
-            }
-            debug('_requestResend: %o', request)
-            this.connection.send(request)
-        })
+        const sessionToken = await this.session.getSessionToken()
+        // don't bother requesting resend if not connected
+        if (!this.isConnected()) { return }
+        let request
+        if (options.last > 0) {
+            request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.last, sessionToken)
+        } else if (options.from && !options.to) {
+            request = ResendFromRequest.create(
+                sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
+                options.publisherId || null, options.msgChainId || '', sessionToken,
+            )
+        } else if (options.from && options.to) {
+            request = ResendRangeRequest.create(
+                sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
+                [options.to.timestamp, options.to.sequenceNumber],
+                options.publisherId || null, options.msgChainId || '', sessionToken,
+            )
+        }
+        debug('_requestResend: %o', request)
+        this.connection.send(request)
     }
 
     _requestPublish(streamMessage, sessionToken) {

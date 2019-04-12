@@ -285,7 +285,7 @@ describe('StreamrClient Connection', () => {
         }, 6000)
     })
 
-    describe('publish connection handling', () => {
+    describe('publish/subscribe connection handling', () => {
         let client
         async function teardown() {
             if (!client) { return }
@@ -301,77 +301,106 @@ describe('StreamrClient Connection', () => {
         afterEach(async () => {
             await teardown()
         })
+        describe('publish', () => {
+            it('will connect if not connected if autoconnect set', async (done) => {
+                client = createClient({
+                    autoConnect: true,
+                    autoDisconnect: true,
+                })
 
-        it('will connect if not connected if autoconnect set', async (done) => {
-            client = createClient({
-                autoConnect: true,
-                autoDisconnect: true,
+                client.once('error', done)
+
+                const stream = await client.createStream({
+                    name: uniqueId(),
+                })
+                await client.ensureDisconnected()
+
+                const message = {
+                    id2: uniqueId(),
+                }
+                client.once('connected', () => {
+                    // wait in case of delayed errors
+                    setTimeout(() => done(), 500)
+                })
+                await client.publish(stream.id, message)
             })
 
-            client.once('error', done)
+            it('will connect if disconnecting & autoconnect set', async (done) => {
+                client = createClient({
+                    autoConnect: true,
+                    autoDisconnect: true,
+                })
 
-            const stream = await client.createStream({
-                name: uniqueId(),
-            })
-            await client.ensureDisconnected()
+                client.once('error', done)
+                await client.ensureConnected()
+                const stream = await client.createStream({
+                    name: uniqueId(),
+                })
 
-            const message = {
-                id2: uniqueId(),
-            }
-            client.once('connected', () => {
+                const message = {
+                    id1: uniqueId(),
+                }
+                const p = client.publish(stream.id, message)
+                setTimeout(() => {
+                    client.disconnect() // start async disconnect after publish started
+                })
+                await p
                 // wait in case of delayed errors
                 setTimeout(() => done(), 500)
             })
-            await client.publish(stream.id, message)
+
+            it('will error if disconnecting & autoconnect not set', async (done) => {
+                client = createClient({
+                    autoConnect: false,
+                    autoDisconnect: false,
+                })
+
+                client.once('error', done)
+                await client.ensureConnected()
+                const stream = await client.createStream({
+                    name: uniqueId(),
+                })
+
+                const message = {
+                    id1: uniqueId(),
+                }
+
+                client.publish(stream.id, message).catch((err) => {
+                    expect(err).toBeTruthy()
+                    done()
+                })
+
+                setTimeout(() => {
+                    client.disconnect() // start async disconnect after publish started
+                })
+            })
         })
+        describe('subscribe', () => {
+            it('does not error if disconnect after subscribe', async (done) => {
+                client = createClient({
+                    autoConnect: true,
+                    autoDisconnect: true,
+                })
 
-        it('will connect if disconnecting & autoconnect set', async (done) => {
-            client = createClient({
-                autoConnect: true,
-                autoDisconnect: true,
-            })
+                client.once('error', done)
+                await client.ensureConnected()
+                const stream = await client.createStream({
+                    name: uniqueId(),
+                })
 
-            client.once('error', done)
-            await client.ensureConnected()
-            const stream = await client.createStream({
-                name: uniqueId(),
-            })
-
-            const message = {
-                id1: uniqueId(),
-            }
-            const p = client.publish(stream.id, message)
-            setTimeout(() => {
-                client.disconnect() // start async disconnect after publish started
-            })
-            await p
-            // wait in case of delayed errors
-            setTimeout(() => done(), 500)
-        })
-
-        it('will error if disconnecting & autoconnect not set', async (done) => {
-            client = createClient({
-                autoConnect: false,
-                autoDisconnect: false,
-            })
-
-            client.once('error', done)
-            await client.ensureConnected()
-            const stream = await client.createStream({
-                name: uniqueId(),
-            })
-
-            const message = {
-                id1: uniqueId(),
-            }
-
-            client.publish(stream.id, message).catch((err) => {
-                expect(err).toBeTruthy()
-                done()
-            })
-
-            setTimeout(() => {
-                client.disconnect() // start async disconnect after publish started
+                const sub = client.subscribe({
+                    stream: stream.id,
+                    resend: {
+                        from: {
+                            timestamp: 0,
+                        },
+                    },
+                }, () => {})
+                sub.once('subscribed', async () => {
+                    await client.disconnect()
+                    // wait in case of delayed errors
+                    setTimeout(() => done(), 500)
+                })
             })
         })
     })
