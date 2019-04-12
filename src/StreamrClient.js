@@ -268,6 +268,18 @@ export default class StreamrClient extends EventEmitter {
         // If connected, emit a publish request
         if (this.isConnected()) {
             const streamMessage = await this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey)
+            // if happened to disconnect before completed
+            if (!this.isConnected()) {
+                if (this.options.autoConnect) {
+                    // try reconnect if autoConnect
+                    return this.publish(streamId, data, timestamp, partitionKey)
+                }
+                throw new FailedToPublishError(
+                    streamId,
+                    data,
+                    'Disconnected before publish completed',
+                )
+            }
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
             if (this.publishQueue.length >= this.options.maxPublishQueueSize) {
