@@ -254,7 +254,6 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
-        const sessionToken = await this.session.getSessionToken()
         // Validate streamObjectOrId
         let streamId
         if (streamObjectOrId instanceof Stream) {
@@ -265,21 +264,13 @@ export default class StreamrClient extends EventEmitter {
             throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
         }
 
-        // If connected, emit a publish request
+        const [sessionToken, streamMessage] = await Promise.all([
+            this.session.getSessionToken(),
+            this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey),
+        ])
+
         if (this.isConnected()) {
-            const streamMessage = await this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey)
-            // if happened to disconnect before completed
-            if (!this.isConnected()) {
-                if (this.options.autoConnect) {
-                    // try reconnect if autoConnect
-                    return this.publish(streamId, data, timestamp, partitionKey)
-                }
-                throw new FailedToPublishError(
-                    streamId,
-                    data,
-                    'Disconnected before publish completed',
-                )
-            }
+            // If connected, emit a publish request
             return this._requestPublish(streamMessage, sessionToken)
         } else if (this.options.autoConnect) {
             if (this.publishQueue.length >= this.options.maxPublishQueueSize) {
@@ -293,7 +284,7 @@ export default class StreamrClient extends EventEmitter {
             const published = new Promise((resolve, reject) => {
                 this.publishQueue.push(async () => {
                     try {
-                        await this.publish(streamId, data, timestamp, partitionKey)
+                        await this._requestPublish(streamMessage, sessionToken)
                     } catch (err) {
                         debug(`Error: ${err}`)
                         this.emit('error', err)
