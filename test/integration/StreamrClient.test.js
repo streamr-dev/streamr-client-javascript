@@ -73,7 +73,7 @@ describe('StreamrClient Connection', () => {
                 expect(onError).toHaveBeenCalledWith(error)
                 done()
             })
-        })
+        }, 10000)
     })
 
     describe('bad config.restUrl', () => {
