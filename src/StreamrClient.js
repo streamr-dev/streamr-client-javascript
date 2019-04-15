@@ -497,9 +497,9 @@ export default class StreamrClient extends EventEmitter {
                         removeCallbacks()
                     }
                     sub.once('message received', handler)
-                    sub.once('no_resend', () => handler)
-                    sub.once('unsubscribed', () => handler)
-                    sub.once('error', () => handler)
+                    sub.once('no_resend', handler)
+                    sub.once('unsubscribed', handler)
+                    sub.once('error', handler)
                 }
             })
         }
