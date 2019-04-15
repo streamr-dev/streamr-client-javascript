@@ -60,24 +60,25 @@ export default class Subscription extends EventEmitter {
         /** * Message handlers ** */
 
         this.on('unsubscribed', () => {
-            Object.keys(this.gaps).forEach((gap) => {
-                clearInterval(gap)
-            })
+            this._clearGaps()
             this.setResending(false)
         })
 
         this.on('disconnected', () => {
             this.setState(Subscription.State.unsubscribed)
-            Object.keys(this.gaps).forEach((gap) => {
-                clearInterval(gap)
-            })
+            this._clearGaps()
             this.setResending(false)
         })
 
         this.on('error', () => {
-            Object.keys(this.gaps).forEach((gap) => {
-                clearInterval(gap)
-            })
+            this._clearGaps()
+        })
+    }
+
+    _clearGaps() {
+        Object.keys(this.gaps).forEach((gap) => {
+            clearInterval(gap)
+            delete this.gaps[gap]
         })
     }
 
