@@ -56,12 +56,21 @@ describe('StreamrClient Connection', () => {
                 autoConnect: true,
                 autoDisconnect: true,
             })
-            client.once('error', async (error) => {
+
+            const onError = jest.fn()
+            client.once('error', onError)
+
+            const stream = await client.createStream({
+                name: uniqueId(),
+            }) // this will succeed because it uses restUrl config, not url
+
+            // publish should trigger connect
+            await client.publish(stream, {}).catch((error) => {
                 expect(error).toBeTruthy()
-                done()
-            })
-            await client.publish('stream-id', {}).catch(async (error) => {
-                expect(error).toBeTruthy()
+                // check error is emitted with same error before rejection
+                // not clear if emit or reject *should* occur first
+                expect(onError).toHaveBeenCalledTimes(1)
+                expect(onError).toHaveBeenCalledWith(error)
                 done()
             })
         })
