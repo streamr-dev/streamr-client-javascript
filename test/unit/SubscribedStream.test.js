@@ -97,7 +97,7 @@ describe('SubscribedStream', () => {
                 const timestamp = Date.now()
                 msg = StreamMessage.create(
                     [streamId, 0, timestamp, 0, '', ''], null, StreamMessage.CONTENT_TYPES.JSON,
-                    data, StreamMessage.SIGNATURE_TYPES.NONE,
+                    StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
                 await signer.signStreamMessage(msg)
                 spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
@@ -138,7 +138,7 @@ describe('SubscribedStream', () => {
                 const timestamp = Date.now()
                 msg = StreamMessage.create(
                     [streamId, 0, timestamp, 0, '', ''], null, StreamMessage.CONTENT_TYPES.JSON,
-                    data, StreamMessage.SIGNATURE_TYPES.NONE,
+                    StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE,
                 )
             })
             afterEach(async () => {

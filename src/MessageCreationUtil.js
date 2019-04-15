@@ -116,14 +116,14 @@ export default class MessageCreationUtil {
         let content = data
         if (groupKey && this.groupKeys[stream.id]) {
             encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
-            const plaintext = groupKey + JSON.stringify(data)
+            const plaintext = ethers.utils.hexlify(groupKey) + JSON.stringify(data)
             content = MessageCreationUtil.encrypt(plaintext, this.groupKeys[stream.id])
             this.groupKeys[stream.id] = groupKey
         } else if (groupKey) {
             this.groupKeys[stream.id] = groupKey
-        }
-
-        if (this.groupKeys[stream.id]) {
+            encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
+            content = MessageCreationUtil.encrypt(JSON.stringify(data), this.groupKeys[stream.id])
+        } else if (this.groupKeys[stream.id]) {
             encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
             content = MessageCreationUtil.encrypt(JSON.stringify(data), this.groupKeys[stream.id])
         }
@@ -164,9 +164,12 @@ export default class MessageCreationUtil {
         }
     }
 
+    /*
+    Both 'data' and 'groupKey' must be byte arrays or Buffers.
+     */
     static encrypt(data, groupKey) {
         const iv = crypto.randomBytes(16) // always need a fresh IV when using CTR mode
         const cipher = crypto.createCipheriv('aes-256-ctr', groupKey, iv)
-        return ethers.utils.hexlify(iv) + cipher.update(data, 'utf8', 'hex') + cipher.final('hex')
+        return ethers.utils.hexlify(iv).slice(2) + cipher.update(data, 'utf8', 'hex') + cipher.final('hex')
     }
 }

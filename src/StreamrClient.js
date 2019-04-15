@@ -58,14 +58,14 @@ export default class StreamrClient extends EventEmitter {
 
         const parts = this.options.url.split('?')
         if (parts.length === 1) { // there is no query string
-            this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=30`
+            this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=31`
         } else {
             const queryObj = qs.parse(parts[1])
             if (!queryObj.controlLayerVersion) {
                 this.options.url = `${this.options.url}&controlLayerVersion=1`
             }
             if (!queryObj.messageLayerVersion) {
-                this.options.url = `${this.options.url}&messageLayerVersion=30`
+                this.options.url = `${this.options.url}&messageLayerVersion=31`
             }
         }
 

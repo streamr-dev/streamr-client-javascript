@@ -166,8 +166,8 @@ class Subscription extends EventEmitter {
     }
 
     async _handleMessage(msg, verifyFn, isResend = false) {
-        if (msg.version !== 30) {
-            throw new Error(`Can handle only StreamMessageV30, not version ${msg.version}`)
+        if (msg.version !== 31) {
+            throw new Error(`Can handle only StreamMessageV31, not version ${msg.version}`)
         }
         if (msg.prevMsgRef == null) {
             debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
@@ -332,7 +332,7 @@ class Subscription extends EventEmitter {
                 return JSON.parse(Subscription.decrypt(msg.getSerializedContent(), this.groupKey))
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
                 const plaintext = Subscription.decrypt(msg.getSerializedContent(), this.groupKey)
-                this.groupKey = plaintext.slice(0, 32)
+                this.groupKey = ethers.utils.arrayify(plaintext.slice(0, 32))
                 return JSON.parse(plaintext.slice(32))
             }
             throw new Error(`Unsupported encryption type for JSON content type: ${msg.encryptionType}`)
