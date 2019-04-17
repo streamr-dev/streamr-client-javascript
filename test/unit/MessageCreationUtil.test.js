@@ -261,19 +261,29 @@ describe('MessageCreationUtil', () => {
             const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream, keys)
             const msg = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
             assert.strictEqual(msg.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
-            assert.strictEqual(msg.getSerializedContent().length, 60) // 2 + 16*2 + 13*2 ('0x' + IV + msg of 13 chars)
+            assert.strictEqual(msg.getSerializedContent().length, 58) // 16*2 + 13*2 (hex string made of IV + msg of 13 chars)
+        })
+        it('should throw when using a key with a size smaller than 256 bits', (done) => {
+            const key = crypto.randomBytes(16)
+            const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
+            msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key).catch((err) => {
+                assert.strictEqual(err.toString(), 'Error: Group key must have a size of 256 bits, not 128')
+                done()
+            })
         })
         it('should create encrypted messages when key defined in createStreamMessage() and use the same key later', async () => {
             const key = crypto.randomBytes(32)
             const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
             const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key)
             assert.strictEqual(msg1.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
-            assert.strictEqual(msg1.getSerializedContent().length, 60)
+            assert.strictEqual(msg1.getSerializedContent().length, 58)
             const msg2 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
             assert.strictEqual(msg2.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
-            assert.strictEqual(msg2.getSerializedContent().length, 60)
+            assert.strictEqual(msg2.getSerializedContent().length, 58)
+            // should use different IVs
+            assert.notDeepStrictEqual(msg1.getSerializedContent().slice(0, 32), msg2.getSerializedContent().slice(0, 32))
             // should produce different ciphertexts even if same plaintexts and same key
-            assert.notDeepStrictEqual(msg1.getSerializedContent(), msg2.getSerializedContent())
+            assert.notDeepStrictEqual(msg1.getSerializedContent().slice(32), msg2.getSerializedContent().slice(32))
         })
         it('should update the key when redefined', async () => {
             const key1 = crypto.randomBytes(32)
@@ -281,12 +291,10 @@ describe('MessageCreationUtil', () => {
             const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
             const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key1)
             assert.strictEqual(msg1.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
-            assert.strictEqual(msg1.getSerializedContent().length, 60)
+            assert.strictEqual(msg1.getSerializedContent().length, 58)
             const msg2 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key2)
             assert.strictEqual(msg2.encryptionType, StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
-            assert.strictEqual(msg2.getSerializedContent().length, 192)// 2 + 16*2 + 32*2 + 13*2
-            // should produce different ciphertexts
-            assert.notDeepStrictEqual(msg1.getSerializedContent(), msg2.getSerializedContent())
+            assert.strictEqual(msg2.getSerializedContent().length, 122)// 16*2 + 32*2 + 13*2 (IV + key of 32 bytes + msg of 13 chars)
         })
     })
 })

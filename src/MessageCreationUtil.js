@@ -19,6 +19,7 @@ export default class MessageCreationUtil {
             useClones: false,
         })
         this.publishedStreams = {}
+        Object.values(groupKeys).forEach((key) => MessageCreationUtil.validateGroupKey(key))
         this.groupKeys = groupKeys
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
@@ -98,6 +99,9 @@ export default class MessageCreationUtil {
         if (typeof data !== 'object') {
             throw new Error(`Message data must be an object! Was: ${data}`)
         }
+        if (groupKey) {
+            MessageCreationUtil.validateGroupKey(groupKey)
+        }
 
         const stream = (streamObjectOrId instanceof Stream) ? streamObjectOrId : await this.getStream(streamObjectOrId)
 
@@ -116,16 +120,15 @@ export default class MessageCreationUtil {
         let content = data
         if (groupKey && this.groupKeys[stream.id]) {
             encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
-            const plaintext = ethers.utils.hexlify(groupKey) + JSON.stringify(data)
+            const plaintext = Buffer.concat([groupKey, Buffer.from(JSON.stringify(data), 'utf8')])
             content = MessageCreationUtil.encrypt(plaintext, this.groupKeys[stream.id])
             this.groupKeys[stream.id] = groupKey
-        } else if (groupKey) {
-            this.groupKeys[stream.id] = groupKey
+        } else if (groupKey || this.groupKeys[stream.id]) {
+            if (groupKey) {
+                this.groupKeys[stream.id] = groupKey
+            }
             encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
-            content = MessageCreationUtil.encrypt(JSON.stringify(data), this.groupKeys[stream.id])
-        } else if (this.groupKeys[stream.id]) {
-            encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
-            content = MessageCreationUtil.encrypt(JSON.stringify(data), this.groupKeys[stream.id])
+            content = MessageCreationUtil.encrypt(Buffer.from(JSON.stringify(data), 'utf8'), this.groupKeys[stream.id])
         }
 
         const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
@@ -165,11 +168,20 @@ export default class MessageCreationUtil {
     }
 
     /*
-    Both 'data' and 'groupKey' must be byte arrays or Buffers.
+    Both 'data' and 'groupKey' must be Buffers. Returns a hex string without the '0x' prefix.
      */
     static encrypt(data, groupKey) {
         const iv = crypto.randomBytes(16) // always need a fresh IV when using CTR mode
         const cipher = crypto.createCipheriv('aes-256-ctr', groupKey, iv)
-        return ethers.utils.hexlify(iv).slice(2) + cipher.update(data, 'utf8', 'hex') + cipher.final('hex')
+        return ethers.utils.hexlify(iv).slice(2) + cipher.update(data, null, 'hex') + cipher.final('hex')
+    }
+
+    static validateGroupKey(groupKey) {
+        if (!(groupKey instanceof Buffer)) {
+            throw new Error(`Group key must be a Buffer: ${groupKey}`)
+        }
+        if (groupKey.length !== 32) {
+            throw new Error(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
+        }
     }
 }

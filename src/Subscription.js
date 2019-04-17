@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { MessageLayer, Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
@@ -236,7 +236,8 @@ class Subscription extends EventEmitter {
             } else {
                 // Normal case where prevMsgRef == null || lastReceivedMsgRef == null || prevMsgRef === lastReceivedMsgRef
                 this.lastReceivedMsgRef[key] = messageRef
-                this.callback(this.getContent(msg), msg)
+                const content = this.getContent(msg)
+                this.callback(content, msg)
                 if (msg.isByeMessage()) {
                     this.emit('done')
                 }
@@ -329,11 +330,22 @@ class Subscription extends EventEmitter {
             if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NONE) {
                 return msg.getParsedContent()
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
-                return JSON.parse(Subscription.decrypt(msg.getSerializedContent(), this.groupKey))
-            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
-                const plaintext = Subscription.decrypt(msg.getSerializedContent(), this.groupKey)
-                this.groupKey = ethers.utils.arrayify(plaintext.slice(0, 32))
-                return JSON.parse(plaintext.slice(32))
+                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKey).toString()
+                try {
+                    return JSON.parse(decryptionResult)
+                } catch (err) {
+                    throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
+                }
+            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
+                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKey)
+                let content
+                try {
+                    content = JSON.parse(decryptionResult.slice(32).toString())
+                    this.groupKey = decryptionResult.slice(0, 32)
+                    return content
+                } catch (err) {
+                    throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
+                }
             }
             throw new Error(`Unsupported encryption type for JSON content type: ${msg.encryptionType}`)
         } else {
@@ -342,11 +354,13 @@ class Subscription extends EventEmitter {
         }
     }
 
+    /*
+    'ciphertext' must be a hex string (without '0x' prefix), 'groupKey' must be a Buffer. Returns a Buffer.
+     */
     static decrypt(ciphertext, groupKey) {
-        // 34 = 2 + 2*16, for '0x' prefix and 2 chars per byte in 16 bytes IV
-        const iv = ethers.utils.arrayify(ciphertext.slice(0, 34))
+        const iv = ethers.utils.arrayify(`0x${ciphertext.slice(0, 32)}`)
         const decipher = crypto.createDecipheriv('aes-256-ctr', groupKey, iv)
-        return decipher.update(ciphertext.slice(34), 'hex', 'utf8') + decipher.final('utf8')
+        return Buffer.concat([decipher.update(ciphertext.slice(32), 'hex', null), decipher.final(null)])
     }
 }
 
