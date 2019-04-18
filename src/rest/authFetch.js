@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import debugFactory from 'debug'
+import AuthFetchError from '../errors/AuthFetchError'
 
 const debug = debugFactory('StreamrClient:utils')
 
@@ -22,13 +23,13 @@ const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
         try {
             return JSON.parse(body || '{}')
         } catch (e) {
-            throw new Error(`Failed to parse JSON response: ${body}`)
+            throw new AuthFetchError(`Failed to parse JSON response: ${body}`, response, body)
         }
     } else if ([400, 401].includes(response.status) && !requireNewToken) {
         return authFetch(url, session, opts, true)
     } else {
-        throw new Error(`Request to ${url} returned with error code ${response.status}: ${body}`)
+        throw new AuthFetchError(`Request to ${url} returned with error code ${response.status}: ${body}`, response, body)
     }
 }
 
-export default fetch
+export default authFetch
