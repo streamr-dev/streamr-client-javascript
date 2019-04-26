@@ -21,7 +21,7 @@ const createMsg = (
 
 const msg = createMsg()
 
-const RESEND_TIMEOUT = 1000
+const RESEND_TIMEOUT = 5000
 
 describe('Subscription', () => {
     describe('message handling', () => {
@@ -245,6 +245,7 @@ describe('Subscription', () => {
             })
 
             it('emits second "gap" after the first one if no missing message is received in between', (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
@@ -254,12 +255,15 @@ describe('Subscription', () => {
                         assert.deepStrictEqual(from, from2)
                         assert.deepStrictEqual(to, to2)
                         assert.deepStrictEqual(publisherId, publisherId2)
+                        clock.restore()
                         done()
                     })
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             }, RESEND_TIMEOUT + 2000)
 
             it('does not emit second "gap" after the first one if the missing messages are received in between', (done) => {
@@ -272,13 +276,58 @@ describe('Subscription', () => {
                 sub.on('gap', () => {
                     sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
                     sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true))
-                    sub.on('gap', sinon.stub().throws())
-                    setTimeout(done, RESEND_TIMEOUT + 1000)
+                    sub.on('gap', () => { throw new Error('should not emit second gap') })
+                    const clock = sinon.useFakeTimers()
+                    setTimeout(() => {
+                        clock.restore()
+                        done()
+                    }, RESEND_TIMEOUT + 1000)
+                    clock.tick(RESEND_TIMEOUT + 1000)
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
                 sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
-            }, RESEND_TIMEOUT + 2000)
+            })
+
+            it('does not emit second "gap" if gets unsubscribed', async (done) => {
+                const msg1 = msg
+                const msg4 = createMsg(4, undefined, 3)
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, RESEND_TIMEOUT)
+                sub.once('gap', () => {
+                    sub.on('gap', () => { throw new Error('should not emit second gap') })
+                    const clock = sinon.useFakeTimers()
+                    setTimeout(() => {
+                        clock.restore()
+                        done()
+                    }, RESEND_TIMEOUT + 1000)
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
+
+                await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                await sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.emit('unsubscribed')
+            })
+
+            it('does not emit second "gap" if gets disconnected', async (done) => {
+                const msg1 = msg
+                const msg4 = createMsg(4, undefined, 3)
+
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, RESEND_TIMEOUT)
+                sub.once('gap', () => {
+                    sub.on('gap', () => { throw new Error('should not emit second gap') })
+                    const clock = sinon.useFakeTimers()
+                    setTimeout(() => {
+                        clock.restore()
+                        done()
+                    }, RESEND_TIMEOUT + 1000)
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
+
+                await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                await sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.emit('disconnected')
+            })
 
             it('does not emit "gap" if different publishers', () => {
                 const msg1 = msg

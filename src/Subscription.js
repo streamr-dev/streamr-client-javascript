@@ -13,7 +13,7 @@ function generateSubscriptionId() {
     return id.toString()
 }
 
-const DEFAULT_RESEND_TIMEOUT = 5000
+const DEFAULT_GAPFILL_TIMEOUT = 5000
 
 export default class Subscription extends EventEmitter {
     static get State() {
@@ -25,7 +25,7 @@ export default class Subscription extends EventEmitter {
         }
     }
 
-    constructor(streamId, streamPartition, callback, options, resendTimeout = DEFAULT_RESEND_TIMEOUT) {
+    constructor(streamId, streamPartition, callback, options, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT) {
         super()
 
         if (!streamId) {
@@ -45,7 +45,7 @@ export default class Subscription extends EventEmitter {
         this.resending = false
         this.lastReceivedMsgRef = {}
         this.gaps = {}
-        this.resendTimeout = resendTimeout
+        this.gapFillTimeout = gapFillTimeout
 
         if (this.resendOptions.from != null && this.resendOptions.last != null) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
@@ -76,9 +76,9 @@ export default class Subscription extends EventEmitter {
     }
 
     _clearGaps() {
-        Object.keys(this.gaps).forEach((gap) => {
-            clearInterval(gap)
-            delete this.gaps[gap]
+        Object.keys(this.gaps).forEach((key) => {
+            clearInterval(this.gaps[key])
+            delete this.gaps[key]
         })
     }
 
@@ -216,9 +216,9 @@ export default class Subscription extends EventEmitter {
             debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
             this.emit('gap', fromObject, toObject, msg.getPublisherId(), msg.messageId.msgChainId)
 
-            // If for some reason the missing messages are not received, the gap filling request is resent every 'resendTimeout' seconds
+            // If for some reason the missing messages are not received, the gap filling request is resent every 'gapFillTimeout' seconds
             // until a message is received, at which point the gap will be filled or
-            // a new different gap request will be sent and resent every 'resendTimeout' seconds.
+            // a new different gap request will be sent and resent every 'gapFillTimeout' seconds.
             clearInterval(this.gaps[key])
             this.gaps[key] = setInterval(() => {
                 if (this.lastReceivedMsgRef[key].compareTo(to) === -1) {
@@ -226,7 +226,7 @@ export default class Subscription extends EventEmitter {
                 } else {
                     clearInterval(this.gaps[key])
                 }
-            }, this.resendTimeout)
+            }, this.gapFillTimeout)
         } else {
             const messageRef = msg.getMessageRef()
             let res
