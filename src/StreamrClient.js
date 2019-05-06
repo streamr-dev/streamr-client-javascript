@@ -84,10 +84,16 @@ export default class StreamrClient extends EventEmitter {
         // Event handling on connection object
         this.connection = connection || new Connection(this.options)
 
-        this.msgCreationUtil = new MessageCreationUtil(
-            this.options.auth, this.signer, this.getUserInfo().catch((err) => this.emit('error', err)),
-            (streamId) => this.getStream(streamId).catch((err) => this.emit('error', err)),
-        )
+        if (this.session.isUnauthenticated()) {
+            this.msgCreationUtil = null
+        } else {
+            this.msgCreationUtil = new MessageCreationUtil(
+                this.options.auth, this.signer, this.getUserInfo()
+                    .catch((err) => this.emit('error', err)),
+                (streamId) => this.getStream(streamId)
+                    .catch((err) => this.emit('error', err)),
+            )
+        }
 
         this.on('error', (error) => {
             console.error(error)
