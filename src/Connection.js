@@ -32,7 +32,14 @@ class Connection extends EventEmitter {
         } else if (this.state === Connection.State.CONNECTED) {
             return Promise.reject(new Error('Already connected!'))
         }
-        this.socket = this.socket || new WebSocket(this.options.url)
+        if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+            try {
+                this.socket = new WebSocket(this.options.url)
+            } catch (err) {
+                this.emit('error', err)
+                return Promise.reject(err)
+            }
+        }
         this.socket.binaryType = 'arraybuffer'
         this.socket.events = new EventEmitter()
         this.socket.onopen = () => this.socket.events.emit('open')
