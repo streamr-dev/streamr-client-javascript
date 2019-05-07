@@ -264,6 +264,9 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async publish(streamObjectOrId, data, timestamp = Date.now(), partitionKey = null) {
+        if (this.session.isUnauthenticated()) {
+            throw new Error('Need to be authenticated to publish.')
+        }
         // Validate streamObjectOrId
         let streamId
         if (streamObjectOrId instanceof Stream) {
