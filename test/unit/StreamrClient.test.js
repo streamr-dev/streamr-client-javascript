@@ -222,7 +222,7 @@ describe('StreamrClient', () => {
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     // sending second resend last request since no answer to the first request was received
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend, 'session-token'))
                     setTimeout(done, STORAGE_DELAY + 1000)
                 })
                 return client.connect()
@@ -668,9 +668,9 @@ describe('StreamrClient', () => {
                             last: 5,
                         },
                     })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5, 'session-token'))
                     setTimeout(done, STORAGE_DELAY + 200)
                 }, STORAGE_DELAY + 1000)
 
