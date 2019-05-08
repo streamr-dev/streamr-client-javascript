@@ -6,16 +6,7 @@ import { ControlLayer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
 
-export default class Connection extends EventEmitter {
-    static get State() {
-        return {
-            DISCONNECTED: 'disconnected',
-            CONNECTING: 'connecting',
-            CONNECTED: 'connected',
-            DISCONNECTING: 'disconnecting',
-        }
-    }
-
+class Connection extends EventEmitter {
     constructor(options, socket) {
         super()
         if (!options.url) {
@@ -120,4 +111,13 @@ export default class Connection extends EventEmitter {
         }
     }
 }
+
+Connection.State = {
+    DISCONNECTED: 'disconnected',
+    CONNECTING: 'connecting',
+    CONNECTED: 'connected',
+    DISCONNECTING: 'disconnecting',
+}
+
+export default Connection
 
