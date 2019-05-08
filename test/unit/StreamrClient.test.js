@@ -53,7 +53,7 @@ describe('StreamrClient', () => {
     ) {
         assert(client.isConnected(), 'setupSubscription: Client is not connected!')
         if (expectSubscribeRequest) {
-            connection.expect(SubscribeRequest.create(streamId))
+            connection.expect(SubscribeRequest.create(streamId, 0, 'session-token'))
         }
         const sub = client.subscribe({
             stream: streamId,
@@ -142,6 +142,9 @@ describe('StreamrClient', () => {
             autoDisconnect: false,
             verifySignatures: 'never',
             retryResendAfter: STORAGE_DELAY,
+            auth: {
+                sessionToken: 'session-token',
+            },
         }, connection)
     })
 
@@ -164,7 +167,7 @@ describe('StreamrClient', () => {
             it('should send pending subscribes', (done) => {
                 client.subscribe('stream1', () => {})
 
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
                 client.connect()
                 connection.on('connected', done)
@@ -172,9 +175,9 @@ describe('StreamrClient', () => {
 
             it('should send pending subscribes when disconnected and then reconnected', async () => {
                 // On connect
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
                 // On reconnect
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
                 client.subscribe('stream1', () => {})
                 await client.connect()
@@ -184,7 +187,7 @@ describe('StreamrClient', () => {
 
             it('should not subscribe to unsubscribed streams on reconnect', (done) => {
                 // On connect
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
                 // On unsubscribe
                 connection.expect(UnsubscribeRequest.create('stream1'))
 
@@ -210,13 +213,13 @@ describe('StreamrClient', () => {
                     },
                 }, () => {})
 
-                connection.expect(SubscribeRequest.create(sub.streamId))
+                connection.expect(SubscribeRequest.create(sub.streamId, 0, 'session-token'))
 
                 connection.on('connected', () => {
                     sub.getEffectiveResendOptions = () => ({
                         last: nbToResend,
                     })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     // sending second resend last request since no answer to the first request was received
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend))
@@ -265,12 +268,12 @@ describe('StreamrClient', () => {
                     setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
                     setTimeout(done, STORAGE_DELAY + 200)
                 })
-                connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 1))
+                connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 1, 'session-token'))
                 connection.emitMessage(SubscribeResponse.create(sub.streamId))
             }, STORAGE_DELAY + 1000)
 
             it('emits multiple resend requests as per multiple subscriptions. No second resends if messages are received.', (done) => {
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
                 const sub1 = client.subscribe({
                     stream: 'stream1',
@@ -292,8 +295,8 @@ describe('StreamrClient', () => {
                     setTimeout(() => connection.emitMessage(msg(sub2.streamId, {}, sub2.id)), 200)
                 })
 
-                connection.expect(ResendLastRequest.create(sub1.streamId, sub1.streamPartition, sub1.id, 2))
-                connection.expect(ResendLastRequest.create(sub2.streamId, sub2.streamPartition, sub2.id, 1))
+                connection.expect(ResendLastRequest.create(sub1.streamId, sub1.streamPartition, sub1.id, 2, 'session-token'))
+                connection.expect(ResendLastRequest.create(sub2.streamId, sub2.streamPartition, sub2.id, 1, 'session-token'))
 
                 connection.emitMessage(SubscribeResponse.create(sub1.streamId))
                 setTimeout(done, STORAGE_DELAY + 400)
@@ -564,7 +567,7 @@ describe('StreamrClient', () => {
             client.options.autoConnect = true
             client.on('connected', done)
 
-            connection.expect(SubscribeRequest.create('stream1'))
+            connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
             client.subscribe('stream1', () => {})
         })
 
@@ -590,7 +593,7 @@ describe('StreamrClient', () => {
             })
 
             it('sends a subscribe request', () => {
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
                 client.subscribe({
                     stream: 'stream1',
@@ -598,19 +601,19 @@ describe('StreamrClient', () => {
             })
 
             it('accepts stream id as first argument instead of object', () => {
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
                 client.subscribe('stream1', () => {})
             })
 
             it('sends only one subscribe request to server even if there are multiple subscriptions for same stream', () => {
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
                 client.subscribe('stream1', () => {})
                 client.subscribe('stream1', () => {})
             })
 
             it('sets subscribed state on subsequent subscriptions without further subscribe requests', (done) => {
-                connection.expect(SubscribeRequest.create('stream1'))
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
                 const sub = client.subscribe('stream1', () => {})
                 connection.emitMessage(SubscribeResponse.create(sub.streamId))
 
@@ -638,7 +641,10 @@ describe('StreamrClient', () => {
                         setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
                         setTimeout(done, STORAGE_DELAY + 200)
                     })
-                    connection.expect(ResendFromRequest.create(sub.streamId, sub.streamPartition, sub.id, ref.toArray(), 'publisherId', '1'))
+                    connection.expect(ResendFromRequest.create(
+                        sub.streamId, sub.streamPartition, sub.id, ref.toArray(),
+                        'publisherId', '1', 'session-token',
+                    ))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 }, STORAGE_DELAY + 1000)
 
@@ -652,7 +658,7 @@ describe('StreamrClient', () => {
                         setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
                         setTimeout(done, STORAGE_DELAY + 200)
                     })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, 5, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 }, STORAGE_DELAY + 1000)
 
@@ -692,7 +698,7 @@ describe('StreamrClient', () => {
                         const toRef = new MessageRef(5, 0)
                         connection.expect(ResendRangeRequest.create(
                             sub.streamId, sub.streamPartition, sub.id,
-                            fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId',
+                            fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId', 'session-token',
                         ))
                         const fromRefObject = {
                             timestamp: fromRef.timestamp,
@@ -711,7 +717,7 @@ describe('StreamrClient', () => {
                         const toRef = new MessageRef(5, 0)
                         connection.expect(ResendRangeRequest.create(
                             sub.streamId, sub.streamPartition, sub.id,
-                            fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId',
+                            fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId', 'session-token',
                         ))
                         const fromRefObject = {
                             timestamp: fromRef.timestamp,
@@ -822,7 +828,7 @@ describe('StreamrClient', () => {
                 [streamId, 0, timestamp, sequenceNumber, hashedUsername, client.msgCreationUtil.msgChainId], prevMsgRef,
                 StreamMessage.CONTENT_TYPES.JSON, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
-            return ControlLayer.PublishRequest.create(streamMessage, undefined)
+            return ControlLayer.PublishRequest.create(streamMessage, 'session-token')
         }
 
         it('queues messages and sends them once connected', (done) => {
@@ -841,6 +847,7 @@ describe('StreamrClient', () => {
         })
 
         it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
+            client.options.auth.username = 'username'
             client.options.autoConnect = false
             client.publish('stream1', pubMsg).catch((err) => {
                 assert(err instanceof FailedToPublishError)
