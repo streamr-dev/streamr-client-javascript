@@ -15,16 +15,7 @@ function generateSubscriptionId() {
 
 const DEFAULT_GAPFILL_TIMEOUT = 5000
 
-export default class Subscription extends EventEmitter {
-    static get State() {
-        return {
-            unsubscribed: 'unsubscribed',
-            subscribing: 'subscribing',
-            subscribed: 'subscribed',
-            unsubscribing: 'unsubscribing',
-        }
-    }
-
+class Subscription extends EventEmitter {
     constructor(streamId, streamPartition, callback, options, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT) {
         super()
 
@@ -330,3 +321,12 @@ export default class Subscription extends EventEmitter {
         this.emit('error', err)
     }
 }
+
+Subscription.State = {
+    unsubscribed: 'unsubscribed',
+    subscribing: 'subscribing',
+    subscribed: 'subscribed',
+    unsubscribing: 'unsubscribing',
+}
+
+export default Subscription
