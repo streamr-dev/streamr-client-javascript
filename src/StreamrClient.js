@@ -304,7 +304,7 @@ export default class StreamrClient extends EventEmitter {
                         reject(err)
                         return
                     }
-                    resolve()
+                    resolve(streamMessage)
                 })
             })
             // be sure to trigger connection *after* queueing publish
