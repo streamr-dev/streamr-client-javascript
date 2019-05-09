@@ -110,6 +110,145 @@ describe('StreamrClient Connection', () => {
         done()
     })
 
+    describe('resend', () => {
+        let client
+        let stream
+
+        // TODO get timestamps from publish
+        let startedTimestamp
+        let middleTimestamp
+
+        beforeEach(async () => {
+            client = createClient()
+            await client.ensureConnected()
+
+            stream = await client.createStream({
+                name: uniqueId(),
+            })
+
+            startedTimestamp = Date.now()
+            for (let i = 0; i < 5; i++) {
+                const message = {
+                    msg: `message${i}`,
+                }
+
+                if (i === 3) {
+                    middleTimestamp = Date.now()
+                }
+
+                // eslint-disable-next-line no-await-in-loop
+                await client.publish(stream.id, message)
+            }
+        })
+
+        afterEach(async () => {
+            await client.disconnect()
+        })
+
+        it('resend last', async (done) => {
+            const messages = []
+
+            setTimeout(async () => {
+                const sub = await client.resend(
+                    stream.id,
+                    {
+                        resend: {
+                            last: 3,
+                        },
+                    },
+                    (message) => {
+                        messages.push(message)
+                    },
+                )
+
+                sub.on('resent', () => {
+                    expect(messages).toEqual([
+                        {
+                            msg: 'message2',
+                        },
+                        {
+                            msg: 'message3',
+                        },
+                        {
+                            msg: 'message4',
+                        },
+                    ])
+                    done()
+                })
+            }, 1000)
+        })
+
+        it('resend from', async (done) => {
+            const messages = []
+
+            setTimeout(async () => {
+                const sub = await client.resend(
+                    stream.id,
+                    {
+                        resend: {
+                            from: {
+                                timestamp: middleTimestamp,
+                            },
+                        },
+                    },
+                    (message) => {
+                        messages.push(message)
+                    },
+                )
+
+                sub.on('resent', () => {
+                    expect(messages).toEqual([
+                        {
+                            msg: 'message3',
+                        },
+                        {
+                            msg: 'message4',
+                        },
+                    ])
+                    done()
+                })
+            }, 1000)
+        })
+
+        it('resend range', async (done) => {
+            const messages = []
+
+            setTimeout(async () => {
+                const sub = await client.resend(
+                    stream.id,
+                    {
+                        resend: {
+                            from: {
+                                timestamp: startedTimestamp,
+                            },
+                            to: {
+                                timestamp: middleTimestamp - 1,
+                            },
+                        },
+                    },
+                    (message) => {
+                        messages.push(message)
+                    },
+                )
+
+                sub.on('resent', () => {
+                    expect(messages).toEqual([
+                        {
+                            msg: 'message0',
+                        },
+                        {
+                            msg: 'message1',
+                        },
+                        {
+                            msg: 'message2',
+                        },
+                    ])
+                    done()
+                })
+            }, 1000)
+        })
+    })
+
     describe('ensureConnected', () => {
         it('connects the client', async () => {
             const client = createClient()

@@ -319,6 +319,21 @@ export default class StreamrClient extends EventEmitter {
         )
     }
 
+    async resend(streamId, options, callback) {
+        if (!streamId) {
+            throw new Error('resend: Invalid arguments: streamId is not given')
+        }
+
+        await this.ensureConnected()
+
+        const sub = new Subscription(streamId, options.partition || 0, callback, options.resend)
+
+        this._addSubscription(sub)
+        this._requestResend(sub)
+
+        return sub
+    }
+
     subscribe(optionsOrStreamId, callback, legacyOptions) {
         if (!optionsOrStreamId) {
             throw new Error('subscribe: Invalid arguments: subscription options is required!')
