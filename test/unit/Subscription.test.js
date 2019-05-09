@@ -264,7 +264,7 @@ describe('Subscription', () => {
                 sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
                     clock.tick(RESEND_TIMEOUT + 1000)
                 })
-            }, RESEND_TIMEOUT + 2000)
+            })
 
             it('does not emit second "gap" after the first one if the missing messages are received in between', (done) => {
                 const msg1 = msg
