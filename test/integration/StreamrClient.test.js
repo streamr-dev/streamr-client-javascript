@@ -20,6 +20,8 @@ const createClient = (opts = {}) => new StreamrClient({
     ...opts,
 })
 
+const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
+
 describe('StreamrClient Connection', () => {
     describe('bad config.url', () => {
         it('emits error without autoconnect', async (done) => {
@@ -134,6 +136,8 @@ describe('StreamrClient Connection', () => {
                 const rawMessage = await client.publish(stream.id, message)
                 timestamps.push(rawMessage.getStreamMessage().getTimestamp())
             }
+
+            await wait(2000) // wait for messages to (probably) land in storage
         })
 
         afterEach(async () => {
@@ -143,104 +147,98 @@ describe('StreamrClient Connection', () => {
         it('resend last', async (done) => {
             const messages = []
 
-            setTimeout(async () => {
-                const sub = await client.resend(
-                    stream.id,
-                    {
-                        resend: {
-                            last: 3,
-                        },
+            const sub = await client.resend(
+                stream.id,
+                {
+                    resend: {
+                        last: 3,
                     },
-                    (message) => {
-                        messages.push(message)
-                    },
-                )
+                },
+                (message) => {
+                    messages.push(message)
+                },
+            )
 
-                sub.on('resent', () => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message2',
-                        },
-                        {
-                            msg: 'message3',
-                        },
-                        {
-                            msg: 'message4',
-                        },
-                    ])
-                    done()
-                })
-            }, 1000)
+            sub.on('resent', () => {
+                expect(messages).toEqual([
+                    {
+                        msg: 'message2',
+                    },
+                    {
+                        msg: 'message3',
+                    },
+                    {
+                        msg: 'message4',
+                    },
+                ])
+                done()
+            })
         })
 
         it('resend from', async (done) => {
             const messages = []
 
-            setTimeout(async () => {
-                const sub = await client.resend(
-                    stream.id,
-                    {
-                        resend: {
-                            from: {
-                                timestamp: timestamps[3],
-                            },
+            const sub = await client.resend(
+                stream.id,
+                {
+                    resend: {
+                        from: {
+                            timestamp: timestamps[3],
                         },
                     },
-                    (message) => {
-                        messages.push(message)
-                    },
-                )
+                },
+                (message) => {
+                    messages.push(message)
+                },
+            )
 
-                sub.on('resent', () => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message3',
-                        },
-                        {
-                            msg: 'message4',
-                        },
-                    ])
-                    done()
-                })
-            }, 1000)
+            sub.on('resent', () => {
+                expect(messages).toEqual([
+                    {
+                        msg: 'message3',
+                    },
+                    {
+                        msg: 'message4',
+                    },
+                ])
+                done()
+            })
         })
 
         it('resend range', async (done) => {
             const messages = []
 
-            setTimeout(async () => {
-                const sub = await client.resend(
-                    stream.id,
-                    {
-                        resend: {
-                            from: {
-                                timestamp: timestamps[0],
-                            },
-                            to: {
-                                timestamp: timestamps[3] - 1,
-                            },
+            const sub = await client.resend(
+                stream.id,
+                {
+                    resend: {
+                        from: {
+                            timestamp: timestamps[0],
+                        },
+                        to: {
+                            timestamp: timestamps[3] - 1,
                         },
                     },
-                    (message) => {
-                        messages.push(message)
-                    },
-                )
+                },
+                (message) => {
+                    messages.push(message)
+                },
+            )
 
-                sub.on('resent', () => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message0',
-                        },
-                        {
-                            msg: 'message1',
-                        },
-                        {
-                            msg: 'message2',
-                        },
-                    ])
-                    done()
-                })
-            }, 1000)
+            sub.on('resent', () => {
+                expect(messages).toEqual([
+                    {
+                        msg: 'message0',
+                    },
+                    {
+                        msg: 'message1',
+                    },
+                    {
+                        msg: 'message2',
+                    },
+                ])
+                done()
+            })
         })
     })
 
