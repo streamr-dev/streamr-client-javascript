@@ -296,15 +296,16 @@ export default class StreamrClient extends EventEmitter {
 
             const published = new Promise((resolve, reject) => {
                 this.publishQueue.push(async () => {
+                    let publishRequest
                     try {
-                        await this._requestPublish(streamMessage, sessionToken)
+                        publishRequest = await this._requestPublish(streamMessage, sessionToken)
                     } catch (err) {
                         debug(`Error: ${err}`)
                         this.emit('error', err)
                         reject(err)
                         return
                     }
-                    resolve(streamMessage)
+                    resolve(publishRequest)
                 })
             })
             // be sure to trigger connection *after* queueing publish

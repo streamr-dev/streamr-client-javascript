@@ -114,9 +114,7 @@ describe('StreamrClient Connection', () => {
         let client
         let stream
 
-        // TODO get timestamps from publish
-        let startedTimestamp
-        let middleTimestamp
+        let timestamps = []
 
         beforeEach(async () => {
             client = createClient()
@@ -126,18 +124,15 @@ describe('StreamrClient Connection', () => {
                 name: uniqueId(),
             })
 
-            startedTimestamp = Date.now()
+            timestamps = []
             for (let i = 0; i < 5; i++) {
                 const message = {
                     msg: `message${i}`,
                 }
 
-                if (i === 3) {
-                    middleTimestamp = Date.now()
-                }
-
                 // eslint-disable-next-line no-await-in-loop
-                await client.publish(stream.id, message)
+                const rawMessage = await client.publish(stream.id, message)
+                timestamps.push(rawMessage.getStreamMessage().getTimestamp())
             }
         })
 
@@ -187,7 +182,7 @@ describe('StreamrClient Connection', () => {
                     {
                         resend: {
                             from: {
-                                timestamp: middleTimestamp,
+                                timestamp: timestamps[3],
                             },
                         },
                     },
@@ -219,10 +214,10 @@ describe('StreamrClient Connection', () => {
                     {
                         resend: {
                             from: {
-                                timestamp: startedTimestamp,
+                                timestamp: timestamps[0],
                             },
                             to: {
-                                timestamp: middleTimestamp - 1,
+                                timestamp: timestamps[3] - 1,
                             },
                         },
                     },
