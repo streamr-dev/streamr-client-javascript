@@ -320,26 +320,30 @@ export default class StreamrClient extends EventEmitter {
         )
     }
 
-    async resend(streamId, options, callback) {
-        if (!streamId) {
-            throw new Error('resend: Invalid arguments: streamId is not given')
+    async resend(optionsOrStreamId, callback) {
+        const options = this._validateParameters(optionsOrStreamId, callback)
+
+        if (!options.stream) {
+            throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
         await this.ensureConnected()
 
-        const sub = new Subscription(streamId, options.partition || 0, callback, options.resend)
+        const sub = new Subscription(options.stream, options.partition || 0, callback, options.resend)
 
+        // TODO remove _addSubscription after uncoupling Subscription and Resend
         this._addSubscription(sub)
         this._requestResend(sub)
 
         return sub
     }
 
-    subscribe(optionsOrStreamId, callback, legacyOptions) {
+    // eslint-disable-next-line class-methods-use-this
+    _validateParameters(optionsOrStreamId, callback) {
         if (!optionsOrStreamId) {
-            throw new Error('subscribe: Invalid arguments: subscription options is required!')
+            throw new Error('subscribe/resend: Invalid arguments: options is required!')
         } else if (!callback) {
-            throw new Error('subscribe: Invalid arguments: callback is required!')
+            throw new Error('subscribe/resend: Invalid arguments: callback is required!')
         }
 
         // Backwards compatibility for giving a streamId as first argument
@@ -351,8 +355,14 @@ export default class StreamrClient extends EventEmitter {
         } else if (typeof optionsOrStreamId === 'object') {
             options = optionsOrStreamId
         } else {
-            throw new Error(`subscribe: options must be an object! Given: ${optionsOrStreamId}`)
+            throw new Error(`subscribe/resend: options must be an object! Given: ${optionsOrStreamId}`)
         }
+
+        return options
+    }
+
+    subscribe(optionsOrStreamId, callback, legacyOptions) {
+        const options = this._validateParameters(optionsOrStreamId, callback)
 
         // Backwards compatibility for giving an options object as third argument
         Object.assign(options, legacyOptions)

@@ -148,8 +148,8 @@ describe('StreamrClient Connection', () => {
             const messages = []
 
             const sub = await client.resend(
-                stream.id,
                 {
+                    stream: stream.id,
                     resend: {
                         last: 3,
                     },
@@ -159,7 +159,7 @@ describe('StreamrClient Connection', () => {
                 },
             )
 
-            sub.on('resent', () => {
+            sub.once('resent', () => {
                 expect(messages).toEqual([
                     {
                         msg: 'message2',
@@ -179,8 +179,8 @@ describe('StreamrClient Connection', () => {
             const messages = []
 
             const sub = await client.resend(
-                stream.id,
                 {
+                    stream: stream.id,
                     resend: {
                         from: {
                             timestamp: timestamps[3],
@@ -192,7 +192,7 @@ describe('StreamrClient Connection', () => {
                 },
             )
 
-            sub.on('resent', () => {
+            sub.once('resent', () => {
                 expect(messages).toEqual([
                     {
                         msg: 'message3',
@@ -209,8 +209,8 @@ describe('StreamrClient Connection', () => {
             const messages = []
 
             const sub = await client.resend(
-                stream.id,
                 {
+                    stream: stream.id,
                     resend: {
                         from: {
                             timestamp: timestamps[0],
@@ -225,7 +225,7 @@ describe('StreamrClient Connection', () => {
                 },
             )
 
-            sub.on('resent', () => {
+            sub.once('resent', () => {
                 expect(messages).toEqual([
                     {
                         msg: 'message0',

@@ -50,8 +50,8 @@ const sub = client.subscribe(
 
 ```javascript
 const sub = await client.resend(
-    streamId,
     {
+        stream: 'streamId',
         resend: {
             last: 5,
         },
