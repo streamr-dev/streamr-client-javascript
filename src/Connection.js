@@ -104,15 +104,12 @@ class Connection extends EventEmitter {
     }
 
     send(controlLayerRequest) {
-        return new Promise((resolve, reject) => {
-            try {
-                this.socket.send(controlLayerRequest.serialize())
-                resolve(controlLayerRequest)
-            } catch (err) {
-                this.emit('error', err)
-                reject(err)
-            }
-        })
+        try {
+            this.socket.send(controlLayerRequest.serialize())
+        } catch (err) {
+            this.emit('error', err)
+        }
+        return controlLayerRequest
     }
 }
 
