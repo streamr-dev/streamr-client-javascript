@@ -3,7 +3,11 @@ class AuthFetchError extends Error {
         super(message)
         this.response = response
         this.body = body
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor)
+        }
     }
 }
 
-module.exports = AuthFetchError
+export default AuthFetchError
