@@ -49,7 +49,8 @@ describe('utils', () => {
             session.getSessionToken = sinon.stub().resolves('invalid token')
             return authFetch(baseUrl + testUrl, session).catch((err) => {
                 assert(session.getSessionToken.calledTwice)
-                assert.equal(err.toString(), `Error: Request to ${baseUrl + testUrl} returned with error code 401: Unauthorized`)
+                assert.equal(err.toString(), `Error: Request to ${baseUrl + testUrl} returned with error code 401.`)
+                assert.equal(err.body, 'Unauthorized')
                 done()
             })
         })
