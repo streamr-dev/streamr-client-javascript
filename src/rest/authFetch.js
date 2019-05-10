@@ -23,12 +23,12 @@ const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
         try {
             return JSON.parse(body || '{}')
         } catch (e) {
-            throw new AuthFetchError(`Failed to parse JSON response: ${body}`, response, body)
+            throw new AuthFetchError(e.message, response, body)
         }
     } else if ([400, 401].includes(response.status) && !requireNewToken) {
         return authFetch(url, session, opts, true)
     } else {
-        throw new AuthFetchError(`Request to ${url} returned with error code ${response.status}: ${body}`, response, body)
+        throw new AuthFetchError(`Request to ${url} returned with error code ${response.status}.`, response, body)
     }
 }
 
