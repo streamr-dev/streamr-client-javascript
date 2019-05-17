@@ -417,7 +417,9 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
-                }, {}, groupKey)
+                }, {}, {
+                    publisherId: groupKey,
+                })
                 return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
             })
             it('should not be able to decrypt with the wrong key', (done) => {
@@ -429,7 +431,9 @@ describe('Subscription', () => {
                 const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
                 const ciphertext = MessageCreationUtil.encrypt(plaintext, correctGroupKey)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {}, wrongGroupKey)
+                const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {}, {
+                    publisherId: wrongGroupKey,
+                })
                 sub.on('error', (err) => {
                     assert.strictEqual(err.toString(), `Error: Unable to decrypt ${ciphertext}`)
                     done()
@@ -451,13 +455,17 @@ describe('Subscription', () => {
                 const ciphertext2 = MessageCreationUtil.encrypt(plaintext2, groupKey2)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
                 const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                let test1Ok = false
                 const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (JSON.stringify(content) === JSON.stringify(data1)) {
-                        assert.deepStrictEqual(sub.groupKey, groupKey2)
-                    } else if (JSON.stringify(content) === JSON.stringify(data2)) {
+                        assert.deepStrictEqual(sub.groupKeys.publisherId, groupKey2)
+                        test1Ok = true
+                    } else if (test1Ok && JSON.stringify(content) === JSON.stringify(data2)) {
                         done()
                     }
-                }, {}, groupKey1)
+                }, {}, {
+                    publisherId: groupKey1,
+                })
                 await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
                 return sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
             })

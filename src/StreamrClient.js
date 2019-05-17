@@ -50,7 +50,8 @@ export default class StreamrClient extends EventEmitter {
             retryResendAfter: 5000,
             gapFillTimeout: 5000,
             maxPublishQueueSize: 10000,
-            groupKeys: {},
+            publisherGroupKeys: {}, // {streamId: groupKey}
+            subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
         }
         this.subscribedStreams = {}
 
@@ -94,7 +95,7 @@ export default class StreamrClient extends EventEmitter {
                 this.options.auth, this.signer, this.getUserInfo()
                     .catch((err) => this.emit('error', err)),
                 (streamId) => this.getStream(streamId)
-                    .catch((err) => this.emit('error', err)), this.options.groupKeys,
+                    .catch((err) => this.emit('error', err)), this.options.publisherGroupKeys,
             )
         }
 
@@ -364,7 +365,7 @@ export default class StreamrClient extends EventEmitter {
         return options
     }
 
-    subscribe(optionsOrStreamId, callback, legacyOptions, groupKey) {
+    subscribe(optionsOrStreamId, callback, legacyOptions, groupKeys) {
         const options = this._validateParameters(optionsOrStreamId, callback)
 
         // Backwards compatibility for giving an options object as third argument
@@ -374,14 +375,14 @@ export default class StreamrClient extends EventEmitter {
             throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
-        if (groupKey) {
-            this.options.groupKeys[options.stream] = groupKey
+        if (groupKeys) {
+            this.options.subscriberGroupKeys[options.stream] = groupKeys
         }
 
         // Create the Subscription object and bind handlers
         const sub = new Subscription(
             options.stream, options.partition || 0, callback, options.resend,
-            this.options.gapFillTimeout, this.options.groupKeys[options.stream],
+            this.options.subscriberGroupKeys[options.stream], this.options.gapFillTimeout,
         )
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {

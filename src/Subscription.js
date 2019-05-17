@@ -19,7 +19,7 @@ function generateSubscriptionId() {
 const DEFAULT_GAPFILL_TIMEOUT = 5000
 
 class Subscription extends EventEmitter {
-    constructor(streamId, streamPartition, callback, options, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT, groupKey) {
+    constructor(streamId, streamPartition, callback, options, groupKeys, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT) {
         super()
 
         if (!streamId) {
@@ -40,7 +40,7 @@ class Subscription extends EventEmitter {
         this.lastReceivedMsgRef = {}
         this.gaps = {}
         this.gapFillTimeout = gapFillTimeout
-        this.groupKey = groupKey
+        this.groupKeys = groupKeys
         if (this.resendOptions.from != null && this.resendOptions.last != null) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
         }
@@ -330,18 +330,18 @@ class Subscription extends EventEmitter {
             if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NONE) {
                 return msg.getParsedContent()
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
-                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKey).toString()
+                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()]).toString()
                 try {
                     return JSON.parse(decryptionResult)
                 } catch (err) {
                     throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
                 }
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
-                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKey)
+                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()])
                 let content
                 try {
                     content = JSON.parse(decryptionResult.slice(32).toString())
-                    this.groupKey = decryptionResult.slice(0, 32)
+                    this.groupKeys[msg.getPublisherId()] = decryptionResult.slice(0, 32)
                     return content
                 } catch (err) {
                     throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
