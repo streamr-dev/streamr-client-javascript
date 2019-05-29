@@ -1,12 +1,11 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { MessageLayer, Errors } from 'streamr-client-protocol'
+import { Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
 import EncryptionUtil from './EncryptionUtil'
 
 const debug = debugFactory('StreamrClient::Subscription')
-const { StreamMessage } = MessageLayer
 
 let subId = 0
 function generateSubscriptionId() {
@@ -39,7 +38,7 @@ class Subscription extends EventEmitter {
         this.lastReceivedMsgRef = {}
         this.gaps = {}
         this.gapFillTimeout = gapFillTimeout
-        this.groupKeys = groupKeys
+        this.groupKeys = groupKeys || {}
         if (this.resendOptions.from != null && this.resendOptions.last != null) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
         }
@@ -235,8 +234,11 @@ class Subscription extends EventEmitter {
             } else {
                 // Normal case where prevMsgRef == null || lastReceivedMsgRef == null || prevMsgRef === lastReceivedMsgRef
                 this.lastReceivedMsgRef[key] = messageRef
-                const content = this.getContent(msg)
-                this.callback(content, msg)
+                const newGroupKey = EncryptionUtil.decryptStreamMessage(msg, this.groupKeys[msg.getPublisherId()])
+                if (newGroupKey) {
+                    this.groupKeys[msg.getPublisherId()] = newGroupKey
+                }
+                this.callback(msg.getParsedContent(), msg)
                 if (msg.isByeMessage()) {
                     this.emit('done')
                 }
@@ -322,35 +324,6 @@ class Subscription extends EventEmitter {
             this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
         }
         this.emit('error', err)
-    }
-
-    getContent(msg) {
-        if (msg.contentType === StreamMessage.CONTENT_TYPES.MESSAGE) {
-            if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NONE) {
-                return msg.getParsedContent()
-            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
-                const decryptionResult = EncryptionUtil.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()]).toString()
-                try {
-                    return JSON.parse(decryptionResult)
-                } catch (err) {
-                    throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
-                }
-            } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
-                const decryptionResult = EncryptionUtil.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()])
-                let content
-                try {
-                    content = JSON.parse(decryptionResult.slice(32).toString())
-                    this.groupKeys[msg.getPublisherId()] = decryptionResult.slice(0, 32)
-                    return content
-                } catch (err) {
-                    throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
-                }
-            }
-            throw new Error(`Unsupported encryption type for JSON content type: ${msg.encryptionType}`)
-        } else {
-            // TODO: Support other types (Group key request, response and reset)
-            throw new Error(`Unsupported content type: ${msg.contentType}`)
-        }
     }
 }
 

@@ -117,30 +117,25 @@ export default class MessageCreationUtil {
             }
         }
 
-        let encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
-        let content = data
-        if (groupKey && this.groupKeys[stream.id]) {
-            encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
-            const plaintext = Buffer.concat([groupKey, Buffer.from(JSON.stringify(data), 'utf8')])
-            content = EncryptionUtil.encrypt(plaintext, this.groupKeys[stream.id])
-            this.groupKeys[stream.id] = groupKey
-        } else if (groupKey || this.groupKeys[stream.id]) {
-            if (groupKey) {
-                this.groupKeys[stream.id] = groupKey
-            }
-            encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
-            content = EncryptionUtil.encrypt(Buffer.from(JSON.stringify(data), 'utf8'), this.groupKeys[stream.id])
-        }
-
         const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
         const streamMessage = StreamMessage.create(
             [stream.id, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
-            StreamMessage.CONTENT_TYPES.MESSAGE, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
         if (this._signer) {
             await this._signer.signStreamMessage(streamMessage)
+        }
+
+        if (groupKey && this.groupKeys[stream.id]) {
+            EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.groupKeys[stream.id])
+            this.groupKeys[stream.id] = groupKey
+        } else if (groupKey || this.groupKeys[stream.id]) {
+            if (groupKey) {
+                this.groupKeys[stream.id] = groupKey
+            }
+            EncryptionUtil.encryptStreamMessage(streamMessage, this.groupKeys[stream.id])
         }
         return streamMessage
     }

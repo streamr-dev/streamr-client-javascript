@@ -1,5 +1,8 @@
 import crypto from 'crypto'
 import { ethers } from 'ethers'
+import { MessageLayer } from 'streamr-client-protocol'
+
+const { StreamMessage } = MessageLayer
 
 export default class EncryptionUtil {
     /*
@@ -18,5 +21,62 @@ export default class EncryptionUtil {
         const iv = ethers.utils.arrayify(`0x${ciphertext.slice(0, 32)}`)
         const decipher = crypto.createDecipheriv('aes-256-ctr', groupKey, iv)
         return Buffer.concat([decipher.update(ciphertext.slice(32), 'hex', null), decipher.final(null)])
+    }
+
+    /*
+    Sets the content of 'streamMessage' with the encryption result of the old content with 'groupKey'.
+     */
+    static encryptStreamMessage(streamMessage, groupKey) {
+        /* eslint-disable no-param-reassign */
+        streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
+        streamMessage.serializedContent = this.encrypt(Buffer.from(streamMessage.getSerializedContent(), 'utf8'), groupKey)
+        streamMessage.parsedContent = undefined
+        /* eslint-enable no-param-reassign */
+    }
+
+    /*
+    Sets the content of 'streamMessage' with the encryption result of a plaintext with 'groupKey'. The
+    plaintext is the concatenation of 'newGroupKey' and the old serialized content of 'streamMessage'.
+     */
+    static encryptStreamMessageAndNewKey(newGroupKey, streamMessage, groupKey) {
+        /* eslint-disable no-param-reassign */
+        streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
+        const plaintext = Buffer.concat([newGroupKey, Buffer.from(streamMessage.getSerializedContent(), 'utf8')])
+        streamMessage.serializedContent = EncryptionUtil.encrypt(plaintext, groupKey)
+        streamMessage.parsedContent = undefined
+        /* eslint-enable no-param-reassign */
+    }
+
+    /*
+    Decrypts the serialized content of 'streamMessage' with 'groupKey'. If the resulting plaintext is the concatenation
+    of a new group key and a message content, sets the content of 'streamMessage' with that message content and returns
+    the key. If the resulting plaintext is only a message content, sets the content of 'streamMessage' with that
+    message content and returns null.
+     */
+    static decryptStreamMessage(streamMessage, groupKey) {
+        /* eslint-disable no-param-reassign */
+        if (streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
+            streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
+            const serializedContent = this.decrypt(streamMessage.getSerializedContent(), groupKey).toString()
+            try {
+                streamMessage.parsedContent = JSON.parse(serializedContent)
+                streamMessage.serializedContent = serializedContent
+            } catch (err) {
+                throw new Error(`Unable to decrypt ${streamMessage.getSerializedContent()}`)
+            }
+        } else if (streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
+            streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
+            const plaintext = this.decrypt(streamMessage.getSerializedContent(), groupKey)
+            const serializedContent = plaintext.slice(32).toString()
+            try {
+                streamMessage.parsedContent = JSON.parse(serializedContent)
+                streamMessage.serializedContent = serializedContent
+            } catch (err) {
+                throw new Error(`Unable to decrypt ${streamMessage.getSerializedContent()}`)
+            }
+            return plaintext.slice(0, 32)
+        }
+        return null
+        /* eslint-enable no-param-reassign */
     }
 }
