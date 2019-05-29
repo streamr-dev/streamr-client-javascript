@@ -1,10 +1,9 @@
-import crypto from 'crypto'
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { ethers } from 'ethers'
 import { MessageLayer, Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
+import EncryptionUtil from './EncryptionUtil'
 
 const debug = debugFactory('StreamrClient::Subscription')
 const { StreamMessage } = MessageLayer
@@ -326,18 +325,18 @@ class Subscription extends EventEmitter {
     }
 
     getContent(msg) {
-        if (msg.contentType === StreamMessage.CONTENT_TYPES.JSON) {
+        if (msg.contentType === StreamMessage.CONTENT_TYPES.MESSAGE) {
             if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NONE) {
                 return msg.getParsedContent()
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
-                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()]).toString()
+                const decryptionResult = EncryptionUtil.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()]).toString()
                 try {
                     return JSON.parse(decryptionResult)
                 } catch (err) {
                     throw new Error(`Unable to decrypt ${msg.getSerializedContent()}`)
                 }
             } else if (msg.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
-                const decryptionResult = Subscription.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()])
+                const decryptionResult = EncryptionUtil.decrypt(msg.getSerializedContent(), this.groupKeys[msg.getPublisherId()])
                 let content
                 try {
                     content = JSON.parse(decryptionResult.slice(32).toString())
@@ -352,15 +351,6 @@ class Subscription extends EventEmitter {
             // TODO: Support other types (Group key request, response and reset)
             throw new Error(`Unsupported content type: ${msg.contentType}`)
         }
-    }
-
-    /*
-    'ciphertext' must be a hex string (without '0x' prefix), 'groupKey' must be a Buffer. Returns a Buffer.
-     */
-    static decrypt(ciphertext, groupKey) {
-        const iv = ethers.utils.arrayify(`0x${ciphertext.slice(0, 32)}`)
-        const decipher = crypto.createDecipheriv('aes-256-ctr', groupKey, iv)
-        return Buffer.concat([decipher.update(ciphertext.slice(32), 'hex', null), decipher.final(null)])
     }
 }
 

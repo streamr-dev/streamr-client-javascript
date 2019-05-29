@@ -6,7 +6,7 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import Subscription from '../../src/Subscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
-import MessageCreationUtil from '../../src/MessageCreationUtil'
+import EncryptionUtil from '../../src/EncryptionUtil'
 
 const { StreamMessage } = MessageLayer
 
@@ -18,7 +18,7 @@ const createMsg = (
     const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
     return StreamMessage.create(
         ['streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId], prevMsgRef,
-        StreamMessage.CONTENT_TYPES.JSON, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE,
+        StreamMessage.CONTENT_TYPES.MESSAGE, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE,
     )
 }
 
@@ -412,7 +412,7 @@ describe('Subscription', () => {
                     foo: 'bar',
                 }
                 const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = MessageCreationUtil.encrypt(plaintext, groupKey)
+                const ciphertext = EncryptionUtil.encrypt(plaintext, groupKey)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
                 const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
@@ -429,7 +429,7 @@ describe('Subscription', () => {
                     foo: 'bar',
                 }
                 const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = MessageCreationUtil.encrypt(plaintext, correctGroupKey)
+                const ciphertext = EncryptionUtil.encrypt(plaintext, correctGroupKey)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
                 const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {}, {
                     publisherId: wrongGroupKey,
@@ -450,9 +450,9 @@ describe('Subscription', () => {
                     test: 'data2',
                 }
                 const plaintext1 = Buffer.concat([groupKey2, Buffer.from(JSON.stringify(data1), 'utf8')])
-                const ciphertext1 = MessageCreationUtil.encrypt(plaintext1, groupKey1)
+                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, groupKey1)
                 const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = MessageCreationUtil.encrypt(plaintext2, groupKey2)
+                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, groupKey2)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
                 const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
                 let test1Ok = false

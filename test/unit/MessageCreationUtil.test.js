@@ -148,7 +148,7 @@ describe('MessageCreationUtil', () => {
         function getStreamMessage(streamId, timestamp, sequenceNumber, prevMsgRef) {
             return StreamMessage.create(
                 [streamId, 0, timestamp, sequenceNumber, hashedUsername, msgCreationUtil.msgChainId], prevMsgRef,
-                StreamMessage.CONTENT_TYPES.JSON, StreamMessage.ENCRYPTION_TYPES.NONE, pubMsg, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+                StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, pubMsg, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
         }
 

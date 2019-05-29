@@ -4,6 +4,7 @@ import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
 import Stream from './rest/domain/Stream'
+import EncryptionUtil from './EncryptionUtil'
 
 const { StreamMessage } = MessageLayer
 
@@ -121,20 +122,20 @@ export default class MessageCreationUtil {
         if (groupKey && this.groupKeys[stream.id]) {
             encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
             const plaintext = Buffer.concat([groupKey, Buffer.from(JSON.stringify(data), 'utf8')])
-            content = MessageCreationUtil.encrypt(plaintext, this.groupKeys[stream.id])
+            content = EncryptionUtil.encrypt(plaintext, this.groupKeys[stream.id])
             this.groupKeys[stream.id] = groupKey
         } else if (groupKey || this.groupKeys[stream.id]) {
             if (groupKey) {
                 this.groupKeys[stream.id] = groupKey
             }
             encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
-            content = MessageCreationUtil.encrypt(Buffer.from(JSON.stringify(data), 'utf8'), this.groupKeys[stream.id])
+            content = EncryptionUtil.encrypt(Buffer.from(JSON.stringify(data), 'utf8'), this.groupKeys[stream.id])
         }
 
         const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
         const streamMessage = StreamMessage.create(
             [stream.id, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
-            StreamMessage.CONTENT_TYPES.JSON, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            StreamMessage.CONTENT_TYPES.MESSAGE, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
@@ -165,15 +166,6 @@ export default class MessageCreationUtil {
             // Fallback to random partition if no key
             return Math.floor(Math.random() * partitionCount)
         }
-    }
-
-    /*
-    Both 'data' and 'groupKey' must be Buffers. Returns a hex string without the '0x' prefix.
-     */
-    static encrypt(data, groupKey) {
-        const iv = crypto.randomBytes(16) // always need a fresh IV when using CTR mode
-        const cipher = crypto.createCipheriv('aes-256-ctr', groupKey, iv)
-        return ethers.utils.hexlify(iv).slice(2) + cipher.update(data, null, 'hex') + cipher.final('hex')
     }
 
     static validateGroupKey(groupKey) {
