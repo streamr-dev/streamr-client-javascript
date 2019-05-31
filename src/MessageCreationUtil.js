@@ -124,9 +124,6 @@ export default class MessageCreationUtil {
         )
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
-        if (this._signer) {
-            await this._signer.signStreamMessage(streamMessage)
-        }
 
         if (groupKey && this.groupKeys[stream.id]) {
             EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.groupKeys[stream.id])
@@ -136,6 +133,10 @@ export default class MessageCreationUtil {
                 this.groupKeys[stream.id] = groupKey
             }
             EncryptionUtil.encryptStreamMessage(streamMessage, this.groupKeys[stream.id])
+        }
+
+        if (this._signer) {
+            await this._signer.signStreamMessage(streamMessage)
         }
         return streamMessage
     }

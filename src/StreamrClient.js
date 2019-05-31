@@ -487,6 +487,10 @@ export default class StreamrClient extends EventEmitter {
         return this.session.logout()
     }
 
+    getPublisherId() {
+        return this.msgCreationUtil.getPublisherId()
+    }
+
     /**
      * Starts new connection if disconnected.
      * Waits for connection if connecting.
