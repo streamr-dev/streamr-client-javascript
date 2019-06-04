@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
+import UnableToDecryptError from './errors/UnableToDecryptError'
 
 const { StreamMessage } = MessageLayer
 
@@ -62,7 +63,7 @@ export default class EncryptionUtil {
                 streamMessage.parsedContent = JSON.parse(serializedContent)
                 streamMessage.serializedContent = serializedContent
             } catch (err) {
-                throw new Error(`Unable to decrypt ${streamMessage.getSerializedContent()}`)
+                throw new UnableToDecryptError(streamMessage)
             }
         } else if (streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
             streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
@@ -72,7 +73,7 @@ export default class EncryptionUtil {
                 streamMessage.parsedContent = JSON.parse(serializedContent)
                 streamMessage.serializedContent = serializedContent
             } catch (err) {
-                throw new Error(`Unable to decrypt ${streamMessage.getSerializedContent()}`)
+                throw new UnableToDecryptError(streamMessage)
             }
             return plaintext.slice(0, 32)
         }
