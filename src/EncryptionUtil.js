@@ -8,6 +8,36 @@ import UnableToDecryptError from './errors/UnableToDecryptError'
 const { StreamMessage } = MessageLayer
 
 export default class EncryptionUtil {
+    constructor(options = {}) {
+        if (options.privateKey && options.publicKey) {
+            EncryptionUtil.validatePrivateKey(options.privateKey)
+            EncryptionUtil.validatePublicKey(options.publicKey)
+            this.privateKey = options.privateKey
+            this.publicKey = options.publicKey
+        } else {
+            this._generateKeyPair()
+        }
+    }
+
+    // Returns a Buffer or a hex String
+    encryptWithPublicKey(plaintextBuffer, hexlify = false) {
+        const ciphertextBuffer = crypto.publicEncrypt(this.publicKey, plaintextBuffer)
+        if (hexlify) {
+            return ethers.utils.hexlify(ciphertextBuffer).slice(2)
+        }
+        return ciphertextBuffer
+    }
+
+    // Returns a Buffer
+    decryptWithPrivateKey(ciphertextBuffer) {
+        return crypto.privateDecrypt(this.privateKey, ciphertextBuffer)
+    }
+
+    // Returns a String (base64 encoding)
+    getPublicKey() {
+        return this.publicKey
+    }
+
     /*
     Both 'data' and 'groupKey' must be Buffers. Returns a hex string without the '0x' prefix.
      */
@@ -81,5 +111,35 @@ export default class EncryptionUtil {
         }
         return null
         /* eslint-enable no-param-reassign */
+    }
+
+    _generateKeyPair() {
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 4096,
+            publicKeyEncoding: {
+                type: 'pkcs1',
+                format: 'pem',
+            },
+            privateKeyEncoding: {
+                type: 'pkcs1',
+                format: 'pem',
+            },
+        })
+        this.privateKey = privateKey
+        this.publicKey = publicKey
+    }
+
+    static validatePublicKey(publicKey) {
+        if (typeof publicKey !== 'string' || !publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----') ||
+            !publicKey.endsWith('-----END RSA PUBLIC KEY-----\n')) {
+            throw new Error('"publicKey" must be a PKCS #1 RSA public key as a string in the PEM format')
+        }
+    }
+
+    static validatePrivateKey(privateKey) {
+        if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----') ||
+            !privateKey.endsWith('-----END RSA PRIVATE KEY-----\n')) {
+            throw new Error('"privateKey" must be a PKCS #1 RSA public key as a string in the PEM format')
+        }
     }
 }

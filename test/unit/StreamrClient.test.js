@@ -70,12 +70,16 @@ describe('StreamrClient', () => {
         return sub
     }
 
-    function msg(streamId = 'stream1', content = {}, subId) {
+    function getStreamMessage(streamId = 'stream1', content = {}, publisherId = '') {
         const timestamp = Date.now()
-        const streamMessage = StreamMessage.create(
-            [streamId, 0, timestamp, 0, '', ''], [timestamp - 100, 0],
+        return StreamMessage.create(
+            [streamId, 0, timestamp, 0, publisherId, ''], [timestamp - 100, 0],
             StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE,
         )
+    }
+
+    function msg(streamId = 'stream1', content = {}, subId) {
+        const streamMessage = getStreamMessage(streamId, content)
         if (subId !== undefined) {
             return UnicastMessage.create(subId, streamMessage)
         }
@@ -113,20 +117,23 @@ describe('StreamrClient', () => {
 
         c.send = (msgToSend) => {
             const next = c.expectedMessagesToSend.shift()
-            assert.deepEqual(
-                msgToSend, next,
-                `Sending unexpected message: ${JSON.stringify(msgToSend)}
-                Expected: ${JSON.stringify(next)}
-                Queue: ${JSON.stringify(c.expectedMessagesToSend)}`,
-            )
+            next.verificationFunction(msgToSend, next.msgToExpect)
         }
 
         c.emitMessage = (message) => {
             c.emit(message.type, message)
         }
 
-        c.expect = (msgToExpect) => {
-            c.expectedMessagesToSend.push(msgToExpect)
+        c.expect = (msgToExpect, verificationFunction = (msgToSend, expected) => assert.deepEqual(
+            msgToSend, expected,
+            `Sending unexpected message: ${JSON.stringify(msgToSend)}
+                Expected: ${JSON.stringify(expected)}
+                Queue: ${JSON.stringify(c.expectedMessagesToSend)}`,
+        )) => {
+            c.expectedMessagesToSend.push({
+                msgToExpect,
+                verificationFunction,
+            })
         }
 
         c.checkSentMessages = () => {
@@ -745,6 +752,33 @@ describe('StreamrClient', () => {
                         sub.emit('done')
                     })
                 })
+                describe('groupKeyRequest', () => {
+                    it('sends group key request', (done) => {
+                        const sub = setupSubscription('stream1')
+                        const publisherId = 'ethAddress'
+                        const content = {
+                            publicKey: client.encryptionUtil.getPublicKey(),
+                        }
+                        const streamMessage = StreamMessage.create(
+                            [publisherId, 0, 0, 0, StubbedStreamrClient.hashedUsername, ''], null, StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                            StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
+                        )
+                        connection.expect(ControlLayer.PublishRequest.create(streamMessage, 'session-token'), (toSend, toExpect) => {
+                            const msgToSend = toSend.streamMessage
+                            const msgToExpect = toExpect.streamMessage
+                            assert.deepStrictEqual(msgToSend.messageId.streamId, msgToExpect.messageId.streamId)
+                            assert.deepStrictEqual(msgToSend.messageId.streamPartition, msgToExpect.messageId.streamPartition)
+                            assert.deepStrictEqual(msgToSend.messageId.publisherId, msgToExpect.messageId.publisherId)
+                            assert.deepStrictEqual(msgToSend.contentType, msgToExpect.contentType)
+                            assert.deepStrictEqual(msgToSend.encryptionType, msgToExpect.encryptionType)
+                            assert.deepStrictEqual(msgToSend.messageId.streamId, msgToExpect.messageId.streamId)
+                            assert(msgToSend.getParsedContent().publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----'))
+                            assert(msgToSend.getParsedContent().publicKey.endsWith('-----END RSA PUBLIC KEY-----\n'))
+                        })
+                        sub.emit('groupKeyMissing', publisherId)
+                        setTimeout(() => done(), 1000)
+                    })
+                })
             })
         })
     })
@@ -821,10 +855,9 @@ describe('StreamrClient', () => {
         const pubMsg = {
             foo: 'bar',
         }
-        const hashedUsername = '0x16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
         function getPublishRequest(streamId, timestamp, sequenceNumber, prevMsgRef) {
             const streamMessage = StreamMessage.create(
-                [streamId, 0, timestamp, sequenceNumber, hashedUsername, client.msgCreationUtil.msgChainId], prevMsgRef,
+                [streamId, 0, timestamp, sequenceNumber, StubbedStreamrClient.hashedUsername, client.msgCreationUtil.msgChainId], prevMsgRef,
                 StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             return ControlLayer.PublishRequest.create(streamMessage, 'session-token')

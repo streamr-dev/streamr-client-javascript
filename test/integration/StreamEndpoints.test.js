@@ -79,6 +79,11 @@ describe('StreamEndpoints', () => {
         assert(!valid)
     })
 
+    it('client.getStreamSubscribers should retrieve itself', async () => {
+        const subscribers = await client.getStreamSubscribers(createdStream.id)
+        assert.deepStrictEqual(subscribers, [client.signer.address.toLowerCase()])
+    })
+
     describe('Stream.update', () => {
         it('can change stream name', () => {
             createdStream.name = 'New name'

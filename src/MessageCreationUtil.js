@@ -181,6 +181,35 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
+    async createGroupKeyResponse(subscriberAddress, encryptedGroupKey, start) {
+        const publisherId = await this.getPublisherId()
+        const data = {
+            keys: [],
+        }
+        data.keys.push({
+            groupKey: encryptedGroupKey,
+            start,
+        })
+        const key = `${subscriberAddress}0` // streamId + streamPartition
+        if (!this.publishedStreams[key]) {
+            this.publishedStreams[key] = {
+                prevTimestamp: null,
+                prevSequenceNumber: 0,
+            }
+        }
+        const timestamp = Date.now()
+        const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
+        const streamMessage = StreamMessage.create(
+            [subscriberAddress, 0, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
+            StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
+        )
+
+        if (this._signer) {
+            await this._signer.signStreamMessage(streamMessage)
+        }
+        return streamMessage
+    }
+
     hash(stringToHash) {
         if (this.cachedHashes[stringToHash] === undefined) {
             this.cachedHashes[stringToHash] = crypto.createHash('md5').update(stringToHash).digest()

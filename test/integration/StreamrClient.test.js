@@ -776,5 +776,37 @@ describe('StreamrClient', () => {
                 }, Date.now(), null, groupKey)
             })
         })
+
+        it('client can publish to own inbox', async (done) => {
+            client.once('error', done)
+            const id = Date.now()
+            const publisherId = await client.getPublisherId()
+            const sub = client.subscribe({
+                stream: stream.id,
+            }, (parsedContent) => {
+                assert.equal(parsedContent.id, id)
+            })
+
+            // Publish after subscribed
+            sub.on('subscribed', () => {
+                const sub2 = client.subscribe({
+                    stream: publisherId,
+                }, (content) => {
+                    assert.equal(content.test, 'works')
+
+                    // All good, unsubscribe
+
+                    client.unsubscribe(sub)
+                    sub.on('unsubscribed', () => {
+                        done()
+                    })
+                })
+                sub2.on('subscribed', () => {
+                    client.publish(publisherId, {
+                        test: 'works',
+                    }, Date.now())
+                })
+            })
+        })
     })
 })

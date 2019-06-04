@@ -35,6 +35,8 @@ import { waitFor } from './utils'
 import RealTimeSubscription from './RealTimeSubscription'
 import CombinedSubscription from './CombinedSubscription'
 import Subscription from './Subscription'
+import EncryptionUtil from './EncryptionUtil'
+import InboxStream from './InboxStream'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -57,6 +59,7 @@ export default class StreamrClient extends EventEmitter {
             maxPublishQueueSize: 10000,
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
+            keyExchange: {},
         }
         this.subscribedStreams = {}
 
@@ -91,6 +94,10 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
         }
 
+        if (this.options.keyExchange) {
+            this.encryptionUtil = new EncryptionUtil(this.options.keyExchange)
+        }
+
         this.publishQueue = []
         this.session = new Session(this, this.options.auth)
         this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
@@ -106,6 +113,10 @@ export default class StreamrClient extends EventEmitter {
                 (streamId) => this.getStream(streamId)
                     .catch((err) => this.emit('error', err)), this.options.publisherGroupKeys,
             )
+        }
+
+        if (this.options.auth.privateKey || this.options.auth.provider) {
+            this.inboxStream = new InboxStream(this)
         }
 
         this.on('error', (error) => {
@@ -236,7 +247,7 @@ export default class StreamrClient extends EventEmitter {
             console.error(errorObject)
         })
 
-        this.connection.on('error', (err) => {
+        this.connection.on('error', async (err) => {
             // If there is an error parsing a json message in a stream, fire error events on the relevant subs
             if (err instanceof Errors.InvalidJsonError) {
                 const stream = this.subscribedStreams[err.streamId]
@@ -412,6 +423,12 @@ export default class StreamrClient extends EventEmitter {
         sub.on('done', () => {
             debug('done event for sub %d', sub.id)
             this.unsubscribe(sub)
+        })
+        sub.on('groupKeyMissing', async (publisherId) => {
+            if (!this.encryptionUtil) {
+                this.encryptionUtil = new EncryptionUtil() // we generate a public-private key pair if we don't have one already
+            }
+            this.publishStreamMessage(this.msgCreationUtil.createGroupKeyRequest(publisherId, this.encryptionUtil.getPublicKey()))
         })
 
         // Add to lookups
@@ -630,6 +647,11 @@ export default class StreamrClient extends EventEmitter {
         }
         debug('_requestResend: %o', request)
         this.connection.send(request)
+    }
+
+    async publishStreamMessage(streamMessage) {
+        const sessionToken = await this.session.getSessionToken()
+        return this._requestPublish(streamMessage, sessionToken)
     }
 
     _requestPublish(streamMessage, sessionToken) {
