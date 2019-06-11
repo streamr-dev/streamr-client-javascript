@@ -87,7 +87,7 @@ class Subscription extends EventEmitter {
         try {
             return await fn()
         } catch (err) {
-            console.error(err)
+            debug(err)
             this.emit('error', err)
             // Swallow rejection
             return Promise.resolve()

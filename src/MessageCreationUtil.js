@@ -1,9 +1,12 @@
 import crypto from 'crypto'
 import NodeCache from 'node-cache'
 import randomstring from 'randomstring'
+import debugFactory from 'debug'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
 import Stream from './rest/domain/Stream'
+
+const debug = debugFactory('StreamrClient::MessageCreationUtil')
 
 const { StreamMessage } = MessageLayer
 
@@ -38,7 +41,7 @@ export default class MessageCreationUtil {
             }))
             const success = this.cachedStreams.set(streamId, streamPromise)
             if (!success) {
-                console.warn(`Could not store stream with id ${streamId} in local cache.`)
+                debug(`Could not store stream with id ${streamId} in local cache.`)
                 return streamPromise
             }
         }

@@ -37,6 +37,7 @@ export default class StreamrClient extends EventEmitter {
 
         // Default options
         this.options = {
+            debug: false,
             // The server to connect to
             url: 'wss://www.streamr.com/api/v1/ws',
             restUrl: 'https://www.streamr.com/api/v1',
@@ -76,6 +77,10 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
+        if (this.options.debug) {
+            debugFactory.enable(this.options.debug === true ? 'StreamrClient*' : this.options.debug)
+        }
+
         if (this.options.auth.privateKey && !this.options.auth.privateKey.startsWith('0x')) {
             this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
         }
@@ -98,7 +103,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         this.on('error', (error) => {
-            console.error(error)
+            debug(error)
             this.ensureDisconnected()
         })
 
@@ -222,7 +227,7 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(ErrorResponse.TYPE, (err) => {
             const errorObject = new Error(err.errorMessage)
             this.emit('error', errorObject)
-            console.error(errorObject)
+            debug(errorObject)
         })
 
         this.connection.on('error', (err) => {
@@ -238,7 +243,7 @@ export default class StreamrClient extends EventEmitter {
                 // if it looks like an error emit as-is, otherwise wrap in new Error
                 const errorObject = (err && err.stack && err.message) ? err : new Error(err)
                 this.emit('error', errorObject)
-                console.error(errorObject)
+                debug(errorObject)
             }
         })
     }
