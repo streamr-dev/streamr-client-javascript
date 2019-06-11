@@ -744,6 +744,7 @@ describe('StreamrClient', () => {
             keys[publisherId] = groupKey
             const sub = client.subscribe({
                 stream: stream.id,
+                groupKeys: keys,
             }, (parsedContent, streamMessage) => {
                 assert.equal(parsedContent.id, id)
 
@@ -757,7 +758,7 @@ describe('StreamrClient', () => {
                 sub.on('unsubscribed', () => {
                     done()
                 })
-            }, undefined, keys)
+            })
 
             // Publish after subscribed
             sub.on('subscribed', () => {

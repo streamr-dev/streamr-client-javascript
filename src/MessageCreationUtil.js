@@ -125,7 +125,7 @@ export default class MessageCreationUtil {
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
 
-        if (groupKey && this.groupKeys[stream.id]) {
+        if (groupKey && this.groupKeys[stream.id] && groupKey !== this.groupKeys[stream.id]) {
             EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.groupKeys[stream.id])
             this.groupKeys[stream.id] = groupKey
         } else if (groupKey || this.groupKeys[stream.id]) {

@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
 import once from 'once'
-import { ControlLayer, Errors } from 'streamr-client-protocol'
+import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 
 const {
     BroadcastMessage,
@@ -18,7 +18,9 @@ const {
     ResendFromRequest,
     ResendRangeRequest,
     ErrorResponse,
+    ControlMessage,
 } = ControlLayer
+const { StreamMessage } = MessageLayer
 const debug = debugFactory('StreamrClient')
 
 import Subscription from './Subscription'
@@ -59,7 +61,9 @@ export default class StreamrClient extends EventEmitter {
 
         const parts = this.options.url.split('?')
         if (parts.length === 1) { // there is no query string
-            this.options.url = `${this.options.url}?controlLayerVersion=1&messageLayerVersion=31`
+            const controlLayer = `controlLayerVersion=${ControlMessage.LATEST_VERSION}`
+            const messageLayer = `messageLayerVersion=${StreamMessage.LATEST_VERSION}`
+            this.options.url = `${this.options.url}?${controlLayer}&${messageLayer}`
         } else {
             const queryObj = qs.parse(parts[1])
             if (!queryObj.controlLayerVersion) {
@@ -365,7 +369,7 @@ export default class StreamrClient extends EventEmitter {
         return options
     }
 
-    subscribe(optionsOrStreamId, callback, legacyOptions, groupKeys) {
+    subscribe(optionsOrStreamId, callback, legacyOptions) {
         const options = this._validateParameters(optionsOrStreamId, callback)
 
         // Backwards compatibility for giving an options object as third argument
@@ -375,8 +379,8 @@ export default class StreamrClient extends EventEmitter {
             throw new Error('subscribe: Invalid arguments: options.stream is not given')
         }
 
-        if (groupKeys) {
-            this.options.subscriberGroupKeys[options.stream] = groupKeys
+        if (options.groupKeys) {
+            this.options.subscriberGroupKeys[options.stream] = options.groupKeys
         }
 
         // Create the Subscription object and bind handlers
