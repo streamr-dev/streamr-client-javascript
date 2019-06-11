@@ -107,7 +107,7 @@ verifySignatures | 'auto' | Determines under which conditions signed and unsigne
 autoConnect | true | If set to `true`, the client connects automatically on the first call to `subscribe()`. Otherwise an explicit call to `connect()` is required.
 autoDisconnect | true  | If set to `true`, the client automatically disconnects when the last stream is unsubscribed. Otherwise the connection is left open and can be disconnected explicitly by calling `disconnect()`.
 maxPublishQueueSize | 10000 | Only in effect when `autoConnect = true`. Controls the maximum number of messages to retain in internal queue when client has disconnected and is reconnecting to Streamr.
-debug | false | Enable debug logging
+debug | false | Enable debug logging. Uses [`debug`](https://github.com/visionmedia/debug) module. Can also be enabled via `DEBUG=StreamrClient*` environment variable.
 
 ### Authentication options
 
@@ -292,11 +292,3 @@ resending | [ResendResponseResending](https://github.com/streamr-dev/streamr-cli
 resent | [ResendResponseResent](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_resent/ResendResponseResentV1.js) | Fired after `resending` when the subscription has finished resending.
 no_resend | [ResendResponseNoResend](https://github.com/streamr-dev/streamr-client-protocol-js/blob/master/src/protocol/control_layer/resend_response_no_resend/ResendResponseNoResendV1.js) | This will occur instead of the `resending` - `resent` sequence in case there were no messages to resend.
 error | Error object | Reports errors, for example problems with message content
-
-### Logging
-
-The Streamr JS client library supports [debug](https://github.com/visionmedia/debug) for logging.
-
-In node.js, start your app like this: `DEBUG=StreamrClient* node your-app.js`
-
-In the browser, include `debug.js` and set `localStorage.debug = 'StreamrClient'`
