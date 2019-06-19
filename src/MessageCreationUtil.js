@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import NodeCache from 'node-cache'
+import Receptacle from 'receptacle'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
@@ -14,10 +14,8 @@ export default class MessageCreationUtil {
         this._signer = signer
         this.userInfoPromise = userInfoPromise
         this.getStreamFunction = getStreamFunction
-        this.cachedStreams = new NodeCache({
-            stdTTL: 60 * 30, // in seconds
-            checkperiod: 0, // no periodic check to delete expired keys
-            useClones: false,
+        this.cachedStreams = new Receptacle({
+            max: 10000,
         })
         this.publishedStreams = {}
         Object.values(groupKeys).forEach((key) => MessageCreationUtil.validateGroupKey(key))
@@ -28,7 +26,8 @@ export default class MessageCreationUtil {
 
     async getUsername() {
         if (!this.usernamePromise) {
-            this.usernamePromise = this.userInfoPromise.then((userInfo) => userInfo.username)
+            // In the edge case where StreamrClient.auth.apiKey is an anonymous key, userInfo.id is that anonymous key
+            this.usernamePromise = this.userInfoPromise.then((userInfo) => userInfo.username || userInfo.id)
         }
         return this.usernamePromise
     }
@@ -39,7 +38,10 @@ export default class MessageCreationUtil {
                 id: stream.id,
                 partitions: stream.partitions,
             }))
-            const success = this.cachedStreams.set(streamId, streamPromise)
+            const success = this.cachedStreams.set(streamId, streamPromise, {
+                ttl: 30 * 60 * 1000, // 30 minutes
+                refresh: true, // reset ttl on access
+            })
             if (!success) {
                 console.warn(`Could not store stream with id ${streamId} in local cache.`)
                 return streamPromise
