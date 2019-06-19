@@ -77,3 +77,4 @@ export default class SubscribedStream {
         delete this.subscriptions[sub.id]
     }
 }
+SubscribedStream.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME
