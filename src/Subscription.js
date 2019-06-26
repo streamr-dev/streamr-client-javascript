@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import { Errors } from 'streamr-client-protocol'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
 import EncryptionUtil from './EncryptionUtil'
@@ -245,13 +244,7 @@ class Subscription extends EventEmitter {
          * If parsing the (expected) message failed, we should still mark it as received. Otherwise the
          * gap detection will think a message was lost, and re-request the failing message.
          */
-        let key
-        if (err.streamMessage) {
-            key = err.streamMessage.getPublisherId() + err.streamMessage.messageId.msgChainId
-        }
-        if (err instanceof Errors.InvalidJsonError && !this.orderingUtil.checkForGap(err.streamMessage.prevMsgRef, key)) {
-            this.orderingUtil.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
-        }
+        this.orderingUtil.addError(err)
         this.emit('error', err)
     }
 }

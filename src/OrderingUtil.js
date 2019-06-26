@@ -1,4 +1,5 @@
 import debugFactory from 'debug'
+import { Errors } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::OrderingUtil')
 
@@ -65,6 +66,16 @@ export default class OrderingUtil {
                 this.lastReceivedMsgRef[key] = messageRef
                 this.inOrderHandler(unorderedStreamMessage)
             }
+        }
+    }
+
+    addError(err) {
+        let key
+        if (err.streamMessage) {
+            key = err.streamMessage.getPublisherId() + err.streamMessage.messageId.msgChainId
+        }
+        if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.prevMsgRef, key)) {
+            this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
         }
     }
 
