@@ -124,7 +124,7 @@ describe('Subscription', () => {
                 sub.setResending(true)
                 await sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
                 assert.equal(handler.callCount, 0)
-                assert.equal(sub.queue.length, 1)
+                assert.equal(sub.orderingUtil.queue.length, 1)
             })
         })
 
