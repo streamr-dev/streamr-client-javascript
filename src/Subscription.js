@@ -31,6 +31,15 @@ class Subscription extends EventEmitter {
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.resendOptions = options || {}
+        if (this.resendOptions.from != null && this.resendOptions.last != null) {
+            throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
+        }
+        if (this.resendOptions.msgChainId != null && typeof this.resendOptions.publisherId === 'undefined') {
+            throw new Error('publisherId must be defined as well if msgChainId is defined.')
+        }
+        if (this.resendOptions.from == null && this.resendOptions.to != null) {
+            throw new Error('"from" must be defined as well if "to" is defined.')
+        }
         this.state = Subscription.State.unsubscribed
         this.groupKeys = groupKeys || {}
         this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
@@ -47,16 +56,6 @@ class Subscription extends EventEmitter {
         }, {
             gapFillTimeout,
         })
-
-        if (this.resendOptions.from != null && this.resendOptions.last != null) {
-            throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
-        }
-        if (this.resendOptions.msgChainId != null && typeof this.resendOptions.publisherId === 'undefined') {
-            throw new Error('publisherId must be defined as well if msgChainId is defined.')
-        }
-        if (this.resendOptions.from == null && this.resendOptions.to != null) {
-            throw new Error('"from" must be defined as well if "to" is defined.')
-        }
 
         /** * Message handlers ** */
 

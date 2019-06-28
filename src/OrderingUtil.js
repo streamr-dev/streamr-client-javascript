@@ -22,33 +22,41 @@ export default class OrderingUtil {
         if (this.resending && !isResend) {
             this.queue.push(unorderedStreamMessage)
         } else if (this.checkForGap(unorderedStreamMessage.prevMsgRef, key) && !this.resending) {
-            // Queue the message to be processed after resend
-            this.queue.push(unorderedStreamMessage)
+            setTimeout(() => {
+                // if there is still a gap after 'firstGapTimeout', a gap fill request is sent
+                if (this.checkForGap(unorderedStreamMessage.prevMsgRef, key) && !this.resending) {
+                    // Queue the message to be processed after resend
+                    this.queue.push(unorderedStreamMessage)
 
-            const from = this.lastReceivedMsgRef[key] // cannot know the first missing message so there will be a duplicate received
-            const fromObject = {
-                timestamp: from.timestamp,
-                sequenceNumber: from.sequenceNumber,
-            }
-            const to = unorderedStreamMessage.prevMsgRef
-            const toObject = {
-                timestamp: to.timestamp,
-                sequenceNumber: to.sequenceNumber,
-            }
-            debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
-            this.gapHandler(fromObject, toObject, unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.messageId.msgChainId)
-
-            // If for some reason the missing messages are not received, the gap filling request is resent every 'gapFillTimeout' seconds
-            // until a message is received, at which point the gap will be filled or
-            // a new different gap request will be sent and resent every 'gapFillTimeout' seconds.
-            clearInterval(this.gaps[key])
-            this.gaps[key] = setInterval(() => {
-                if (this.lastReceivedMsgRef[key].compareTo(to) === -1) {
+                    const from = this.lastReceivedMsgRef[key] // cannot know the first missing message so there will be a duplicate received
+                    const fromObject = {
+                        timestamp: from.timestamp,
+                        sequenceNumber: from.sequenceNumber,
+                    }
+                    const to = unorderedStreamMessage.prevMsgRef
+                    const toObject = {
+                        timestamp: to.timestamp,
+                        sequenceNumber: to.sequenceNumber,
+                    }
+                    debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
                     this.gapHandler(fromObject, toObject, unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.messageId.msgChainId)
-                } else {
+
+                    // If for some reason the missing messages are not received, the gap filling request is resent every 'gapFillTimeout' seconds
+                    // until a message is received, at which point the gap will be filled or
+                    // a new different gap request will be sent and resent every 'gapFillTimeout' seconds.
                     clearInterval(this.gaps[key])
+                    this.gaps[key] = setInterval(() => {
+                        if (this.lastReceivedMsgRef[key].compareTo(to) === -1) {
+                            this.gapHandler(
+                                fromObject, toObject,
+                                unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.messageId.msgChainId,
+                            )
+                        } else {
+                            clearInterval(this.gaps[key])
+                        }
+                    }, this.options.gapFillTimeout)
                 }
-            }, this.options.gapFillTimeout)
+            }, this.options.firstGapTimeout || 0)
         } else {
             const messageRef = unorderedStreamMessage.getMessageRef()
             let res
