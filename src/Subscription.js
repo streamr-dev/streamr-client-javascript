@@ -30,6 +30,7 @@ class Subscription extends EventEmitter {
         this.id = generateSubscriptionId()
         this.streamId = streamId
         this.streamPartition = streamPartition
+        this.resending = false
         this.resendOptions = options || {}
         if (this.resendOptions.from != null && this.resendOptions.last != null) {
             throw new Error(`Multiple resend options active! Please use only one: ${JSON.stringify(this.resendOptions)}`)
@@ -40,8 +41,10 @@ class Subscription extends EventEmitter {
         if (this.resendOptions.from == null && this.resendOptions.to != null) {
             throw new Error('"from" must be defined as well if "to" is defined.')
         }
+        this.initialResendDone = Object.keys(this.resendOptions).length === 0
         this.state = Subscription.State.unsubscribed
         this.groupKeys = groupKeys || {}
+        this.queue = []
         this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
             const newGroupKey = EncryptionUtil.decryptStreamMessage(orderedMessage, this.groupKeys[orderedMessage.getPublisherId()])
             if (newGroupKey) {
@@ -76,7 +79,7 @@ class Subscription extends EventEmitter {
     }
 
     _clearGaps() {
-        this.orderingUtil.clearGaps()
+        return this.orderingUtil.clearGaps()
     }
 
     async _catchAndEmitErrors(fn) {
@@ -155,6 +158,7 @@ class Subscription extends EventEmitter {
     async _finishResend() {
         this._lastMessageHandlerPromise = null
         this.setResending(false)
+        this.initialResendDone = true
         await this.checkQueue()
     }
 
@@ -179,44 +183,28 @@ class Subscription extends EventEmitter {
         }
 
         this.emit('message received')
-        this.orderingUtil.add(msg, isResend)
+        // we queue real-time messages until the initial resend (subscribe with resend options) is completed.
+        if (!this.initialResendDone && !isResend) {
+            this.queue.push(msg)
+        } else {
+            await this.orderingUtil.add(msg)
+        }
     }
 
     async checkQueue() {
-        return this.orderingUtil.checkQueue()
+        if (this.queue.length) {
+            debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId)
+
+            const originalQueue = this.queue
+            this.queue = []
+
+            const promises = originalQueue.map((msg) => this.orderingUtil.add(msg))
+            await Promise.all(promises)
+        }
     }
 
     hasResendOptions() {
         return this.resendOptions.from || this.resendOptions.last > 0
-    }
-
-    /**
-     * Resend needs can change if messages have already been received.
-     * This function always returns the effective resend options:
-     *
-     * If messages have been received:
-     * - 'from' option becomes 'from' option the latest received message
-     * - 'last' option stays the same
-     */
-    getEffectiveResendOptions() {
-        const key = this.resendOptions.publisherId + this.resendOptions.msgChainId
-        if (this.hasReceivedMessagesFrom(key) && this.hasResendOptions()
-            && (this.resendOptions.from)) {
-            return {
-                // cannot know the first missing message so there will be a duplicate received
-                from: {
-                    timestamp: this.orderingUtil.lastReceivedMsgRef[key].timestamp,
-                    sequenceNumber: this.orderingUtil.lastReceivedMsgRef[key].sequenceNumber,
-                },
-                publisherId: this.resendOptions.publisherId,
-                msgChainId: this.resendOptions.msgChainId,
-            }
-        }
-        return this.resendOptions
-    }
-
-    hasReceivedMessagesFrom(key) {
-        return this.orderingUtil.lastReceivedMsgRef[key] !== undefined
     }
 
     getState() {
@@ -230,12 +218,12 @@ class Subscription extends EventEmitter {
     }
 
     isResending() {
-        return this.orderingUtil.resending
+        return this.resending
     }
 
     setResending(resending) {
         debug(`Subscription: Stream ${this.streamId} resending: ${resending}`)
-        this.orderingUtil.resending = resending
+        this.resending = resending
     }
 
     handleError(err) {
