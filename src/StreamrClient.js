@@ -36,7 +36,7 @@ import RealTimeSubscription from './RealTimeSubscription'
 import CombinedSubscription from './CombinedSubscription'
 import Subscription from './Subscription'
 import EncryptionUtil from './EncryptionUtil'
-import InboxStream from './InboxStream'
+import KeyExchangeUtil from './KeyExchangeUtil'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -96,6 +96,7 @@ export default class StreamrClient extends EventEmitter {
 
         if (this.options.keyExchange) {
             this.encryptionUtil = new EncryptionUtil(this.options.keyExchange)
+            this.keyExchangeUtil = new KeyExchangeUtil(this)
         }
 
         this.publishQueue = []
@@ -116,7 +117,14 @@ export default class StreamrClient extends EventEmitter {
         }
 
         if (this.options.auth.privateKey || this.options.auth.provider) {
-            this.inboxStream = new InboxStream(this)
+            // subscribing to own inbox stream
+            this._client.getPublisherId().then((ethAddress) => this._client.subscribe(ethAddress, async (parsedContent, streamMessage) => {
+                if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
+                    if (this.keyExchangeUtil) {
+                        this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
+                    }
+                }
+            }))
         }
 
         this.on('error', (error) => {
