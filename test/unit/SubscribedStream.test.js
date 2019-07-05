@@ -5,6 +5,7 @@ import { MessageLayer } from 'streamr-client-protocol'
 
 import SubscribedStream from '../../src/SubscribedStream'
 import Signer from '../../src/Signer'
+import Subscription from '../../src/Subscription'
 
 const { StreamMessage } = MessageLayer
 
@@ -182,9 +183,7 @@ describe('SubscribedStream', () => {
         beforeEach(() => {
             ({ client } = setupClientAndStream())
             subscribedStream = new SubscribedStream(client, 'streamId')
-            sub1 = {
-                id: 'sub1Id',
-            }
+            sub1 = new Subscription('sub1Id', 0, () => {})
         })
         it('should add and remove subscription correctly', () => {
             assert(subscribedStream.getSubscription(sub1.id) === undefined)
