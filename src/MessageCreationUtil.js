@@ -1,8 +1,10 @@
 import crypto from 'crypto'
+
 import Receptacle from 'receptacle'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
+
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
 

@@ -293,7 +293,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.isConnected()) {
             // If connected, emit a publish request
             return this._requestPublish(streamMessage, sessionToken)
-        } else if (this.options.autoConnect) {
+        } if (this.options.autoConnect) {
             if (this.publishQueue.length >= this.options.maxPublishQueueSize) {
                 throw new FailedToPublishError(
                     streamId,
@@ -470,7 +470,7 @@ export default class StreamrClient extends EventEmitter {
     connect() {
         if (this.isConnected()) {
             return Promise.reject(new Error('Already connected!'))
-        } else if (this.connection.state === Connection.State.CONNECTING) {
+        } if (this.connection.state === Connection.State.CONNECTING) {
             return Promise.reject(new Error('Already connecting!'))
         }
 

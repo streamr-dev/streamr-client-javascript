@@ -1,12 +1,16 @@
 import assert from 'assert'
+
 import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
 import debug from 'debug'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
-import StubbedStreamrClient from '../unit/StubbedStreamrClient'
+
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
+
+// eslint-disable-next-line import/no-named-as-default-member
+import StubbedStreamrClient from './StubbedStreamrClient'
 
 const {
     BroadcastMessage,

@@ -1,5 +1,6 @@
 import assert from 'assert'
 import crypto from 'crypto'
+
 import sinon from 'sinon'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 

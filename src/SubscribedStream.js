@@ -23,7 +23,7 @@ export default class SubscribedStream {
                 return Signer.verifyStreamMessage(msg, new Set(publishers))
             }
             return false
-        } else if (this._client.options.verifySignatures === 'never') {
+        } if (this._client.options.verifySignatures === 'never') {
             return true
         }
         // if this._client.options.verifySignatures === 'auto'

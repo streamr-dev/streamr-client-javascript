@@ -1,7 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import WebSocket from 'ws'
-
 import { ControlLayer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')
@@ -25,7 +24,7 @@ class Connection extends EventEmitter {
     connect() {
         if (this.state === Connection.State.CONNECTING) {
             return Promise.reject(new Error('Already connecting!'))
-        } else if (this.state === Connection.State.CONNECTED) {
+        } if (this.state === Connection.State.CONNECTED) {
             return Promise.reject(new Error('Already connected!'))
         }
         if (this.state === Connection.State.DISCONNECTING) {
@@ -86,9 +85,9 @@ class Connection extends EventEmitter {
     disconnect() {
         if (this.state === Connection.State.DISCONNECTING) {
             return Promise.reject(new Error('Already disconnecting!'))
-        } else if (this.state === Connection.State.DISCONNECTED) {
+        } if (this.state === Connection.State.DISCONNECTED) {
             return Promise.reject(new Error('Already disconnected!'))
-        } else if (this.socket === undefined) {
+        } if (this.socket === undefined) {
             return Promise.reject(new Error('Something is wrong: socket is undefined!'))
         }
         if (this.state === Connection.State.CONNECTING) {

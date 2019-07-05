@@ -1,6 +1,8 @@
 import { ethers } from 'ethers'
 import uuid from 'uuid/v4'
+
 import StreamrClient from '../../src'
+
 import config from './config'
 
 const createClient = (opts = {}) => new StreamrClient({

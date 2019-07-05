@@ -1,11 +1,13 @@
 import assert from 'assert'
 import crypto from 'crypto'
+
 import fetch from 'node-fetch'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
 import uuid from 'uuid/v4'
 
 import StreamrClient from '../../src'
+
 import config from './config'
 
 const { StreamMessage } = MessageLayer
@@ -578,9 +580,9 @@ describe('StreamrClient', () => {
             ])
         } catch (e) {
             if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
-                throw new Error('Integration testing requires that engine-and-editor ' +
-                    'and data-api ("entire stack") are running in the background. ' +
-                    'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
+                throw new Error('Integration testing requires that engine-and-editor '
+                    + 'and data-api ("entire stack") are running in the background. '
+                    + 'Instructions: https://github.com/streamr-dev/streamr-docker-dev#running')
             } else {
                 throw e
             }

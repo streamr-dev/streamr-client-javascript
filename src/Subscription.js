@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import { Errors } from 'streamr-client-protocol'
+
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
 import EncryptionUtil from './EncryptionUtil'
@@ -79,9 +80,9 @@ class Subscription extends EventEmitter {
      * and the previousMsgRef is larger than what has been received, we have a gap!
      */
     checkForGap(previousMsgRef, key) {
-        return previousMsgRef != null &&
-            this.lastReceivedMsgRef[key] !== undefined &&
-            previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
+        return previousMsgRef != null
+            && this.lastReceivedMsgRef[key] !== undefined
+            && previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
     async _catchAndEmitErrors(fn) {

@@ -1,8 +1,10 @@
 import crypto from 'crypto'
 import assert from 'assert'
+
 import sinon from 'sinon'
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
+
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 import Stream from '../../src/rest/domain/Stream'
 

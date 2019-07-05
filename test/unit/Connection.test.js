@@ -1,6 +1,8 @@
 import assert from 'assert'
+
 import sinon from 'sinon'
 import { ControlLayer, Errors, MessageLayer } from 'streamr-client-protocol'
+
 import Connection from '../../src/Connection'
 
 const { UnicastMessage } = ControlLayer
