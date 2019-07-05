@@ -556,7 +556,7 @@ describe('StreamrClient', () => {
     let stream
 
     // These tests will take time, especially on Travis
-    const TIMEOUT = 15 * 1000
+    const TIMEOUT = 2 * 1000
 
     const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
@@ -666,7 +666,7 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-            }, 10000)
+            }, TIMEOUT * 0.8)
         }, TIMEOUT)
 
         it('client.subscribe with resend last', (done) => {
@@ -707,7 +707,7 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-            }, 10000)
+            }, TIMEOUT * 0.8)
         }, TIMEOUT)
 
         it('client.subscribe (realtime)', (done) => {
