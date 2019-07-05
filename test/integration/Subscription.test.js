@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import uniqueId from 'lodash/uniqueId'
+import uuid from 'uuid/v4'
 import StreamrClient from '../../src'
 import config from './config'
 
@@ -32,7 +32,7 @@ describe('Subscription', () => {
         client = createClient()
         client.on('error', throwError)
         stream = await client.createStream({
-            name: uniqueId(),
+            name: uuid(),
         })
     }
 
@@ -78,7 +78,7 @@ describe('Subscription', () => {
 
     async function publishMessage() {
         const message = {
-            message: uniqueId(),
+            message: uuid(),
         }
         await stream.publish(message)
         return message
