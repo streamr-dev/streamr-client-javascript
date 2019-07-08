@@ -18,9 +18,6 @@ describe('Connection', () => {
         })
     })
 
-    afterEach(() => {
-    })
-
     describe('initial state', () => {
         it('should be correct', () => {
             assert.equal(conn.state, Connection.State.DISCONNECTED)
