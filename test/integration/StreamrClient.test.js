@@ -556,7 +556,7 @@ describe('StreamrClient', () => {
     let stream
 
     // These tests will take time, especially on Travis
-    const TIMEOUT = 2 * 1000
+    const TIMEOUT = 5 * 1000
 
     const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
