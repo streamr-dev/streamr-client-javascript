@@ -436,7 +436,8 @@ export default class StreamrClient extends EventEmitter {
             if (!this.encryptionUtil) {
                 this.encryptionUtil = new EncryptionUtil() // we generate a public-private key pair if we don't have one already
             }
-            this.publishStreamMessage(this.msgCreationUtil.createGroupKeyRequest(publisherId, this.encryptionUtil.getPublicKey()))
+            const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(publisherId, sub.streamId, this.encryptionUtil.getPublicKey())
+            return this.publishStreamMessage(streamMessage)
         })
 
         // Add to lookups

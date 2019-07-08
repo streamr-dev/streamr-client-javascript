@@ -1,3 +1,5 @@
+import EncryptionUtil from './EncryptionUtil'
+
 const SUBSCRIBERS_EXPIRATION_TIME = 5 * 60 * 1000 // 5 minutes
 export default class KeyExchangeUtil {
     constructor(client) {
@@ -6,21 +8,28 @@ export default class KeyExchangeUtil {
     }
 
     async handleGroupKeyRequest(streamMessage) {
-        if (!this._client.encryptionUtil) {
-            throw new Error('Cannot handle group key requests without setting the "keyExchange" options in the constructor.')
+        // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
+        // does not require signed data for all types of messages.
+        if (!streamMessage.signature) {
+            throw new Error('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
         }
+        // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
         const groupKey = this._client.options.publisherGroupKeys[parsedContent.streamId]
         if (!groupKey) {
-            throw new Error(`Received group key request for stream ${parsedContent.streamId} but no group key is set`)
+            throw new Error(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
         }
         const subscriberId = streamMessage.getPublisherId()
         const valid = await this.isValidSubscriber(parsedContent.streamId, subscriberId)
         if (!valid) {
-            throw new Error(`Received group key request for stream ${parsedContent.streamId} from invalid address ${subscriberId}`)
+            throw new Error(`Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`)
         }
-        const encryptedGroupKey = this._client.encryptionUtil.encryptWithPublicKey(groupKey, true)
-        return this._client.publishStreamMessage(this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, encryptedGroupKey, 0))
+        const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, parsedContent.publicKey, true)
+        const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, [{
+            groupKey: encryptedGroupKey,
+            start: 0, // TODO: real start time
+        }])
+        return this._client.publishStreamMessage(response)
     }
 
     async getSubscribers(streamId) {

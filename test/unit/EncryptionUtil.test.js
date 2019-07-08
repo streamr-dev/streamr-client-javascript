@@ -6,7 +6,7 @@ describe('EncryptionUtil', () => {
     it('rsa decryption after encryption equals the initial plaintext', () => {
         const encryptionUtil = new EncryptionUtil()
         const plaintext = 'some random text'
-        const ciphertext = encryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'))
+        const ciphertext = EncryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'), encryptionUtil.getPublicKey())
         assert.deepStrictEqual(encryptionUtil.decryptWithPrivateKey(ciphertext).toString('utf8'), plaintext)
     })
     it('throws if invalid public key passed in the constructor', () => {

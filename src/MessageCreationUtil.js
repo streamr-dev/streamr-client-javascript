@@ -150,9 +150,13 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
-    async createGroupKeyRequest(publisherAddress, rsaPublicKey, start, end) {
+    async createGroupKeyRequest(publisherAddress, streamId, rsaPublicKey, start, end) {
+        if (!this._signer) {
+            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+        }
         const publisherId = await this.getPublisherId()
         const data = {
+            streamId,
             publicKey: rsaPublicKey,
         }
         if (start && end) {
@@ -174,22 +178,19 @@ export default class MessageCreationUtil {
             [publisherAddress, 0, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
             StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
-
-        if (this._signer) {
-            await this._signer.signStreamMessage(streamMessage)
-        }
+        await this._signer.signStreamMessage(streamMessage)
         return streamMessage
     }
 
-    async createGroupKeyResponse(subscriberAddress, encryptedGroupKey, start) {
+    async createGroupKeyResponse(subscriberAddress, streamId, encryptedGroupKeys) {
+        if (!this._signer) {
+            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+        }
         const publisherId = await this.getPublisherId()
         const data = {
-            keys: [],
+            streamId,
+            keys: encryptedGroupKeys,
         }
-        data.keys.push({
-            groupKey: encryptedGroupKey,
-            start,
-        })
         const key = `${subscriberAddress}0` // streamId + streamPartition
         if (!this.publishedStreams[key]) {
             this.publishedStreams[key] = {
@@ -203,10 +204,7 @@ export default class MessageCreationUtil {
             [subscriberAddress, 0, timestamp, sequenceNumber, publisherId, this.msgChainId], this.getPrevMsgRef(key),
             StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, data, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
-
-        if (this._signer) {
-            await this._signer.signStreamMessage(streamMessage)
-        }
+        await this._signer.signStreamMessage(streamMessage)
         return streamMessage
     }
 

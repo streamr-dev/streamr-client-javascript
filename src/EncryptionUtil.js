@@ -19,15 +19,6 @@ export default class EncryptionUtil {
         }
     }
 
-    // Returns a Buffer or a hex String
-    encryptWithPublicKey(plaintextBuffer, hexlify = false) {
-        const ciphertextBuffer = crypto.publicEncrypt(this.publicKey, plaintextBuffer)
-        if (hexlify) {
-            return ethers.utils.hexlify(ciphertextBuffer).slice(2)
-        }
-        return ciphertextBuffer
-    }
-
     // Returns a Buffer
     decryptWithPrivateKey(ciphertextBuffer) {
         return crypto.privateDecrypt(this.privateKey, ciphertextBuffer)
@@ -36,6 +27,16 @@ export default class EncryptionUtil {
     // Returns a String (base64 encoding)
     getPublicKey() {
         return this.publicKey
+    }
+
+    // Returns a Buffer or a hex String
+    static encryptWithPublicKey(plaintextBuffer, publicKey, hexlify = false) {
+        EncryptionUtil.validatePublicKey(publicKey)
+        const ciphertextBuffer = crypto.publicEncrypt(publicKey, plaintextBuffer)
+        if (hexlify) {
+            return ethers.utils.hexlify(ciphertextBuffer).slice(2)
+        }
+        return ciphertextBuffer
     }
 
     /*
