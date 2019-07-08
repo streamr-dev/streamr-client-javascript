@@ -20,7 +20,7 @@ export default class MessageCreationUtil {
             max: 10000,
         })
         this.publishedStreams = {}
-        Object.values(groupKeys).forEach((key) => MessageCreationUtil.validateGroupKey(key))
+        Object.values(groupKeys).forEach((key) => EncryptionUtil.validateGroupKey(key))
         this.groupKeys = groupKeys
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
@@ -110,7 +110,7 @@ export default class MessageCreationUtil {
         }
 
         if (groupKey) {
-            MessageCreationUtil.validateGroupKey(groupKey)
+            EncryptionUtil.validateGroupKey(groupKey)
         }
 
         const stream = (streamObjectOrId instanceof Stream) ? streamObjectOrId : await this.getStream(streamObjectOrId)
@@ -228,16 +228,6 @@ export default class MessageCreationUtil {
         } else {
             // Fallback to random partition if no key
             return Math.floor(Math.random() * partitionCount)
-        }
-    }
-
-    static validateGroupKey(groupKey) {
-        if (!(groupKey instanceof Buffer)) {
-            throw new Error(`Group key must be a Buffer: ${groupKey}`)
-        }
-
-        if (groupKey.length !== 32) {
-            throw new Error(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
         }
     }
 }

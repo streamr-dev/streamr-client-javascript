@@ -4,7 +4,6 @@ import sinon from 'sinon'
 import { MessageLayer } from 'streamr-client-protocol'
 import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 import EncryptionUtil from '../../src/EncryptionUtil'
-import * as ethers from 'ethers/ethers'
 
 const { StreamMessage } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
@@ -24,6 +23,12 @@ function setupClient() {
     client.options.publisherGroupKeys = {
         streamId: crypto.randomBytes(32),
     }
+    client.subscribedStreams = {
+        streamId: {
+            setSubscriptionsGroupKey: sinon.stub(),
+        },
+    }
+    client.encryptionUtil = new EncryptionUtil()
     return client
 }
 
@@ -141,7 +146,7 @@ describe('KeyExchangeUtil', () => {
                     assert.strictEqual(keys.length, 1)
                     const keyObject = keys[0]
                     const expectedKey = client.options.publisherGroupKeys.streamId
-                    assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(ethers.utils.arrayify(`0x${keyObject.groupKey}`)), expectedKey)
+                    assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKey)
                     // TODO: assert start time
                     return Promise.resolve('fake response')
                 },
@@ -151,6 +156,84 @@ describe('KeyExchangeUtil', () => {
                 done()
             }
             return util.handleGroupKeyRequest(streamMessage)
+        })
+    })
+    describe('handleGroupKeyResponse', () => {
+        it('should reject unsigned response', (done) => {
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    keys: [{
+                        groupKey: 'encrypted-group-key',
+                        start: 54256,
+                    }],
+                }, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            )
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                assert.strictEqual(err.message, 'Received unsigned group key response (it must be signed to avoid MitM attacks).')
+                done()
+            }
+        })
+        it('should reject response for a stream to which the client is not subscribed', (done) => {
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'wrong-streamId',
+                    keys: [{
+                        groupKey: 'encrypted-group-key',
+                        start: 54256,
+                    }],
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                assert.strictEqual(err.message, 'Received group key for a stream to which the client is not subscribed.')
+                done()
+            }
+        })
+        it('should reject response with invalid group key', (done) => {
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    keys: [{
+                        groupKey: encryptedGroupKey,
+                        start: 54256,
+                    }],
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                assert.strictEqual(err.message, 'Group key must have a size of 256 bits, not 128')
+                done()
+            }
+        })
+        it('should update client options and subscriptions with received group key', (done) => {
+            const groupKey = crypto.randomBytes(32)
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, client.encryptionUtil.getPublicKey(), true)
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    keys: [{
+                        groupKey: encryptedGroupKey,
+                        start: 54256,
+                    }],
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            client.setGroupKey = (streamId, publisherId, key) => {
+                assert.strictEqual(streamId, 'streamId')
+                assert.strictEqual(publisherId, 'publisherId')
+                assert.deepStrictEqual(key, groupKey)
+                done()
+            }
+            util.handleGroupKeyResponse(streamMessage)
         })
     })
 })

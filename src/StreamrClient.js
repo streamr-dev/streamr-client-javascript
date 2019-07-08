@@ -123,6 +123,10 @@ export default class StreamrClient extends EventEmitter {
                     if (this.keyExchangeUtil) {
                         this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
                     }
+                } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
+                    if (this.keyExchangeUtil) {
+                        this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                    }
                 }
             }))
         }
@@ -667,6 +671,11 @@ export default class StreamrClient extends EventEmitter {
         const request = ControlLayer.PublishRequest.create(streamMessage, sessionToken)
         debug('_requestPublish: %o', request)
         return this.connection.send(request)
+    }
+
+    setGroupKey(streamId, publisherId, groupKey) {
+        this.options.subscriberGroupKeys[streamId][publisherId] = groupKey
+        this.subscribedStreams[streamId].setSubscriptionsGroupKey(publisherId, groupKey)
     }
 
     handleError(msg) {

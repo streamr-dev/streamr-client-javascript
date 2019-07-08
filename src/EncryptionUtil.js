@@ -20,7 +20,11 @@ export default class EncryptionUtil {
     }
 
     // Returns a Buffer
-    decryptWithPrivateKey(ciphertextBuffer) {
+    decryptWithPrivateKey(ciphertext, isHexString = false) {
+        let ciphertextBuffer = ciphertext
+        if (isHexString) {
+            ciphertextBuffer = ethers.utils.arrayify(`0x${ciphertext}`)
+        }
         return crypto.privateDecrypt(this.privateKey, ciphertextBuffer)
     }
 
@@ -141,6 +145,15 @@ export default class EncryptionUtil {
         if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----') ||
             !privateKey.endsWith('-----END RSA PRIVATE KEY-----\n')) {
             throw new Error('"privateKey" must be a PKCS #1 RSA public key as a string in the PEM format')
+        }
+    }
+
+    static validateGroupKey(groupKey) {
+        if (!(groupKey instanceof Buffer)) {
+            throw new Error(`Group key must be a Buffer: ${groupKey}`)
+        }
+        if (groupKey.length !== 32) {
+            throw new Error(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
         }
     }
 }

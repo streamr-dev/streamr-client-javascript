@@ -121,5 +121,11 @@ export default class SubscribedStream {
             delete this.subscriptions[sub.id]
         }
     }
+
+    setSubscriptionsGroupKey(publisherId, groupKey) {
+        Object.values(this.subscriptions).forEach((sub) => {
+            sub.setGroupKey(publisherId, groupKey)
+        })
+    }
 }
 SubscribedStream.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME
