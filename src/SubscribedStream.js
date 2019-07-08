@@ -10,7 +10,7 @@ export default class SubscribedStream {
     }
 
     async getPublishers() {
-        if (!this.publishersPromise || (Date.now() - this.lastAccess) > PUBLISHERS_EXPIRATION_TIME) {
+        if (!this.publishersPromise || (Date.now() - this.lastUpdated) > PUBLISHERS_EXPIRATION_TIME) {
             this.publishersPromise = this._client.getStreamPublishers(this.streamId).then((publishers) => {
                 const map = {}
                 publishers.forEach((p) => {
@@ -18,12 +18,12 @@ export default class SubscribedStream {
                 })
                 return map
             })
-            this.lastAccess = Date.now()
+            this.lastUpdated = Date.now()
         }
         return this.publishersPromise
     }
 
-    async isPublisher(publisherId) {
+    async _isPublisher(publisherId) {
         if (!this.isPublisherPromises[publisherId]) {
             this.isPublisherPromises[publisherId] = this._client.isStreamPublisher(this.streamId, publisherId)
         }
@@ -35,7 +35,7 @@ export default class SubscribedStream {
         if (cache[publisherId]) {
             return cache[publisherId]
         }
-        const isValid = await this.isPublisher(publisherId)
+        const isValid = await this._isPublisher(publisherId)
         cache[publisherId] = isValid
         return isValid
     }
