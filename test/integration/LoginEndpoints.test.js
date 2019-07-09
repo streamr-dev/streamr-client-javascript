@@ -22,6 +22,11 @@ describe('LoginEndpoints', () => {
         client = createClient()
     })
 
+    afterAll(async (done) => {
+        await client.disconnect()
+        done()
+    })
+
     describe('Challenge generation', () => {
         it('should retrieve a challenge', () => client.getChallenge('some-address')
             .then((challenge) => {

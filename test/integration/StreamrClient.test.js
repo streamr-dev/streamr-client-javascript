@@ -76,6 +76,7 @@ describe('StreamrClient Connection', () => {
                 // not clear if emit or reject *should* occur first
                 expect(onError).toHaveBeenCalledTimes(1)
                 expect(onError).toHaveBeenCalledWith(error)
+
                 done()
             })
         }, 10000)
@@ -336,8 +337,8 @@ describe('StreamrClient Connection', () => {
             client = createClient()
             client.once('error', done)
             client.connect()
-            client.once('connected', () => {
-                client.disconnect()
+            client.once('connected', async () => {
+                await client.disconnect()
             })
             client.once('disconnected', () => {
                 client.connect()
@@ -366,7 +367,7 @@ describe('StreamrClient Connection', () => {
                 done()
             })
 
-            client.disconnect()
+            await client.disconnect()
         }, 5000)
 
         it('will resolve original disconnect', async (done) => {
@@ -417,7 +418,7 @@ describe('StreamrClient Connection', () => {
                 }
                 client.once('connecting', onConnecting)
 
-                client.disconnect()
+                await client.disconnect()
                 // wait for possible reconnections
                 setTimeout(() => {
                     client.off('connecting', onConnecting)
@@ -425,7 +426,7 @@ describe('StreamrClient Connection', () => {
                     done()
                 }, 2000)
             })
-            client.disconnect()
+            await client.disconnect()
         }, 6000)
     })
 
@@ -485,8 +486,8 @@ describe('StreamrClient Connection', () => {
                     id1: uuid(),
                 }
                 const p = client.publish(stream.id, message)
-                setTimeout(() => {
-                    client.disconnect() // start async disconnect after publish started
+                setTimeout(async () => {
+                    await client.disconnect() // start async disconnect after publish started
                 })
                 await p
                 // wait in case of delayed errors
@@ -514,8 +515,8 @@ describe('StreamrClient Connection', () => {
                     done()
                 })
 
-                setTimeout(() => {
-                    client.disconnect() // start async disconnect after publish started
+                setTimeout(async () => {
+                    await client.disconnect() // start async disconnect after publish started
                 })
             })
         })
@@ -555,7 +556,7 @@ describe('StreamrClient', () => {
     let stream
 
     // These tests will take time, especially on Travis
-    const TIMEOUT = 15 * 1000
+    const TIMEOUT = 5 * 1000
 
     const createStream = async () => {
         const name = `StreamrClient-integration-${Date.now()}`
@@ -665,7 +666,7 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-            }, 10000)
+            }, TIMEOUT * 0.8)
         }, TIMEOUT)
 
         it('client.subscribe with resend last', (done) => {
@@ -706,7 +707,7 @@ describe('StreamrClient', () => {
                         done()
                     })
                 })
-            }, 10000)
+            }, TIMEOUT * 0.8)
         }, TIMEOUT)
 
         it('client.subscribe (realtime)', (done) => {

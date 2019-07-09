@@ -88,6 +88,10 @@ class Subscription extends EventEmitter {
             && previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
+    stop() {
+        this._clearGaps()
+    }
+
     async _catchAndEmitErrors(fn) {
         try {
             return await fn()

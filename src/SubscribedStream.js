@@ -77,7 +77,10 @@ export default class SubscribedStream {
     }
 
     removeSubscription(sub) {
-        delete this.subscriptions[sub.id]
+        if (this.subscriptions[sub.id]) {
+            this.subscriptions[sub.id].stop()
+            delete this.subscriptions[sub.id]
+        }
     }
 }
 SubscribedStream.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME

@@ -26,6 +26,10 @@ export default class MessageCreationUtil {
         this.cachedHashes = {}
     }
 
+    stop() {
+        this.cachedStreams.clear()
+    }
+
     async getUsername() {
         if (!this.usernamePromise) {
             // In the edge case where StreamrClient.auth.apiKey is an anonymous key, userInfo.id is that anonymous key

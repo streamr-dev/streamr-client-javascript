@@ -154,6 +154,7 @@ describe('StreamrClient', () => {
 
     afterEach(() => {
         connection.checkSentMessages()
+        client.disconnect()
     })
 
     describe('Connection event handling', () => {
@@ -336,9 +337,10 @@ describe('StreamrClient', () => {
                         client.options.autoDisconnect = true
                     })
 
-                    it('calls connection.disconnect() when no longer subscribed to any streams', (done) => {
-                        connection.disconnect = done
+                    it('calls connection.disconnect() when no longer subscribed to any streams', () => {
+                        const disconnect = jest.spyOn(connection, 'disconnect')
                         connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
+                        expect(disconnect).toHaveBeenCalled()
                     })
                 })
 
@@ -348,8 +350,9 @@ describe('StreamrClient', () => {
                     })
 
                     it('should not disconnect if autoDisconnect is set to false', () => {
-                        connection.disconnect = sinon.stub().throws('Should not call disconnect!')
+                        const disconnect = jest.spyOn(connection, 'disconnect')
                         connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
+                        expect(disconnect).not.toHaveBeenCalled()
                     })
                 })
             })

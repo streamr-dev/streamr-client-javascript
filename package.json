@@ -15,9 +15,10 @@
     "prepack": "npm run build",
     "dev": "webpack --progress --colors --watch --mode=development",
     "eslint": "eslint .",
-    "test": "npm run eslint && jest --detectOpenHandles",
-    "test-unit": "jest --detectOpenHandles --forceExit test/unit",
-    "test-integration": "jest --detectOpenHandles --forceExit --runInBand test/integration"
+    "test": "jest --detectOpenHandles",
+    "test-unit": "jest test/unit --detectOpenHandles",
+    "coverage": "jest --coverage",
+    "test-integration": "jest test/integration --detectOpenHandles"
   },
   "browser": {
     "http": "./src/shim/http-https.js",

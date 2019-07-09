@@ -147,6 +147,10 @@ describe('MessageCreationUtil', () => {
             msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
         })
 
+        afterAll(() => {
+            msgCreationUtil.stop()
+        })
+
         function getStreamMessage(streamId, timestamp, sequenceNumber, prevMsgRef) {
             return StreamMessage.create(
                 [streamId, 0, timestamp, sequenceNumber, hashedUsername, msgCreationUtil.msgChainId], prevMsgRef,

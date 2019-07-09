@@ -489,6 +489,10 @@ export default class StreamrClient extends EventEmitter {
     }
 
     disconnect() {
+        if (this.msgCreationUtil) {
+            this.msgCreationUtil.stop()
+        }
+
         this.subscribedStreams = {}
         return this.connection.disconnect()
     }
