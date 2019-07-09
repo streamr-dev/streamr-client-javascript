@@ -21,12 +21,16 @@ const createMsg = (
 const msg = createMsg()
 
 describe('OrderingUtil', () => {
+    let util
+    afterEach(() => {
+        util.clearGaps()
+    })
     it('calls the message handler when a message is received', (done) => {
         const handler = (streamMessage) => {
             assert.deepStrictEqual(streamMessage.serialize(), msg.serialize())
             done()
         }
-        const util = new OrderingUtil('streamId', 0, handler, sinon.stub())
+        util = new OrderingUtil('streamId', 0, handler, sinon.stub())
         util.add(msg)
     })
     it('calls the gap handler if a gap is detected', (done) => {
@@ -38,7 +42,7 @@ describe('OrderingUtil', () => {
             assert.equal(publisherId, 'publisherId')
             done()
         }
-        const util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler)
+        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler)
         const msg1 = msg
         const msg4 = createMsg(4, undefined, 3)
         util.add(msg1)
@@ -48,7 +52,7 @@ describe('OrderingUtil', () => {
         const gapHandler = () => {
             throw new Error('The gap handler should not be called.')
         }
-        const util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler, {
+        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler, {
             firstGapTimeout: 5000,
         })
         const msg1 = msg
