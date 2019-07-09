@@ -96,6 +96,7 @@ export default class EncryptionUtil {
             throw new UnableToDecryptError(streamMessage)
         }
         /* eslint-disable no-param-reassign */
+
         if (streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES) {
             streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE
             const serializedContent = this.decrypt(streamMessage.getSerializedContent(), groupKey).toString()
@@ -103,6 +104,7 @@ export default class EncryptionUtil {
                 streamMessage.parsedContent = JSON.parse(serializedContent)
                 streamMessage.serializedContent = serializedContent
             } catch (err) {
+                streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.AES
                 throw new UnableToDecryptError(streamMessage)
             }
         } else if (streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
@@ -113,6 +115,7 @@ export default class EncryptionUtil {
                 streamMessage.parsedContent = JSON.parse(serializedContent)
                 streamMessage.serializedContent = serializedContent
             } catch (err) {
+                streamMessage.encryptionType = StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES
                 throw new UnableToDecryptError(streamMessage)
             }
             return plaintext.slice(0, 32)
@@ -138,15 +141,15 @@ export default class EncryptionUtil {
     }
 
     static validatePublicKey(publicKey) {
-        if (typeof publicKey !== 'string' || !publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----') ||
-            !publicKey.endsWith('-----END RSA PUBLIC KEY-----\n')) {
+        if (typeof publicKey !== 'string' || !publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----')
+            || !publicKey.endsWith('-----END RSA PUBLIC KEY-----\n')) {
             throw new Error('"publicKey" must be a PKCS #1 RSA public key as a string in the PEM format')
         }
     }
 
     static validatePrivateKey(privateKey) {
-        if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----') ||
-            !privateKey.endsWith('-----END RSA PRIVATE KEY-----\n')) {
+        if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----')
+            || !privateKey.endsWith('-----END RSA PRIVATE KEY-----\n')) {
             throw new Error('"privateKey" must be a PKCS #1 RSA public key as a string in the PEM format')
         }
     }
@@ -155,6 +158,7 @@ export default class EncryptionUtil {
         if (!(groupKey instanceof Buffer)) {
             throw new Error(`Group key must be a Buffer: ${groupKey}`)
         }
+
         if (groupKey.length !== 32) {
             throw new Error(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
         }

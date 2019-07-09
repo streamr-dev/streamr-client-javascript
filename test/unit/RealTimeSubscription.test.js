@@ -7,6 +7,7 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import RealTimeSubscription from '../../src/RealTimeSubscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
+import UnableToDecryptError from '../../src/errors/UnableToDecryptError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
 
@@ -419,7 +420,7 @@ describe('RealTimeSubscription', () => {
                 })
                 return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
             })
-            it('should not be able to decrypt with the wrong key', (done) => {
+            it('should emit "groupKeyMissing" when not able to decrypt with the wrong key', (done) => {
                 const correctGroupKey = crypto.randomBytes(32)
                 const wrongGroupKey = crypto.randomBytes(32)
                 const data = {
@@ -431,11 +432,82 @@ describe('RealTimeSubscription', () => {
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
                     publisherId: wrongGroupKey,
                 })
-                sub.on('error', (err) => {
-                    assert.strictEqual(err.toString(), `Error: Unable to decrypt ${ciphertext}`)
+                sub.on('groupKeyMissing', (publisherId) => {
+                    assert.strictEqual(publisherId, msg1.getPublisherId())
                     done()
                 })
                 return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+            })
+            it('should queue messages when not able to decrypt and handle them once the key is updated', async () => {
+                const correctGroupKey = crypto.randomBytes(32)
+                const wrongGroupKey = crypto.randomBytes(32)
+                const data1 = {
+                    test: 'data1',
+                }
+                const data2 = {
+                    test: 'data2',
+                }
+                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
+                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
+                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
+                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
+                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                let received1 = null
+                let received2 = null
+                const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                    if (!received1) {
+                        received1 = content
+                    } else {
+                        received2 = content
+                    }
+                }, {}, {
+                    publisherId: wrongGroupKey,
+                })
+                // cannot decrypt msg1, emits "groupKeyMissing" (should send group key request).
+                await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                // cannot decrypt msg2, queues it.
+                await sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
+                // faking the reception of the group key response
+                sub.setGroupKey('publisherId', correctGroupKey)
+                // try again to decrypt the queued messages but this time with the correct key
+                await sub.checkQueue()
+                assert.deepStrictEqual(received1, data1)
+                assert.deepStrictEqual(received2, data2)
+            })
+            it('should throw when not able to decrypt for the second time', async (done) => {
+                const correctGroupKey = crypto.randomBytes(32)
+                const wrongGroupKey = crypto.randomBytes(32)
+                const otherWrongGroupKey = crypto.randomBytes(32)
+                const data1 = {
+                    test: 'data1',
+                }
+                const data2 = {
+                    test: 'data2',
+                }
+                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
+                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
+                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
+                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
+                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const sub = new Subscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
+                    throw new Error('should not call the handler')
+                }, {}, {
+                    publisherId: wrongGroupKey,
+                })
+                sub.on('error', (err) => {
+                    assert(err instanceof UnableToDecryptError)
+                    done()
+                })
+                // cannot decrypt msg1, emits "groupKeyMissing" (should send group key request).
+                await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+                // cannot decrypt msg2, queues it.
+                await sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
+                // faking the reception of the group key response
+                sub.setGroupKey('publisherId', otherWrongGroupKey)
+                // try again to decrypt the queued messages but with another wrong key
+                await sub.checkQueue()
             })
             it('should decrypt first content, update key and decrypt second content', async (done) => {
                 const groupKey1 = crypto.randomBytes(32)
