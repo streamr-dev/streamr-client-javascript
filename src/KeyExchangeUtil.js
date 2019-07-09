@@ -30,31 +30,31 @@ export default class KeyExchangeUtil {
         const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, parsedContent.publicKey, true)
         const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, [{
             groupKey: encryptedGroupKey,
-            start: 0, // TODO: real start time
+            start: Date.now(), // TODO: real start time
         }])
         return this._client.publishStreamMessage(response)
     }
 
-    handleGroupKeyResponse(streamMessage) {
+    async handleGroupKeyResponse(streamMessage) {
         // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
         // does not require signed data for all types of messages.
         if (!streamMessage.signature) {
             throw new Error('Received unsigned group key response (it must be signed to avoid MitM attacks).')
         }
-        // TODO: check the publisher is a valid publisher for parsedContent.streamId (not only the inbox stream)
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
         if (!this._client.subscribedStreams[parsedContent.streamId]) {
             throw new Error('Received group key for a stream to which the client is not subscribed.')
         }
         // TODO: handle multiple keys
+
         if (!this._client.encryptionUtil) {
             throw new Error('Cannot decrypt group key response without the private key.')
         }
         const encryptedGroupKey = parsedContent.keys[0].groupKey
         const groupKey = this._client.encryptionUtil.decryptWithPrivateKey(encryptedGroupKey, true)
         EncryptionUtil.validateGroupKey(groupKey)
-        this._client.setGroupKey(parsedContent.streamId, streamMessage.getPublisherId(), groupKey)
+        await this._client.setGroupKey(parsedContent.streamId, streamMessage.getPublisherId(), groupKey)
         debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
     }
 

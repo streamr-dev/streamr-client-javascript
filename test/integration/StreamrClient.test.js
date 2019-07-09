@@ -808,5 +808,37 @@ describe('StreamrClient', () => {
                 })
             })
         })
+        it('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
+            client.once('error', done)
+            const id = Date.now()
+            const groupKey = crypto.randomBytes(32)
+            // subscribe without knowing the group key to decrypt stream messages
+            const sub = client.subscribe({
+                stream: stream.id,
+            }, (parsedContent, streamMessage) => {
+                assert.equal(parsedContent.id, id)
+
+                // Check signature stuff
+                assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+                assert(streamMessage.getPublisherId())
+                assert(streamMessage.signature)
+
+                // Now the subscriber knows the group key
+                assert.deepStrictEqual(sub.groupKeys[streamMessage.getPublisherId()], groupKey)
+
+                // All good, unsubscribe
+                client.unsubscribe(sub)
+                sub.on('unsubscribed', () => {
+                    done()
+                })
+            })
+
+            // Publish after subscribed
+            sub.on('subscribed', () => {
+                client.publish(stream.id, {
+                    id,
+                }, Date.now(), null, groupKey)
+            })
+        }, 300000)
     })
 })

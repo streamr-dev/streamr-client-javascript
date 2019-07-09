@@ -122,10 +122,12 @@ export default class SubscribedStream {
         }
     }
 
-    setSubscriptionsGroupKey(publisherId, groupKey) {
-        Object.values(this.subscriptions).forEach((sub) => {
+    async setSubscriptionsGroupKey(publisherId, groupKey) {
+        const promises = Object.values(this.subscriptions).map((sub) => {
             sub.setGroupKey(publisherId, groupKey)
+            return sub.checkQueue()
         })
+        return Promise.all(promises)
     }
 }
 SubscribedStream.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME

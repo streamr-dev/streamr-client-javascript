@@ -170,12 +170,10 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
-            try {
-                util.handleGroupKeyResponse(streamMessage)
-            } catch (err) {
+            util.handleGroupKeyResponse(streamMessage).catch((err) => {
                 assert.strictEqual(err.message, 'Received unsigned group key response (it must be signed to avoid MitM attacks).')
                 done()
-            }
+            })
         })
         it('should reject response for a stream to which the client is not subscribed', (done) => {
             const streamMessage = StreamMessage.create(
@@ -188,12 +186,10 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
-            try {
-                util.handleGroupKeyResponse(streamMessage)
-            } catch (err) {
+            util.handleGroupKeyResponse(streamMessage).catch((err) => {
                 assert.strictEqual(err.message, 'Received group key for a stream to which the client is not subscribed.')
                 done()
-            }
+            })
         })
         it('should reject response with invalid group key', (done) => {
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
@@ -207,12 +203,10 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
-            try {
-                util.handleGroupKeyResponse(streamMessage)
-            } catch (err) {
+            util.handleGroupKeyResponse(streamMessage).catch((err) => {
                 assert.strictEqual(err.message, 'Group key must have a size of 256 bits, not 128')
                 done()
-            }
+            })
         })
         it('should update client options and subscriptions with received group key', (done) => {
             const groupKey = crypto.randomBytes(32)
@@ -233,7 +227,7 @@ describe('KeyExchangeUtil', () => {
                 assert.deepStrictEqual(key, groupKey)
                 done()
             }
-            util.handleGroupKeyResponse(streamMessage)
+            return util.handleGroupKeyResponse(streamMessage)
         })
     })
 })

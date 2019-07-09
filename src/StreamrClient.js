@@ -118,16 +118,23 @@ export default class StreamrClient extends EventEmitter {
 
         if (this.options.auth.privateKey || this.options.auth.provider) {
             // subscribing to own inbox stream
-            this._client.getPublisherId().then((ethAddress) => this._client.subscribe(ethAddress, async (parsedContent, streamMessage) => {
+            this.getPublisherId().then((ethAddress) => this.subscribe(ethAddress, async (parsedContent, streamMessage) => {
                 if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
                     if (this.keyExchangeUtil) {
-                        this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
+                        await this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
                     }
                 } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
                     if (this.keyExchangeUtil) {
-                        this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                        const { streamId } = streamMessage.getParsedContent()
+                        const valid = await this.subscribedStreams[streamId].isValidPublisher(streamMessage.getPublisherId())
+                        if (valid) {
+                            await this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                        } else {
+                            debug('WARN: Received group key from an invalid publisher %s for stream %s', streamMessage.getPublisherId(), streamId)
+                        }
                     }
                 }
+                debug('WARN: Cannot handle message with content type: %s', streamMessage.contentType)
             }))
         }
 
@@ -441,6 +448,7 @@ export default class StreamrClient extends EventEmitter {
                 this.encryptionUtil = new EncryptionUtil() // we generate a public-private key pair if we don't have one already
             }
             const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(publisherId, sub.streamId, this.encryptionUtil.getPublicKey())
+            // MessageLayer.StreamMessageFactory.deserialize(streamMessage.serialize())
             return this.publishStreamMessage(streamMessage)
         })
 
@@ -674,8 +682,11 @@ export default class StreamrClient extends EventEmitter {
     }
 
     setGroupKey(streamId, publisherId, groupKey) {
+        if (!this.options.subscriberGroupKeys[streamId]) {
+            this.options.subscriberGroupKeys[streamId] = {}
+        }
         this.options.subscriberGroupKeys[streamId][publisherId] = groupKey
-        this.subscribedStreams[streamId].setSubscriptionsGroupKey(publisherId, groupKey)
+        return this.subscribedStreams[streamId].setSubscriptionsGroupKey(publisherId, groupKey)
     }
 
     handleError(msg) {
