@@ -10,6 +10,8 @@ export default class OrderingUtil {
         this.inOrderHandler = inOrderHandler
         this.gapHandler = gapHandler
         this.options = options || {}
+        this.firstGapTimeout = this.options.firstGapTimeout
+        this.gapFillTimeout = this.options.gapFillTimeout
         this.queue = []
         this.lastReceivedMsgRef = {}
         this.gaps = {}
@@ -17,18 +19,18 @@ export default class OrderingUtil {
 
     async add(unorderedStreamMessage) {
         const key = unorderedStreamMessage.getPublisherId() + unorderedStreamMessage.messageId.msgChainId
-        if (!this.checkForGap(unorderedStreamMessage.prevMsgRef, key)) { // if it is the next message, process it
-            this.processMsg(key, unorderedStreamMessage)
-            await this.checkQueue()
+        if (!this._checkForGap(unorderedStreamMessage.prevMsgRef, key)) { // if it is the next message, process it
+            this._processMsg(key, unorderedStreamMessage)
+            await this._checkQueue()
         } else {
             if (!this.gaps[key]) { // send a gap fill request only if there is not one already in progress
-                this.scheduleGapFillRequests(key, unorderedStreamMessage)
+                this._scheduleGapFillRequests(key, unorderedStreamMessage)
             }
             this.queue.push(unorderedStreamMessage)
         }
     }
 
-    processMsg(key, unorderedStreamMessage) {
+    _processMsg(key, unorderedStreamMessage) {
         const messageRef = unorderedStreamMessage.getMessageRef()
         let res
         if (this.lastReceivedMsgRef[key] !== undefined) {
@@ -44,10 +46,10 @@ export default class OrderingUtil {
         }
     }
 
-    scheduleGapFillRequests(key, unorderedStreamMessage) {
+    _scheduleGapFillRequests(key, unorderedStreamMessage) {
         setTimeout(() => {
             // if there is still a gap after 'firstGapTimeout', a gap fill request is sent
-            if (this.checkForGap(unorderedStreamMessage.prevMsgRef, key)) {
+            if (this._checkForGap(unorderedStreamMessage.prevMsgRef, key)) {
                 const from = this.lastReceivedMsgRef[key]
                 const fromObject = {
                     timestamp: from.timestamp,
@@ -67,26 +69,26 @@ export default class OrderingUtil {
                     if (this.lastReceivedMsgRef[key].compareTo(to) === -1) {
                         this.gapHandler(
                             fromObject, toObject,
-                            unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.messageId.msgChainId,
+                            unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.getMsgChainId(),
                         )
                     } else {
                         clearInterval(this.gaps[key])
                     }
-                }, this.options.gapFillTimeout)
+                }, this.gapFillTimeout)
 
                 debug('Gap detected, requesting resend for stream %s from %o to %o', this.streamId, from, to)
-                this.gapHandler(fromObject, toObject, unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.messageId.msgChainId)
+                this.gapHandler(fromObject, toObject, unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.getMsgChainId())
             }
-        }, this.options.firstGapTimeout || 0)
+        }, this.firstGapTimeout || 0)
     }
 
     addError(err) {
         let key
         if (err.streamMessage) {
-            key = err.streamMessage.getPublisherId() + err.streamMessage.messageId.msgChainId
-        }
-        if (err instanceof Errors.InvalidJsonError && !this.checkForGap(err.streamMessage.prevMsgRef, key)) {
-            this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
+            key = err.streamMessage.getPublisherId() + err.streamMessage.getMsgChainId()
+            if (err instanceof Errors.InvalidJsonError && !this._checkForGap(err.streamMessage.prevMsgRef, key)) {
+                this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
+            }
         }
     }
 
@@ -94,13 +96,13 @@ export default class OrderingUtil {
      * Gap check: If the msg contains the previousMsgRef, and we know the lastReceivedMsgRef,
      * and the previousMsgRef is larger than what has been received, we have a gap!
      */
-    checkForGap(previousMsgRef, key) {
+    _checkForGap(previousMsgRef, key) {
         return previousMsgRef != null &&
             this.lastReceivedMsgRef[key] !== undefined &&
             previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
-    async checkQueue() {
+    async _checkQueue() {
         if (this.queue.length) {
             debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId)
 
