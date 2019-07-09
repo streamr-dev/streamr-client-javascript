@@ -36,6 +36,7 @@ export default class OrderingUtil {
         if (this.lastReceivedMsgRef[key] !== undefined) {
             res = messageRef.compareTo(this.lastReceivedMsgRef[key])
         }
+
         if (res <= 0) {
             // Prevent double-processing of messages for any reason
             debug('Already received message: %o, lastReceivedMsgRef: %d. Ignoring message.', messageRef, this.lastReceivedMsgRef[key])
@@ -97,9 +98,9 @@ export default class OrderingUtil {
      * and the previousMsgRef is larger than what has been received, we have a gap!
      */
     _checkForGap(previousMsgRef, key) {
-        return previousMsgRef != null &&
-            this.lastReceivedMsgRef[key] !== undefined &&
-            previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
+        return previousMsgRef != null
+            && this.lastReceivedMsgRef[key] !== undefined
+            && previousMsgRef.compareTo(this.lastReceivedMsgRef[key]) === 1
     }
 
     async _checkQueue() {

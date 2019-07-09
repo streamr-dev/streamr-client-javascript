@@ -1,6 +1,8 @@
 import assert from 'assert'
+
 import sinon from 'sinon'
 import { MessageLayer } from 'streamr-client-protocol'
+
 import OrderingUtil from '../../src/OrderingUtil'
 
 const { StreamMessage } = MessageLayer
