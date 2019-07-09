@@ -23,9 +23,12 @@ export default class SubscribedStream {
                 return Signer.verifyStreamMessage(msg, new Set(publishers))
             }
             return false
-        } if (this._client.options.verifySignatures === 'never') {
+        }
+
+        if (this._client.options.verifySignatures === 'never') {
             return true
         }
+
         // if this._client.options.verifySignatures === 'auto'
         if (msg.signatureType && msg.signatureType !== 0 && msg.signature) { // always verify in case the message is signed
             const publishers = await this.getPublishers()

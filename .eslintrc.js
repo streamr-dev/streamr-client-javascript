@@ -9,6 +9,10 @@ module.exports = exports = {
     rules: {
         'max-len': [WARN, { code: 150 }],
         'no-plusplus': ["error", { "allowForLoopAfterthoughts": true }],
-        'no-underscore-dangle': ["error", { "allowAfterThis": true }]
+        'no-underscore-dangle': ["error", { "allowAfterThis": true }],
+        "padding-line-between-statements": [
+            "error",
+            { "blankLine": "always", "prev": "if", "next": "if" }
+        ]
     }
 }

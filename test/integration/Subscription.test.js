@@ -43,10 +43,12 @@ describe('Subscription', () => {
             await client.unsubscribe(subscription)
             subscription = undefined
         }
+
         if (stream) {
             await stream.delete()
             stream = undefined
         }
+
         if (client && client.isConnected()) {
             await client.disconnect()
             client.off('error', throwError)

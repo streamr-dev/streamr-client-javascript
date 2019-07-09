@@ -22,7 +22,9 @@ const agentByProtocol = {
 function getKeepAliveAgentForUrl(url) {
     if (url.startsWith('https')) {
         return agentByProtocol.https
-    } if (url.startsWith('http')) {
+    }
+
+    if (url.startsWith('http')) {
         return agentByProtocol.http
     }
 
