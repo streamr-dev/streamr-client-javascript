@@ -18,7 +18,7 @@ export default class OrderingUtil {
     }
 
     async add(unorderedStreamMessage) {
-        const key = unorderedStreamMessage.getPublisherId() + unorderedStreamMessage.messageId.msgChainId
+        const key = unorderedStreamMessage.getPublisherId() + unorderedStreamMessage.getMsgChainId()
         if (!this._checkForGap(unorderedStreamMessage.prevMsgRef, key)) { // if it is the next message, process it
             this._processMsg(key, unorderedStreamMessage)
             await this._checkQueue()
