@@ -1,7 +1,9 @@
 import assert from 'assert'
+
 import { ethers } from 'ethers'
 
 import StreamrClient from '../../src'
+
 import config from './config'
 
 /**
@@ -65,6 +67,16 @@ describe('StreamEndpoints', () => {
     it('client.getStreamPublishers should retrieve itself', async () => {
         const publishers = await client.getStreamPublishers(createdStream.id)
         assert.deepStrictEqual(publishers, [client.signer.address.toLowerCase()])
+    })
+
+    it('client.isStreamPublisher should return true', async () => {
+        const valid = await client.isStreamPublisher(createdStream.id, client.signer.address.toLowerCase())
+        assert(valid)
+    })
+
+    it('client.isStreamPublisher should return false', async () => {
+        const valid = await client.isStreamPublisher(createdStream.id, 'some-wrong-address')
+        assert(!valid)
     })
 
     describe('Stream.update', () => {

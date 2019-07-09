@@ -6,30 +6,63 @@ export default class SubscribedStream {
         this._client = client
         this.streamId = streamId
         this.subscriptions = {}
+        this.isPublisherPromises = {}
     }
 
-    getPublishers() {
-        if (!this.publishersPromise || (Date.now() - this.lastAccess) > PUBLISHERS_EXPIRATION_TIME) {
-            this.publishersPromise = this._client.getStreamPublishers(this.streamId)
-            this.lastAccess = Date.now()
+    async getPublishers() {
+        if (!this.publishersPromise || (Date.now() - this.lastUpdated) > PUBLISHERS_EXPIRATION_TIME) {
+            this.publishersPromise = this._client.getStreamPublishers(this.streamId).then((publishers) => {
+                const map = {}
+                publishers.forEach((p) => {
+                    map[p] = true
+                })
+                return map
+            })
+            this.lastUpdated = Date.now()
         }
         return this.publishersPromise
+    }
+
+    async _isPublisher(publisherId) {
+        if (!this.isPublisherPromises[publisherId]) {
+            this.isPublisherPromises[publisherId] = this._client.isStreamPublisher(this.streamId, publisherId)
+        }
+        return this.isPublisherPromises[publisherId]
+    }
+
+    async isValidPublisher(publisherId) {
+        const cache = await this.getPublishers()
+        if (cache[publisherId]) {
+            return cache[publisherId]
+        }
+        const isValid = await this._isPublisher(publisherId)
+        cache[publisherId] = isValid
+        return isValid
     }
 
     async verifyStreamMessage(msg) {
         if (this._client.options.verifySignatures === 'always') {
             if (msg.signatureType && msg.signatureType !== 0 && msg.signature) {
-                const publishers = await this.getPublishers()
-                return Signer.verifyStreamMessage(msg, new Set(publishers))
+                const isValid = await this.isValidPublisher(msg.getPublisherId().toLowerCase())
+                if (!isValid) {
+                    return false
+                }
+                return Signer.verifyStreamMessage(msg)
             }
             return false
-        } else if (this._client.options.verifySignatures === 'never') {
+        }
+
+        if (this._client.options.verifySignatures === 'never') {
             return true
         }
+
         // if this._client.options.verifySignatures === 'auto'
         if (msg.signatureType && msg.signatureType !== 0 && msg.signature) { // always verify in case the message is signed
-            const publishers = await this.getPublishers()
-            return Signer.verifyStreamMessage(msg, new Set(publishers))
+            const isValid = await this.isValidPublisher(msg.getPublisherId().toLowerCase())
+            if (!isValid) {
+                return false
+            }
+            return Signer.verifyStreamMessage(msg)
         }
         return !(await this.getVerifySignatures())
     }
@@ -74,7 +107,10 @@ export default class SubscribedStream {
     }
 
     removeSubscription(sub) {
-        delete this.subscriptions[sub.id]
+        if (this.subscriptions[sub.id]) {
+            this.subscriptions[sub.id].stop()
+            delete this.subscriptions[sub.id]
+        }
     }
 }
 SubscribedStream.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME

@@ -22,7 +22,9 @@ const agentByProtocol = {
 function getKeepAliveAgentForUrl(url) {
     if (url.startsWith('https')) {
         return agentByProtocol.https
-    } else if (url.startsWith('http')) {
+    }
+
+    if (url.startsWith('http')) {
         return agentByProtocol.http
     }
 
@@ -95,6 +97,19 @@ export async function getStreamPublishers(streamId) {
     const url = `${this.options.restUrl}/streams/${streamId}/publishers`
     const json = await authFetch(url, this.session)
     return json.addresses.map((a) => a.toLowerCase())
+}
+
+export async function isStreamPublisher(streamId, ethAddress) {
+    const url = `${this.options.restUrl}/streams/${streamId}/publisher/${ethAddress}`
+    try {
+        await authFetch(url, this.session)
+        return true
+    } catch (e) {
+        if (e.response && e.response.status === 404) {
+            return false
+        }
+        throw e
+    }
 }
 
 export function publishHttp(streamObjectOrId, data, requestOptions = {}, keepAlive = true) {
