@@ -752,33 +752,6 @@ describe('StreamrClient', () => {
                         sub.emit('done')
                     })
                 })
-                describe('groupKeyRequest', () => {
-                    it('sends group key request', (done) => {
-                        const sub = setupSubscription('stream1')
-                        const publisherId = 'ethAddress'
-                        const content = {
-                            publicKey: client.encryptionUtil.getPublicKey(),
-                        }
-                        const streamMessage = StreamMessage.create(
-                            [publisherId, 0, 0, 0, StubbedStreamrClient.hashedUsername, ''], null, StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
-                            StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE, null,
-                        )
-                        connection.expect(ControlLayer.PublishRequest.create(streamMessage, 'session-token'), (toSend, toExpect) => {
-                            const msgToSend = toSend.streamMessage
-                            const msgToExpect = toExpect.streamMessage
-                            assert.deepStrictEqual(msgToSend.messageId.streamId, msgToExpect.messageId.streamId)
-                            assert.deepStrictEqual(msgToSend.messageId.streamPartition, msgToExpect.messageId.streamPartition)
-                            assert.deepStrictEqual(msgToSend.messageId.publisherId, msgToExpect.messageId.publisherId)
-                            assert.deepStrictEqual(msgToSend.contentType, msgToExpect.contentType)
-                            assert.deepStrictEqual(msgToSend.encryptionType, msgToExpect.encryptionType)
-                            assert.deepStrictEqual(msgToSend.messageId.streamId, msgToExpect.messageId.streamId)
-                            assert(msgToSend.getParsedContent().publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----'))
-                            assert(msgToSend.getParsedContent().publicKey.endsWith('-----END RSA PUBLIC KEY-----\n'))
-                        })
-                        sub.emit('groupKeyMissing', publisherId)
-                        setTimeout(() => done(), 1000)
-                    })
-                })
             })
         })
     })

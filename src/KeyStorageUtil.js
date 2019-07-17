@@ -22,6 +22,13 @@ export default class KeyStorageUtil {
         return undefined
     }
 
+    getKeysBetween(streamId, start, end) {
+        if (this.groupKeyHistories[streamId]) {
+            return this.groupKeyHistories[streamId].getKeysBetween(start, end)
+        }
+        return []
+    }
+
     addKey(streamId, groupKey, start) {
         if (!this.groupKeyHistories[streamId]) {
             this.groupKeyHistories[streamId] = new GroupKeyHistory()

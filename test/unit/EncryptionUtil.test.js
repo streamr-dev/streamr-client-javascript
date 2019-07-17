@@ -1,5 +1,6 @@
 import assert from 'assert'
 import crypto from 'crypto'
+
 import EncryptionUtil from '../../src/EncryptionUtil'
 
 describe('EncryptionUtil', () => {

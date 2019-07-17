@@ -18,10 +18,17 @@ export default class KeyExchangeUtil {
         }
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
-        // TODO: handle request for specific time range
-        // fetch from MessageCreationUtil or a KeyStorageUtil?
-        const groupKeyObj = this._client.keyStorageUtil.getLatestKey(parsedContent.streamId, true)
-        if (!groupKeyObj) {
+        let keys = []
+        if (parsedContent.range) {
+            keys = this._client.keyStorageUtil.getKeysBetween(parsedContent.streamId, parsedContent.range.start, parsedContent.range.end)
+        } else {
+            const groupKeyObj = this._client.keyStorageUtil.getLatestKey(parsedContent.streamId, true)
+            if (groupKeyObj) {
+                keys.push(groupKeyObj)
+            }
+        }
+
+        if (keys.length === 0) {
             throw new Error(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
         }
         const subscriberId = streamMessage.getPublisherId()
@@ -29,11 +36,16 @@ export default class KeyExchangeUtil {
         if (!valid) {
             throw new Error(`Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`)
         }
-        const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKeyObj.groupKey, parsedContent.publicKey, true)
-        const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, [{
-            groupKey: encryptedGroupKey,
-            start: groupKeyObj.start,
-        }])
+
+        const encryptedGroupKeys = []
+        keys.forEach((keyObj) => {
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(keyObj.groupKey, parsedContent.publicKey, true)
+            encryptedGroupKeys.push({
+                groupKey: encryptedGroupKey,
+                start: keyObj.start,
+            })
+        })
+        const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, encryptedGroupKeys)
         return this._client.publishStreamMessage(response)
     }
 
