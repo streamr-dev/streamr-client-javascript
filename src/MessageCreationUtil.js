@@ -7,11 +7,12 @@ import { ethers } from 'ethers'
 
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
+import KeyStorageUtil from './KeyStorageUtil'
 
 const { StreamMessage } = MessageLayer
 
 export default class MessageCreationUtil {
-    constructor(auth, signer, userInfoPromise, getStreamFunction, groupKeys = {}) {
+    constructor(auth, signer, userInfoPromise, getStreamFunction, keyStorageUtil) {
         this.auth = auth
         this._signer = signer
         this.userInfoPromise = userInfoPromise
@@ -20,8 +21,7 @@ export default class MessageCreationUtil {
             max: 10000,
         })
         this.publishedStreams = {}
-        Object.values(groupKeys).forEach((key) => EncryptionUtil.validateGroupKey(key))
-        this.groupKeys = groupKeys
+        this.keyStorageUtil = keyStorageUtil || new KeyStorageUtil()
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
     }
@@ -134,14 +134,14 @@ export default class MessageCreationUtil {
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
 
-        if (groupKey && this.groupKeys[stream.id] && groupKey !== this.groupKeys[stream.id]) {
-            EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.groupKeys[stream.id])
-            this.groupKeys[stream.id] = groupKey
-        } else if (groupKey || this.groupKeys[stream.id]) {
+        if (groupKey && this.keyStorageUtil.hasKey(stream.id) && groupKey !== this.keyStorageUtil.getLatestKey(stream.id)) {
+            EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.keyStorageUtil.getLatestKey(stream.id))
+            this.keyStorageUtil.addKey(stream.id, groupKey)
+        } else if (groupKey || this.keyStorageUtil.hasKey(stream.id)) {
             if (groupKey) {
-                this.groupKeys[stream.id] = groupKey
+                this.keyStorageUtil.addKey(stream.id, groupKey)
             }
-            EncryptionUtil.encryptStreamMessage(streamMessage, this.groupKeys[stream.id])
+            EncryptionUtil.encryptStreamMessage(streamMessage, this.keyStorageUtil.getLatestKey(stream.id))
         }
 
         if (this._signer) {

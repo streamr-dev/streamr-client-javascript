@@ -1,4 +1,5 @@
 import debugFactory from 'debug'
+
 import EncryptionUtil from './EncryptionUtil'
 
 const debug = debugFactory('KeyExchangeUtil')
@@ -18,8 +19,9 @@ export default class KeyExchangeUtil {
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
         // TODO: handle request for specific time range
-        const groupKey = this._client.options.publisherGroupKeys[parsedContent.streamId]
-        if (!groupKey) {
+        // fetch from MessageCreationUtil or a KeyStorageUtil?
+        const groupKeyObj = this._client.keyStorageUtil.getLatestKey(parsedContent.streamId, true)
+        if (!groupKeyObj) {
             throw new Error(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
         }
         const subscriberId = streamMessage.getPublisherId()
@@ -27,10 +29,10 @@ export default class KeyExchangeUtil {
         if (!valid) {
             throw new Error(`Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`)
         }
-        const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, parsedContent.publicKey, true)
+        const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKeyObj.groupKey, parsedContent.publicKey, true)
         const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, [{
             groupKey: encryptedGroupKey,
-            start: Date.now(), // TODO: real start time
+            start: groupKeyObj.start,
         }])
         return this._client.publishStreamMessage(response)
     }
@@ -76,6 +78,7 @@ export default class KeyExchangeUtil {
         if (!this.isSubscriberPromises[streamId]) {
             this.isSubscriberPromises[streamId] = {}
         }
+
         if (!this.isSubscriberPromises[streamId][subscriberId]) {
             this.isSubscriberPromises[streamId][subscriberId] = this._client.isStreamSubscriber(streamId, subscriberId)
         }

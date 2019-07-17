@@ -37,6 +37,7 @@ import CombinedSubscription from './CombinedSubscription'
 import Subscription from './Subscription'
 import EncryptionUtil from './EncryptionUtil'
 import KeyExchangeUtil from './KeyExchangeUtil'
+import KeyStorageUtil from './KeyStorageUtil'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -99,6 +100,8 @@ export default class StreamrClient extends EventEmitter {
             this.keyExchangeUtil = new KeyExchangeUtil(this)
         }
 
+        this.keyStorageUtil = new KeyStorageUtil(this.options.publisherGroupKeys)
+
         this.publishQueue = []
         this.session = new Session(this, this.options.auth)
         this.signer = Signer.createSigner(this.options.auth, this.options.publishWithSignature)
@@ -112,7 +115,7 @@ export default class StreamrClient extends EventEmitter {
                 this.options.auth, this.signer, this.getUserInfo()
                     .catch((err) => this.emit('error', err)),
                 (streamId) => this.getStream(streamId)
-                    .catch((err) => this.emit('error', err)), this.options.publisherGroupKeys,
+                    .catch((err) => this.emit('error', err)), this.keyStorageUtil,
             )
         }
 

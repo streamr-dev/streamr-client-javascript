@@ -4,6 +4,7 @@ import sinon from 'sinon'
 import { MessageLayer } from 'streamr-client-protocol'
 import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 import EncryptionUtil from '../../src/EncryptionUtil'
+import KeyStorageUtil from '../../src/KeyStorageUtil'
 
 const { StreamMessage } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
@@ -19,10 +20,9 @@ function setupClient() {
     client.isStreamSubscriber = sinon.stub()
     client.isStreamSubscriber.withArgs('streamId', 'subscriber4').resolves(true)
     client.isStreamSubscriber.withArgs('streamId', 'subscriber5').resolves(false)
-    client.options = {}
-    client.options.publisherGroupKeys = {
+    client.keyStorageUtil = new KeyStorageUtil({
         streamId: crypto.randomBytes(32),
-    }
+    })
     client.subscribedStreams = {
         streamId: {
             setSubscriptionsGroupKey: sinon.stub(),
@@ -145,9 +145,9 @@ describe('KeyExchangeUtil', () => {
                     assert.strictEqual(streamId, 'streamId')
                     assert.strictEqual(keys.length, 1)
                     const keyObject = keys[0]
-                    const expectedKey = client.options.publisherGroupKeys.streamId
-                    assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKey)
-                    // TODO: assert start time
+                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId', true)
+                    assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKeyObj.groupKey)
+                    assert.deepStrictEqual(keyObject.start, expectedKeyObj.start)
                     return Promise.resolve('fake response')
                 },
             }

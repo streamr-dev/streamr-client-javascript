@@ -7,6 +7,7 @@ import { MessageLayer } from 'streamr-client-protocol'
 
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 import Stream from '../../src/rest/domain/Stream'
+import KeyStorageUtil from '../../src/KeyStorageUtil'
 
 const { StreamMessage } = MessageLayer
 
@@ -262,9 +263,12 @@ describe('MessageCreationUtil', () => {
         })
         it('should create encrypted messages when key defined in constructor', async () => {
             const key = crypto.randomBytes(32)
-            const keys = {}
-            keys[stream.id] = key
-            const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream, keys)
+            const keyStorageUtil = new KeyStorageUtil()
+            keyStorageUtil.addKey(stream.id, key)
+
+            const msgCreationUtil = new MessageCreationUtil(
+                client.options.auth, client.signer, client.getUserInfo(), client.getStream, keyStorageUtil,
+            )
             const msg = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
             assert.strictEqual(msg.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
             assert.strictEqual(msg.getSerializedContent().length, 58) // 16*2 + 13*2 (hex string made of IV + msg of 13 chars)
