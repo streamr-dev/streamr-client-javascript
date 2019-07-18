@@ -839,6 +839,46 @@ describe('StreamrClient', () => {
                     id,
                 }, Date.now(), null, groupKey)
             })
-        }, 300000)
+        }, 2 * TIMEOUT)
+
+        it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
+            client.once('error', done)
+            // Publish encrypted messages with different keys
+            const groupKey1 = crypto.randomBytes(32)
+            const groupKey2 = crypto.randomBytes(32)
+            client.publish(stream.id, {
+                test: 'resent msg 1',
+            }, Date.now(), null, groupKey1)
+            client.publish(stream.id, {
+                test: 'resent msg 2',
+            }, Date.now(), null, groupKey2)
+
+            // Add delay: this test needs some time to allow the message to be written to Cassandra
+            let receivedFirst = false
+            setTimeout(() => {
+                // subscribe with resend without knowing the historical keys
+                const sub = client.subscribe({
+                    stream: stream.id,
+                    resend: {
+                        last: 2,
+                    },
+                }, async (parsedContent) => {
+                    // Check message content
+                    if (!receivedFirst) {
+                        assert.strictEqual(parsedContent.test, 'resent msg 1')
+                        receivedFirst = true
+                    } else {
+                        assert.strictEqual(parsedContent.test, 'resent msg 2')
+                    }
+
+                    // All good, unsubscribe
+                    client.unsubscribe(sub)
+                    sub.on('unsubscribed', () => {
+                        assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                        done()
+                    })
+                })
+            }, TIMEOUT * 0.8)
+        }, 2 * TIMEOUT)
     })
 })

@@ -253,5 +253,26 @@ describe('SubscribedStream', () => {
         it('should return true', () => {
             assert.strictEqual(subscribedStream.emptySubscriptionsSet(), true)
         })
+        it('should call setGroupKeys() and checkQueue() for every subscription', async () => {
+            const sub2 = {
+                id: 'sub2Id',
+                setGroupKeys: sinon.stub(),
+                checkQueue: sinon.stub().resolves(true)
+            }
+            const sub3 = {
+                id: 'sub3Id',
+                setGroupKeys: sinon.stub(),
+                checkQueue: sinon.stub().resolves(true)
+            }
+            subscribedStream.removeSubscription(sub1)
+            subscribedStream.addSubscription(sub2)
+            subscribedStream.addSubscription(sub3)
+
+            await subscribedStream.setSubscriptionsGroupKeys('publisherId', ['group-key-1', 'group-key-2'])
+            assert(sub2.setGroupKeys.calledWith('publisherId', ['group-key-1', 'group-key-2']))
+            assert(sub2.checkQueue.calledOnce)
+            assert(sub3.setGroupKeys.calledWith('publisherId', ['group-key-1', 'group-key-2']))
+            assert(sub3.checkQueue.calledOnce)
+        })
     })
 })

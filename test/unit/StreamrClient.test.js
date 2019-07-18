@@ -597,6 +597,20 @@ describe('StreamrClient', () => {
                 }, () => {})
             })
 
+            it('sets the group keys if passed as arguments', () => {
+                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+
+                const sub = client.subscribe({
+                    stream: 'stream1',
+                    groupKeys: {
+                        publisherId: 'group-key'
+                    }
+                }, () => {})
+                assert(client.options.subscriberGroupKeys.stream1.publisherId.start)
+                assert.strictEqual(client.options.subscriberGroupKeys.stream1.publisherId.groupKey, 'group-key')
+                assert.strictEqual(sub.groupKeys.publisherId, 'group-key')
+            })
+
             it('accepts stream id as first argument instead of object', () => {
                 connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
@@ -950,6 +964,61 @@ describe('StreamrClient', () => {
         it('sets unauthenticated', () => {
             const c = new StubbedStreamrClient({}, createConnectionMock())
             assert(c.session.options.unauthenticated)
+        })
+        it('sets start time of group key', () => {
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: 'group-key1'
+                    }
+                }
+            }, createConnectionMock())
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key1')
+            assert(c.options.subscriberGroupKeys.streamId.publisherId.start)
+        })
+        it('updates the latest group key with a more recent key', () => {
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: 'group-key1'
+                    }
+                }
+            }, createConnectionMock())
+            c.subscribedStreams = {
+                streamId: {
+                    setSubscriptionsGroupKeys: sinon.stub()
+                }
+            }
+            const newGroupKey = {
+                groupKey: 'group-key2',
+                start: Date.now() + 2000
+            }
+            /* eslint-disable no-underscore-dangle */
+            c._setGroupKeys('streamId', 'publisherId', [newGroupKey])
+            /* eslint-enable no-underscore-dangle */
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key2')
+        })
+        it('does not update the latest group key with an older key', () => {
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: 'group-key1'
+                    }
+                }
+            }, createConnectionMock())
+            c.subscribedStreams = {
+                streamId: {
+                    setSubscriptionsGroupKeys: sinon.stub()
+                }
+            }
+            const oldGroupKey = {
+                groupKey: 'group-key2',
+                start: Date.now() - 2000
+            }
+            /* eslint-disable no-underscore-dangle */
+            c._setGroupKeys('streamId', 'publisherId', [oldGroupKey])
+            /* eslint-enable no-underscore-dangle */
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key1')
         })
     })
 })

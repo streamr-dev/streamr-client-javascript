@@ -1,3 +1,8 @@
+/*
+This class contains the history of group keys used by the client as a publisher to encrypt messages for a particular stream.
+The history is used to answer group key requests from subscribers who may ask for the latest key (getLatestKey() method)
+in case of real-time messages or a sequence of historical keys (getKeysBetween() method) in case of resends.
+ */
 export default class GroupKeyHistory {
     constructor(initialGroupKey) {
         this.keys = []

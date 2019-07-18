@@ -227,7 +227,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
             util.handleGroupKeyResponse(streamMessage).catch((err) => {
-                assert.strictEqual(err.message, 'Received group key for a stream to which the client is not subscribed.')
+                assert.strictEqual(err.message, 'Received group key response for a stream to which the client is not subscribed.')
                 done()
             })
         })
@@ -261,12 +261,17 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
-            client.setGroupKey = (streamId, publisherId, key) => {
+            /* eslint-disable no-underscore-dangle */
+            client._setGroupKeys = (streamId, publisherId, keys) => {
                 assert.strictEqual(streamId, 'streamId')
                 assert.strictEqual(publisherId, 'publisherId')
-                assert.deepStrictEqual(key, groupKey)
+                assert.deepStrictEqual(keys, [{
+                    groupKey,
+                    start: 54256
+                }])
                 done()
             }
+            /* eslint-enable no-underscore-dangle */
             return util.handleGroupKeyResponse(streamMessage)
         })
     })

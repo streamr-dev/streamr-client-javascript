@@ -58,17 +58,24 @@ export default class KeyExchangeUtil {
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
         if (!this._client.subscribedStreams[parsedContent.streamId]) {
-            throw new Error('Received group key for a stream to which the client is not subscribed.')
+            throw new Error('Received group key response for a stream to which the client is not subscribed.')
         }
-        // TODO: handle multiple keys
 
         if (!this._client.encryptionUtil) {
             throw new Error('Cannot decrypt group key response without the private key.')
         }
-        const encryptedGroupKey = parsedContent.keys[0].groupKey
-        const groupKey = this._client.encryptionUtil.decryptWithPrivateKey(encryptedGroupKey, true)
-        EncryptionUtil.validateGroupKey(groupKey)
-        await this._client.setGroupKey(parsedContent.streamId, streamMessage.getPublisherId(), groupKey)
+        const decryptedGroupKeys = []
+        parsedContent.keys.forEach((encryptedGroupKeyObj) => {
+            const groupKey = this._client.encryptionUtil.decryptWithPrivateKey(encryptedGroupKeyObj.groupKey, true)
+            EncryptionUtil.validateGroupKey(groupKey)
+            decryptedGroupKeys.push({
+                groupKey,
+                start: encryptedGroupKeyObj.start
+            })
+        })
+        /* eslint-disable no-underscore-dangle */
+        await this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), decryptedGroupKeys)
+        /* eslint-enable no-underscore-dangle */
         debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
     }
 

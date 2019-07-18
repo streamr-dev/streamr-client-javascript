@@ -122,9 +122,9 @@ export default class SubscribedStream {
         }
     }
 
-    async setSubscriptionsGroupKey(publisherId, groupKey) {
+    async setSubscriptionsGroupKeys(publisherId, groupKeys) {
         const promises = Object.values(this.subscriptions).map((sub) => {
-            sub.setGroupKey(publisherId, groupKey)
+            sub.setGroupKeys(publisherId, groupKeys)
             return sub.checkQueue()
         })
         return Promise.all(promises)

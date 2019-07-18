@@ -100,6 +100,17 @@ export default class StreamrClient extends EventEmitter {
             this.keyExchangeUtil = new KeyExchangeUtil(this)
         }
 
+        // add the start time to every group key
+        Object.keys(this.options.subscriberGroupKeys).forEach((streamId) => {
+            const streamGroupKeys = this.options.subscriberGroupKeys[streamId]
+            Object.keys(streamGroupKeys).forEach((publisherId) => {
+                this.options.subscriberGroupKeys[streamId][publisherId] = {
+                    groupKey: streamGroupKeys[publisherId],
+                    start: Date.now()
+                }
+            })
+        })
+
         this.keyStorageUtil = new KeyStorageUtil(this.options.publisherGroupKeys)
 
         this.publishQueue = []
@@ -375,7 +386,11 @@ export default class StreamrClient extends EventEmitter {
         const options = this._validateParameters(optionsOrStreamId, callback)
 
         if (!options.stream) {
-            throw new Error('subscribe: Invalid arguments: options.stream is not given')
+            throw new Error('resend: Invalid arguments: options.stream is not given')
+        }
+
+        if (!options.resend) {
+            throw new Error('resend: Invalid arguments: options.resend is not given')
         }
 
         await this.ensureConnected()
@@ -423,7 +438,15 @@ export default class StreamrClient extends EventEmitter {
         }
 
         if (options.groupKeys) {
-            this.options.subscriberGroupKeys[options.stream] = options.groupKeys
+            Object.keys(options.groupKeys).forEach((publisherId) => {
+                if (!this.options.subscriberGroupKeys[options.stream]) {
+                    this.options.subscriberGroupKeys[options.stream] = {}
+                }
+                this.options.subscriberGroupKeys[options.stream][publisherId] = {
+                    groupKey: options.groupKeys[publisherId],
+                    start: Date.now()
+                }
+            })
         }
 
         // Create the Subscription object and bind handlers
@@ -448,13 +471,13 @@ export default class StreamrClient extends EventEmitter {
             debug('done event for sub %d', sub.id)
             this.unsubscribe(sub)
         })
-        sub.on('groupKeyMissing', async (publisherId) => {
-            if (!this.encryptionUtil) {
-                this.encryptionUtil = new EncryptionUtil() // we generate a public-private key pair if we don't have one already
+        sub.on('groupKeyMissing', async (publisherId, start, end) => {
+            if (this.encryptionUtil) {
+                const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(
+                    publisherId, sub.streamId, this.encryptionUtil.getPublicKey(), start, end,
+                )
+                await this.publishStreamMessage(streamMessage)
             }
-            const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(publisherId, sub.streamId, this.encryptionUtil.getPublicKey())
-            // MessageLayer.StreamMessageFactory.deserialize(streamMessage.serialize())
-            return this.publishStreamMessage(streamMessage)
         })
 
         // Add to lookups
@@ -686,12 +709,17 @@ export default class StreamrClient extends EventEmitter {
         return this.connection.send(request)
     }
 
-    setGroupKey(streamId, publisherId, groupKey) {
+    // each element of the array "groupKeys" is an object with 2 fields: "groupKey" and "start"
+    _setGroupKeys(streamId, publisherId, groupKeys) {
         if (!this.options.subscriberGroupKeys[streamId]) {
             this.options.subscriberGroupKeys[streamId] = {}
         }
-        this.options.subscriberGroupKeys[streamId][publisherId] = groupKey
-        return this.subscribedStreams[streamId].setSubscriptionsGroupKey(publisherId, groupKey)
+        const last = groupKeys[groupKeys.length - 1]
+        const current = this.options.subscriberGroupKeys[streamId][publisherId]
+        if (!current || last.start > current.start) {
+            this.options.subscriberGroupKeys[streamId][publisherId] = last
+        }
+        return this.subscribedStreams[streamId].setSubscriptionsGroupKeys(publisherId, groupKeys.map((obj) => obj.groupKey))
     }
 
     handleError(msg) {
