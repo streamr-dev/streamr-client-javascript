@@ -22,7 +22,7 @@ function setupClient() {
     client.isStreamSubscriber = sinon.stub()
     client.isStreamSubscriber.withArgs('streamId', 'subscriber4').resolves(true)
     client.isStreamSubscriber.withArgs('streamId', 'subscriber5').resolves(false)
-    client.keyStorageUtil = new KeyStorageUtil()
+    client.keyStorageUtil = KeyStorageUtil.getKeyStorageUtil()
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 5)
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 12)
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 17)
@@ -188,6 +188,33 @@ describe('KeyExchangeUtil', () => {
                         })
                     })
                     assert.deepStrictEqual(decryptedKeys, client.keyStorageUtil.getKeysBetween('streamId', 15, 27))
+                    return Promise.resolve('fake response')
+                },
+            }
+            client.publishStreamMessage = (response) => {
+                assert.strictEqual(response, 'fake response')
+                done()
+            }
+            return util.handleGroupKeyRequest(streamMessage)
+        })
+        it('should send group key response (latest key and no storage of past keys)', (done) => {
+            const subscriberKeyPair = new EncryptionUtil()
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                    streamId: 'streamId',
+                    publicKey: subscriberKeyPair.getPublicKey(),
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            client.msgCreationUtil = {
+                createGroupKeyResponse: (subscriberId, streamId, keys) => {
+                    assert.strictEqual(subscriberId, 'subscriber2')
+                    assert.strictEqual(streamId, 'streamId')
+                    assert.strictEqual(keys.length, 1)
+                    const keyObject = keys[0]
+                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId', true)
+                    assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKeyObj.groupKey)
+                    assert.deepStrictEqual(keyObject.start, expectedKeyObj.start)
                     return Promise.resolve('fake response')
                 },
             }

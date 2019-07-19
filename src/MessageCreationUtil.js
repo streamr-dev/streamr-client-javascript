@@ -21,7 +21,7 @@ export default class MessageCreationUtil {
             max: 10000,
         })
         this.publishedStreams = {}
-        this.keyStorageUtil = keyStorageUtil || new KeyStorageUtil()
+        this.keyStorageUtil = keyStorageUtil || KeyStorageUtil.getKeyStorageUtil()
         this.msgChainId = randomstring.generate(20)
         this.cachedHashes = {}
     }

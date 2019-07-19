@@ -58,6 +58,8 @@ export default class StreamrClient extends EventEmitter {
             retryResendAfter: 5000,
             gapFillTimeout: 5000,
             maxPublishQueueSize: 10000,
+            // encryption options
+            publisherStoreKeyHistory: true,
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
             keyExchange: {},
@@ -100,18 +102,16 @@ export default class StreamrClient extends EventEmitter {
             this.keyExchangeUtil = new KeyExchangeUtil(this)
         }
 
-        // add the start time to every group key
-        Object.keys(this.options.subscriberGroupKeys).forEach((streamId) => {
-            const streamGroupKeys = this.options.subscriberGroupKeys[streamId]
-            Object.keys(streamGroupKeys).forEach((publisherId) => {
-                this.options.subscriberGroupKeys[streamId][publisherId] = {
-                    groupKey: streamGroupKeys[publisherId],
-                    start: Date.now()
-                }
-            })
-        })
+        // add the start time to every group key if missing
+        const validated = KeyStorageUtil.validateAndAddStart(this.options.publisherGroupKeys, this.options.subscriberGroupKeys)
+        /* eslint-disable prefer-destructuring */
+        this.options.publisherGroupKeys = validated[0]
+        this.options.subscriberGroupKeys = validated[1]
+        /* eslint-enable prefer-destructuring */
 
-        this.keyStorageUtil = new KeyStorageUtil(this.options.publisherGroupKeys)
+        this.keyStorageUtil = KeyStorageUtil.getKeyStorageUtil(
+            this.options.publisherGroupKeys, this.options.publisherStoreKeyHistory
+        )
 
         this.publishQueue = []
         this.session = new Session(this, this.options.auth)

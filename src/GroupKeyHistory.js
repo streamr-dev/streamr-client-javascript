@@ -4,13 +4,11 @@ The history is used to answer group key requests from subscribers who may ask fo
 in case of real-time messages or a sequence of historical keys (getKeysBetween() method) in case of resends.
  */
 export default class GroupKeyHistory {
+    // initialGroupKey is an object with fields "groupKey" and "start"
     constructor(initialGroupKey) {
         this.keys = []
         if (initialGroupKey) {
-            this.keys.push({
-                groupKey: initialGroupKey,
-                start: Date.now()
-            })
+            this.keys.push(initialGroupKey)
         }
     }
 

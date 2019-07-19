@@ -263,7 +263,7 @@ describe('MessageCreationUtil', () => {
         })
         it('should create encrypted messages when key defined in constructor', async () => {
             const key = crypto.randomBytes(32)
-            const keyStorageUtil = new KeyStorageUtil()
+            const keyStorageUtil = KeyStorageUtil.getKeyStorageUtil()
             keyStorageUtil.addKey(stream.id, key)
 
             const msgCreationUtil = new MessageCreationUtil(

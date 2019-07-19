@@ -1,38 +1,42 @@
-import GroupKeyHistory from './GroupKeyHistory'
+import KeyHistoryStorageUtil from './KeyHistoryStorageUtil'
+import LatestKeyStorageUtil from './LatestKeyStorageUtil'
 import EncryptionUtil from './EncryptionUtil'
 
 export default class KeyStorageUtil {
-    // publisherGroupKeys is an object {streamId: groupKey}
-    constructor(publisherGroupKeys = {}) {
-        this.groupKeyHistories = {}
+    static getKeyStorageUtil(publisherGroupKeys = {}, storeHistoricalKeys = true) {
+        if (storeHistoricalKeys) {
+            return new KeyHistoryStorageUtil(publisherGroupKeys)
+        }
+        return new LatestKeyStorageUtil(publisherGroupKeys)
+    }
+
+    static validateAndAddStart(publisherGroupKeys, subscriberGroupKeys) {
+        const validatedPublisherGroupKeys = {}
         Object.keys(publisherGroupKeys).forEach((streamId) => {
-            EncryptionUtil.validateGroupKey(publisherGroupKeys[streamId])
-            this.groupKeyHistories[streamId] = new GroupKeyHistory(publisherGroupKeys[streamId])
+            validatedPublisherGroupKeys[streamId] = this._getValidatedKeyObject(publisherGroupKeys[streamId])
         })
+
+        const validatedSubscriberGroupKeys = {}
+        Object.keys(subscriberGroupKeys).forEach((streamId) => {
+            const streamGroupKeys = subscriberGroupKeys[streamId]
+            validatedSubscriberGroupKeys[streamId] = {}
+            Object.keys(streamGroupKeys).forEach((publisherId) => {
+                validatedSubscriberGroupKeys[streamId][publisherId] = this._getValidatedKeyObject(streamGroupKeys[publisherId])
+            })
+        })
+
+        return [validatedPublisherGroupKeys, validatedSubscriberGroupKeys]
     }
 
-    hasKey(streamId) {
-        return this.groupKeyHistories[streamId] !== undefined
-    }
-
-    getLatestKey(streamId, withStart = false) {
-        if (this.groupKeyHistories[streamId]) {
-            return this.groupKeyHistories[streamId].getLatestKey(withStart)
+    static _getValidatedKeyObject(groupKeyObjOrString) {
+        if (groupKeyObjOrString.groupKey && groupKeyObjOrString.start) {
+            EncryptionUtil.validateGroupKey(groupKeyObjOrString.groupKey)
+            return groupKeyObjOrString
         }
-        return undefined
-    }
-
-    getKeysBetween(streamId, start, end) {
-        if (this.groupKeyHistories[streamId]) {
-            return this.groupKeyHistories[streamId].getKeysBetween(start, end)
+        EncryptionUtil.validateGroupKey(groupKeyObjOrString)
+        return {
+            groupKey: groupKeyObjOrString,
+            start: Date.now()
         }
-        return []
-    }
-
-    addKey(streamId, groupKey, start) {
-        if (!this.groupKeyHistories[streamId]) {
-            this.groupKeyHistories[streamId] = new GroupKeyHistory()
-        }
-        this.groupKeyHistories[streamId].addKey(groupKey, start)
     }
 }

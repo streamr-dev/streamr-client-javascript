@@ -6,8 +6,11 @@ import KeyStorageUtil from '../../src/KeyStorageUtil'
 describe('KeyStorageUtil', () => {
     describe('hasKey()', () => {
         it('returns true iff there is a GroupKeyHistory for the stream', () => {
-            const util = new KeyStorageUtil({
-                streamId: crypto.randomBytes(32)
+            const util = KeyStorageUtil.getKeyStorageUtil({
+                streamId: {
+                    groupKey: crypto.randomBytes(32),
+                    start: Date.now()
+                }
             })
             assert.strictEqual(util.hasKey('streamId'), true)
             assert.strictEqual(util.hasKey('wrong-streamId'), false)
@@ -15,11 +18,24 @@ describe('KeyStorageUtil', () => {
     })
     describe('getLatestKey()', () => {
         it('returns undefined if no key history', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             assert.strictEqual(util.getLatestKey('streamId'), undefined)
         })
+        it('returns key passed in constructor', () => {
+            const lastKey = crypto.randomBytes(32)
+            const util = KeyStorageUtil.getKeyStorageUtil({
+                streamId: {
+                    groupKey: lastKey,
+                    start: 7
+                }
+            })
+            assert.deepStrictEqual(util.getLatestKey('streamId', true), {
+                groupKey: lastKey,
+                start: 7,
+            })
+        })
         it('returns the last key', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             util.addKey('streamId', crypto.randomBytes(32), 1)
             util.addKey('streamId', crypto.randomBytes(32), 5)
             const lastKey = crypto.randomBytes(32)
@@ -32,16 +48,16 @@ describe('KeyStorageUtil', () => {
     })
     describe('getKeysBetween()', () => {
         it('returns empty array for wrong streamId', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             assert.deepStrictEqual(util.getKeysBetween('wrong-streamId', 1, 2), [])
         })
         it('returns empty array when end time is before start of first key', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             util.addKey('streamId', crypto.randomBytes(32), 10)
             assert.deepStrictEqual(util.getKeysBetween('streamId', 1, 9), [])
         })
         it('returns only the latest key when start time is after last key', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             util.addKey('streamId', crypto.randomBytes(32), 5)
             const lastKey = crypto.randomBytes(32)
             util.addKey('streamId', lastKey, 10)
@@ -51,7 +67,7 @@ describe('KeyStorageUtil', () => {
             }])
         })
         it('returns keys in interval start-end', () => {
-            const util = new KeyStorageUtil()
+            const util = KeyStorageUtil.getKeyStorageUtil()
             const key1 = crypto.randomBytes(32)
             const key2 = crypto.randomBytes(32)
             const key3 = crypto.randomBytes(32)

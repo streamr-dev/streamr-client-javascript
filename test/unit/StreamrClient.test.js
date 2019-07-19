@@ -1,4 +1,5 @@
 import assert from 'assert'
+import crypto from 'crypto'
 
 import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
@@ -966,21 +967,37 @@ describe('StreamrClient', () => {
             assert(c.session.options.unauthenticated)
         })
         it('sets start time of group key', () => {
+            const groupKey = crypto.randomBytes(32)
             const c = new StubbedStreamrClient({
                 subscriberGroupKeys: {
                     streamId: {
-                        publisherId: 'group-key1'
+                        publisherId: groupKey
                     }
                 }
             }, createConnectionMock())
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key1')
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
             assert(c.options.subscriberGroupKeys.streamId.publisherId.start)
+        })
+        it('keeps start time passed in the constructor', () => {
+            const groupKey = crypto.randomBytes(32)
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: {
+                            groupKey,
+                            start: 12
+                        }
+                    }
+                }
+            }, createConnectionMock())
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.start, 12)
         })
         it('updates the latest group key with a more recent key', () => {
             const c = new StubbedStreamrClient({
                 subscriberGroupKeys: {
                     streamId: {
-                        publisherId: 'group-key1'
+                        publisherId: crypto.randomBytes(32)
                     }
                 }
             }, createConnectionMock())
@@ -990,19 +1007,20 @@ describe('StreamrClient', () => {
                 }
             }
             const newGroupKey = {
-                groupKey: 'group-key2',
+                groupKey: crypto.randomBytes(32),
                 start: Date.now() + 2000
             }
             /* eslint-disable no-underscore-dangle */
             c._setGroupKeys('streamId', 'publisherId', [newGroupKey])
             /* eslint-enable no-underscore-dangle */
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key2')
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId, newGroupKey)
         })
         it('does not update the latest group key with an older key', () => {
+            const groupKey = crypto.randomBytes(32)
             const c = new StubbedStreamrClient({
                 subscriberGroupKeys: {
                     streamId: {
-                        publisherId: 'group-key1'
+                        publisherId: groupKey
                     }
                 }
             }, createConnectionMock())
@@ -1012,13 +1030,13 @@ describe('StreamrClient', () => {
                 }
             }
             const oldGroupKey = {
-                groupKey: 'group-key2',
+                groupKey: crypto.randomBytes(32),
                 start: Date.now() - 2000
             }
             /* eslint-disable no-underscore-dangle */
             c._setGroupKeys('streamId', 'publisherId', [oldGroupKey])
             /* eslint-enable no-underscore-dangle */
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, 'group-key1')
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
         })
     })
 })
