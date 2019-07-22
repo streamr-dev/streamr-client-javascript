@@ -367,7 +367,7 @@ describe('MessageCreationUtil', () => {
                 groupKey: 'group-key',
                 start: 34524,
             }]).catch((err) => {
-                assert.strictEqual(err.message, 'Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+                assert.strictEqual(err.message, 'Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
                 done()
             })
         })

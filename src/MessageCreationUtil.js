@@ -184,7 +184,7 @@ export default class MessageCreationUtil {
 
     async createGroupKeyResponse(subscriberAddress, streamId, encryptedGroupKeys) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
         }
         const publisherId = await this.getPublisherId()
         const data = {
