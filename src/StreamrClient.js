@@ -287,9 +287,10 @@ export default class StreamrClient extends EventEmitter {
             throw new Error(`First argument must be a Stream object or the stream id! Was: ${streamObjectOrId}`)
         }
 
+        const timestampAsNumber = typeof timestamp === 'number' ? timestamp : timestamp.getTime()
         const [sessionToken, streamMessage] = await Promise.all([
             this.session.getSessionToken(),
-            this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestamp, partitionKey, groupKey),
+            this.msgCreationUtil.createStreamMessage(streamObjectOrId, data, timestampAsNumber, partitionKey, groupKey),
         ])
 
         if (this.isConnected()) {
