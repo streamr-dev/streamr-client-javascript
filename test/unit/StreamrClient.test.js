@@ -864,6 +864,16 @@ describe('StreamrClient', () => {
             })
         })
 
+        it('accepts timestamp as date string instead of number', (done) => {
+            client.options.autoConnect = true
+            client.options.auth.username = 'username'
+            connection.expect(getPublishRequest('streamId', 123, 0, null))
+            client.publish('streamId', pubMsg, '1970-01-01T00:00:00.123Z')
+            connection.on('connected', () => {
+                setTimeout(done, 1000)
+            })
+        })
+
         it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
             client.options.auth.username = 'username'
             client.options.autoConnect = false
