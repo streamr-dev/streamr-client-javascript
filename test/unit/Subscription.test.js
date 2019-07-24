@@ -223,23 +223,27 @@ describe('Subscription', () => {
 
         describe('gap detection', () => {
             it('emits "gap" if a gap is detected', (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
-                    assert.equal(from.sequenceNumber, 0)
+                    assert.equal(from.sequenceNumber, 1)
                     assert.equal(to.timestamp, 3)
                     assert.equal(to.sequenceNumber, 0)
                     assert.equal(publisherId, 'publisherId')
 
+                    clock.restore()
                     sub.stop()
                     done()
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             })
 
             it('emits second "gap" after the first one if no missing message is received in between', (done) => {
@@ -247,7 +251,7 @@ describe('Subscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, RESEND_TIMEOUT)
+                const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, RESEND_TIMEOUT)
                 sub.on('gap', (from, to, publisherId) => {
                     sub.on('gap', (from2, to2, publisherId2) => {
                         assert.deepStrictEqual(from, from2)
@@ -262,11 +266,12 @@ describe('Subscription', () => {
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
                 sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
-                    clock.tick(RESEND_TIMEOUT + 1000)
+                    clock.tick(2 * RESEND_TIMEOUT + 1000)
                 })
             })
 
             it('does not emit second "gap" after the first one if the missing messages are received in between', (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg2 = createMsg(2, undefined, 1)
                 const msg3 = createMsg(3, undefined, 2)
@@ -275,22 +280,25 @@ describe('Subscription', () => {
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, RESEND_TIMEOUT)
                 sub.on('gap', () => {
                     sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
-                    sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true))
+                    sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true)).then(() => {
+                        clock.tick(RESEND_TIMEOUT + 1000)
+                    })
                     sub.on('gap', () => { throw new Error('should not emit second gap') })
-                    const clock = sinon.useFakeTimers()
                     setTimeout(() => {
-                        clock.restore()
                         sub.stop()
+                        clock.restore()
                         done()
                     }, RESEND_TIMEOUT + 1000)
-                    clock.tick(RESEND_TIMEOUT + 1000)
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             })
 
             it('does not emit second "gap" if gets unsubscribed', async (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
@@ -298,7 +306,6 @@ describe('Subscription', () => {
                 sub.once('gap', () => {
                     sub.emit('unsubscribed')
                     sub.on('gap', () => { throw new Error('should not emit second gap') })
-                    const clock = sinon.useFakeTimers()
                     setTimeout(() => {
                         clock.restore()
                         sub.stop()
@@ -308,10 +315,13 @@ describe('Subscription', () => {
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             })
 
             it('does not emit second "gap" if gets disconnected', async (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
@@ -319,7 +329,6 @@ describe('Subscription', () => {
                 sub.once('gap', () => {
                     sub.emit('disconnected')
                     sub.on('gap', () => { throw new Error('should not emit second gap') })
-                    const clock = sinon.useFakeTimers()
                     setTimeout(() => {
                         clock.restore()
                         sub.stop()
@@ -329,7 +338,9 @@ describe('Subscription', () => {
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             })
 
             it('does not emit "gap" if different publishers', () => {
@@ -344,23 +355,27 @@ describe('Subscription', () => {
             })
 
             it('emits "gap" if a gap is detected (same timestamp but different sequenceNumbers)', (done) => {
+                const clock = sinon.useFakeTimers()
                 const msg1 = msg
                 const msg4 = createMsg(1, 4, 1, 3)
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
-                    assert.equal(from.sequenceNumber, 0)
+                    assert.equal(from.sequenceNumber, 1)
                     assert.equal(to.timestamp, 1)
                     assert.equal(to.sequenceNumber, 3)
                     assert.equal(publisherId, 'publisherId')
 
+                    clock.restore()
                     sub.stop()
                     done()
                 })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                    clock.tick(RESEND_TIMEOUT + 1000)
+                })
             })
 
             it('does not emit "gap" if a gap is not detected', () => {
@@ -492,7 +507,7 @@ describe('Subscription', () => {
             sub.handleError(err)
         })
 
-        it('marks the message as received if an InvalidJsonError occurs, and continue normally on next message', (done) => {
+        it('marks the message as received if an InvalidJsonError occurs, and continue normally on next message', async (done) => {
             const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                 if (receivedMsg.getTimestamp() === 3) {
                     sub.stop()
@@ -506,26 +521,28 @@ describe('Subscription', () => {
             const msg3 = createMsg(3, undefined, 2)
 
             // Receive msg1 successfully
-            sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+            await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
 
             // Get notified of an invalid message
             const err = new Errors.InvalidJsonError(msg.getStreamId(), 'invalid json', 'test error msg', createMsg(2, undefined, 1))
             sub.handleError(err)
 
             // Receive msg3 successfully
-            sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true))
+            await sub.handleBroadcastMessage(msg3, sinon.stub().resolves(true))
         })
 
         it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', async (done) => {
+            const clock = sinon.useFakeTimers()
             const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
 
             sub.on('gap', (from, to, publisherId) => {
                 assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
-                assert.equal(from.sequenceNumber, 0)
+                assert.equal(from.sequenceNumber, 1)
                 assert.equal(to.timestamp, 3)
                 assert.equal(to.sequenceNumber, 0)
                 assert.equal(publisherId, 'publisherId')
 
+                clock.restore()
                 sub.stop()
                 done()
             })
@@ -541,7 +558,9 @@ describe('Subscription', () => {
             sub.handleError(err)
 
             // Receive msg4 and should emit gap
-            sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+            await sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true)).then(() => {
+                clock.tick(RESEND_TIMEOUT + 1000)
+            })
         })
     })
 

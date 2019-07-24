@@ -60,9 +60,7 @@ class Subscription extends EventEmitter {
             }
         }, (from, to, publisherId, msgChainId) => {
             this.emit('gap', from, to, publisherId, msgChainId)
-        }, {
-            gapFillTimeout,
-        })
+        }, gapFillTimeout)
 
         /** * Message handlers ** */
 
@@ -83,7 +81,7 @@ class Subscription extends EventEmitter {
     }
 
     _clearGaps() {
-        return this.orderingUtil.clearGaps()
+        this.orderingUtil.clearGaps()
     }
 
     stop() {
@@ -145,7 +143,7 @@ class Subscription extends EventEmitter {
                 try {
                     this.emit('resent', response)
                 } finally {
-                    await this._finishResend()
+                    this._finishResend()
                 }
             })
         })
@@ -159,16 +157,16 @@ class Subscription extends EventEmitter {
             try {
                 this.emit('no_resend', response)
             } finally {
-                await this._finishResend()
+                this._finishResend()
             }
         })
     }
 
-    async _finishResend() {
+    _finishResend() {
         this._lastMessageHandlerPromise = null
         this.setResending(false)
         this.initialResendDone = true
-        await this.checkQueue()
+        this.checkQueue()
     }
 
     async _handleMessage(msg, verifyFn, isResend = false) {
@@ -197,19 +195,18 @@ class Subscription extends EventEmitter {
         if (!this.initialResendDone && !isResend) {
             this.queue.push(msg)
         } else {
-            await this.orderingUtil.add(msg)
+            this.orderingUtil.add(msg)
         }
     }
 
-    async checkQueue() {
+    checkQueue() {
         if (this.queue.length) {
             debug('Attempting to process %d queued messages for stream %s', this.queue.length, this.streamId)
 
             const originalQueue = this.queue
             this.queue = []
 
-            const promises = originalQueue.map((msg) => this.orderingUtil.add(msg))
-            await Promise.all(promises)
+            originalQueue.forEach((msg) => this.orderingUtil.add(msg))
         }
     }
 

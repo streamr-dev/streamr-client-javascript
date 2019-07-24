@@ -36,13 +36,13 @@ describe('OrderingUtil', () => {
     it('calls the gap handler if a gap is detected', (done) => {
         const gapHandler = (from, to, publisherId) => {
             assert.equal(from.timestamp, 1)
-            assert.equal(from.sequenceNumber, 0)
+            assert.equal(from.sequenceNumber, 1)
             assert.equal(to.timestamp, 3)
             assert.equal(to.sequenceNumber, 0)
             assert.equal(publisherId, 'publisherId')
             done()
         }
-        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler)
+        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler, 50)
         const msg1 = msg
         const msg4 = createMsg(4, undefined, 3)
         util.add(msg1)
@@ -52,9 +52,7 @@ describe('OrderingUtil', () => {
         const gapHandler = () => {
             throw new Error('The gap handler should not be called.')
         }
-        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler, {
-            firstGapTimeout: 5000,
-        })
+        util = new OrderingUtil('streamId', 0, sinon.stub(), gapHandler, 5000)
         const msg1 = msg
         const msg2 = createMsg(2, undefined, 1)
         const msg3 = createMsg(3, undefined, 2)

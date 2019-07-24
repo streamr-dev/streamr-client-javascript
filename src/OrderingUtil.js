@@ -1,22 +1,23 @@
 import debugFactory from 'debug'
-import { Errors } from 'streamr-client-protocol'
+
+import OrderedMsgChain from './OrderedMsgChain'
 
 const debug = debugFactory('StreamrClient::OrderingUtil')
 
 export default class OrderingUtil {
-    constructor(streamId, streamPartition, inOrderHandler, gapHandler, options) {
+    constructor(streamId, streamPartition, inOrderHandler, gapHandler, gapFillTimeout) {
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.inOrderHandler = inOrderHandler
         this.gapHandler = gapHandler
-        this.options = options || {}
-        this.firstGapTimeout = this.options.firstGapTimeout
-        this.gapFillTimeout = this.options.gapFillTimeout
+        this.gapFillTimeout = gapFillTimeout
         this.queue = []
         this.lastReceivedMsgRef = {}
         this.gaps = {}
+        this.orderedChains = {}
     }
 
+    /*
     async add(unorderedStreamMessage) {
         const key = unorderedStreamMessage.getPublisherId() + unorderedStreamMessage.getMsgChainId()
         if (!this._checkForGap(unorderedStreamMessage.prevMsgRef, key)) { // if it is the next message, process it
@@ -28,6 +29,19 @@ export default class OrderingUtil {
             }
             this.queue.push(unorderedStreamMessage)
         }
+    } */
+
+    add(unorderedStreamMessage) {
+        const chain = this._getChain(unorderedStreamMessage.getPublisherId(), unorderedStreamMessage.getMsgChainId())
+        chain.add(unorderedStreamMessage)
+    }
+
+    _getChain(publisherId, msgChainId) {
+        const key = publisherId + msgChainId
+        if (!this.orderedChains[key]) {
+            this.orderedChains[key] = new OrderedMsgChain(publisherId, msgChainId, this.inOrderHandler, this.gapHandler, this.gapFillTimeout)
+        }
+        return this.orderedChains[key]
     }
 
     _processMsg(key, unorderedStreamMessage) {
@@ -84,12 +98,9 @@ export default class OrderingUtil {
     }
 
     addError(err) {
-        let key
         if (err.streamMessage) {
-            key = err.streamMessage.getPublisherId() + err.streamMessage.getMsgChainId()
-            if (err instanceof Errors.InvalidJsonError && !this._checkForGap(err.streamMessage.prevMsgRef, key)) {
-                this.lastReceivedMsgRef[key] = err.streamMessage.getMessageRef()
-            }
+            const chain = this._getChain(err.streamMessage.getPublisherId(), err.streamMessage.getMsgChainId())
+            chain.addError(err)
         }
     }
 
@@ -116,9 +127,8 @@ export default class OrderingUtil {
     }
 
     clearGaps() {
-        Object.keys(this.gaps).forEach((key) => {
-            clearInterval(this.gaps[key])
-            delete this.gaps[key]
+        Object.keys(this.orderedChains).forEach((key) => {
+            this.orderedChains[key].clearGap()
         })
     }
 }
