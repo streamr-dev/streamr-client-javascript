@@ -210,6 +210,7 @@ describe('Subscription', () => {
                 await sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
                 await sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
                 assert.equal(handler.callCount, 1)
+                sub.stop()
             })
             it('ignores re-received messages if they come from resend', async () => {
                 const handler = sinon.stub()
@@ -218,6 +219,7 @@ describe('Subscription', () => {
 
                 await sub.handleBroadcastMessage(msg, sinon.stub().resolves(true))
                 await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+                sub.stop()
             })
         })
 

@@ -52,7 +52,7 @@ export default class OrderedMsgChain {
     }
 
     _isNextMessage(unorderedStreamMessage) {
-        const isFirstMessage = this.lastReceivedMsgRef === null && unorderedStreamMessage.prevMsgRef == null
+        const isFirstMessage = this.lastReceivedMsgRef === null
         return isFirstMessage
             || (this.lastReceivedMsgRef !== null
                 && unorderedStreamMessage.prevMsgRef !== null

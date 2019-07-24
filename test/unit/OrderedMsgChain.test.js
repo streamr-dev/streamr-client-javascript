@@ -90,31 +90,31 @@ describe('OrderedMsgChain', () => {
         }, () => {
             throw new Error('Unexpected gap')
         }, 10000)
+        util.add(msg1)
         util.add(msg5)
         util.add(msg4)
         util.add(msg3)
         util.add(msg2)
-        util.add(msg1)
         assert.deepStrictEqual(received, [msg1, msg2, msg3, msg4, msg5])
     })
     it('call the gap handler MAX_GAP_REQUESTS times and then throws', (done) => {
         const clock = sinon.useFakeTimers()
         let counter = 0
         try {
-            util = new OrderedMsgChain('publisherId', 'msgChainId', () => {
-                throw new Error('received unexpected message')
-            }, (from, to, publisherId, msgChainId) => {
-                assert.deepStrictEqual(from, msg2.prevMsgRef)
-                assert.deepStrictEqual(to, msg2.prevMsgRef)
+            util = new OrderedMsgChain('publisherId', 'msgChainId', () => {}, (from, to, publisherId, msgChainId) => {
+                assert.strictEqual(from.timestamp, msg1.getMessageRef().timestamp)
+                assert.strictEqual(from.sequenceNumber, msg1.getMessageRef().sequenceNumber + 1)
+                assert.deepStrictEqual(to, msg3.prevMsgRef)
                 assert.strictEqual(publisherId, 'publisherId')
                 assert.strictEqual(msgChainId, 'msgChainId')
                 counter += 1
                 clock.tick(5000)
             }, 5000)
-            util.add(msg2)
+            util.add(msg1)
+            util.add(msg3)
             clock.tick(5000)
         } catch (e) {
-            assert.strictEqual(e.message, 'Failed to fill gap between [1,0] and [1,0] for publisherId-msgChainId'
+            assert.strictEqual(e.message, 'Failed to fill gap between [1,1] and [2,0] for publisherId-msgChainId'
                 + ` after ${OrderedMsgChain.MAX_GAP_REQUESTS} trials`)
             assert.strictEqual(counter, OrderedMsgChain.MAX_GAP_REQUESTS)
             clock.restore()
@@ -132,7 +132,12 @@ describe('OrderedMsgChain', () => {
         util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, () => {}, 50)
-        shuffled.forEach((msg) => util.add(msg))
+        util.add(msg1)
+        shuffled.forEach((msg) => {
+            if (msg.getTimestamp() !== msg1.getTimestamp()) {
+                util.add(msg)
+            }
+        })
         assert.deepStrictEqual(received, expected)
     })
 })
