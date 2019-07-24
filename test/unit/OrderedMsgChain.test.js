@@ -24,9 +24,13 @@ describe('OrderedMsgChain', () => {
     const msg3 = createMsg(3, 0, 2, 0)
     const msg4 = createMsg(4, 0, 3, 0)
     const msg5 = createMsg(5, 0, 4, 0)
+    let util
+    afterEach(() => {
+        util.clearGap()
+    })
     it('handles ordered messages in order', () => {
         const received = []
-        const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, () => {
             throw new Error('Unexpected gap')
@@ -36,9 +40,22 @@ describe('OrderedMsgChain', () => {
         util.add(msg3)
         assert.deepStrictEqual(received, [msg1, msg2, msg3])
     })
+    it('drops duplicates', () => {
+        const received = []
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+            received.push(msg)
+        }, () => {
+            throw new Error('Unexpected gap')
+        })
+        util.add(msg1)
+        util.add(msg1)
+        util.add(msg2)
+        util.add(msg1)
+        assert.deepStrictEqual(received, [msg1, msg2])
+    })
     it('calls the gap handler', (done) => {
         const received = []
-        const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, (from, to, publisherId, msgChainId) => {
             assert.deepStrictEqual(received, [msg1, msg2])
@@ -56,7 +73,7 @@ describe('OrderedMsgChain', () => {
     })
     it('handles unordered messages in order', () => {
         const received = []
-        const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, () => {})
         util.add(msg1)
@@ -68,7 +85,7 @@ describe('OrderedMsgChain', () => {
     })
     it('does not call the gap handler (scheduled but resolved before timeout)', () => {
         const received = []
-        const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, () => {
             throw new Error('Unexpected gap')
@@ -84,7 +101,7 @@ describe('OrderedMsgChain', () => {
         const clock = sinon.useFakeTimers()
         let counter = 0
         try {
-            const util = new OrderedMsgChain('publisherId', 'msgChainId', () => {
+            util = new OrderedMsgChain('publisherId', 'msgChainId', () => {
                 throw new Error('received unexpected message')
             }, (from, to, publisherId, msgChainId) => {
                 assert.deepStrictEqual(from, msg2.prevMsgRef)
@@ -112,7 +129,7 @@ describe('OrderedMsgChain', () => {
         }
         const shuffled = shuffle(expected)
         const received = []
-        const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
         }, () => {}, 50)
         shuffled.forEach((msg) => util.add(msg))
