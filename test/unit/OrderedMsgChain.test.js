@@ -58,7 +58,7 @@ describe('OrderedMsgChain', () => {
         const received = []
         const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
-        }, sinon.stub())
+        }, () => {})
         util.add(msg1)
         util.add(msg2)
         util.add(msg5)
@@ -114,7 +114,7 @@ describe('OrderedMsgChain', () => {
         const received = []
         const util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
             received.push(msg)
-        }, sinon.stub(), 50)
+        }, () => {}, 50)
         shuffled.forEach((msg) => util.add(msg))
         assert.deepStrictEqual(received, expected)
     })
