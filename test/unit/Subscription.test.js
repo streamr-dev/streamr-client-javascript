@@ -345,13 +345,15 @@ describe('Subscription', () => {
 
             it('does not emit "gap" if different publishers', () => {
                 const msg1 = msg
-                const msg4 = createMsg(4, undefined, 3, 0, {}, 'anotherPublisherId')
+                const msg1b = createMsg(1, 0, undefined, 0, {}, 'anotherPublisherId')
 
                 const sub = new Subscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-                sub.on('gap', sinon.stub().throws())
+                sub.on('gap', () => {
+                    throw new Error('unexpected gap')
+                })
 
                 sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
-                sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
+                sub.handleBroadcastMessage(msg1b, sinon.stub().resolves(true))
             })
 
             it('emits "gap" if a gap is detected (same timestamp but different sequenceNumbers)', (done) => {
