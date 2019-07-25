@@ -2,6 +2,8 @@ import debugFactory from 'debug'
 import Heap from 'heap'
 import { Errors, MessageLayer } from 'streamr-client-protocol'
 
+import GapFillFailedError from './errors/GapFillFailedError'
+
 const debug = debugFactory('StreamrClient::OrderedMsgChain')
 const { MessageRef } = MessageLayer
 
@@ -23,18 +25,20 @@ export default class OrderedMsgChain {
 
     add(unorderedStreamMessage) {
         const msgRef = unorderedStreamMessage.getMessageRef()
-        if (this.lastReceivedMsgRef && msgRef.compareTo(this.lastReceivedMsgRef) < 0) {
+        if (this.lastReceivedMsgRef && msgRef.compareTo(this.lastReceivedMsgRef) <= 0) {
             // Prevent double-processing of messages for any reason
             debug('Already received message: %o, lastReceivedMsgRef: %d. Ignoring message.', msgRef, this.lastReceivedMsgRef)
+            return
         }
 
         if (this._isNextMessage(unorderedStreamMessage)) {
             this._process(unorderedStreamMessage)
+            this._checkQueue()
         } else {
             if (!this.gap) {
                 this._scheduleGap()
             }
-            this._insertInOrderedQueue(unorderedStreamMessage)
+            this.queue.push(unorderedStreamMessage)
         }
     }
 
@@ -54,53 +58,42 @@ export default class OrderedMsgChain {
     _isNextMessage(unorderedStreamMessage) {
         const isFirstMessage = this.lastReceivedMsgRef === null
         return isFirstMessage
-            || (this.lastReceivedMsgRef !== null
-                && unorderedStreamMessage.prevMsgRef !== null
-                && unorderedStreamMessage.prevMsgRef.compareTo(this.lastReceivedMsgRef) === 0)
-    }
-
-    _insertInOrderedQueue(unorderedStreamMessage) {
-        this.queue.push(unorderedStreamMessage)
-    }
-
-    _getTopMsgInQueue() {
-        return this.queue.peek()
-    }
-
-    _popQueue() {
-        return this.queue.pop()
+            // is chained and next
+            || (unorderedStreamMessage.prevMsgRef !== null && unorderedStreamMessage.prevMsgRef.compareTo(this.lastReceivedMsgRef) === 0)
+            // is unchained and newer
+            || (unorderedStreamMessage.prevMsgRef === null && unorderedStreamMessage.getMessageRef().compareTo(this.lastReceivedMsgRef) >= 0)
     }
 
     _checkQueue() {
-        const msg = this._getTopMsgInQueue()
-        if (msg && this._isNextMessage(msg)) {
-            this._popQueue()
-            this.clearGap()
-            this._process(msg)
+        while (!this.queue.empty()) {
+            const msg = this.queue.peek()
+            if (msg && this._isNextMessage(msg)) {
+                this.queue.pop()
+                // If the next message is found in the queue, any gap must have been filled, so clear the timer
+                this.clearGap()
+                this._process(msg)
+            } else {
+                return
+            }
         }
     }
 
     _process(msg) {
         this.lastReceivedMsgRef = msg.getMessageRef()
         this.inOrderHandler(msg)
-        this._checkQueue()
     }
 
     _scheduleGap() {
         this.gapRequestCount = 0
         this.gap = setInterval(() => {
-            const from = this.lastReceivedMsgRef == null ? this._getTopMsgInQueue().prevMsgRef
-                : new MessageRef(this.lastReceivedMsgRef.timestamp, this.lastReceivedMsgRef.sequenceNumber + 1)
-            const to = this._getTopMsgInQueue().prevMsgRef
+            const from = new MessageRef(this.lastReceivedMsgRef.timestamp, this.lastReceivedMsgRef.sequenceNumber + 1)
+            const to = this.queue.peek().prevMsgRef
             if (this.gapRequestCount < MAX_GAP_REQUESTS) {
                 this.gapRequestCount += 1
                 this.gapHandler(from, to, this.publisherId, this.msgChainId)
             } else {
                 this.clearGap()
-                throw new Error(
-                    `Failed to fill gap between ${from.serialize()} and ${to.serialize()}`
-                    + ` for ${this.publisherId}-${this.msgChainId} after ${MAX_GAP_REQUESTS} trials`
-                )
+                throw new GapFillFailedError(from, to, this.publisherId, this.msgChainId, MAX_GAP_REQUESTS)
             }
         }, this.gapFillTimeout)
     }

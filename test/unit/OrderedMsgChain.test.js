@@ -83,6 +83,20 @@ describe('OrderedMsgChain', () => {
         util.add(msg4)
         assert.deepStrictEqual(received, [msg1, msg2, msg3, msg4, msg5])
     })
+    it('handles unchained messages in the order in which they arrive if they are newer', () => {
+        const m2 = createMsg(4, 0)
+        const m3 = createMsg(17, 0)
+        const m4 = createMsg(7, 0)
+        const received = []
+        util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
+            received.push(msg)
+        }, () => {})
+        util.add(msg1)
+        util.add(m2)
+        util.add(m3)
+        util.add(m4)
+        assert.deepStrictEqual(received, [msg1, m2, m3])
+    })
     it('does not call the gap handler (scheduled but resolved before timeout)', () => {
         const received = []
         util = new OrderedMsgChain('publisherId', 'msgChainId', (msg) => {
