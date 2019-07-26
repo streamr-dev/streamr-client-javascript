@@ -42,10 +42,10 @@ export default class OrderedMsgChain {
         }
     }
 
-    addError(err) {
-        if (err.streamMessage) {
-            if (err instanceof Errors.InvalidJsonError && this._isNextMessage(err.streamMessage)) {
-                this.lastReceivedMsgRef = err.streamMessage.getMessageRef()
+    markMessageExplicitly(streamMessage) {
+        if (streamMessage) {
+            if (this._isNextMessage(streamMessage)) {
+                this.lastReceivedMsgRef = streamMessage.getMessageRef()
             }
         }
     }
@@ -61,7 +61,7 @@ export default class OrderedMsgChain {
             // is chained and next
             || (unorderedStreamMessage.prevMsgRef !== null && unorderedStreamMessage.prevMsgRef.compareTo(this.lastReceivedMsgRef) === 0)
             // is unchained and newer
-            || (unorderedStreamMessage.prevMsgRef === null && unorderedStreamMessage.getMessageRef().compareTo(this.lastReceivedMsgRef) >= 0)
+            || (unorderedStreamMessage.prevMsgRef === null && unorderedStreamMessage.getMessageRef().compareTo(this.lastReceivedMsgRef) > 0)
     }
 
     _checkQueue() {

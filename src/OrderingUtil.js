@@ -23,11 +23,9 @@ export default class OrderingUtil {
         return this.orderedChains[key]
     }
 
-    addError(err) {
-        if (err.streamMessage) {
-            const chain = this._getChain(err.streamMessage.getPublisherId(), err.streamMessage.getMsgChainId())
-            chain.addError(err)
-        }
+    markMessageExplicitly(streamMessage) {
+        const chain = this._getChain(streamMessage.getPublisherId(), streamMessage.getMsgChainId())
+        chain.markMessageExplicitly(streamMessage)
     }
 
     clearGaps() {

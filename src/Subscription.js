@@ -5,6 +5,7 @@ import InvalidSignatureError from './errors/InvalidSignatureError'
 import VerificationFailedError from './errors/VerificationFailedError'
 import EncryptionUtil from './EncryptionUtil'
 import OrderingUtil from './OrderingUtil'
+import { Errors } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Subscription')
 
@@ -238,7 +239,9 @@ class Subscription extends EventEmitter {
          * If parsing the (expected) message failed, we should still mark it as received. Otherwise the
          * gap detection will think a message was lost, and re-request the failing message.
          */
-        this.orderingUtil.addError(err)
+        if (err instanceof Errors.InvalidJsonError && err.streamMessage) {
+            this.orderingUtil.markMessageExplicitly(err.streamMessage)
+        }
         this.emit('error', err)
     }
 }
