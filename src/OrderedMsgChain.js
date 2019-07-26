@@ -1,6 +1,6 @@
 import debugFactory from 'debug'
 import Heap from 'heap'
-import { Errors, MessageLayer } from 'streamr-client-protocol'
+import { MessageLayer } from 'streamr-client-protocol'
 
 import GapFillFailedError from './errors/GapFillFailedError'
 
