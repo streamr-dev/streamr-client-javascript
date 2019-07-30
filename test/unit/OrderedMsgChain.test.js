@@ -114,26 +114,25 @@ describe('OrderedMsgChain', () => {
     it('call the gap handler MAX_GAP_REQUESTS times and then throws', (done) => {
         const clock = sinon.useFakeTimers()
         let counter = 0
-        try {
-            util = new OrderedMsgChain('publisherId', 'msgChainId', () => {}, (from, to, publisherId, msgChainId) => {
-                assert.strictEqual(from.timestamp, msg1.getMessageRef().timestamp)
-                assert.strictEqual(from.sequenceNumber, msg1.getMessageRef().sequenceNumber + 1)
-                assert.deepStrictEqual(to, msg3.prevMsgRef)
-                assert.strictEqual(publisherId, 'publisherId')
-                assert.strictEqual(msgChainId, 'msgChainId')
-                counter += 1
-                clock.tick(5000)
-            }, 5000)
-            util.add(msg1)
-            util.add(msg3)
+        util = new OrderedMsgChain('publisherId', 'msgChainId', () => {}, (from, to, publisherId, msgChainId) => {
+            assert.strictEqual(from.timestamp, msg1.getMessageRef().timestamp)
+            assert.strictEqual(from.sequenceNumber, msg1.getMessageRef().sequenceNumber + 1)
+            assert.deepStrictEqual(to, msg3.prevMsgRef)
+            assert.strictEqual(publisherId, 'publisherId')
+            assert.strictEqual(msgChainId, 'msgChainId')
+            counter += 1
             clock.tick(5000)
-        } catch (e) {
+        }, 5000)
+        util.on('error', (e) => {
             assert.strictEqual(e.message, 'Failed to fill gap between [1,1] and [2,0] for publisherId-msgChainId'
                 + ` after ${OrderedMsgChain.MAX_GAP_REQUESTS} trials`)
             assert.strictEqual(counter, OrderedMsgChain.MAX_GAP_REQUESTS)
             clock.restore()
             done()
-        }
+        })
+        util.add(msg1)
+        util.add(msg3)
+        clock.tick(5000)
     })
     it('handles unordered messages in order (large randomized test)', () => {
         const expected = [msg1]
@@ -152,6 +151,19 @@ describe('OrderedMsgChain', () => {
                 util.add(msg)
             }
         })
-        assert.deepStrictEqual(received, expected)
+        try {
+            assert.deepStrictEqual(received, expected)
+        } catch (e) {
+            const shuffledTimestamps = []
+            shuffled.forEach((streamMessage) => {
+                shuffledTimestamps.push(streamMessage.getTimestamp())
+            })
+            const receivedTimestamps = []
+            received.forEach((streamMessage) => {
+                receivedTimestamps.push(streamMessage.getTimestamp())
+            })
+            throw new Error('Was expecting to receive messages ordered per timestamp but instead received timestamps in this '
+                + `order:\n${receivedTimestamps}.\nThe unordered messages were processed in the following timestamp order:\n${shuffledTimestamps}`)
+        }
     })
 })

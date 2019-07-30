@@ -1,6 +1,7 @@
 import debugFactory from 'debug'
 import Heap from 'heap'
 import { MessageLayer } from 'streamr-client-protocol'
+import EventEmitter from 'eventemitter3'
 
 import GapFillFailedError from './errors/GapFillFailedError'
 
@@ -10,8 +11,9 @@ const { MessageRef } = MessageLayer
 const DEFAULT_GAPFILL_TIMEOUT = 5000
 const MAX_GAP_REQUESTS = 10
 
-export default class OrderedMsgChain {
+export default class OrderedMsgChain extends EventEmitter {
     constructor(publisherId, msgChainId, inOrderHandler, gapHandler, gapFillTimeout = DEFAULT_GAPFILL_TIMEOUT) {
+        super()
         this.publisherId = publisherId
         this.msgChainId = msgChainId
         this.inOrderHandler = inOrderHandler
@@ -92,8 +94,8 @@ export default class OrderedMsgChain {
                 this.gapRequestCount += 1
                 this.gapHandler(from, to, this.publisherId, this.msgChainId)
             } else {
+                this.emit('error', new GapFillFailedError(from, to, this.publisherId, this.msgChainId, MAX_GAP_REQUESTS))
                 this.clearGap()
-                throw new GapFillFailedError(from, to, this.publisherId, this.msgChainId, MAX_GAP_REQUESTS)
             }
         }, this.gapFillTimeout)
     }
