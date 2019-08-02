@@ -6,7 +6,7 @@ import debug from 'debug'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 
 import Connection from '../../src/Connection'
-import Subscription from '../../src/Subscription'
+import AbstractSubscription from '../../src/AbstractSubscription'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -208,30 +208,6 @@ describe('StreamrClient', () => {
                     client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
                 })
             })
-
-            it('should request resend according to sub.getEffectiveResendOptions()', (done) => {
-                const nbToResend = 1
-                const sub = client.subscribe({
-                    stream: 'stream1',
-                    resend: {
-                        last: nbToResend,
-                    },
-                }, () => {})
-
-                connection.expect(SubscribeRequest.create(sub.streamId, 0, 'session-token'))
-
-                connection.on('connected', () => {
-                    sub.getEffectiveResendOptions = () => ({
-                        last: nbToResend,
-                    })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend, 'session-token'))
-                    connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    // sending second resend last request since no answer to the first request was received
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, nbToResend, 'session-token'))
-                    setTimeout(done, STORAGE_DELAY + 1000)
-                })
-                return client.connect()
-            }, STORAGE_DELAY + 2000)
         })
 
         describe('disconnected', () => {
@@ -251,7 +227,7 @@ describe('StreamrClient', () => {
             it('sets subscription state to unsubscribed', () => {
                 const sub = setupSubscription('stream1')
                 connection.emit('disconnected')
-                assert.equal(sub.getState(), Subscription.State.unsubscribed)
+                assert.equal(sub.getState(), AbstractSubscription.State.unsubscribed)
             })
         })
 
@@ -260,7 +236,7 @@ describe('StreamrClient', () => {
 
             it('marks Subscriptions as subscribed', () => {
                 const sub = setupSubscription('stream1')
-                assert.equal(sub.getState(), Subscription.State.subscribed)
+                assert.equal(sub.getState(), AbstractSubscription.State.subscribed)
             })
 
             it('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
@@ -335,7 +311,7 @@ describe('StreamrClient', () => {
 
             it('sets Subscription state to unsubscribed', () => {
                 connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                assert.equal(sub.getState(), Subscription.State.unsubscribed)
+                assert.equal(sub.getState(), AbstractSubscription.State.unsubscribed)
             })
 
             describe('automatic disconnection after last unsubscribe', () => {
@@ -633,7 +609,7 @@ describe('StreamrClient', () => {
 
                 const sub2 = client.subscribe(sub.streamId, () => {})
                 sub2.on('subscribed', () => {
-                    assert.equal(sub2.getState(), Subscription.State.subscribed)
+                    assert.equal(sub2.getState(), AbstractSubscription.State.subscribed)
                     done()
                 })
             })
@@ -822,7 +798,7 @@ describe('StreamrClient', () => {
             sub.on('unsubscribed', handler)
             client.unsubscribe(sub)
             connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-            assert.equal(sub.getState(), Subscription.State.unsubscribed)
+            assert.equal(sub.getState(), AbstractSubscription.State.unsubscribed)
 
             client.unsubscribe(sub)
             assert.equal(handler.callCount, 1)
