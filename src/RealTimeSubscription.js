@@ -1,28 +1,13 @@
 import debugFactory from 'debug'
-import { Errors, Utils } from 'streamr-client-protocol'
 
-import EncryptionUtil from './EncryptionUtil'
 import AbstractSubscription from './AbstractSubscription'
 
-const { OrderingUtil } = Utils
 const debug = debugFactory('StreamrClient::Subscription')
 
 export default class RealTimeSubscription extends AbstractSubscription {
     constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, startMsgRef = null) {
         super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
         this.resending = false
-        this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
-            const newGroupKey = EncryptionUtil.decryptStreamMessage(orderedMessage, this.groupKeys[orderedMessage.getPublisherId()])
-            if (newGroupKey) {
-                this.groupKeys[orderedMessage.getPublisherId()] = newGroupKey
-            }
-            callback(orderedMessage.getParsedContent(), orderedMessage)
-            if (orderedMessage.isByeMessage()) {
-                this.emit('done')
-            }
-        }, (from, to, publisherId, msgChainId) => {
-            this.emit('gap', from, to, publisherId, msgChainId)
-        }, this.propagationTimeout, this.resendTimeout)
         this.orderingUtil.lastReceivedMsgRef = startMsgRef
 
         /** * Message handlers ** */
@@ -41,14 +26,6 @@ export default class RealTimeSubscription extends AbstractSubscription {
         this.on('error', () => {
             this._clearGaps()
         })
-    }
-
-    _clearGaps() {
-        this.orderingUtil.clearGaps()
-    }
-
-    stop() {
-        this._clearGaps()
     }
 
     // All the handle* methods should:
@@ -142,16 +119,5 @@ export default class RealTimeSubscription extends AbstractSubscription {
     setResending(resending) {
         debug(`Subscription: Stream ${this.streamId} resending: ${resending}`)
         this.resending = resending
-    }
-
-    handleError(err) {
-        /**
-         * If parsing the (expected) message failed, we should still mark it as received. Otherwise the
-         * gap detection will think a message was lost, and re-request the failing message.
-         */
-        if (err instanceof Errors.InvalidJsonError && err.streamMessage) {
-            this.orderingUtil.markMessageExplicitly(err.streamMessage)
-        }
-        this.emit('error', err)
     }
 }

@@ -5,9 +5,9 @@ import AbstractSubscription from './AbstractSubscription'
 export default class CombinedSubscription extends AbstractSubscription {
     constructor(
         streamId, streamPartition, callback, options, groupKeys,
-        propagationTimeout, resendTimeout,
+        propagationTimeout, resendTimeout
     ) {
-        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
+        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, true)
         this.sub = new HistoricalSubscription(streamId, streamPartition, callback, options, groupKeys, this.propagationTimeout, this.resendTimeout)
         this.sub.on('resend done', async (lastReceivedMsgRef) => {
             const realTime = new RealTimeSubscription(
