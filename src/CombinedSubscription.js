@@ -14,6 +14,7 @@ export default class CombinedSubscription extends AbstractSubscription {
                 streamId, streamPartition, callback, groupKeys, this.propagationTimeout, this.resendTimeout, lastReceivedMsgRef
             )
             await Promise.all(this.sub.realTimeMsgsQueue.map((msg) => realTime.handleBroadcastMessage(msg, () => true)))
+            this.sub.stop()
             this.sub = realTime
         })
         this.sub.on('done', () => this.emit('done'))
