@@ -65,7 +65,7 @@ export default class CombinedSubscription extends AbstractSubscription {
 
     setState(state) {
         super.setState(state)
-        this.sub.setState(state)
+        this.sub.state = state
     }
 
     handleError(err) {
