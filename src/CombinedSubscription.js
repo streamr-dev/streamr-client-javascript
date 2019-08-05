@@ -63,12 +63,9 @@ export default class CombinedSubscription extends AbstractSubscription {
         return this.sub.setResending(resending)
     }
 
-    getState() {
-        return this.sub.getState()
-    }
-
     setState(state) {
-        return this.sub.setState(state)
+        super.setState(state)
+        this.sub.setState(state)
     }
 
     handleError(err) {
