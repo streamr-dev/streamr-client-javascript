@@ -9,14 +9,23 @@ export default class CombinedSubscription extends AbstractSubscription {
     ) {
         super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, true)
         this.sub = new HistoricalSubscription(streamId, streamPartition, callback, options, groupKeys, this.propagationTimeout, this.resendTimeout)
+        this.realTimeMsgsQueue = []
+        this.sub.on('message received', (msg) => {
+            this.realTimeMsgsQueue.push(msg)
+        })
         this.sub.on('resend done', async (lastReceivedMsgRef) => {
             const realTime = new RealTimeSubscription(
                 streamId, streamPartition, callback, groupKeys, this.propagationTimeout, this.resendTimeout, lastReceivedMsgRef
             )
-            await Promise.all(this.sub.realTimeMsgsQueue.map((msg) => realTime.handleBroadcastMessage(msg, () => true)))
+            await Promise.all(this.realTimeMsgsQueue.map((msg) => realTime.handleBroadcastMessage(msg, () => true)))
             this.sub.stop()
             this.sub = realTime
+            this._bindListeners()
         })
+        this._bindListeners()
+    }
+
+    _bindListeners() {
         this.sub.on('done', () => this.emit('done'))
         this.sub.on('gap', (from, to, publisherId, msgChainId) => this.emit('gap', from, to, publisherId, msgChainId))
         this.sub.on('error', (err) => this.emit('error', err))

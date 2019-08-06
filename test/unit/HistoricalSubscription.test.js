@@ -33,6 +33,8 @@ describe('HistoricalSubscription', () => {
                 const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                     assert.deepEqual(content, msg.getParsedContent())
                     assert.equal(msg, receivedMsg)
+                }, {
+                    last: 1
                 })
                 return sub.handleResentMessage(msg, sinon.stub().resolves(true))
             })
@@ -42,7 +44,9 @@ describe('HistoricalSubscription', () => {
                 let sub
 
                 beforeEach(() => {
-                    sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub().throws('should not be called!'))
+                    sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub().throws('should not be called!'), {
+                        last: 1
+                    })
                     stdError = console.error
                     console.error = sinon.stub()
                 })
@@ -113,6 +117,8 @@ describe('HistoricalSubscription', () => {
                     if (received.length === 5) {
                         assert.deepEqual(msgs, received)
                     }
+                }, {
+                    last: 1
                 })
 
                 return Promise.all(msgs.map((m) => sub.handleResentMessage(m, sinon.stub().resolves(true))))
@@ -122,7 +128,9 @@ describe('HistoricalSubscription', () => {
         describe('duplicate handling', () => {
             it('ignores re-received messages', async () => {
                 const handler = sinon.stub()
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                    last: 1
+                })
 
                 await sub.handleResentMessage(msg, sinon.stub().resolves(true))
                 await sub.handleResentMessage(msg, sinon.stub().resolves(true))
@@ -136,7 +144,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 1)
@@ -157,7 +167,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.on('gap', (from, to, publisherId) => {
                     sub.on('gap', (from2, to2, publisherId2) => {
                         assert.deepStrictEqual(from, from2)
@@ -178,7 +190,9 @@ describe('HistoricalSubscription', () => {
                 const msg3 = createMsg(3, undefined, 2)
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.on('gap', () => {
                     sub.handleResentMessage(msg2, sinon.stub().resolves(true))
                     sub.handleResentMessage(msg3, sinon.stub().resolves(true)).then(() => {
@@ -198,7 +212,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.once('gap', () => {
                     sub.emit('unsubscribed')
                     sub.on('gap', () => { throw new Error('should not emit second gap') })
@@ -216,7 +232,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(4, undefined, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.once('gap', () => {
                     sub.emit('disconnected')
                     sub.on('gap', () => { throw new Error('should not emit second gap') })
@@ -234,7 +252,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg1b = createMsg(1, 0, undefined, 0, {}, 'anotherPublisherId')
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                })
                 sub.on('gap', () => {
                     throw new Error('unexpected gap')
                 })
@@ -247,7 +267,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg4 = createMsg(1, 4, 1, 3)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {}, 100, 100)
                 sub.on('gap', (from, to, publisherId) => {
                     assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
                     assert.equal(from.sequenceNumber, 1)
@@ -268,7 +290,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg2 = createMsg(2, undefined, 1)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                })
                 sub.on('gap', sinon.stub().throws())
 
                 sub.handleResentMessage(msg1, sinon.stub().resolves(true))
@@ -279,7 +303,9 @@ describe('HistoricalSubscription', () => {
                 const msg1 = msg
                 const msg2 = createMsg(1, 1, 1, 0)
 
-                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                })
                 sub.on('gap', sinon.stub().throws())
 
                 sub.handleResentMessage(msg1, sinon.stub().resolves(true))
@@ -292,7 +318,9 @@ describe('HistoricalSubscription', () => {
                 _bye: true,
             })
             const handler = sinon.stub()
-            const sub = new HistoricalSubscription(byeMsg.getStreamId(), byeMsg.getStreamPartition(), handler)
+            const sub = new HistoricalSubscription(byeMsg.getStreamId(), byeMsg.getStreamPartition(), handler, {
+                last: 1
+            })
             sub.on('done', () => {
                 assert(handler.calledOnce)
                 done()
@@ -309,6 +337,8 @@ describe('HistoricalSubscription', () => {
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, msg1.getParsedContent())
                     done()
+                }, {
+                    last: 1
                 })
                 return sub.handleResentMessage(msg1, sinon.stub().resolves(true))
             })
@@ -323,7 +353,9 @@ describe('HistoricalSubscription', () => {
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
-                }, {}, {
+                }, {
+                    last: 1
+                }, {
                     publisherId: groupKey,
                 })
                 return sub.handleResentMessage(msg1, sinon.stub().resolves(true))
@@ -337,7 +369,9 @@ describe('HistoricalSubscription', () => {
                 const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
                 const ciphertext = EncryptionUtil.encrypt(plaintext, correctGroupKey)
                 const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {}, {
+                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
+                    last: 1
+                }, {
                     publisherId: wrongGroupKey,
                 })
                 sub.on('error', (err) => {
@@ -369,7 +403,9 @@ describe('HistoricalSubscription', () => {
                     } else if (test1Ok && JSON.stringify(content) === JSON.stringify(data2)) {
                         done()
                     }
-                }, {}, {
+                }, {
+                    last: 1
+                }, {
                     publisherId: groupKey1,
                 })
                 await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
@@ -384,7 +420,9 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(
                 msg.getStreamId(),
                 msg.getStreamPartition(),
-                sinon.stub().throws('Msg handler should not be called!'),
+                sinon.stub().throws('Msg handler should not be called!'), {
+                    last: 1
+                }
             )
             sub.on('error', (thrown) => {
                 assert(err === thrown)
@@ -399,6 +437,8 @@ describe('HistoricalSubscription', () => {
                     sub.stop()
                     done()
                 }
+            }, {
+                last: 1
             })
 
             sub.on('gap', sinon.stub().throws('Should not emit gap!'))
@@ -418,7 +458,9 @@ describe('HistoricalSubscription', () => {
         })
 
         it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', async (done) => {
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {}, {}, 100, 100)
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                last: 1
+            }, {}, 100, 100)
 
             sub.on('gap', (from, to, publisherId) => {
                 assert.equal(from.timestamp, 1) // cannot know the first missing message so there will be a duplicate received
@@ -449,12 +491,16 @@ describe('HistoricalSubscription', () => {
 
     describe('setState()', () => {
         it('updates the state', () => {
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                last: 1
+            })
             sub.setState(AbstractSubscription.State.subscribed)
             assert.equal(sub.getState(), AbstractSubscription.State.subscribed)
         })
         it('fires an event', (done) => {
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                last: 1
+            })
             sub.on(AbstractSubscription.State.subscribed, done)
             sub.setState(AbstractSubscription.State.subscribed)
         })
@@ -462,7 +508,9 @@ describe('HistoricalSubscription', () => {
 
     describe('handleResending()', () => {
         it('emits the resending event', (done) => {
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                last: 1
+            })
             sub.on('resending', () => done())
             sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'subId'))
         })
@@ -471,7 +519,9 @@ describe('HistoricalSubscription', () => {
     describe('handleResent()', () => {
         it('arms the Subscription to emit the resent event on last message (message handler completes BEFORE resent)', async (done) => {
             const handler = sinon.stub()
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
             sub.on('resent', () => done())
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
@@ -479,7 +529,9 @@ describe('HistoricalSubscription', () => {
 
         it('arms the Subscription to emit the resent event on last message (message handler completes AFTER resent)', async (done) => {
             const handler = sinon.stub()
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
             sub.on('resent', () => done())
             sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
@@ -488,7 +540,9 @@ describe('HistoricalSubscription', () => {
 
     describe('handleNoResend()', () => {
         it('emits the no_resend event', (done) => {
-            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
+                last: 1
+            })
             sub.on('no_resend', () => done())
             sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
         })
