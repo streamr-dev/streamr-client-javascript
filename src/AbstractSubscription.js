@@ -141,14 +141,6 @@ export default class AbstractSubscription extends Subscription {
     }
 
     static async validate(msg, verifyFn) {
-        if (msg.version !== 31) {
-            throw new Error(`Can handle only StreamMessageV31, not version ${msg.version}`)
-        }
-
-        if (msg.prevMsgRef == null) {
-            debug('handleMessage: prevOffset is null, gap detection is impossible! message: %o', msg)
-        }
-
         // Make sure the verification is successful before proceeding
         let valid
         try {
