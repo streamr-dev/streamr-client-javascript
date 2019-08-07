@@ -104,7 +104,7 @@ describe('HistoricalSubscription', () => {
                 })
             })
 
-            it('calls the callback once for each message in order', () => {
+            it('calls the callback once for each message in order', (done) => {
                 const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
                     timestamp,
                     timestamp === 1 ? 0 : timestamp - 1,
@@ -116,6 +116,7 @@ describe('HistoricalSubscription', () => {
                     received.push(receivedMsg)
                     if (received.length === 5) {
                         assert.deepEqual(msgs, received)
+                        done()
                     }
                 }, {
                     last: 1
