@@ -1,13 +1,11 @@
 import HistoricalSubscription from './HistoricalSubscription'
 import RealTimeSubscription from './RealTimeSubscription'
-import AbstractSubscription from './AbstractSubscription'
+import Subscription from './Subscription'
 
-export default class CombinedSubscription extends AbstractSubscription {
-    constructor(
-        streamId, streamPartition, callback, options, groupKeys,
-        propagationTimeout, resendTimeout
-    ) {
-        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, true)
+export default class CombinedSubscription extends Subscription {
+    constructor(streamId, streamPartition, callback, options, groupKeys, propagationTimeout, resendTimeout) {
+        super(streamId, streamPartition, callback, options, groupKeys, propagationTimeout, resendTimeout)
+
         this.sub = new HistoricalSubscription(streamId, streamPartition, callback, options, groupKeys, this.propagationTimeout, this.resendTimeout)
         this.realTimeMsgsQueue = []
         this.sub.on('message received', (msg) => {
@@ -33,7 +31,7 @@ export default class CombinedSubscription extends AbstractSubscription {
         this.sub.on('resent', (response) => this.emit('resent', response))
         this.sub.on('no_resend', (response) => this.emit('no_resend', response))
         this.sub.on('message received', () => this.emit('message received'))
-        Object.keys(AbstractSubscription.State).forEach((state) => this.sub.on(state, () => this.emit(state)))
+        Object.keys(Subscription.State).forEach((state) => this.sub.on(state, () => this.emit(state)))
     }
 
     stop() {

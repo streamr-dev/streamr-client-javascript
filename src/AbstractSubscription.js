@@ -1,57 +1,30 @@
-import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import { Errors, Utils } from 'streamr-client-protocol'
 
 import VerificationFailedError from './errors/VerificationFailedError'
 import InvalidSignatureError from './errors/InvalidSignatureError'
 import EncryptionUtil from './EncryptionUtil'
+import Subscription from './Subscription'
 
 const { OrderingUtil } = Utils
 const debug = debugFactory('StreamrClient::AbstractSubscription')
 
-let subId = 0
-function generateSubscriptionId() {
-    const id = subId
-    subId += 1
-    return id.toString()
-}
+export default class AbstractSubscription extends Subscription {
+    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout) {
+        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
 
-const DEFAULT_PROPAGATION_TIMEOUT = 5000
-const DEFAULT_RESEND_TIMEOUT = 5000
-
-export default class AbstractSubscription extends EventEmitter {
-    constructor(
-        streamId, streamPartition, callback, groupKeys,
-        propagationTimeout = DEFAULT_PROPAGATION_TIMEOUT, resendTimeout = DEFAULT_RESEND_TIMEOUT, isCombined = false
-    ) {
-        super()
-        if (!streamId) {
-            throw new Error('No stream id given!')
-        }
-
-        if (!callback) {
-            throw new Error('No callback given!')
-        }
-        this.streamId = streamId
-        this.streamPartition = streamPartition
-        this.id = generateSubscriptionId()
-        this.groupKeys = groupKeys || {}
-
-        if (!isCombined) {
-            this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
-                const newGroupKey = EncryptionUtil.decryptStreamMessage(orderedMessage, this.groupKeys[orderedMessage.getPublisherId()])
-                if (newGroupKey) {
-                    this.groupKeys[orderedMessage.getPublisherId()] = newGroupKey
-                }
-                callback(orderedMessage.getParsedContent(), orderedMessage)
-                if (orderedMessage.isByeMessage()) {
-                    this.emit('done')
-                }
-            }, (from, to, publisherId, msgChainId) => {
-                this.emit('gap', from, to, publisherId, msgChainId)
-            }, propagationTimeout, resendTimeout)
-        }
-        this.state = AbstractSubscription.State.unsubscribed
+        this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
+            const newGroupKey = EncryptionUtil.decryptStreamMessage(orderedMessage, this.groupKeys[orderedMessage.getPublisherId()])
+            if (newGroupKey) {
+                this.groupKeys[orderedMessage.getPublisherId()] = newGroupKey
+            }
+            callback(orderedMessage.getParsedContent(), orderedMessage)
+            if (orderedMessage.isByeMessage()) {
+                this.emit('done')
+            }
+        }, (from, to, publisherId, msgChainId) => {
+            this.emit('gap', from, to, publisherId, msgChainId)
+        }, this.propagationTimeout, this.resendTimeout)
 
         /** * Message handlers ** */
 
@@ -61,7 +34,7 @@ export default class AbstractSubscription extends EventEmitter {
         })
 
         this.on('disconnected', () => {
-            this.setState(AbstractSubscription.State.unsubscribed)
+            this.setState(Subscription.State.unsubscribed)
             this._clearGaps()
             this.setResending(false)
         })
@@ -194,11 +167,4 @@ export default class AbstractSubscription extends EventEmitter {
         this.emit('message received')
         this.orderingUtil.add(msg)
     }
-}
-
-AbstractSubscription.State = {
-    unsubscribed: 'unsubscribed',
-    subscribing: 'subscribing',
-    subscribed: 'subscribed',
-    unsubscribing: 'unsubscribing',
 }

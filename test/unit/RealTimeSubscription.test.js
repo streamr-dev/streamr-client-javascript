@@ -8,7 +8,7 @@ import RealTimeSubscription from '../../src/RealTimeSubscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
-import AbstractSubscription from '../../src/AbstractSubscription'
+import Subscription from '../../src/Subscription'
 
 const { StreamMessage } = MessageLayer
 
@@ -541,13 +541,13 @@ describe('RealTimeSubscription', () => {
     describe('setState()', () => {
         it('updates the state', () => {
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            sub.setState(AbstractSubscription.State.subscribed)
-            assert.equal(sub.getState(), AbstractSubscription.State.subscribed)
+            sub.setState(Subscription.State.subscribed)
+            assert.equal(sub.getState(), Subscription.State.subscribed)
         })
         it('fires an event', (done) => {
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            sub.on(AbstractSubscription.State.subscribed, done)
-            sub.setState(AbstractSubscription.State.subscribed)
+            sub.on(Subscription.State.subscribed, done)
+            sub.setState(Subscription.State.subscribed)
         })
     })
 

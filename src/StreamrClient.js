@@ -34,7 +34,7 @@ import MessageCreationUtil from './MessageCreationUtil'
 import { waitFor } from './utils'
 import RealTimeSubscription from './RealTimeSubscription'
 import CombinedSubscription from './CombinedSubscription'
-import AbstractSubscription from './AbstractSubscription'
+import Subscription from './Subscription'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -149,7 +149,7 @@ export default class StreamrClient extends EventEmitter {
             if (stream) {
                 stream.setSubscribing(false)
                 stream.getSubscriptions().filter((sub) => !sub.resending)
-                    .forEach((sub) => sub.setState(AbstractSubscription.State.subscribed))
+                    .forEach((sub) => sub.setState(Subscription.State.subscribed))
             }
             debug('Client subscribed: streamId: %s, streamPartition: %s', response.streamId, response.streamPartition)
         })
@@ -160,7 +160,7 @@ export default class StreamrClient extends EventEmitter {
             if (stream) {
                 stream.getSubscriptions().forEach((sub) => {
                     this._removeSubscription(sub)
-                    sub.setState(AbstractSubscription.State.unsubscribed)
+                    sub.setState(Subscription.State.unsubscribed)
                 })
             }
 
@@ -204,7 +204,7 @@ export default class StreamrClient extends EventEmitter {
             Object.keys(this.subscribedStreams)
                 .forEach((streamId) => {
                     this.subscribedStreams[streamId].getSubscriptions().forEach((sub) => {
-                        if (sub.getState() !== AbstractSubscription.State.subscribed) {
+                        if (sub.getState() !== Subscription.State.subscribed) {
                             this._resendAndSubscribe(sub)
                         }
                     })
@@ -225,7 +225,7 @@ export default class StreamrClient extends EventEmitter {
                     const stream = this.subscribedStreams[streamId]
                     stream.setSubscribing(false)
                     stream.getSubscriptions().forEach((sub) => {
-                        sub.setState(AbstractSubscription.State.unsubscribed)
+                        sub.setState(Subscription.State.unsubscribed)
                     })
                 })
         })
@@ -434,13 +434,13 @@ export default class StreamrClient extends EventEmitter {
         // If this is the last subscription for this stream, unsubscribe the client too
         if (this.subscribedStreams[sub.streamId] !== undefined && this.subscribedStreams[sub.streamId].getSubscriptions().length === 1
             && this.isConnected()
-            && sub.getState() === AbstractSubscription.State.subscribed) {
-            sub.setState(AbstractSubscription.State.unsubscribing)
+            && sub.getState() === Subscription.State.subscribed) {
+            sub.setState(Subscription.State.unsubscribing)
             this._requestUnsubscribe(sub.streamId)
-        } else if (sub.getState() !== AbstractSubscription.State.unsubscribing && sub.getState() !== AbstractSubscription.State.unsubscribed) {
+        } else if (sub.getState() !== Subscription.State.unsubscribing && sub.getState() !== Subscription.State.unsubscribed) {
             // Else the sub can be cleaned off immediately
             this._removeSubscription(sub)
-            sub.setState(AbstractSubscription.State.unsubscribed)
+            sub.setState(Subscription.State.unsubscribed)
             this._checkAutoDisconnect()
         }
     }
@@ -553,8 +553,8 @@ export default class StreamrClient extends EventEmitter {
     }
 
     _resendAndSubscribe(sub) {
-        if (sub.getState() !== AbstractSubscription.State.subscribing && !sub.resending) {
-            sub.setState(AbstractSubscription.State.subscribing)
+        if (sub.getState() !== Subscription.State.subscribing && !sub.resending) {
+            sub.setState(Subscription.State.subscribing)
             this._requestSubscribe(sub)
 
             // Once subscribed, ask for a resend
@@ -581,7 +581,7 @@ export default class StreamrClient extends EventEmitter {
 
     _requestSubscribe(sub) {
         const stream = this.subscribedStreams[sub.streamId]
-        const subscribedSubs = stream.getSubscriptions().filter((it) => it.getState() === AbstractSubscription.State.subscribed)
+        const subscribedSubs = stream.getSubscriptions().filter((it) => it.getState() === Subscription.State.subscribed)
 
         return this.session.getSessionToken().then((sessionToken) => {
             // If this is the first subscription for this stream, send a subscription request to the server
@@ -595,7 +595,7 @@ export default class StreamrClient extends EventEmitter {
                 debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
 
                 setTimeout(() => {
-                    sub.setState(AbstractSubscription.State.subscribed)
+                    sub.setState(Subscription.State.subscribed)
                 })
             }
         })
