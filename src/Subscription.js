@@ -28,6 +28,7 @@ export default class Subscription extends EventEmitter {
         }
         this.streamId = streamId
         this.streamPartition = streamPartition
+        this.callback = callback
         this.id = generateSubscriptionId()
         this.groupKeys = groupKeys || {}
         this.propagationTimeout = propagationTimeout

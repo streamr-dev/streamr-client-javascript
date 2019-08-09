@@ -22,6 +22,7 @@ export default class CombinedSubscription extends Subscription {
             })
             this._bindListeners(realTime)
             await Promise.all(this.realTimeMsgsQueue.map((msg) => realTime.handleBroadcastMessage(msg, () => true)))
+            this.realTimeMsgsQueue = []
             this.sub = realTime
         })
         this._bindListeners(this.sub)
@@ -35,6 +36,7 @@ export default class CombinedSubscription extends Subscription {
         sub.on('resent', (response) => this.emit('resent', response))
         sub.on('no_resend', (response) => this.emit('no_resend', response))
         sub.on('message received', () => this.emit('message received'))
+        sub.on('groupKeyMissing', (publisherId, start, end) => this.emit('groupKeyMissing', publisherId, start, end))
         Object.keys(Subscription.State).forEach((state) => this.sub.on(state, () => this.emit(state)))
     }
 
@@ -77,6 +79,10 @@ export default class CombinedSubscription extends Subscription {
     setState(state) {
         super.setState(state)
         this.sub.state = state
+    }
+
+    setGroupKeys(publisherId, groupKeys) {
+        this.sub.setGroupKeys(publisherId, groupKeys)
     }
 
     handleError(err) {

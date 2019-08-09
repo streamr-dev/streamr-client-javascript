@@ -839,7 +839,7 @@ describe('StreamrClient', () => {
                     id,
                 }, Date.now(), null, groupKey)
             })
-        }, 2 * TIMEOUT)
+        }, 2 * TIMEOUT * 20)
 
         it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
             client.once('error', done)

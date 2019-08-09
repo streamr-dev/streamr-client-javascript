@@ -13,14 +13,7 @@ export default class AbstractSubscription extends Subscription {
     constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout) {
         super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
         this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
-            const newGroupKey = EncryptionUtil.decryptStreamMessage(orderedMessage, this.groupKeys[orderedMessage.getPublisherId()])
-            if (newGroupKey) {
-                this.groupKeys[orderedMessage.getPublisherId()] = newGroupKey
-            }
-            callback(orderedMessage.getParsedContent(), orderedMessage)
-            if (orderedMessage.isByeMessage()) {
-                this.emit('done')
-            }
+            this._inOrderHandler(orderedMessage)
         }, (from, to, publisherId, msgChainId) => {
             this.emit('gap', from, to, publisherId, msgChainId)
         }, this.propagationTimeout, this.resendTimeout)
@@ -40,6 +33,26 @@ export default class AbstractSubscription extends Subscription {
 
         this.on('error', () => {
             this._clearGaps()
+        })
+
+        this.encryptedMsgsQueue = []
+        this.alreadyFailedToDecrypt = {}
+        this.waitingForGroupKey = {}
+    }
+
+    _inOrderHandler(orderedMessage) {
+        return this._catchAndEmitErrors(() => {
+            if (!this.waitingForGroupKey[orderedMessage.getPublisherId()]) {
+                const success = this._decryptOrRequestGroupKey(orderedMessage)
+                if (success) {
+                    this.callback(orderedMessage.getParsedContent(), orderedMessage)
+                    if (orderedMessage.isByeMessage()) {
+                        this.emit('done')
+                    }
+                }
+            } else {
+                this.encryptedMsgsQueue.push(orderedMessage)
+            }
         })
     }
 

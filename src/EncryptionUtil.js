@@ -92,7 +92,8 @@ export default class EncryptionUtil {
     message content and returns null.
      */
     static decryptStreamMessage(streamMessage, groupKey) {
-        if (streamMessage.encryptionType !== StreamMessage.ENCRYPTION_TYPES.NONE && !groupKey) {
+        if ((streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.AES
+            || streamMessage.encryptionType === StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) && !groupKey) {
             throw new UnableToDecryptError(streamMessage)
         }
         /* eslint-disable no-param-reassign */

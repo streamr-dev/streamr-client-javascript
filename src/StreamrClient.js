@@ -454,11 +454,11 @@ export default class StreamrClient extends EventEmitter {
         if (options.resend) {
             sub = new CombinedSubscription(
                 options.stream, options.partition || 0, callback, options.resend,
-                this.options.subscriberGroupKeys[options.stream], this.options.gapFillTimeout, this.options.retryResendAfter,
+                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
             )
         } else {
             sub = new RealTimeSubscription(options.stream, options.partition || 0, callback,
-                this.options.subscriberGroupKeys[options.stream], this.options.gapFillTimeout, this.options.retryResendAfter)
+                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter)
         }
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {
@@ -487,7 +487,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.isConnected()) {
             this._resendAndSubscribe(sub)
         } else if (this.options.autoConnect) {
-            this.ensureConnected()
+            this.ensureConnected().catch((err) => this.emit('error', err))
         }
 
         return sub
@@ -719,7 +719,7 @@ export default class StreamrClient extends EventEmitter {
         if (!current || last.start > current.start) {
             this.options.subscriberGroupKeys[streamId][publisherId] = last
         }
-        return this.subscribedStreams[streamId].setSubscriptionsGroupKeys(publisherId, groupKeys.map((obj) => obj.groupKey))
+        this.subscribedStreams[streamId].setSubscriptionsGroupKeys(publisherId, groupKeys.map((obj) => obj.groupKey))
     }
 
     handleError(msg) {

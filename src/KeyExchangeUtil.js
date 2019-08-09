@@ -49,7 +49,7 @@ export default class KeyExchangeUtil {
         return this._client.publishStreamMessage(response)
     }
 
-    async handleGroupKeyResponse(streamMessage) {
+    handleGroupKeyResponse(streamMessage) {
         // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
         // does not require signed data for all types of messages.
         if (!streamMessage.signature) {
@@ -74,7 +74,7 @@ export default class KeyExchangeUtil {
             })
         })
         /* eslint-disable no-underscore-dangle */
-        await this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), decryptedGroupKeys)
+        this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), decryptedGroupKeys)
         /* eslint-enable no-underscore-dangle */
         debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
     }
