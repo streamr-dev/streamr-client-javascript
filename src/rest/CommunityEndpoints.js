@@ -23,39 +23,25 @@ export async function joinCommunity(communityAddress, memberAddress, secret = un
     return json
 }
 
-export async function withdraw(communityAddress, memberAddress, wallet) {
-    const json = await authFetch(
+export async function memberStats(communityAddress, memberAddress) {
+    const json = await fetch(
         `${this.options.restUrl}/communities/${communityAddress}/members/${memberAddress}`,
-        this.session,
-        {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }
+        {}
     ).then((res) => res.json())
+    return json
+}
 
+export async function withdraw(communityAddress, memberAddress, wallet, confirmations = 1) {
+    const stats = memberStats(communityAddress, memberAddress)
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
-    const withdrawTx = await contract.withdrawAll(json.withdrawableBlockNumber, json.withdrawableEarnings, json.proof)
-    await withdrawTx.wait(2)
+    const withdrawTx = await contract.withdrawAll(stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof)
+    await withdrawTx.wait(confirmations)
 }
 
 export async function communityStats(communityAddress) {
     const json = fetch(
         `${this.options.restUrl}/communities/${communityAddress}/stats`,
-        {
-            method: 'GET',
-        },
-    ).then((res) => res.json())
-    return json
-}
-
-export async function memberStats(communityAddress, memberAddress) {
-    const json = await fetch(
-        `${this.options.restUrl}/communities/${communityAddress}/members/${memberAddress}`,
-        {
-            method: 'GET',
-        }
+        {},
     ).then((res) => res.json())
     return json
 }
