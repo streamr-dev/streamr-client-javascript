@@ -39,15 +39,10 @@ export async function withdraw(communityAddress, memberAddress, wallet, confirma
         throw new Error('No earnings to withdraw.')
     }
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
-    console.log(stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof)
-    console.log(await contract.proofIsCorrect(stats.withdrawableBlockNumber, memberAddress, stats.withdrawableEarnings, stats.proof))
     const withdrawTx = await contract.withdrawAll(stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof)
-    console.log(withdrawTx)
     const tokenAddress = await contract.token()
     const token = new Contract(tokenAddress, TestToken.abi, wallet)
-    console.log(await token.balanceOf(communityAddress))
     const receipt = await withdrawTx.wait(confirmations)
-    console.log(receipt)
 }
 
 export async function communityStats(communityAddress) {
