@@ -28,7 +28,7 @@ import HistoricalSubscription from './HistoricalSubscription'
 import Connection from './Connection'
 import Session from './Session'
 import Signer from './Signer'
-import SubscribedStream from './SubscribedStreamPartition'
+import SubscribedStreamPartition from './SubscribedStreamPartition'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
@@ -283,7 +283,7 @@ export default class StreamrClient extends EventEmitter {
     _addSubscription(sub) {
         let sp = this._getSubscribedStreamPartition(sub.streamId, sub.streamPartition)
         if (!sp) {
-            sp = new SubscribedStream(this, sub.streamId, sub.streamPartition)
+            sp = new SubscribedStreamPartition(this, sub.streamId, sub.streamPartition)
             this._addSubscribedStreamPartition(sp)
         }
         sp.addSubscription(sub)
