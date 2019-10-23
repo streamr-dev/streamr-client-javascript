@@ -3,13 +3,13 @@ import assert from 'assert'
 import sinon from 'sinon'
 import { MessageLayer } from 'streamr-client-protocol'
 
-import SubscribedStream from '../../src/SubscribedStream'
+import SubscribedStreamPartition from '../../src/SubscribedStreamPartition'
 import Signer from '../../src/Signer'
 import RealTimeSubscription from '../../src/RealTimeSubscription'
 
 const { StreamMessage } = MessageLayer
 
-describe('SubscribedStream', () => {
+describe('SubscribedStreamPartition', () => {
     let subscribedStream
     const publishers = ['0xb8ce9ab6943e0eced004cde8e3bbed6568b2fa01'.toLowerCase(), 'publisher2', 'publisher3']
     const publishersMap = {}
@@ -45,7 +45,7 @@ describe('SubscribedStream', () => {
             let stream
             beforeEach(() => {
                 ({ client, stream } = setupClientAndStream())
-                subscribedStream = new SubscribedStream(client, 'streamId')
+                subscribedStream = new SubscribedStreamPartition(client, 'streamId')
             })
             describe('getPublishers', () => {
                 it('should use endpoint to retrieve publishers', async () => {
@@ -73,7 +73,7 @@ describe('SubscribedStream', () => {
                     await subscribedStream.getPublishers()
                     subscribedStream.publishersPromise = Promise.resolve(publishersMap)
                     await subscribedStream.getPublishers()
-                    clock.tick(SubscribedStream.PUBLISHERS_EXPIRATION_TIME + 100)
+                    clock.tick(SubscribedStreamPartition.PUBLISHERS_EXPIRATION_TIME + 100)
                     await subscribedStream.getPublishers()
                     assert(client.getStreamPublishers.calledTwice)
                     clock.restore()
@@ -137,7 +137,7 @@ describe('SubscribedStream', () => {
                 )
                 await signer.signStreamMessage(msg)
                 const spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
-                subscribedStream = new SubscribedStream(setupClientAndStream('auto', true).client, 'streamId')
+                subscribedStream = new SubscribedStreamPartition(setupClientAndStream('auto', true).client, 'streamId')
                 const valid = await subscribedStream.verifyStreamMessage(msg)
                 assert.strictEqual(valid, false)
                 assert(spiedVerifyStreamMessage.notCalled)
@@ -166,7 +166,7 @@ describe('SubscribedStream', () => {
                 spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
             })
             afterEach(async () => {
-                subscribedStream = new SubscribedStream(client, 'streamId')
+                subscribedStream = new SubscribedStreamPartition(client, 'streamId')
                 const valid = await subscribedStream.verifyStreamMessage(msg)
                 assert.strictEqual(valid, true)
                 assert(spiedExpectedCall())
@@ -205,7 +205,7 @@ describe('SubscribedStream', () => {
                 )
             })
             afterEach(async () => {
-                subscribedStream = new SubscribedStream(client, 'streamId')
+                subscribedStream = new SubscribedStreamPartition(client, 'streamId')
                 const valid = await subscribedStream.verifyStreamMessage(msg)
                 assert.strictEqual(valid, expectedValid)
             })
@@ -232,7 +232,7 @@ describe('SubscribedStream', () => {
         let sub1
         beforeEach(() => {
             ({ client } = setupClientAndStream())
-            subscribedStream = new SubscribedStream(client, 'streamId')
+            subscribedStream = new SubscribedStreamPartition(client, 'streamId')
             sub1 = new RealTimeSubscription('sub1Id', 0, () => {})
         })
         it('should add and remove subscription correctly', () => {
