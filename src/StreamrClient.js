@@ -577,7 +577,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.isConnected()) { return Promise.resolve() }
 
         if (!this.isConnecting()) {
-            this.connect()
+            this.connect().catch((err) => this.emit('error', err))
         }
         return waitFor(this, 'connected')
     }
