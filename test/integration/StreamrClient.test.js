@@ -765,8 +765,9 @@ describe('StreamrClient', () => {
                 if (counter === nbMessages) {
                     // All good, unsubscribe
                     client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
-                        done()
+                    sub.on('unsubscribed', async () => {
+                        await client.disconnect()
+                        setTimeout(done, 1000)
                     })
                 }
             })
