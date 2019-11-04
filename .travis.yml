@@ -8,7 +8,6 @@ branches:
   - master
   - "/^v\\d+\\.\\d+(\\.\\d+)?(-\\S*)?$/"
 before_install:
-- sudo apt-get -y install websocat
 - npm i -g npm@6.0.0
 jobs:
   include:
