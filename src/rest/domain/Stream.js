@@ -45,6 +45,13 @@ export default class Stream {
         )
     }
 
+    getMyPermissions() {
+        return authFetch(
+            `${this._client.options.restUrl}/streams/${this.id}/permissions/me`,
+            this._client.session,
+        )
+    }
+
     async hasPermission(operation, userId) {
         const permissions = await this.getPermissions()
         return permissions.find((p) => p.operation === operation && ((userId == null && p.anonymous) || (userId != null && p.user === userId)))
