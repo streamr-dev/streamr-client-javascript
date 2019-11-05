@@ -13,13 +13,12 @@ import config from './config'
 const { StreamMessage } = MessageLayer
 
 const createClient = (opts = {}) => new StreamrClient({
-    url: config.websocketUrl,
-    restUrl: config.restUrl,
     auth: {
         privateKey: ethers.Wallet.createRandom().privateKey,
     },
     autoConnect: false,
     autoDisconnect: false,
+    ...config.clientOptions,
     ...opts,
 })
 
@@ -578,8 +577,8 @@ describe('StreamrClient', () => {
     beforeEach(async () => {
         try {
             await Promise.all([
-                fetch(config.restUrl),
-                fetch(config.websocketUrl.replace('ws://', 'http://')),
+                fetch(config.clientOptions.restUrl),
+                fetch(config.clientOptions.websocketUrl.replace('ws://', 'http://')),
             ])
         } catch (e) {
             if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
