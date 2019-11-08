@@ -143,7 +143,7 @@ describe('StreamrClient Connection', () => {
             }
 
             await wait(5000) // wait for messages to (probably) land in storage
-        }, 10*1000)
+        }, 10 * 1000)
 
         afterEach(async () => {
             await client.disconnect()
