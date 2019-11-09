@@ -58,6 +58,7 @@ describe('CommunityEndPoints', () => {
         console.log(`Deployment done for ${community.address}`)
         await community.isReady()
         console.log(`Community ${community.address} is ready to roll`)
+        await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
     }, 60000)
 
     afterAll(async () => adminClient.disconnect())
@@ -70,8 +71,8 @@ describe('CommunityEndPoints', () => {
                 '0x0000000000000000000000000000000000000002',
                 '0x000000000000000000000000000000000000bEEF',
             ]
-
             await adminClient.communityIsReady(community.address, console.log)
+
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
             await adminClient.memberHasJoined(community.address, memberAddressList[0])
             const res = await adminClient.getCommunityStats(community.address)
@@ -85,53 +86,70 @@ describe('CommunityEndPoints', () => {
     })
 
     describe('Members', () => {
-        const memberWallet = Wallet.createRandom()
-        const memberClient = createClient({
-            auth: {
-                privateKey: memberWallet.privateKey
-            }
-        })
-
-        const memberClientWithApiKey = createClient({
-            auth: {
-                apiKey: 'tester1-api-key'
-            }
-        })
-
-        beforeAll(async () => {
-            await memberClient.ensureConnected()
-            await memberClientWithApiKey.ensureConnected()
-            // so the member can afford to send tx
+        it('can join the community, and get their stats, and check proof, and withdraw', async () => {
+            // send eth so the member can afford to send tx
+            const memberWallet = new Wallet("0x0000000000000000000000000000000000000000000000000000000000000001", testProvider)
             await adminWallet.sendTransaction({
                 to: memberWallet.address,
-                value: utils.parseEther('1').toString(),
+                value: utils.parseEther('1'),
             })
-        })
 
-        it('can join the community when auth: privateKey', async () => {
-            await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
+            const memberClient = createClient({
+                auth: {
+                    privateKey: memberWallet.privateKey
+                }
+            })
+            await memberClient.ensureConnected()
+
             const res = await memberClient.joinCommunity(community.address, 'secret')
+            await memberClient.hasJoined(community.address)
             assert.strictEqual(res.state, 'ACCEPTED')
-            console.log(res)
-        })
+            assert.strictEqual(res.memberAddress, memberWallet.address)
+            assert.strictEqual(res.communityAddress, community.address)
 
-        it('can join the community when auth: apiKey', async () => {
-            await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
-            const res = await memberClientWithApiKey.joinCommunity(community.address, 'secret', memberWallet.address)
-            assert.strictEqual(res.state, 'ACCEPTED')
-            console.log(res)
-        })
+            // too much bother to check this in a separate test...
+            const res2 = await memberClient.getMemberStats(community.address)
+            console.log(res2)
+            assert.deepStrictEqual(res2, {
+                address: memberWallet.address,
+                earnings: '0',
+                recordedEarnings: '0',
+                withdrawableEarnings: '0',
+                frozenEarnings: '0' }
+            )
 
-        it('can not join without giving address when auth: apiKey', async () => {
-            await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
-            assert.throws(memberClientWithApiKey.joinCommunity(community.address, 'secret'), "StreamrClient wasn't authenticated with privateKey, and myAddress argument not supplied")
-        })
+            // add revenue, just to see some action
+            const opWallet = new Wallet("0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0", testProvider)
+            const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
+            const tx = await opToken.mint(community.address, utils.parseEther('1'))
+            const tr = await tx.wait(2)
+            assert.strictEqual(tr.events[0].event, "Transfer")
+            assert.strictEqual(tr.events[0].args.from, "0x0000000000000000000000000000000000000000")
+            assert.strictEqual(tr.events[0].args.to, community.address)
 
-        it('can get their own stats', async () => {
-            assert.deepStrictEqual(await memberClient.getMemberStats(community.address), {
-                adsf: 2
-            })
-        })
+            const res3 = await memberClient.getMemberStats(community.address)
+            assert.deepStrictEqual(res3, {
+                address: memberWallet.address,
+                earnings: '1000000000000000000',
+                recordedEarnings: '1000000000000000000',
+                withdrawableEarnings: '1000000000000000000',
+                frozenEarnings: '0',
+                withdrawableBlockNumber: res3.withdrawableBlockNumber,
+                proof: [ '0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4' ] }
+            )
+
+            const opts = { provider: testProvider }
+
+            const isValid = await memberClient.validateProof(community.address, opts)
+            assert(isValid)
+
+            const tr2 = await memberClient.withdraw(community.address, opts)
+            assert.strictEqual(tr2.logs[0].address, adminClient.options.tokenAddress)
+
+            // TODO: assert withdrawing produced tokens to member
+        }, 60000)
+
+        // TODO: test withdrawTo, withdrawFor
     })
 
     describe('Anyone', () => {
@@ -168,9 +186,5 @@ describe('CommunityEndPoints', () => {
                 adsf: 2
             })
         })
-    })
-
-    describe('', () => {
-
     })
 })
