@@ -275,16 +275,54 @@ resend: {
 
 ### Community Product API
 
-Streamr Client provides functions for operating with Community Product.
+Streamr Client provides functions for working with Community Products. All are async, that is, they return a Promise.
 
-Name | Description
----- | -----------
-joinCommunity(communityAddress, memberAddress, secret = undefined) | Join a community product
-memberStats(communityAddress, memberAddress) | Get member's community product statistics
-withdraw(communityAddress, memberAddress, wallet, confirmations = 1) | Withdraw funds from community product
-communityStats(communityAddress) | Get community product's statistics
-createSecret(communityAddress, secret, name = 'Untitled Community Secret') | Create a secret for a community product
-deployCommunity(wallet, blockFreezePeriodSeconds = 0, adminFee = 0) | Deploy a community product
+#### Admin functions
+
+Name | Returns | Description
+---- | ------- | -----------
+deployCommunity() | Transaction | Deploy a new community product
+createSecret(communityAddress, secret[, name]) | Create a secret for a community product
+communityIsReady(address) | | Wait until community is operated
+addMembers(communityAddress, memberAddressList) | | Add members
+kick(communityAddress, memberAddressList) | | Kick members out from community
+```
+const community = await client.deployCommunity()
+community.address           // already available before deployment
+await community.deployed()  // waits until contract is deployed
+await community.isReady()   // waits until community is operated
+```
+
+#### Member functions
+
+Name | Returns | Description
+---- | ------- | -----------
+joinCommunity(communityAddress[, secret]) | JoinRequest | Join a community product
+hasJoined(communityAddress[, memberAddress]) | | Wait until member has been accepted (default: authenticated StreamrClient)
+validateProof(communityAddress, options) | true/false | Check that server is giving a proof that allows withdrawing
+withdraw(communityAddress, options) | Receipt | Withdraw funds from community product
+withdrawFor(memberAddress, communityAddress, options) | Receipt | Pay for withdraw transaction on behalf of a community member
+withdrawTo(recipientAddress, communityAddress, options) | Receipt | Donate/move your earnings to recipientAddress instead of your memberAddress
+
+The options object for withdraw functions above may contain following overrides:
+
+Property | Default | Description
+-------- | ------- | -----------
+wallet   | auth    | ethers.js Wallet object to use to sign and send withdraw transaction
+provider | mainnet | ethers.js Provider to use if wallet wasn't provided
+confirmations | 1  | Number of blocks to wait after the withdraw transaction is mined
+gasPrice | ethers.js | Probably uses the network estimate
+
+#### Query functions
+
+These are available for everyone and anyone, to query publicly available info from a community
+
+Name | Returns | Description
+---- | ------- | -----------
+getMemberStats(communityAddress[, memberAddress]) | {earnings, proof, ...} | Get member's community stats
+getCommunityStats(communityAddress) | {memberCount, totalEarnings, ...} | Get community product's statistics
+getMembers(communityAddress) | [{address, earnings}, ...] | Get community members
+
 
 ### Utility functions
 
