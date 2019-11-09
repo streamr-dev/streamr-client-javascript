@@ -47,27 +47,6 @@ function sleep(ms) {
     })
 }
 
-/**
- * Get a wallet from something that looks like a private key
- * @param {Wallet | String | Provider} arg anything accepted by these functions: Wallet or private key, or provider so StreamrClient auth: privateKey will be used
- * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
- */
-async function parseWalletFrom(arg) {
-    if (arg instanceof Wallet) { return arg }
-
-    if (typeof arg === 'string') { return new Wallet(arg, getDefaultProvider()) }
-
-    // use the same Ethereum account as this client is authenticated with
-    const key = this.options.auth.privateKey
-    if (key) {
-        const provider = arg instanceof providers.Provider ? arg : getDefaultProvider()
-        return new Wallet(key, provider) // eslint-disable-line no-param-reassign
-    }
-
-    // TODO: check metamask before erroring!
-    throw new Error("Please provide a Wallet or private key string if you're not authenticated using a privateKey")
-}
-
 // //////////////////////////////////////////////////////////////////
 //          admin: DEPLOY AND SETUP COMMUNITY
 // //////////////////////////////////////////////////////////////////
@@ -81,6 +60,7 @@ async function parseWalletFrom(arg) {
  * @param {Function} logger will print debug info if given (optional)
  * @return {TransactionResponse} has methods that can be awaited: contract is deployed (`.deployed()`), operator is started (`.isReady()`)
  */
+// TODO: use WithdrawOptions, rename it to EthereumOptions or something
 export async function deployCommunity(wallet, blockFreezePeriodSeconds = 0, adminFee = 0, logger) {
     await throwIfNotContract(wallet.provider, this.options.tokenAddress, 'deployCommunity function argument tokenAddress')
     await throwIfBadAddress(this.options.streamrNodeAddress, 'StreamrClient option streamrNodeAddress')
@@ -159,20 +139,15 @@ export async function createSecret(communityAddress, secret, name = 'Untitled Co
  * Send a joinRequest, or get into community instantly with a community secret
  * @param {EthereumAddress} communityAddress to join
  * @param {String} secret (optional) if given, and correct, join the community immediately
- * @param {EthereumAddress} myAddress (optional) only needed if StreamrClient wasn't authenticated using an Ethereum private key (e.g. using apiKey)
  */
-export async function joinCommunity(communityAddress, secret, myAddress) {
-    let memberAddress = myAddress
-    if (!memberAddress) {
-        const authKey = this.options.auth && this.options.auth.privateKey
-        if (!authKey) {
-            throw new Error("StreamrClient wasn't authenticated with privateKey, and myAddress argument not supplied")
-        }
-        memberAddress = computeAddress(authKey)
+export async function joinCommunity(communityAddress, secret) {
+    const authKey = this.options.auth && this.options.auth.privateKey
+    if (!authKey) {
+        throw new Error("joinCommunity: StreamrClient must have auth: privateKey")
     }
 
     const body = {
-        memberAddress
+        memberAddress: computeAddress(authKey)
     }
     if (secret) { body.secret = secret }
 
@@ -193,18 +168,27 @@ export async function joinCommunity(communityAddress, secret, myAddress) {
 /**
  * Await this function when you want to make sure a member is accepted in the community
  * @param {EthereumAddress} communityAddress
- * @param {EthereumAddress} memberAddress
+ * @param {EthereumAddress} memberAddress (optional, default is StreamrClient's auth: privateKey)
  * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
  * @param {Number} timeoutMs (optional, default: 60000) give up
  * @return {Promise} resolves when member is in the community (or fails with HTTP error)
  */
-export async function memberHasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs, logger) {
-    let stats = await this.getMemberStats(communityAddress, memberAddress)
+export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs, logger) {
+    let address = memberAddress
+    if (!address) {
+        const authKey = this.options.auth && this.options.auth.privateKey
+        if (!authKey) {
+            throw new Error("StreamrClient wasn't authenticated with privateKey, and memberAddress argument not supplied")
+        }
+        address = computeAddress(authKey)
+    }
+
+    let stats = await this.getMemberStats(communityAddress, address)
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
-        if (logger) { logger(`Waiting for member ${memberAddress} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`) }
+        if (logger) { logger(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`) }
         await sleep(pollingIntervalMs || 1000)
-        stats = await this.getMemberStats(communityAddress, memberAddress)
+        stats = await this.getMemberStats(communityAddress, address)
     }
     if (stats.error) {
         throw new Error(`Member failed to join within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
@@ -252,31 +236,56 @@ export async function getCommunityStats(communityAddress) {
 // //////////////////////////////////////////////////////////////////
 
 /**
- * Validate the proof given by the server with the smart contract (ground truth)
- * @param {EthereumAddress} communityAddress to query
- * @param {EthereumAddress} memberAddress to query
- * @param {providers.Provider} provider (optional) e.g. `wallet.provider`, default is `ethers.getDefaultProvider()` (mainnet)
- */
-export async function validateProof(communityAddress, memberAddress, provider) {
-    const stats = await this.memberStats(communityAddress, memberAddress)
-    const contract = new Contract(communityAddress, CommunityProduct.abi, provider || getDefaultProvider())
-    return contract.proofIsCorrect(
-        stats.withdrawableBlockNumber,
-        memberAddress,
-        stats.withdrawableEarnings,
-        stats.proof,
-    )
-}
-
-/**
  * @typedef {Object} WithdrawOptions all optional, hence "options"
  * @property {Wallet | String} wallet or private key, default is currently logged in StreamrClient (if auth: privateKey)
+ * @property {providers.Provider} provider to use in case wallet was a String, or omitted
  * @property {Number} confirmations, default is 1
  * @property {BigNumber} gasPrice in wei (part of ethers overrides), default is whatever the network recommends (ethers.js default)
  * @see https://docs.ethers.io/ethers.js/html/api-contract.html#overrides
  */
 
 // TODO: gasPrice to overrides (not needed for browser, but would be useful in node.js)
+
+/**
+ * Get a wallet from WithdrawOptions, e.g. by parsing something that looks like a private key
+ * @param {StreamrClient} client this
+ * @param {WithdrawOptions} arg anything accepted by these functions: Wallet or private key, or provider so StreamrClient auth: privateKey will be used
+ * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
+ */
+function parseWalletFromOptions(client, options) {
+    if (options.wallet instanceof Wallet) { return options.wallet }
+
+    const key = typeof options.wallet === 'string' ? options.wallet : options.key || options.privateKey || client.options.auth.privateKey
+    if (key) {
+        const provider = options.provider instanceof providers.Provider ? options.provider : getDefaultProvider()
+        return new Wallet(key, provider)
+    }
+
+    // TODO: check metamask before erroring!
+    throw new Error("Please provide options.wallet, or options.privateKey string, if you're not authenticated using a privateKey")
+}
+
+/**
+ * Validate the proof given by the server with the smart contract (ground truth)
+ * @param {EthereumAddress} communityAddress to query
+ * @param {EthereumAddress} memberAddress to query
+ * @param {providers.Provider} provider (optional) e.g. `wallet.provider`, default is `ethers.getDefaultProvider()` (mainnet)
+ * @return {Boolean} true if proof is correct
+ */
+export async function validateProof(communityAddress, options) {
+    const wallet = parseWalletFromOptions(this, options)
+    const stats = await this.getMemberStats(communityAddress, wallet.address)
+    if (!stats.withdrawableBlockNumber) {
+        throw new Error('No earnings to withdraw.')
+    }
+    const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
+    return contract.proofIsCorrect(
+        stats.withdrawableBlockNumber,
+        wallet.address,
+        stats.withdrawableEarnings,
+        stats.proof,
+    )
+}
 
 /**
  * Withdraw all your earnings
@@ -296,8 +305,8 @@ export async function withdraw(communityAddress, options) {
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTx(communityAddress, options) {
-    const wallet = parseWalletFrom(options.wallet)
-    const stats = await this.memberStats(communityAddress, wallet.address)
+    const wallet = parseWalletFromOptions(this, options)
+    const stats = await this.getMemberStats(communityAddress, wallet.address)
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
@@ -324,11 +333,11 @@ export async function withdrawFor(memberAddress, communityAddress, options) {
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxFor(memberAddress, communityAddress, options) {
-    const stats = await this.memberStats(communityAddress, memberAddress)
+    const stats = await this.getMemberStats(communityAddress, memberAddress)
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
-    const wallet = parseWalletFrom(options.wallet)
+    const wallet = parseWalletFromOptions(this, options)
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
     return contract.withdrawAllFor(memberAddress, stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof)
 }
@@ -353,8 +362,8 @@ export async function withdrawTo(recipientAddress, communityAddress, options) {
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxTo(recipientAddress, communityAddress, options) {
-    const wallet = parseWalletFrom(options.wallet)
-    const stats = await this.memberStats(communityAddress, wallet.address)
+    const wallet = parseWalletFromOptions(this, options)
+    const stats = await this.getMemberStats(communityAddress, wallet.address)
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
