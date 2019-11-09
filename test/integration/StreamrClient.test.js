@@ -578,7 +578,7 @@ describe('StreamrClient', () => {
         try {
             await Promise.all([
                 fetch(config.clientOptions.restUrl),
-                fetch(config.clientOptions.websocketUrl.replace('ws://', 'http://')),
+                fetch(config.clientOptions.url.replace('ws://', 'http://')),
             ])
         } catch (e) {
             if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
