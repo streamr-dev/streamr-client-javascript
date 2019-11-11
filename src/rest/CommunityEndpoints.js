@@ -79,7 +79,7 @@ export async function deployCommunity(wallet, blockFreezePeriodSeconds = 0, admi
     const deployer = new ContractFactory(CommunityProduct.abi, CommunityProduct.bytecode, wallet)
     const result = await deployer.deploy(this.options.streamrOperatorAddress, stream.id,
         this.options.tokenAddress, blockFreezePeriodSeconds, adminFeeBN)
-    const address = result.address     // this can be known in advance
+    const { address } = result // this can be known in advance
 
     // add the waiting method so that caller can await community being operated by server (so that EE calls work)
     const client = this
@@ -99,8 +99,8 @@ export async function communityIsReady(address, pollingIntervalMs, timeoutMs, lo
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
         if (logger) { logger(`Waiting for community ${address} to start. Status: ${JSON.stringify(stats)}`) }
-        await sleep(pollingIntervalMs || 1000)
-        stats = await this.getCommunityStats(address)
+        await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
+        stats = await this.getCommunityStats(address) // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
         throw new Error(`Community failed to start within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
@@ -143,7 +143,7 @@ export async function createSecret(communityAddress, secret, name = 'Untitled Co
 export async function joinCommunity(communityAddress, secret) {
     const authKey = this.options.auth && this.options.auth.privateKey
     if (!authKey) {
-        throw new Error("joinCommunity: StreamrClient must have auth: privateKey")
+        throw new Error('joinCommunity: StreamrClient must have auth: privateKey')
     }
 
     const body = {
@@ -171,6 +171,7 @@ export async function joinCommunity(communityAddress, secret) {
  * @param {EthereumAddress} memberAddress (optional, default is StreamrClient's auth: privateKey)
  * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
  * @param {Number} timeoutMs (optional, default: 60000) give up
+ * @param {Function} logger
  * @return {Promise} resolves when member is in the community (or fails with HTTP error)
  */
 export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs, logger) {
@@ -187,8 +188,8 @@ export async function hasJoined(communityAddress, memberAddress, pollingInterval
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
         if (logger) { logger(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`) }
-        await sleep(pollingIntervalMs || 1000)
-        stats = await this.getMemberStats(communityAddress, address)
+        await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
+        stats = await this.getMemberStats(communityAddress, address) // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
         throw new Error(`Member failed to join within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
