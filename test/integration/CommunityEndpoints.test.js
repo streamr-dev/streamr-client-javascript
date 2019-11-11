@@ -1,19 +1,11 @@
 import assert from 'assert'
 
-import {
-    Wallet,
-    Contract,
-    providers,
-    utils,
-} from 'ethers'
+import { Contract, providers, utils, Wallet } from 'ethers'
 
 import StreamrClient from '../../src'
-// import * as Community from '../../contracts/CommunityProduct.json'
 import * as Token from '../../contracts/TestToken.json'
 
 import config from './config'
-
-import mutex from 'async-mutex'
 
 function sleep(ms) {
     return new Promise((resolve) => {
@@ -21,28 +13,24 @@ function sleep(ms) {
     })
 }
 
-const createClient = (opts = {}) => new StreamrClient({
-    autoConnect: false,
-    autoDisconnect: false,
-    ...config.clientOptions,
-    ...opts,
-})
-
 describe('CommunityEndPoints', () => {
     let community
 
     let testProvider
-    let adminWallet
     let adminClient
+    let adminWallet
     let adminToken
 
     beforeAll(() => {
         testProvider = new providers.JsonRpcProvider(config.ethereumServerUrl)
         adminWallet = new Wallet(config.privateKey, testProvider)
-        adminClient = createClient({
+        adminClient = new StreamrClient({
             auth: {
                 privateKey: adminWallet.privateKey
-            }
+            },
+            autoConnect: false,
+            autoDisconnect: false,
+            ...config.clientOptions,
         })
 
         adminToken = new Contract(adminClient.options.tokenAddress, Token.abi, adminWallet)
@@ -64,40 +52,50 @@ describe('CommunityEndPoints', () => {
     afterAll(async () => adminClient.disconnect())
 
     describe('Admin', () => {
+        const memberAddressList = [
+            '0x0000000000000000000000000000000000000001',
+            '0x0000000000000000000000000000000000000002',
+            '0x000000000000000000000000000000000000bEEF',
+        ]
+
         it('can add and remove members', async () => {
             console.log('starting test')
-            const memberAddressList = [
-                '0x0000000000000000000000000000000000000001',
-                '0x0000000000000000000000000000000000000002',
-                '0x000000000000000000000000000000000000bEEF',
-            ]
             await adminClient.communityIsReady(community.address, console.log)
 
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
-            await adminClient.memberHasJoined(community.address, memberAddressList[0])
+            await adminClient.hasJoined(community.address, memberAddressList[0])
             const res = await adminClient.getCommunityStats(community.address)
-            assert.deepStrictEqual(res.memberCount, { total: 3, active: 3, inactive: 0 })
+            assert.deepStrictEqual(res.memberCount, {
+                total: 3, active: 3, inactive: 0
+            })
 
             await adminClient.kick(community.address, memberAddressList.slice(1), testProvider)
             await sleep(1000) // TODO: instead of sleeping, find a way to check server has registered the parting
             const res2 = await adminClient.getCommunityStats(community.address)
-            assert.deepStrictEqual(res2.memberCount, { total: 3, active: 1, inactive: 2 })
+            assert.deepStrictEqual(res2.memberCount, {
+                total: 3, active: 1, inactive: 2
+            })
         })
+
+        // separate test for adding and removing secrets? Adding secret is tested in member joins community test though.
     })
 
     describe('Members', () => {
         it('can join the community, and get their stats, and check proof, and withdraw', async () => {
             // send eth so the member can afford to send tx
-            const memberWallet = new Wallet("0x0000000000000000000000000000000000000000000000000000000000000001", testProvider)
+            const memberWallet = new Wallet('0x0000000000000000000000000000000000000000000000000000000000000001', testProvider)
             await adminWallet.sendTransaction({
                 to: memberWallet.address,
                 value: utils.parseEther('1'),
             })
 
-            const memberClient = createClient({
+            const memberClient = new StreamrClient({
                 auth: {
                     privateKey: memberWallet.privateKey
-                }
+                },
+                autoConnect: false,
+                autoDisconnect: false,
+                ...config.clientOptions,
             })
             await memberClient.ensureConnected()
 
@@ -115,18 +113,19 @@ describe('CommunityEndPoints', () => {
                 earnings: '0',
                 recordedEarnings: '0',
                 withdrawableEarnings: '0',
-                frozenEarnings: '0' }
-            )
+                frozenEarnings: '0'
+            })
 
             // add revenue, just to see some action
-            const opWallet = new Wallet("0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0", testProvider)
+            const opWallet = new Wallet('0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0', testProvider)
             const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
             const tx = await opToken.mint(community.address, utils.parseEther('1'))
             const tr = await tx.wait(2)
-            assert.strictEqual(tr.events[0].event, "Transfer")
-            assert.strictEqual(tr.events[0].args.from, "0x0000000000000000000000000000000000000000")
+            assert.strictEqual(tr.events[0].event, 'Transfer')
+            assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
             assert.strictEqual(tr.events[0].args.to, community.address)
 
+            // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
             const res3 = await memberClient.getMemberStats(community.address)
             assert.deepStrictEqual(res3, {
                 address: memberWallet.address,
@@ -135,28 +134,37 @@ describe('CommunityEndPoints', () => {
                 withdrawableEarnings: '1000000000000000000',
                 frozenEarnings: '0',
                 withdrawableBlockNumber: res3.withdrawableBlockNumber,
-                proof: [ '0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4' ] }
-            )
+                proof: ['0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4']
+            })
 
-            const opts = { provider: testProvider }
-
-            const isValid = await memberClient.validateProof(community.address, opts)
+            const isValid = await memberClient.validateProof(community.address, {
+                provider: testProvider
+            })
             assert(isValid)
 
-            const tr2 = await memberClient.withdraw(community.address, opts)
+            const balanceBefore = await opToken.balanceOf(memberWallet.address)
+
+            const tr2 = await memberClient.withdraw(community.address, {
+                provider: testProvider
+            })
             assert.strictEqual(tr2.logs[0].address, adminClient.options.tokenAddress)
 
-            // TODO: assert withdrawing produced tokens to member
+            const balanceAfter = await opToken.balanceOf(memberWallet.address)
+            const diff = balanceAfter.sub(balanceBefore)
+            assert.strictEqual(diff.toString(), res3.withdrawableEarnings)
         }, 60000)
 
         // TODO: test withdrawTo, withdrawFor
     })
 
     describe('Anyone', () => {
-        const client = createClient({
+        const client = new StreamrClient({
             auth: {
                 apiKey: 'tester1-api-key'
-            }
+            },
+            autoConnect: false,
+            autoDisconnect: false,
+            ...config.clientOptions,
         })
         const memberAddressList = [
             '0x0000000000000000000000000000000000000001',
@@ -164,27 +172,53 @@ describe('CommunityEndPoints', () => {
             '0x000000000000000000000000000000000000bEEF',
         ]
 
-        beforeEach(async () => mutex.runExclusive(async () => {
+        it('can get community stats, member list, and member stats', async () => {
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
-            await adminToken.transfer(community.address, utils.formatEther(1))              // without mutex, transfer will have a nonce problem
-        }))
+            await adminClient.hasJoined(community.address, memberAddressList[0])
 
-        it('can get community stats', async () => {
-            assert.deepStrictEqual(await client.getCommunityStats(community.address), {
-                adsf: 2
+            // mint tokens to community to generate revenue
+            const opWallet = new Wallet('0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0', testProvider)
+            const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
+            const tx = await opToken.mint(community.address, utils.parseEther('1'))
+            const tr = await tx.wait(2)
+            assert.strictEqual(tr.events[0].event, 'Transfer')
+            assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
+            assert.strictEqual(tr.events[0].args.to, community.address)
+
+            const cstats = await client.getCommunityStats(community.address)
+            const mlist = await client.getMembers(community.address)
+            const mstats = await client.getMemberStats(community.address, memberAddressList[0])
+
+            assert.deepStrictEqual(cstats.memberCount, {
+                total: 3, active: 3, inactive: 0
             })
-        })
-
-        it('can get member list', async () => {
-            assert.deepStrictEqual(await client.getMembers(community.address), [{
-                adsf: 2
+            assert.deepStrictEqual(cstats.totalEarnings, '1000000000000000000')
+            assert.deepStrictEqual(cstats.latestWithdrawableBlock.memberCount, 4)
+            assert.deepStrictEqual(cstats.latestWithdrawableBlock.totalEarnings, '1000000000000000000')
+            assert.deepStrictEqual(mlist, [{
+                address: '0x0000000000000000000000000000000000000001',
+                earnings: '333333333333333333'
+            },
+            {
+                address: '0x0000000000000000000000000000000000000002',
+                earnings: '333333333333333333'
+            },
+            {
+                address: '0x000000000000000000000000000000000000bEEF',
+                earnings: '333333333333333333'
             }])
-        })
-
-        it('can get member stats', async () => {
-            assert.deepStrictEqual(await client.getMemberStats(community.address), {
-                adsf: 2
+            assert.deepStrictEqual(mstats, {
+                address: '0x0000000000000000000000000000000000000001',
+                earnings: '333333333333333333',
+                recordedEarnings: '333333333333333333',
+                withdrawableEarnings: '333333333333333333',
+                frozenEarnings: '0',
+                withdrawableBlockNumber: cstats.latestWithdrawableBlock.blockNumber,
+                proof: [
+                    '0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4',
+                    '0xe482f62a15e13774223a74cc4db3abb30d4ec3af8bf89f2f56116b9af1dbbe05',
+                ]
             })
-        })
+        }, 30000)
     })
 })
