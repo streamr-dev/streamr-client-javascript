@@ -37,6 +37,7 @@ describe('Connection', () => {
             assert(conn.socket.onopen != null)
             assert(conn.socket.onclose != null)
             assert(conn.socket.onmessage != null)
+            assert(conn.socket.onerror != null)
         })
 
         it('should report correct state when connecting', () => {
