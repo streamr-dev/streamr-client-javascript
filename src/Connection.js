@@ -61,8 +61,11 @@ class Connection extends EventEmitter {
             this.updateState(Connection.State.CONNECTED)
         })
 
-        this.socket.events.on('error', () => {
+        this.socket.events.on('error', (err) => {
             debug('Error in websocket.')
+            if (err) {
+                console.error(err)
+            }
             this.socket.terminate()
         })
 
@@ -71,7 +74,9 @@ class Connection extends EventEmitter {
                 debug('Connection lost. Attempting to reconnect')
                 clearTimeout(this._reconnectTimeout)
                 this._reconnectTimeout = setTimeout(() => {
-                    this.connect()
+                    this.connect().catch((err) => {
+                        console.error(err)
+                    })
                 }, 2000)
             }
 
@@ -112,7 +117,7 @@ class Connection extends EventEmitter {
 
         if (this.state === Connection.State.CONNECTING) {
             return new Promise((resolve) => {
-                this.once('connected', () => resolve(this.disconnect()))
+                this.once('connected', () => resolve(this.disconnect().catch((err) => console.error(err))))
             })
         }
 
