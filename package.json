@@ -67,11 +67,11 @@
     "heap": "^0.2.6",
     "node-fetch": "^2.6.0",
     "once": "^1.4.0",
-    "qs": "^6.7.0",
+    "qs": "^6.9.1",
     "randomstring": "^1.1.5",
     "receptacle": "^1.3.2",
     "streamr-client-protocol": "^2.2.15",
     "webpack-node-externals": "^1.7.2",
-    "ws": "^7.0.1"
+    "ws": "^7.2.0"
   }
 }
