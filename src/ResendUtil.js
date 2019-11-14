@@ -18,12 +18,15 @@ export default class ResendUtil extends EventEmitter {
             const error = new Error(`Received unexpected ${responseType} message ${response.serialize()}`)
             this.emit('error', error)
         }
-        return this.subForRequestId[response.subId] // TODO: replace with response.requestId
+        const sub = this.subForRequestId[response.subId] // TODO: replace with response.requestId
+        delete this.subForRequestId[response.subId] // each resend response must be handled only once
+        return sub
     }
 
     registerResendRequestForSub(sub) {
         const requestId = this.generateRequestId()
         this.subForRequestId[requestId] = sub
+        sub.addPendingResendRequestIds(requestId)
         return requestId
     }
 }
