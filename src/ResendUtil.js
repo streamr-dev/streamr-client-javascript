@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3'
+import { ControlLayer } from 'streamr-client-protocol'
 
 export default class ResendUtil extends EventEmitter {
     constructor() {
@@ -13,13 +14,15 @@ export default class ResendUtil extends EventEmitter {
         return id.toString()
     }
 
-    getSubFromResendResponse(response, responseType) {
+    getSubFromResendResponse(response, responseTypeName) {
         if (!this.subForRequestId[response.subId]) { // TODO: replace with response.requestId
-            const error = new Error(`Received unexpected ${responseType} message ${response.serialize()}`)
+            const error = new Error(`Received unexpected ${responseTypeName} message ${response.serialize()}`)
             this.emit('error', error)
         }
         const sub = this.subForRequestId[response.subId] // TODO: replace with response.requestId
-        delete this.subForRequestId[response.subId] // each resend response must be handled only once
+        if (response.type !== ControlLayer.ResendResponseResending.TYPE) {
+            delete this.subForRequestId[response.subId] // request handled when "no resend" or "resent" is received
+        }
         return sub
     }
 
