@@ -36,6 +36,7 @@ import { waitFor } from './utils'
 import RealTimeSubscription from './RealTimeSubscription'
 import CombinedSubscription from './CombinedSubscription'
 import Subscription from './Subscription'
+import ResendUtil from './ResendUtil'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -113,6 +114,9 @@ export default class StreamrClient extends EventEmitter {
             )
         }
 
+        this.resendUtil = new ResendUtil()
+        this.resendUtil.on('error', (err) => this.emit('error', err))
+
         this.on('error', (error) => {
             console.error(error)
             this.ensureDisconnected()
@@ -175,8 +179,9 @@ export default class StreamrClient extends EventEmitter {
         // Route resending state messages to corresponding Subscriptions
         this.connection.on(ResendResponseResending.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            if (stream && stream.getSubscription(response.subId)) {
-                stream.getSubscription(response.subId).handleResending(response)
+            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseResending')
+            if (stream && sub && stream.getSubscription(sub.id)) {
+                stream.getSubscription(sub.id).handleResending(response)
             } else {
                 debug('resent: Subscription %s is gone already', response.subId)
             }
@@ -184,8 +189,9 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on(ResendResponseNoResend.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            if (stream && stream.getSubscription(response.subId)) {
-                stream.getSubscription(response.subId).handleNoResend(response)
+            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseNoResend')
+            if (stream && sub && stream.getSubscription(sub.id)) {
+                stream.getSubscription(sub.id).handleNoResend(response)
             } else {
                 debug('resent: Subscription %s is gone already', response.subId)
             }
@@ -193,8 +199,9 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on(ResendResponseResent.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            if (stream && stream.getSubscription(response.subId)) {
-                stream.getSubscription(response.subId).handleResent(response)
+            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseResent')
+            if (stream && sub && stream.getSubscription(sub.id)) {
+                stream.getSubscription(sub.id).handleResent(response)
             } else {
                 debug('resent: Subscription %s is gone already', response.subId)
             }
@@ -664,21 +671,22 @@ export default class StreamrClient extends EventEmitter {
 
     async _requestResend(sub, resendOptions) {
         sub.setResending(true)
+        const requestId = this.resendUtil.registerResendRequestForSub(sub)
         const options = resendOptions || sub.getResendOptions()
         const sessionToken = await this.session.getSessionToken()
         // don't bother requesting resend if not connected
         if (!this.isConnected()) { return }
         let request
         if (options.last > 0) {
-            request = ResendLastRequest.create(sub.streamId, sub.streamPartition, sub.id, options.last, sessionToken)
+            request = ResendLastRequest.create(sub.streamId, sub.streamPartition, requestId, options.last, sessionToken)
         } else if (options.from && !options.to) {
             request = ResendFromRequest.create(
-                sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
+                sub.streamId, sub.streamPartition, requestId, [options.from.timestamp, options.from.sequenceNumber],
                 options.publisherId || null, options.msgChainId || null, sessionToken,
             )
         } else if (options.from && options.to) {
             request = ResendRangeRequest.create(
-                sub.streamId, sub.streamPartition, sub.id, [options.from.timestamp, options.from.sequenceNumber],
+                sub.streamId, sub.streamPartition, requestId, [options.from.timestamp, options.from.sequenceNumber],
                 [options.to.timestamp, options.to.sequenceNumber],
                 options.publisherId || null, options.msgChainId || null, sessionToken,
             )
