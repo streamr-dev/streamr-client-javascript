@@ -71,14 +71,14 @@ describe('StreamrClient', () => {
         return sub
     }
 
-    function msg(streamId = 'stream1', content = {}, subId) {
+    function msg(streamId = 'stream1', content = {}, requestId) {
         const timestamp = Date.now()
         const streamMessage = StreamMessage.create(
             [streamId, 0, timestamp, 0, '', ''], [timestamp - 100, 0],
             StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE,
         )
-        if (subId !== undefined) {
-            return UnicastMessage.create(subId, streamMessage)
+        if (requestId !== undefined) {
+            return UnicastMessage.create(requestId, streamMessage)
         }
 
         return BroadcastMessage.create(streamMessage)
@@ -258,7 +258,7 @@ describe('StreamrClient', () => {
                     },
                 })
                 sub.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
+                    setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, 0)), 200)
                     setTimeout(() => {
                         sub.stop()
                         done()
@@ -285,10 +285,10 @@ describe('StreamrClient', () => {
                 }, () => {})
 
                 sub1.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub1.streamId, {}, sub1.id)), 200)
+                    setTimeout(() => connection.emitMessage(msg(sub1.streamId, {}, 0)), 200)
                 })
                 sub2.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub2.streamId, {}, sub2.id)), 200)
+                    setTimeout(() => connection.emitMessage(msg(sub2.streamId, {}, 1)), 200)
                 })
 
                 const compFunction = (m1, m2) => {
@@ -408,7 +408,12 @@ describe('StreamrClient', () => {
 
             beforeEach(async () => {
                 await client.connect()
-                sub = setupSubscription('stream1')
+                sub = setupSubscription('stream1', true, {
+                    resend: {
+                        last: 5,
+                    },
+                })
+                connection.expect(ResendLastRequest.create('stream1', 0, 0, 5, 'session-token'))
             })
 
             it('should call the message handler of specified Subscription', () => {
@@ -419,15 +424,14 @@ describe('StreamrClient', () => {
                 const sub2 = setupSubscription('stream1')
                 sub2.handleResentMessage = sinon.stub().throws()
 
-                const msg1 = msg(sub.streamId, {}, sub.id)
-                connection.emitMessage(msg1, sub.id)
-
+                const msg1 = msg(sub.streamId, {}, '0')
+                connection.emitMessage(msg1)
                 sinon.assert.calledWithMatch(sub.handleResentMessage, msg1.streamMessage, sinon.match.func)
             })
 
             it('ignores messages for unknown Subscriptions', () => {
                 sub.handleResentMessage = sinon.stub().throws()
-                connection.emitMessage(msg(sub.streamId, {}, 'unknown subId'), 'unknown subId')
+                connection.emitMessage(msg(sub.streamId, {}, 'unknown subId'))
             })
 
             it('should ensure that the promise returned by the verification function is cached', (done) => {
@@ -437,8 +441,8 @@ describe('StreamrClient', () => {
                     assert.strictEqual(firstResult, verifyFn())
                     done()
                 }
-                const msg1 = msg(sub.streamId, {}, sub.id)
-                connection.emitMessage(msg1, sub.id)
+                const msg1 = msg(sub.streamId, {}, '0')
+                connection.emitMessage(msg1)
             })
         })
 
@@ -704,7 +708,7 @@ describe('StreamrClient', () => {
                         },
                     })
                     sub.once('subscribed', () => {
-                        setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
+                        setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, '0')), 200)
                         setTimeout(() => {
                             sub.stop()
                             done()
@@ -724,13 +728,13 @@ describe('StreamrClient', () => {
                         },
                     })
                     sub.once('subscribed', () => {
-                        setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, sub.id)), 200)
+                        setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, '0')), 200)
                         setTimeout(() => {
                             sub.stop()
                             done()
                         }, STORAGE_DELAY + 200)
                     })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, 0, 5, 'session-token'))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 }, STORAGE_DELAY + 1000)
 
@@ -755,10 +759,10 @@ describe('StreamrClient', () => {
                             last: 5,
                         },
                     })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, 0, 5, 'session-token'))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, 0))
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, 1, 5, 'session-token'))
+                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '1', 5, 'session-token'))
                     setTimeout(() => {
                         sub.stop()
                         done()

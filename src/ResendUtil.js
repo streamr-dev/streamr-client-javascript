@@ -20,7 +20,7 @@ export default class ResendUtil extends EventEmitter {
             this.emit('error', error)
         }
         const sub = this.subForRequestId[response.subId] // TODO: replace with response.requestId
-        if (response.type !== ControlLayer.ResendResponseResending.TYPE) {
+        if (response.type === ControlLayer.ResendResponseResent.TYPE || response.type === ControlLayer.ResendResponseNoResend.TYPE) {
             delete this.subForRequestId[response.subId] // request handled when "no resend" or "resent" is received
         }
         return sub

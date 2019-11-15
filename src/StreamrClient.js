@@ -138,15 +138,15 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(UnicastMessage.TYPE, async (msg) => {
             const stream = this._getSubscribedStreamPartition(msg.streamMessage.getStreamId(), msg.streamMessage.getStreamPartition())
             if (stream) {
-                const sub = stream.getSubscription(msg.subId)
-                if (sub) {
+                const sub = this.resendUtil.getSubFromResendResponse(msg, 'UnicastMessage')
+                if (sub && stream.getSubscription(sub.id)) {
                     // sub.handleResentMessage never rejects: on any error it emits an 'error' event on the Subscription
                     sub.handleResentMessage(
                         msg.streamMessage,
                         once(() => stream.verifyStreamMessage(msg.streamMessage)), // ensure verification occurs only once
                     )
                 } else {
-                    debug('WARN: subscription not found for stream: %s, sub: %s', msg.streamMessage.getStreamId(), msg.subId)
+                    debug('WARN: request id not found for stream: %s, sub: %s', msg.streamMessage.getStreamId(), msg.subId) // TODO: msg.requestId
                 }
             } else {
                 debug('WARN: message received for stream with no subscriptions: %s', msg.streamMessage.getStreamId())
