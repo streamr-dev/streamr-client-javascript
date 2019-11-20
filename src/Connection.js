@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
-import WebSocket from 'ws'
+import WebSocket from 'isomorphic-ws'
 import { ControlLayer } from 'streamr-client-protocol'
 
 const debug = debugFactory('StreamrClient::Connection')

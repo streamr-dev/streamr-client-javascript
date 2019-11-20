@@ -68,12 +68,21 @@ describe('Connection', () => {
         })
     })
 
-    describe('disconnect()', () => {
+    describe.only('disconnect()', () => {
         beforeEach(() => {
             conn.connect()
             conn.socket.onopen()
             assert.equal(conn.state, Connection.State.CONNECTED)
         })
+
+        //afterEach(async () => {
+
+            //if (conn.state !== Connection.State.DISCONNECTING && conn.state !== Connection.State.DISCONNECTED) {
+                //await conn.disconnect()
+            //}
+            ////conn.socket.onopen()
+            ////assert.equal(conn.state, Connection.State.CONNECTED)
+        //})
 
         it('returns a promise and resolves it when disconnected', () => {
             const result = conn.disconnect()

@@ -69,6 +69,10 @@ const clientConfig = merge({}, commonConfig, {
     output: {
         filename: libraryName + '.web.js',
     },
+    node: {
+        http: 'mock',
+        https: 'mock',
+    },
 })
 
 let clientMinifiedConfig = {}

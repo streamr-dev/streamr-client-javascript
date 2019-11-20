@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import fetch from 'isomorphic-fetch'
 import debugFactory from 'debug'
 
 import AuthFetchError from '../errors/AuthFetchError'
