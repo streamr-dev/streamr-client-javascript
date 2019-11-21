@@ -23,10 +23,10 @@ describe('CommunityEndPoints', () => {
 
     beforeAll(async () => {
         testProvider = new providers.JsonRpcProvider(config.ethereumServerUrl)
-        const network = await testProvider.getNetwork().catch(e => {
+        const network = await testProvider.getNetwork().catch((e) => {
             throw new Error(`Connecting to Ethereum failed, config = ${JSON.stringify(config)}`, e)
         })
-        console.log("Connected to Ethereum network: ", JSON.stringify(network))
+        console.log('Connected to Ethereum network: ', JSON.stringify(network))
 
         adminWallet = new Wallet(config.privateKey, testProvider)
         adminClient = new StreamrClient({
