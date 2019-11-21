@@ -40,7 +40,9 @@ describe('CommunityEndPoints', () => {
         console.log('starting beforeEach')
         await adminClient.ensureConnected()
         console.log('deploying new community...')
-        community = await adminClient.deployCommunity(adminWallet)
+        community = await adminClient.deployCommunity({
+            provider: testProvider
+        })
         console.log(`Going to deploy to ${community.address}`)
         await community.deployed()
         console.log(`Deployment done for ${community.address}`)
@@ -81,7 +83,7 @@ describe('CommunityEndPoints', () => {
     })
 
     describe('Members', () => {
-        it('can join the community, and get their stats, and check proof, and withdraw', async () => {
+        it('can join the community, and get their balances and stats, and check proof, and withdraw', async () => {
             // send eth so the member can afford to send tx
             const memberWallet = new Wallet('0x0000000000000000000000000000000000000000000000000000000000000001', testProvider)
             await adminWallet.sendTransaction({
@@ -107,7 +109,6 @@ describe('CommunityEndPoints', () => {
 
             // too much bother to check this in a separate test...
             const res2 = await memberClient.getMemberStats(community.address)
-            console.log(res2)
             assert.deepStrictEqual(res2, {
                 address: memberWallet.address,
                 earnings: '0',
@@ -124,6 +125,8 @@ describe('CommunityEndPoints', () => {
             assert.strictEqual(tr.events[0].event, 'Transfer')
             assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
             assert.strictEqual(tr.events[0].args.to, community.address)
+            assert.strictEqual(tr.events[0].args.value.toString(), '1000000000000000000')
+            await sleep(1000)
 
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
             const res3 = await memberClient.getMemberStats(community.address)
@@ -142,19 +145,19 @@ describe('CommunityEndPoints', () => {
             })
             assert(isValid)
 
-            const balanceBefore = await opToken.balanceOf(memberWallet.address)
+            const walletBefore = await opToken.balanceOf(memberWallet.address)
 
             const tr2 = await memberClient.withdraw(community.address, {
                 provider: testProvider
             })
             assert.strictEqual(tr2.logs[0].address, adminClient.options.tokenAddress)
 
-            const balanceAfter = await opToken.balanceOf(memberWallet.address)
-            const diff = balanceAfter.sub(balanceBefore)
+            const walletAfter = await opToken.balanceOf(memberWallet.address)
+            const diff = walletAfter.sub(walletBefore)
             assert.strictEqual(diff.toString(), res3.withdrawableEarnings)
         }, 60000)
 
-        // TODO: test withdrawTo, withdrawFor
+        // TODO: test withdrawTo, withdrawFor, getBalance
     })
 
     describe('Anyone', () => {
@@ -184,6 +187,7 @@ describe('CommunityEndPoints', () => {
             assert.strictEqual(tr.events[0].event, 'Transfer')
             assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
             assert.strictEqual(tr.events[0].args.to, community.address)
+            await sleep(1000)
 
             const cstats = await client.getCommunityStats(community.address)
             const mlist = await client.getMembers(community.address)
