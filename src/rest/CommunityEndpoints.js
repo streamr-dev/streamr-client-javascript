@@ -147,7 +147,7 @@ export async function communityIsReady(address, pollingIntervalMs, timeoutMs, lo
         stats = await this.getCommunityStats(address) // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
-        throw new Error(`Community failed to start within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
+        throw new Error(`Community failed to start within ${timeoutMs || 60000} ms. Status: ${JSON.stringify(stats)}`)
     }
 }
 
