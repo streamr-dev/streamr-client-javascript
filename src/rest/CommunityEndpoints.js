@@ -12,12 +12,15 @@ import fetch from 'node-fetch'
 import {
     Contract,
     ContractFactory,
-    utils,
     Wallet,
     getDefaultProvider,
     providers,
 } from 'ethers'
-import { computeAddress } from 'ethers/utils'
+import {
+    BigNumber,
+    computeAddress,
+    getAddress
+} from 'ethers/utils'
 
 import * as CommunityProduct from '../../contracts/CommunityProduct.json'
 
@@ -27,7 +30,7 @@ import authFetch from './authFetch'
 
 function throwIfBadAddress(address, variableDescription) {
     try {
-        return utils.getAddress(address)
+        return getAddress(address)
     } catch (e) {
         throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}`)
     }
@@ -47,43 +50,84 @@ function sleep(ms) {
     })
 }
 
+/**
+ * @typedef {Object} EthereumOptions all optional, hence "options"
+ * @property {Wallet | String} wallet or private key, default is currently logged in StreamrClient (if auth: privateKey)
+ * @property {providers.Provider} provider to use in case wallet was a String, or omitted
+ * @property {Number} confirmations, default is 1
+ * @property {BigNumber} gasPrice in wei (part of ethers overrides), default is whatever the network recommends (ethers.js default)
+ * @see https://docs.ethers.io/ethers.js/html/api-contract.html#overrides
+ */
+
+// TODO: gasPrice to overrides (not needed for browser, but would be useful in node.js)
+
+/**
+ * Get a wallet from options, e.g. by parsing something that looks like a private key
+ * @param {StreamrClient} client this
+ * @param {EthereumOptions} arg anything accepted by these functions: Wallet or private key, or provider so StreamrClient auth: privateKey will be used
+ * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
+ */
+function parseWalletFromOptions(client, options) {
+    if (options.wallet instanceof Wallet) { return options.wallet }
+
+    const key = typeof options.wallet === 'string' ? options.wallet : options.key || options.privateKey || client.options.auth.privateKey
+    if (key) {
+        const provider = options.provider instanceof providers.Provider ? options.provider : getDefaultProvider()
+        return new Wallet(key, provider)
+    }
+
+    // TODO: check metamask before erroring!
+    throw new Error("Please provide options.wallet, or options.privateKey string, if you're not authenticated using a privateKey")
+}
+
 // //////////////////////////////////////////////////////////////////
 //          admin: DEPLOY AND SETUP COMMUNITY
 // //////////////////////////////////////////////////////////////////
 
 /**
  * Deploy a new CommunityProduct contract and create the required joinPartStream
- * Note that the Promise resolves with an ethers
- * @param {Wallet} wallet to do the deployment from, also becomes owner or stream and contract
- * @param {Number} blockFreezePeriodSeconds security parameter against operator failure (optional, default: 0)
- * @param {Number} adminFee fraction of revenue that goes to product admin, 0...1 (optional, default: 0)
- * @param {Function} logger will print debug info if given (optional)
- * @return {TransactionResponse} has methods that can be awaited: contract is deployed (`.deployed()`), operator is started (`.isReady()`)
+ * Note that the Promise resolves with an ethers.js TransactionResponse, so it's only sent to the chain at that point, but not yet deployed
+ * @param {EthereumOptions} options such as blockFreezePeriodSeconds (default: 0), adminFee (default: 0)
+ * @return {Promise<Contract>} has methods that can be awaited: contract is deployed (`.deployed()`), operator is started (`.isReady()`)
  */
-// TODO: use WithdrawOptions, rename it to EthereumOptions or something
-export async function deployCommunity(wallet, blockFreezePeriodSeconds = 0, adminFee = 0, logger) {
-    await throwIfNotContract(wallet.provider, this.options.tokenAddress, 'deployCommunity function argument tokenAddress')
-    await throwIfBadAddress(this.options.streamrNodeAddress, 'StreamrClient option streamrNodeAddress')
+export async function deployCommunity(options) {
+    const wallet = parseWalletFromOptions(this, options)
+    const log = options.logger || options.log || (() => {})
 
-    if (adminFee < 0 || adminFee > 1) { throw new Error('Admin fee must be a number between 0...1, got: ' + adminFee) }
-    const adminFeeBN = new utils.BigNumber((adminFee * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
+    const blockFreezePeriodSeconds = options.blockFreezePeriodSeconds || 0
+    const adminFee = options.adminFee || 0
+    const tokenAddress = options.tokenAddress || this.options.tokenAddress
+    const streamrNodeAddress = options.streamrNodeAddress || this.options.streamrNodeAddress
+    const streamrOperatorAddress = options.streamrOperatorAddress || this.options.streamrOperatorAddress
+    // const {blockFreezePeriodSeconds, adminFeeFraction, tokenAddress, streamrNodeAddress, operatorAddress} = {
+    //     blockFreezePeriodSeconds: 0,
+    //     adminFee: 0,
+    //     ...this.options,
+    //     ...options,
+    // }
+
+    await throwIfNotContract(wallet.provider, tokenAddress, 'options.tokenAddress')
+    await throwIfBadAddress(streamrNodeAddress, 'options.streamrNodeAddress')
+    await throwIfBadAddress(streamrOperatorAddress, 'options.streamrOperatorAddress')
+
+    if (adminFee < 0 || adminFee > 1) { throw new Error('options.adminFeeFraction must be a number between 0...1, got: ' + adminFee) }
+    const adminFeeBN = new BigNumber((adminFee * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
 
     const stream = await this.getOrCreateStream({
         name: `Join-Part-${wallet.address.slice(0, 10)}-${Date.now()}`
     })
     const res1 = await stream.grantPermission('read', null)
-    if (logger) { logger(`Grant read permission response from server: ${JSON.stringify(res1)}`) }
-    const res2 = await stream.grantPermission('write', this.options.streamrNodeAddress)
-    if (logger) { logger(`Grant write permission response to ${this.options.streamrNodeAddress} from server: ${JSON.stringify(res2)}`) }
+    log(`Grant read permission response from server: ${JSON.stringify(res1)}`)
+    const res2 = await stream.grantPermission('write', streamrNodeAddress)
+    log(`Grant write permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res2)}`)
 
     const deployer = new ContractFactory(CommunityProduct.abi, CommunityProduct.bytecode, wallet)
-    const result = await deployer.deploy(this.options.streamrOperatorAddress, stream.id,
-        this.options.tokenAddress, blockFreezePeriodSeconds, adminFeeBN)
+    const result = await deployer.deploy(streamrOperatorAddress, stream.id, tokenAddress, blockFreezePeriodSeconds, adminFeeBN)
     const { address } = result // this can be known in advance
 
     // add the waiting method so that caller can await community being operated by server (so that EE calls work)
     const client = this
-    result.isReady = async (pollingIntervalMs, timeoutMs) => client.communityIsReady(address, pollingIntervalMs, timeoutMs, logger)
+    result.isReady = async (pollingIntervalMs, timeoutMs) => client.communityIsReady(address, pollingIntervalMs, timeoutMs, log)
     return result
 }
 
@@ -165,6 +209,22 @@ export async function joinCommunity(communityAddress, secret) {
     )
 }
 
+async function get(client, communityAddress, endpoint, ...opts) {
+    const url = `${client.options.restUrl}/communities/${communityAddress}${endpoint}`
+    const response = await fetch(url, ...opts)
+    const json = response.json()
+    // server may return things like { code: "ConnectionPoolTimeoutException", message: "Timeout waiting for connection from pool" }
+    //   they must still be handled as errors
+    if (!response.ok && !json.error) {
+        json.error = `Server returned ${response.status} ${response.statusText}`
+    }
+
+    if (json.code && !json.error) {
+        json.error = json.code
+    }
+    return json
+}
+
 /**
  * Await this function when you want to make sure a member is accepted in the community
  * @param {EthereumAddress} communityAddress
@@ -184,12 +244,12 @@ export async function hasJoined(communityAddress, memberAddress, pollingInterval
         address = computeAddress(authKey)
     }
 
-    let stats = await this.getMemberStats(communityAddress, address)
+    let stats = await get(this, communityAddress, `/members/${address}`)
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
         if (logger) { logger(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`) }
         await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
-        stats = await this.getMemberStats(communityAddress, address) // eslint-disable-line no-await-in-loop
+        stats = await get(this, communityAddress, `/members/${address}`) // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
         throw new Error(`Member failed to join within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
@@ -211,60 +271,71 @@ export async function getMemberStats(communityAddress, memberAddress) {
         address = computeAddress(authKey)
     }
 
-    const url = `${this.options.restUrl}/communities/${communityAddress}/members/${address}`
-    return fetch(url).then((response) => {
-        const result = response.json()
-        if (result.error) {
-            throw new Error(result.error)
+    const stats = await get(this, communityAddress, `/members/${address}`)
+    if (stats.error) {
+        throw new Error(stats)
+    }
+    return stats
+}
+
+/**
+ * @typedef {Object} BalanceResponse
+ * @property {BigNumber} total tokens earned less withdrawn previously, what you'd get once Operator commits the earnings to CommunityProduct contract
+ * @property {BigNumber} withdrawable number of tokens that you'd get if you withdraw now
+ */
+
+/**
+ * Calculate the amount of tokens the member would get from a successful withdraw
+ * @param communityAddress
+ * @param memberAddress
+ * @return {Promise<BalanceResponse>} earnings minus withdrawn tokens
+ */
+export async function getBalance(communityAddress, memberAddress, provider) {
+    let address = memberAddress
+    if (!address) {
+        const authKey = this.options.auth && this.options.auth.privateKey
+        if (!authKey) {
+            throw new Error("StreamrClient wasn't authenticated with privateKey, and memberAddress argument not supplied")
         }
-        return result
-    })
+        address = computeAddress(authKey)
+    }
+
+    const stats = await get(this, communityAddress, `/members/${address}`)
+    if (stats.error || stats.earnings === '0') {
+        return {
+            total: BigNumber.ZERO, withdrawable: BigNumber.ZERO
+        }
+    }
+    const earningsBN = new BigNumber(stats.earnings)
+
+    if (stats.withdrawableEarnings === '0') {
+        return {
+            total: earningsBN, withdrawable: BigNumber.ZERO
+        }
+    }
+    const withdrawableEarningsBN = new BigNumber(stats.withdrawableEarnings)
+
+    const community = new Contract(communityAddress, CommunityProduct.abi, provider || getDefaultProvider())
+    const withdrawnBN = await community.withdrawn(address)
+    const total = earningsBN.sub(withdrawnBN)
+    const withdrawable = withdrawableEarningsBN.sub(withdrawnBN)
+    return {
+        total, withdrawable
+    }
 }
 
 // TODO: filter? That JSON blob could be big
 export async function getMembers(communityAddress) {
-    const url = `${this.options.restUrl}/communities/${communityAddress}/members`
-    return fetch(url).then((res) => res.json())
+    return get(this, communityAddress, '/members')
 }
 
 export async function getCommunityStats(communityAddress) {
-    const url = `${this.options.restUrl}/communities/${communityAddress}/stats`
-    return fetch(url).then((res) => res.json())
+    return get(this, communityAddress, '/stats')
 }
 
 // //////////////////////////////////////////////////////////////////
 //          member: WITHDRAW EARNINGS
 // //////////////////////////////////////////////////////////////////
-
-/**
- * @typedef {Object} WithdrawOptions all optional, hence "options"
- * @property {Wallet | String} wallet or private key, default is currently logged in StreamrClient (if auth: privateKey)
- * @property {providers.Provider} provider to use in case wallet was a String, or omitted
- * @property {Number} confirmations, default is 1
- * @property {BigNumber} gasPrice in wei (part of ethers overrides), default is whatever the network recommends (ethers.js default)
- * @see https://docs.ethers.io/ethers.js/html/api-contract.html#overrides
- */
-
-// TODO: gasPrice to overrides (not needed for browser, but would be useful in node.js)
-
-/**
- * Get a wallet from WithdrawOptions, e.g. by parsing something that looks like a private key
- * @param {StreamrClient} client this
- * @param {WithdrawOptions} arg anything accepted by these functions: Wallet or private key, or provider so StreamrClient auth: privateKey will be used
- * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
- */
-function parseWalletFromOptions(client, options) {
-    if (options.wallet instanceof Wallet) { return options.wallet }
-
-    const key = typeof options.wallet === 'string' ? options.wallet : options.key || options.privateKey || client.options.auth.privateKey
-    if (key) {
-        const provider = options.provider instanceof providers.Provider ? options.provider : getDefaultProvider()
-        return new Wallet(key, provider)
-    }
-
-    // TODO: check metamask before erroring!
-    throw new Error("Please provide options.wallet, or options.privateKey string, if you're not authenticated using a privateKey")
-}
 
 /**
  * Validate the proof given by the server with the smart contract (ground truth)
@@ -275,7 +346,7 @@ function parseWalletFromOptions(client, options) {
  */
 export async function validateProof(communityAddress, options) {
     const wallet = parseWalletFromOptions(this, options)
-    const stats = await this.getMemberStats(communityAddress, wallet.address)
+    const stats = await this.getMemberStats(communityAddress, wallet.address) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
@@ -291,7 +362,7 @@ export async function validateProof(communityAddress, options) {
 /**
  * Withdraw all your earnings
  * @param {EthereumAddress} communityAddress
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdraw(communityAddress, options) {
@@ -302,12 +373,12 @@ export async function withdraw(communityAddress, options) {
 /**
  * Get the tx promise for withdrawing all your earnings
  * @param {EthereumAddress} communityAddress
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTx(communityAddress, options) {
     const wallet = parseWalletFromOptions(this, options)
-    const stats = await this.getMemberStats(communityAddress, wallet.address)
+    const stats = await this.getMemberStats(communityAddress, wallet.address) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
@@ -316,10 +387,10 @@ export async function getWithdrawTx(communityAddress, options) {
 }
 
 /**
- * Withdraw earnings on behalf of another member
+ * Withdraw earnings (pay gas) on behalf of another member
  * @param {EthereumAddress} memberAddress the other member who gets its tokens out of the Community
  * @param {EthereumAddress} communityAddress
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawFor(memberAddress, communityAddress, options) {
@@ -330,11 +401,11 @@ export async function withdrawFor(memberAddress, communityAddress, options) {
 /**
  * Get the tx promise for withdrawing all earnings on behalf of another member
  * @param {EthereumAddress} communityAddress
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxFor(memberAddress, communityAddress, options) {
-    const stats = await this.getMemberStats(communityAddress, memberAddress)
+    const stats = await this.getMemberStats(communityAddress, memberAddress) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
@@ -347,7 +418,7 @@ export async function getWithdrawTxFor(memberAddress, communityAddress, options)
  * Withdraw earnings and "donate" them to the given address
  * @param {EthereumAddress} communityAddress
  * @param {EthereumAddress} recipientAddress the other member who gets its tokens out of the Community
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawTo(recipientAddress, communityAddress, options) {
@@ -359,12 +430,12 @@ export async function withdrawTo(recipientAddress, communityAddress, options) {
  * Withdraw earnings and "donate" them to the given address
  * @param {EthereumAddress} communityAddress
  * @param {EthereumAddress} recipientAddress the other member who gets its tokens out of the Community
- * @param {WithdrawOptions} options
+ * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxTo(recipientAddress, communityAddress, options) {
     const wallet = parseWalletFromOptions(this, options)
-    const stats = await this.getMemberStats(communityAddress, wallet.address)
+    const stats = await this.getMemberStats(communityAddress, wallet.address) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
         throw new Error('No earnings to withdraw.')
     }
