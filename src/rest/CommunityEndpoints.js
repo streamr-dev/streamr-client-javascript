@@ -212,7 +212,7 @@ export async function joinCommunity(communityAddress, secret) {
 async function get(client, communityAddress, endpoint, ...opts) {
     const url = `${client.options.restUrl}/communities/${communityAddress}${endpoint}`
     const response = await fetch(url, ...opts)
-    const json = response.json()
+    const json = await response.json()
     // server may return things like { code: "ConnectionPoolTimeoutException", message: "Timeout waiting for connection from pool" }
     //   they must still be handled as errors
     if (!response.ok && !json.error) {
@@ -223,6 +223,14 @@ async function get(client, communityAddress, endpoint, ...opts) {
         json.error = json.code
     }
     return json
+}
+
+async function getOrThrow(...args) {
+    const res = await get(...args)
+    if (res.error) {
+        throw new Error(JSON.stringify(res))
+    }
+    return res
 }
 
 /**
@@ -271,11 +279,7 @@ export async function getMemberStats(communityAddress, memberAddress) {
         address = computeAddress(authKey)
     }
 
-    const stats = await get(this, communityAddress, `/members/${address}`)
-    if (stats.error) {
-        throw new Error(stats)
-    }
-    return stats
+    return getOrThrow(this, communityAddress, `/members/${address}`)
 }
 
 /**
@@ -326,11 +330,11 @@ export async function getBalance(communityAddress, memberAddress, provider) {
 
 // TODO: filter? That JSON blob could be big
 export async function getMembers(communityAddress) {
-    return get(this, communityAddress, '/members')
+    return getOrThrow(this, communityAddress, '/members')
 }
 
 export async function getCommunityStats(communityAddress) {
-    return get(this, communityAddress, '/stats')
+    return getOrThrow(this, communityAddress, '/stats')
 }
 
 // //////////////////////////////////////////////////////////////////
