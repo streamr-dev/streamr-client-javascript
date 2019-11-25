@@ -1,5 +1,3 @@
-/* TODO: CPS-35 these tests should pass before further modifying StreamrClient.js
- * see also CORE-1845
 import assert from 'assert'
 
 import { Contract, providers, utils, Wallet } from 'ethers'
@@ -14,9 +12,8 @@ function sleep(ms) {
         setTimeout(resolve, ms)
     })
 }
-*/
+
 describe('CommunityEndPoints', () => {
-    /*
     let community
 
     let testProvider
@@ -49,7 +46,8 @@ describe('CommunityEndPoints', () => {
         await adminClient.ensureConnected()
         console.log('deploying new community...')
         community = await adminClient.deployCommunity({
-            provider: testProvider
+            provider: testProvider,
+            logger: console.log,
         })
         console.log(`Going to deploy to ${community.address}`)
         await community.deployed()
@@ -233,5 +231,4 @@ describe('CommunityEndPoints', () => {
             })
         }, 30000)
     })
-    */
 })

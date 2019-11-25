@@ -50,6 +50,30 @@ function sleep(ms) {
     })
 }
 
+async function get(client, communityAddress, endpoint, ...opts) {
+    const url = `${client.options.restUrl}/communities/${communityAddress}${endpoint}`
+    const response = await fetch(url, ...opts)
+    const json = await response.json()
+    // server may return things like { code: "ConnectionPoolTimeoutException", message: "Timeout waiting for connection from pool" }
+    //   they must still be handled as errors
+    if (!response.ok && !json.error) {
+        json.error = `Server returned ${response.status} ${response.statusText}`
+    }
+
+    if (json.code && !json.error) {
+        json.error = json.code
+    }
+    return json
+}
+
+async function getOrThrow(...args) {
+    const res = await get(...args)
+    if (res.error) {
+        throw new Error(JSON.stringify(res))
+    }
+    return res
+}
+
 /**
  * @typedef {Object} EthereumOptions all optional, hence "options"
  * @property {Wallet | String} wallet or private key, default is currently logged in StreamrClient (if auth: privateKey)
@@ -139,15 +163,16 @@ export async function deployCommunity(options) {
  * @return {Promise} resolves when community server is ready to operate the community (or fails with HTTP error)
  */
 export async function communityIsReady(address, pollingIntervalMs, timeoutMs, logger) {
-    let stats = await this.getCommunityStats(address)
+    let stats = await get(this, address, '/stats')
+    const timeout = timeoutMs || 60000
     const startTime = Date.now()
-    while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
+    while (stats.error && Date.now() < startTime + timeout) {
         if (logger) { logger(`Waiting for community ${address} to start. Status: ${JSON.stringify(stats)}`) }
         await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
-        stats = await this.getCommunityStats(address) // eslint-disable-line no-await-in-loop
+        stats = await get(this, address, '/stats') // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
-        throw new Error(`Community failed to start within ${timeoutMs || 60000} ms. Status: ${JSON.stringify(stats)}`)
+        throw new Error(`Community failed to start within ${timeout} ms. Status: ${JSON.stringify(stats)}`)
     }
 }
 
@@ -207,30 +232,6 @@ export async function joinCommunity(communityAddress, secret) {
             },
         },
     )
-}
-
-async function get(client, communityAddress, endpoint, ...opts) {
-    const url = `${client.options.restUrl}/communities/${communityAddress}${endpoint}`
-    const response = await fetch(url, ...opts)
-    const json = await response.json()
-    // server may return things like { code: "ConnectionPoolTimeoutException", message: "Timeout waiting for connection from pool" }
-    //   they must still be handled as errors
-    if (!response.ok && !json.error) {
-        json.error = `Server returned ${response.status} ${response.statusText}`
-    }
-
-    if (json.code && !json.error) {
-        json.error = json.code
-    }
-    return json
-}
-
-async function getOrThrow(...args) {
-    const res = await get(...args)
-    if (res.error) {
-        throw new Error(JSON.stringify(res))
-    }
-    return res
 }
 
 /**
