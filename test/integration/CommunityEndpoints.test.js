@@ -201,11 +201,16 @@ describe('CommunityEndPoints', () => {
             assert.strictEqual(tr.events[0].event, 'Transfer')
             assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
             assert.strictEqual(tr.events[0].args.to, community.address)
+
             await sleep(1000)
+            let mstats = await client.getMemberStats(community.address, memberAddressList[0])
+            while (!mstats.withdrawableBlockNumber) {
+                await sleep(4000)
+                mstats = await client.getMemberStats(community.address, memberAddressList[0])
+            }
 
             const cstats = await client.getCommunityStats(community.address)
             const mlist = await client.getMembers(community.address)
-            const mstats = await client.getMemberStats(community.address, memberAddressList[0])
 
             assert.deepStrictEqual(cstats.memberCount, {
                 total: 3, active: 3, inactive: 0
