@@ -52,10 +52,10 @@ describe('CommunityEndPoints', () => {
         console.log(`Going to deploy to ${community.address}`)
         await community.deployed()
         console.log(`Deployment done for ${community.address}`)
-        await community.isReady()
+        await community.isReady(2000, 200000)
         console.log(`Community ${community.address} is ready to roll`)
         await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
-    }, 60000)
+    }, 300000)
 
     afterAll(async () => adminClient.disconnect())
 
@@ -83,7 +83,7 @@ describe('CommunityEndPoints', () => {
             assert.deepStrictEqual(res2.memberCount, {
                 total: 3, active: 1, inactive: 2
             })
-        })
+        }, 300000)
 
         // separate test for adding and removing secrets? Adding secret is tested in member joins community test though.
     })
@@ -161,7 +161,7 @@ describe('CommunityEndPoints', () => {
             const walletAfter = await opToken.balanceOf(memberWallet.address)
             const diff = walletAfter.sub(walletBefore)
             assert.strictEqual(diff.toString(), res3.withdrawableEarnings)
-        }, 60000)
+        }, 600000)
 
         // TODO: test withdrawTo, withdrawFor, getBalance
     })
@@ -229,6 +229,6 @@ describe('CommunityEndPoints', () => {
                     '0xe482f62a15e13774223a74cc4db3abb30d4ec3af8bf89f2f56116b9af1dbbe05',
                 ]
             })
-        }, 30000)
+        }, 300000)
     })
 })
