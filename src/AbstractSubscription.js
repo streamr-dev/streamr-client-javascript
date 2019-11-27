@@ -38,7 +38,7 @@ export default class AbstractSubscription extends Subscription {
         })
     }
 
-    addPendingResendRequestIds(requestId) {
+    addPendingResendRequestId(requestId) {
         this.pendingResendRequestIds[requestId] = true
     }
 

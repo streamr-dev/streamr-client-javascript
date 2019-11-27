@@ -598,7 +598,7 @@ describe('RealTimeSubscription', () => {
     describe('handleResending()', () => {
         it('emits the resending event', (done) => {
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resending', () => done())
             sub.setResending(true)
             sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'requestId'))
@@ -609,7 +609,7 @@ describe('RealTimeSubscription', () => {
         it('arms the Subscription to emit the resent event on last message (message handler completes BEFORE resent)', async (done) => {
             const handler = sinon.stub()
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             sub.setResending(true)
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
@@ -619,7 +619,7 @@ describe('RealTimeSubscription', () => {
         it('arms the Subscription to emit the resent event on last message (message handler completes AFTER resent)', async (done) => {
             const handler = sinon.stub()
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             sub.setResending(true)
             sub.handleResentMessage(msg, sinon.stub().resolves(true))
@@ -644,7 +644,7 @@ describe('RealTimeSubscription', () => {
                 const handler = sinon.stub()
                 sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), handler)
                 const error = new Error('test error, ignore')
-                sub.addPendingResendRequestIds('requestId')
+                sub.addPendingResendRequestId('requestId')
                 sub.on('resent', sinon.stub().throws(error))
                 sub.setResending(true)
                 await sub.handleResentMessage(msg, sinon.stub().resolves(true))
@@ -658,7 +658,7 @@ describe('RealTimeSubscription', () => {
     describe('handleNoResend()', () => {
         it('emits the no_resend event', (done) => {
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('no_resend', () => done())
             sub.setResending(true)
             sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
@@ -681,7 +681,7 @@ describe('RealTimeSubscription', () => {
             it('cleans up the resend if event handler throws', async () => {
                 sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
                 const error = new Error('test error, ignore')
-                sub.addPendingResendRequestIds('requestId')
+                sub.addPendingResendRequestId('requestId')
                 sub.on('no_resend', sinon.stub()
                     .throws(error))
                 sub.setResending(true)

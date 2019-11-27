@@ -560,7 +560,7 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1
             })
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resending', () => done())
             sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'requestId'))
         })
@@ -572,7 +572,7 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
             })
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
@@ -583,7 +583,7 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
             })
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
@@ -595,7 +595,7 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1
             })
-            sub.addPendingResendRequestIds('requestId')
+            sub.addPendingResendRequestId('requestId')
             sub.on('no_resend', () => done())
             sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
         })

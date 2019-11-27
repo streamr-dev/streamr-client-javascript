@@ -27,7 +27,7 @@ describe('CombinedSubscription', () => {
         const sub = new CombinedSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
             last: 1
         }, {}, 100, 100)
-        sub.addPendingResendRequestIds('requestId')
+        sub.addPendingResendRequestId('requestId')
         sub.on('gap', (from, to, publisherId) => {
             assert.equal(from.timestamp, 1)
             assert.equal(from.sequenceNumber, 1)

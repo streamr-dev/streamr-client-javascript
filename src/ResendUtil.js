@@ -29,7 +29,7 @@ export default class ResendUtil extends EventEmitter {
     registerResendRequestForSub(sub) {
         const requestId = this.generateRequestId()
         this.subForRequestId[requestId] = sub
-        sub.addPendingResendRequestIds(requestId)
+        sub.addPendingResendRequestId(requestId)
         return requestId
     }
 }

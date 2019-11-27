@@ -47,8 +47,8 @@ export default class CombinedSubscription extends Subscription {
         return this.sub.stop()
     }
 
-    addPendingResendRequestIds(requestId) {
-        this.sub.addPendingResendRequestIds(requestId)
+    addPendingResendRequestId(requestId) {
+        this.sub.addPendingResendRequestId(requestId)
     }
 
     async handleResentMessage(msg, verifyFn) {
