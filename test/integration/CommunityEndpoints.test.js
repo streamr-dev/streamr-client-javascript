@@ -57,7 +57,7 @@ describe('CommunityEndPoints', () => {
         await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
     }, 300000)
 
-    afterAll(async () => adminClient.disconnect())
+    afterAll(async () => adminClient.ensureDisconnected())
 
     describe('Admin', () => {
         const memberAddressList = [
@@ -188,7 +188,7 @@ describe('CommunityEndPoints', () => {
                 ...config.clientOptions,
             })
         })
-        afterAll(async () => client.disconnect())
+        afterAll(async () => client.ensureDisconnected())
 
         it('can get community stats, member list, and member stats', async () => {
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
