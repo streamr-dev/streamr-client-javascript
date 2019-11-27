@@ -171,19 +171,24 @@ describe('CommunityEndPoints', () => {
     })
 
     describe('Anyone', () => {
-        const client = new StreamrClient({
-            auth: {
-                apiKey: 'tester1-api-key'
-            },
-            autoConnect: false,
-            autoDisconnect: false,
-            ...config.clientOptions,
-        })
         const memberAddressList = [
             '0x0000000000000000000000000000000000000001',
             '0x0000000000000000000000000000000000000002',
             '0x000000000000000000000000000000000000bEEF',
         ]
+
+        let client
+        beforeAll(async () => {
+            client = new StreamrClient({
+                auth: {
+                    apiKey: 'tester1-api-key'
+                },
+                autoConnect: false,
+                autoDisconnect: false,
+                ...config.clientOptions,
+            })
+        })
+        afterAll(async () => client.disconnect())
 
         it('can get community stats, member list, and member stats', async () => {
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
