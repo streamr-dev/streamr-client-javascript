@@ -88,7 +88,7 @@ async function getOrThrow(...args) {
 /**
  * Get a wallet from options, e.g. by parsing something that looks like a private key
  * @param {StreamrClient} client this
- * @param {EthereumOptions} arg anything accepted by these functions: Wallet or private key, or provider so StreamrClient auth: privateKey will be used
+ * @param {EthereumOptions} options includes wallet which is Wallet or private key, or provider so StreamrClient auth: privateKey will be used
  * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
  */
 function parseWalletFromOptions(client, options) {

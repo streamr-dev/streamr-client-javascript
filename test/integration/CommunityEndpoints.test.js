@@ -19,7 +19,6 @@ describe('CommunityEndPoints', () => {
     let testProvider
     let adminClient
     let adminWallet
-    let adminToken
 
     beforeAll(async () => {
         testProvider = new providers.JsonRpcProvider(config.ethereumServerUrl)
@@ -38,7 +37,6 @@ describe('CommunityEndPoints', () => {
             ...config.clientOptions,
         })
 
-        adminToken = new Contract(adminClient.options.tokenAddress, Token.abi, adminWallet)
         console.log('beforeAll done')
     })
     beforeEach(async () => {
