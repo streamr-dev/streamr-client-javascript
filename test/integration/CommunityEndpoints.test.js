@@ -135,7 +135,11 @@ describe('CommunityEndPoints', () => {
             await sleep(1000)
 
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-            const res3 = await memberClient.getMemberStats(community.address)
+            let res3 = await memberClient.getMemberStats(community.address)
+            while (!res3.withdrawableBlockNumber) {
+                await sleep(4000)
+                res3 = await memberClient.getMemberStats(community.address)
+            }
             assert.deepStrictEqual(res3, {
                 address: memberWallet.address,
                 earnings: '1000000000000000000',
