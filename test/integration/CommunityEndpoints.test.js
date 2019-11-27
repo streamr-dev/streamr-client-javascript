@@ -58,6 +58,10 @@ describe('CommunityEndPoints', () => {
     }, 300000)
 
     afterAll(async () => adminClient.ensureDisconnected())
+    afterAll(() => {
+        testProvider.removeAllListeners()
+        adminToken.removeAllListeners()
+    })
 
     describe('Admin', () => {
         const memberAddressList = [
@@ -165,6 +169,9 @@ describe('CommunityEndPoints', () => {
             const walletAfter = await opToken.balanceOf(memberWallet.address)
             const diff = walletAfter.sub(walletBefore)
             assert.strictEqual(diff.toString(), res3.withdrawableEarnings)
+
+            // cleanup
+            opToken.removeAllListeners()
         }, 600000)
 
         // TODO: test withdrawTo, withdrawFor, getBalance
@@ -238,6 +245,9 @@ describe('CommunityEndPoints', () => {
                     '0xe482f62a15e13774223a74cc4db3abb30d4ec3af8bf89f2f56116b9af1dbbe05',
                 ]
             })
+
+            // cleanup
+            opToken.removeAllListeners()
         }, 300000)
     })
 })
