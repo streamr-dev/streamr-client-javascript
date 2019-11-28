@@ -210,7 +210,7 @@ describe('StreamrClient Connection', () => {
                 ])
                 done()
             })
-        }, 300000)
+        })
 
         it('resend range', async (done) => {
             const messages = []

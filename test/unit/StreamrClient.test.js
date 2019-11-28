@@ -465,7 +465,7 @@ describe('StreamrClient', () => {
                 connection.emitMessage(resendResponse)
                 sinon.assert.calledWith(sub.handleResending, resendResponse)
             })
-            it('throws when unknown request id', (done) => {
+            it('emits error when unknown request id', (done) => {
                 sub.handleResending = sinon.stub().throws()
                 const resendResponse = ResendResponseResending.create(sub.streamId, sub.streamPartition, 'unknown request id')
                 client.on('error', (err) => {
