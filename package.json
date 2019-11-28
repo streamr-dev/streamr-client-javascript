@@ -18,7 +18,7 @@
     "test": "jest --detectOpenHandles",
     "test-unit": "jest test/unit --detectOpenHandles",
     "coverage": "jest --coverage",
-    "test-integration": "jest test/integration --detectOpenHandles"
+    "test-integration": "jest test/integration --detectOpenHandles --exit"
   },
   "browser": {
     "http": "./src/shim/http-https.js",
