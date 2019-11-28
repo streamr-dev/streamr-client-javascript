@@ -14,16 +14,24 @@ export default class ResendUtil extends EventEmitter {
         return id.toString()
     }
 
-    getSubFromResendResponse(response, responseTypeName) {
-        if (!this.subForRequestId[response.subId]) { // TODO: replace with response.requestId
-            const error = new Error(`Received unexpected ${responseTypeName} message ${response.serialize()}`)
+    _subForRequestIdExists(subId) { // TODO: replace with response.requestId
+        return subId in this.subForRequestId
+    }
+
+    getSubFromResendResponse(response) {
+        if (!this._subForRequestIdExists(response.subId)) { // TODO: replace with response.requestId
+            const error = new Error(`Received unexpected ${response.constructor.name} message ${response.serialize()}`)
             this.emit('error', error)
         }
-        const sub = this.subForRequestId[response.subId] // TODO: replace with response.requestId
+
+        return this.subForRequestId[response.subId] // TODO: replace with response.requestId
+    }
+
+    deleteDoneSubsByResponse(response) {
+        // TODO: replace with response.requestId
         if (response.type === ControlLayer.ResendResponseResent.TYPE || response.type === ControlLayer.ResendResponseNoResend.TYPE) {
             delete this.subForRequestId[response.subId] // request handled when "no resend" or "resent" is received
         }
-        return sub
     }
 
     registerResendRequestForSub(sub) {

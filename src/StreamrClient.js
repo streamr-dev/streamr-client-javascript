@@ -138,7 +138,9 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(UnicastMessage.TYPE, async (msg) => {
             const stream = this._getSubscribedStreamPartition(msg.streamMessage.getStreamId(), msg.streamMessage.getStreamPartition())
             if (stream) {
-                const sub = this.resendUtil.getSubFromResendResponse(msg, 'UnicastMessage')
+                const sub = this.resendUtil.getSubFromResendResponse(msg)
+                this.resendUtil.deleteDoneSubsByResponse(msg)
+
                 if (sub && stream.getSubscription(sub.id)) {
                     // sub.handleResentMessage never rejects: on any error it emits an 'error' event on the Subscription
                     sub.handleResentMessage(
@@ -179,7 +181,9 @@ export default class StreamrClient extends EventEmitter {
         // Route resending state messages to corresponding Subscriptions
         this.connection.on(ResendResponseResending.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseResending')
+            const sub = this.resendUtil.getSubFromResendResponse(response)
+            this.resendUtil.deleteDoneSubsByResponse(response)
+
             if (stream && sub && stream.getSubscription(sub.id)) {
                 stream.getSubscription(sub.id).handleResending(response)
             } else {
@@ -189,7 +193,9 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on(ResendResponseNoResend.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseNoResend')
+            const sub = this.resendUtil.getSubFromResendResponse(response)
+            this.resendUtil.deleteDoneSubsByResponse(response)
+
             if (stream && sub && stream.getSubscription(sub.id)) {
                 stream.getSubscription(sub.id).handleNoResend(response)
             } else {
@@ -199,7 +205,9 @@ export default class StreamrClient extends EventEmitter {
 
         this.connection.on(ResendResponseResent.TYPE, (response) => {
             const stream = this._getSubscribedStreamPartition(response.streamId, response.streamPartition)
-            const sub = this.resendUtil.getSubFromResendResponse(response, 'ResendResponseResent')
+            const sub = this.resendUtil.getSubFromResendResponse(response)
+            this.resendUtil.deleteDoneSubsByResponse(response)
+
             if (stream && sub && stream.getSubscription(sub.id)) {
                 stream.getSubscription(sub.id).handleResent(response)
             } else {

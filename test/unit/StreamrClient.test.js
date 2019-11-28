@@ -469,7 +469,7 @@ describe('StreamrClient', () => {
                 sub.handleResending = sinon.stub().throws()
                 const resendResponse = ResendResponseResending.create(sub.streamId, sub.streamPartition, 'unknown request id')
                 client.on('error', (err) => {
-                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseResending message ${resendResponse.serialize()}`)
+                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseResendingV1 message ${resendResponse.serialize()}`)
                     done()
                 })
                 connection.emitMessage(resendResponse)
@@ -499,7 +499,7 @@ describe('StreamrClient', () => {
                 sub.handleNoResend = sinon.stub().throws()
                 const resendResponse = ResendResponseNoResend.create(sub.streamId, sub.streamPartition, 'unknown request id')
                 client.on('error', (err) => {
-                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseNoResend message ${resendResponse.serialize()}`)
+                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseNoResendV1 message ${resendResponse.serialize()}`)
                     done()
                 })
                 connection.emitMessage(resendResponse)
@@ -529,7 +529,7 @@ describe('StreamrClient', () => {
                 sub.handleResent = sinon.stub().throws()
                 const resendResponse = ResendResponseResent.create(sub.streamId, sub.streamPartition, 'unknown request id')
                 client.on('error', (err) => {
-                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseResent message ${resendResponse.serialize()}`)
+                    assert.deepStrictEqual(err.message, `Received unexpected ResendResponseResentV1 message ${resendResponse.serialize()}`)
                     done()
                 })
                 connection.emitMessage(resendResponse)
