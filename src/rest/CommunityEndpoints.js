@@ -139,7 +139,7 @@ export async function deployCommunity(options) {
     if (adminFee < 0 || adminFee > 1) { throw new Error('options.adminFeeFraction must be a number between 0...1, got: ' + adminFee) }
     const adminFeeBN = new BigNumber((adminFee * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
 
-    const stream = await this.getOrCreateStream({
+    const stream = await this.createStream({
         name: `Join-Part-${wallet.address.slice(0, 10)}-${Date.now()}`
     })
     debug(`Stream created: ${JSON.stringify(stream.toObject())}`)
