@@ -45,7 +45,6 @@ describe('CommunityEndPoints', () => {
         console.log('deploying new community...')
         community = await adminClient.deployCommunity({
             provider: testProvider,
-            logger: console.log,
         })
         console.log(`Going to deploy to ${community.address}`)
         await community.deployed()

@@ -21,10 +21,13 @@ import {
     computeAddress,
     getAddress
 } from 'ethers/utils'
+import debugFactory from 'debug'
 
 import * as CommunityProduct from '../../contracts/CommunityProduct.json'
 
 import authFetch from './authFetch'
+
+const debug = debugFactory('StreamrClient::CommunityEndpoints')
 
 /** @typedef {String} EthereumAddress */
 
@@ -116,7 +119,6 @@ function parseWalletFromOptions(client, options) {
  */
 export async function deployCommunity(options) {
     const wallet = parseWalletFromOptions(this, options)
-    const log = options.logger || options.log || (() => {})
 
     const blockFreezePeriodSeconds = options.blockFreezePeriodSeconds || 0
     const adminFee = options.adminFee || 0
@@ -140,18 +142,20 @@ export async function deployCommunity(options) {
     const stream = await this.getOrCreateStream({
         name: `Join-Part-${wallet.address.slice(0, 10)}-${Date.now()}`
     })
+    debug(`Stream created: ${JSON.stringify(stream.toObject())}`)
     const res1 = await stream.grantPermission('read', null)
-    log(`Grant read permission response from server: ${JSON.stringify(res1)}`)
+    debug(`Grant read permission response from server: ${JSON.stringify(res1)}`)
     const res2 = await stream.grantPermission('write', streamrNodeAddress)
-    log(`Grant write permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res2)}`)
+    debug(`Grant write permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res2)}`)
 
     const deployer = new ContractFactory(CommunityProduct.abi, CommunityProduct.bytecode, wallet)
     const result = await deployer.deploy(streamrOperatorAddress, stream.id, tokenAddress, blockFreezePeriodSeconds, adminFeeBN)
     const { address } = result // this can be known in advance
+    debug(`Community contract @ ${address} deployment started`)
 
     // add the waiting method so that caller can await community being operated by server (so that EE calls work)
     const client = this
-    result.isReady = async (pollingIntervalMs, timeoutMs) => client.communityIsReady(address, pollingIntervalMs, timeoutMs, log)
+    result.isReady = async (pollingIntervalMs, timeoutMs) => client.communityIsReady(address, pollingIntervalMs, timeoutMs)
     return result
 }
 
@@ -162,12 +166,12 @@ export async function deployCommunity(options) {
  * @param {Number} timeoutMs (optional, default: 60000) give up
  * @return {Promise} resolves when community server is ready to operate the community (or fails with HTTP error)
  */
-export async function communityIsReady(address, pollingIntervalMs, timeoutMs, logger) {
+export async function communityIsReady(address, pollingIntervalMs, timeoutMs) {
     let stats = await get(this, address, '/stats')
     const timeout = timeoutMs || 60000
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + timeout) {
-        if (logger) { logger(`Waiting for community ${address} to start. Status: ${JSON.stringify(stats)}`) }
+        debug(`Waiting for community ${address} to start. Status: ${JSON.stringify(stats)}`)
         await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
         stats = await get(this, address, '/stats') // eslint-disable-line no-await-in-loop
     }
@@ -240,10 +244,9 @@ export async function joinCommunity(communityAddress, secret) {
  * @param {EthereumAddress} memberAddress (optional, default is StreamrClient's auth: privateKey)
  * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
  * @param {Number} timeoutMs (optional, default: 60000) give up
- * @param {Function} logger
  * @return {Promise} resolves when member is in the community (or fails with HTTP error)
  */
-export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs, logger) {
+export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs) {
     let address = memberAddress
     if (!address) {
         const authKey = this.options.auth && this.options.auth.privateKey
@@ -256,7 +259,7 @@ export async function hasJoined(communityAddress, memberAddress, pollingInterval
     let stats = await get(this, communityAddress, `/members/${address}`)
     const startTime = Date.now()
     while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
-        if (logger) { logger(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`) }
+        debug(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`)
         await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
         stats = await get(this, communityAddress, `/members/${address}`) // eslint-disable-line no-await-in-loop
     }
