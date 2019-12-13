@@ -27,7 +27,7 @@
     "node-fetch": "./src/shim/node-fetch.js"
   },
   "engines": {
-    "node": ">= 8"
+    "node": ">= 10"
   },
   "author": "Streamr",
   "license": "Apache-2.0",

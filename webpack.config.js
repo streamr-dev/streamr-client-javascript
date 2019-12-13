@@ -28,15 +28,15 @@ const commonConfig = {
         libraryTarget: 'umd',
         umdNamedDefine: true,
     },
+    optimization: {
+        minimize: false
+    },
     module: {
         rules: [
             {
                 test: /(\.jsx|\.js)$/,
                 loader: 'babel-loader',
-                exclude: /(node_modules|bower_components)/,
-                query: {
-                    plugins: ['transform-runtime'],
-                },
+                exclude: /(node_modules|bower_components)/
             },
             {
                 test: /(\.jsx|\.js)$/,
@@ -76,6 +76,7 @@ let clientMinifiedConfig = {}
 if (isProduction) {
     clientMinifiedConfig = merge({}, clientConfig, {
         optimization: {
+            minimize: true,
             minimizer: [
                 new TerserPlugin({
                     cache: true,
