@@ -152,6 +152,6 @@ describe('Subscription', () => {
             subscription.on('no_resend', () => {
                 done('error: got no_resend, expected: resent')
             })
-        }, 10 * 1000)
+        }, 20 * 1000)
     })
 })

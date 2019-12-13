@@ -1,8 +1,23 @@
 {
-  "presets": ["env", "stage-2"],
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": false,
+        "loose": false,
+        "targets": {
+          "browsers": [
+            "last 2 versions"]
+        }
+      }
+    ]
+  ],
   "plugins": [
-    "transform-runtime",
-    "babel-plugin-add-module-exports",
-    ["babel-plugin-transform-builtin-extend", {"globals": ["Error"]}]
+    "add-module-exports",
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-transform-modules-commonjs",
+    ["@babel/plugin-proposal-class-properties",
+      { "loose": false }
+    ]
   ]
 }
