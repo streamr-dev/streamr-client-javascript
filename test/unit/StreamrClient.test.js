@@ -966,7 +966,7 @@ describe('StreamrClient', () => {
             client.options.auth.username = 'username'
             client.options.autoConnect = false
             client.publish('stream1', pubMsg).catch((err) => {
-                assert(err instanceof FailedToPublishError)
+                expect(err).toBeInstanceOf(FailedToPublishError)
                 done()
             })
         })
