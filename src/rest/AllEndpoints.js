@@ -2,6 +2,6 @@ import * as StreamEndpoints from './StreamEndpoints'
 import * as LoginEndpoints from './LoginEndpoints'
 import * as CommunityEndpoints from './CommunityEndpoints'
 
-module.exports = {
+export default {
     ...StreamEndpoints, ...LoginEndpoints, ...CommunityEndpoints,
 }
