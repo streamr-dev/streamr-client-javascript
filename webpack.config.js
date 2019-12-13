@@ -25,7 +25,6 @@ const commonConfig = {
             root: 'StreamrClient',
             amd: libraryName,
         },
-        libraryTarget: 'umd',
         umdNamedDefine: true,
     },
     optimization: {
@@ -53,13 +52,14 @@ const commonConfig = {
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         }),
-    ],
+    ]
 }
 
 const serverConfig = merge({}, commonConfig, {
     target: 'node',
     externals: [nodeExternals()],
     output: {
+        libraryTarget: 'commonjs2',
         filename: libraryName + '.js',
     },
 })
@@ -67,6 +67,7 @@ const serverConfig = merge({}, commonConfig, {
 const clientConfig = merge({}, commonConfig, {
     target: 'web',
     output: {
+        libraryTarget: 'umd2',
         filename: libraryName + '.web.js',
     },
 })
