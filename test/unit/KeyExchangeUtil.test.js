@@ -226,7 +226,7 @@ describe('KeyExchangeUtil', () => {
         })
     })
     describe('handleGroupKeyResponse', () => {
-        it('should reject unsigned response', (done) => {
+        it('should reject unsigned response', () => {
             const streamMessage = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
                 StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
@@ -237,12 +237,13 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
-            util.handleGroupKeyResponse(streamMessage).catch((err) => {
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
                 assert.strictEqual(err.message, 'Received unsigned group key response (it must be signed to avoid MitM attacks).')
-                done()
-            })
+            }
         })
-        it('should reject response for a stream to which the client is not subscribed', (done) => {
+        it('should reject response for a stream to which the client is not subscribed', () => {
             const streamMessage = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
                 StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
@@ -253,12 +254,13 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
-            util.handleGroupKeyResponse(streamMessage).catch((err) => {
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
                 assert.strictEqual(err.message, 'Received group key response for a stream to which the client is not subscribed.')
-                done()
-            })
+            }
         })
-        it('should reject response with invalid group key', (done) => {
+        it('should reject response with invalid group key', () => {
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
             const streamMessage = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
@@ -270,10 +272,11 @@ describe('KeyExchangeUtil', () => {
                     }],
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
-            util.handleGroupKeyResponse(streamMessage).catch((err) => {
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
                 assert.strictEqual(err.message, 'Group key must have a size of 256 bits, not 128')
-                done()
-            })
+            }
         })
         it('should update client options and subscriptions with received group key', (done) => {
             const groupKey = crypto.randomBytes(32)

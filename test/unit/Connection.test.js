@@ -14,6 +14,7 @@ describe('Connection', () => {
         conn = new Connection({
             url: 'foo',
         }, {
+            on: sinon.mock(),
             close: sinon.mock(),
         })
     })
@@ -37,6 +38,7 @@ describe('Connection', () => {
             assert(conn.socket.onopen != null)
             assert(conn.socket.onclose != null)
             assert(conn.socket.onmessage != null)
+            assert(conn.socket.onerror != null)
         })
 
         it('should report correct state when connecting', () => {
@@ -162,11 +164,11 @@ describe('Connection', () => {
                     assert(message instanceof UnicastMessage)
                     assert.equal(message.streamMessage.getTimestamp(), timestamp)
                     assert.equal(message.streamMessage.getParsedContent().hello, 'world')
-                    assert.equal(message.subId, 'subId')
+                    assert.equal(message.requestId, 'requestId')
                     done()
                 })
                 const message = UnicastMessage.create(
-                    'subId',
+                    'requestId',
                     StreamMessage.create(
                         ['streamId', 0, timestamp, 0, '', ''], [timestamp - 100, 0], StreamMessage.CONTENT_TYPES.MESSAGE,
                         StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE,
@@ -185,7 +187,7 @@ describe('Connection', () => {
                 })
 
                 conn.socket.onmessage({
-                    data: [0, 1, 'subId', [30, ['streamId', 0, Date.now(), 0, '', ''], [Date.now() - 100, 0], 27, 'invalid json', 0]],
+                    data: [0, 1, 'requestId', [30, ['streamId', 0, Date.now(), 0, '', ''], [Date.now() - 100, 0], 27, 'invalid json', 0]],
                 })
             })
         })
@@ -201,7 +203,7 @@ describe('Connection', () => {
             })
 
             it('tries to reconnect after 2 seconds', () => {
-                conn.connect = sinon.stub()
+                conn.connect = sinon.stub().resolves()
                 conn.socket.events.emit('close')
                 clock.tick(2100)
                 assert(conn.connect.calledOnce)

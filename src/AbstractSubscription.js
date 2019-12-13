@@ -10,13 +10,15 @@ const { OrderingUtil } = Utils
 const debug = debugFactory('StreamrClient::AbstractSubscription')
 
 export default class AbstractSubscription extends Subscription {
-    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout) {
+    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true) {
         super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
-        this.orderingUtil = new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
+        this.callback = callback
+        this.pendingResendRequestIds = {}
+        this.orderingUtil = (orderMessages) ? new OrderingUtil(streamId, streamPartition, (orderedMessage) => {
             this._inOrderHandler(orderedMessage)
         }, (from, to, publisherId, msgChainId) => {
             this.emit('gap', from, to, publisherId, msgChainId)
-        }, this.propagationTimeout, this.resendTimeout)
+        }, this.propagationTimeout, this.resendTimeout) : undefined
 
         /** * Message handlers ** */
 
@@ -56,6 +58,10 @@ export default class AbstractSubscription extends Subscription {
         })
     }
 
+    addPendingResendRequestId(requestId) {
+        this.pendingResendRequestIds[requestId] = true
+    }
+
     async handleResentMessage(msg, verifyFn) {
         return this._catchAndEmitErrors(() => {
             if (!this.isResending()) {
@@ -70,8 +76,8 @@ export default class AbstractSubscription extends Subscription {
 
     async handleResending(response) {
         return this._catchAndEmitErrors(() => {
-            if (!this.isResending()) {
-                throw new Error(`There should be no resend in progress, but received ResendResponseResending message ${response.serialize()}`)
+            if (!this.pendingResendRequestIds[response.requestId]) {
+                throw new Error(`Received unexpected ResendResponseResending message ${response.serialize()}`)
             }
             this.emit('resending', response)
         })
@@ -79,8 +85,8 @@ export default class AbstractSubscription extends Subscription {
 
     async handleResent(response) {
         return this._catchAndEmitErrors(async () => {
-            if (!this.isResending()) {
-                throw new Error(`There should be no resend in progress, but received ResendResponseResent message ${response.serialize()}`)
+            if (!this.pendingResendRequestIds[response.requestId]) {
+                throw new Error(`Received unexpected ResendResponseResent message ${response.serialize()}`)
             }
 
             if (!this._lastMessageHandlerPromise) {
@@ -92,20 +98,22 @@ export default class AbstractSubscription extends Subscription {
             try {
                 this.emit('resent', response)
             } finally {
-                this._finishResend()
+                delete this.pendingResendRequestIds[response.requestId]
+                this.finishResend()
             }
         })
     }
 
     async handleNoResend(response) {
         return this._catchAndEmitErrors(async () => {
-            if (!this.isResending()) {
-                throw new Error(`There should be no resend in progress, but received ResendResponseNoResend message ${response.serialize()}`)
+            if (!this.pendingResendRequestIds[response.requestId]) {
+                throw new Error(`Received unexpected ResendResponseNoResend message ${response.serialize()}`)
             }
             try {
                 this.emit('no_resend', response)
             } finally {
-                this._finishResend()
+                delete this.pendingResendRequestIds[response.requestId]
+                this.finishResend(true)
             }
         })
     }
@@ -135,7 +143,7 @@ export default class AbstractSubscription extends Subscription {
          * If parsing the (expected) message failed, we should still mark it as received. Otherwise the
          * gap detection will think a message was lost, and re-request the failing message.
          */
-        if (err instanceof Errors.InvalidJsonError && err.streamMessage) {
+        if (err instanceof Errors.InvalidJsonError && err.streamMessage && this.orderingUtil) {
             this.orderingUtil.markMessageExplicitly(err.streamMessage)
         }
         this.emit('error', err)
@@ -169,6 +177,10 @@ export default class AbstractSubscription extends Subscription {
     async _handleMessage(msg, verifyFn) {
         await AbstractSubscription.validate(msg, verifyFn)
         this.emit('message received')
-        this.orderingUtil.add(msg)
+        if (this.orderingUtil) {
+            this.orderingUtil.add(msg)
+        } else {
+            this._inOrderHandler(msg)
+        }
     }
 }

@@ -9,7 +9,6 @@ import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
-import RealTimeSubscription from '../../src/RealTimeSubscription'
 import UnableToDecryptError from '../../src/errors/UnableToDecryptError'
 
 const { StreamMessage } = MessageLayer
@@ -314,6 +313,54 @@ describe('HistoricalSubscription', () => {
                 sub.handleResentMessage(msg1, sinon.stub().resolves(true))
                 sub.handleResentMessage(msg2, sinon.stub().resolves(true))
             })
+
+            describe('ordering util', () => {
+                it('handles messages in the order in which they arrive if no ordering util', async () => {
+                    const msg1 = msg
+                    const msg2 = createMsg(2, 0, 1, 0)
+                    const msg3 = createMsg(3, 0, 2, 0)
+                    const msg4 = createMsg(4, 0, 3, 0)
+                    const received = []
+
+                    const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                        received.push(receivedMsg)
+                    }, {
+                        last: 1
+                    }, {}, 100, 100, false)
+                    sub.on('gap', sinon.stub().throws())
+
+                    await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg4, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg3, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+
+                    assert.deepStrictEqual(received, [msg1, msg2, msg4, msg2, msg3, msg1])
+                })
+                it('handles messages in order without duplicates if ordering util is set', async () => {
+                    const msg1 = msg
+                    const msg2 = createMsg(2, 0, 1, 0)
+                    const msg3 = createMsg(3, 0, 2, 0)
+                    const msg4 = createMsg(4, 0, 3, 0)
+                    const received = []
+
+                    const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                        received.push(receivedMsg)
+                    }, {
+                        last: 1
+                    })
+
+                    await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg4, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg3, sinon.stub().resolves(true))
+                    await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+
+                    assert.deepStrictEqual(received, [msg1, msg2, msg3, msg4])
+                })
+            })
         })
 
         it('emits done after processing a message with the bye key', (done) => {
@@ -548,8 +595,9 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1
             })
+            sub.addPendingResendRequestId('requestId')
             sub.on('resending', () => done())
-            sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'subId'))
+            sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'requestId'))
         })
     })
 
@@ -559,9 +607,10 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
             })
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
-            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
         })
 
         it('arms the Subscription to emit the resent event on last message (message handler completes AFTER resent)', async (done) => {
@@ -569,9 +618,10 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
             })
+            sub.addPendingResendRequestId('requestId')
             sub.on('resent', () => done())
             sub.handleResentMessage(msg, sinon.stub().resolves(true))
-            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'subId'))
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
         })
     })
 
@@ -580,8 +630,9 @@ describe('HistoricalSubscription', () => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1
             })
+            sub.addPendingResendRequestId('requestId')
             sub.on('no_resend', () => done())
-            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'subId'))
+            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
         })
     })
 })

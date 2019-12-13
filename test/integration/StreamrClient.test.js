@@ -11,6 +11,7 @@ import StreamrClient from '../../src'
 import config from './config'
 
 const { StreamMessage } = MessageLayer
+const WebSocket = require('ws')
 
 const createClient = (opts = {}) => new StreamrClient({
     url: config.websocketUrl,
@@ -141,8 +142,8 @@ describe('StreamrClient Connection', () => {
                 timestamps.push(rawMessage.getStreamMessage().getTimestamp())
             }
 
-            await wait(2000) // wait for messages to (probably) land in storage
-        })
+            await wait(5000) // wait for messages to (probably) land in storage
+        }, 10 * 1000)
 
         afterEach(async () => {
             await client.disconnect()
@@ -579,7 +580,17 @@ describe('StreamrClient', () => {
         try {
             await Promise.all([
                 fetch(config.restUrl),
-                fetch(config.websocketUrl.replace('ws://', 'http://')),
+                new Promise((resolve, reject) => {
+                    const ws = new WebSocket(config.websocketUrl)
+                    ws.once('open', () => {
+                        resolve()
+                        ws.close()
+                    })
+                    ws.once('error', (err) => {
+                        reject(err)
+                        ws.terminate()
+                    })
+                }),
             ])
         } catch (e) {
             if (e.errno === 'ENOTFOUND' || e.errno === 'ECONNREFUSED') {
@@ -636,7 +647,7 @@ describe('StreamrClient', () => {
             })
 
             // Check that we're not subscribed yet
-            assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+            assert.strictEqual(client.getSubscriptions()[stream.id], undefined)
 
             // Add delay: this test needs some time to allow the message to be written to Cassandra
             setTimeout(() => {
@@ -652,7 +663,8 @@ describe('StreamrClient', () => {
                     assert.strictEqual(parsedContent.test, 'client.subscribe with resend')
 
                     // Check signature stuff
-                    const subStream = client.subscribedStreams[stream.id]
+                    // WARNING: digging into internals
+                    const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const requireVerification = await subStream.getVerifySignatures()
                     assert.strictEqual(requireVerification, true)
@@ -666,7 +678,7 @@ describe('StreamrClient', () => {
                     // All good, unsubscribe
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
-                        assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                        assert.strictEqual(client.getSubscriptions(stream.id).length, 0)
                         done()
                     })
                 })
@@ -681,7 +693,7 @@ describe('StreamrClient', () => {
             })
 
             // Check that we're not subscribed yet
-            assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+            assert.strictEqual(client.getSubscriptions(stream.id).length, 0)
 
             // Add delay: this test needs some time to allow the message to be written to Cassandra
             setTimeout(() => {
@@ -695,7 +707,8 @@ describe('StreamrClient', () => {
                     assert.strictEqual(parsedContent.test, 'client.subscribe with resend')
 
                     // Check signature stuff
-                    const subStream = client.subscribedStreams[stream.id]
+                    // WARNING: digging into internals
+                    const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const requireVerification = await subStream.getVerifySignatures()
                     assert.strictEqual(requireVerification, true)
@@ -709,7 +722,7 @@ describe('StreamrClient', () => {
                     // All good, unsubscribe
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', () => {
-                        assert.strictEqual(client.subscribedStreams[stream.id], undefined)
+                        assert.strictEqual(client.getSubscriptions(stream.id).length, 0)
                         done()
                     })
                 })
@@ -743,6 +756,87 @@ describe('StreamrClient', () => {
                 })
             })
         })
+
+        it('publish and subscribe a sequence of messages', (done) => {
+            client.options.autoConnect = true
+            const nbMessages = 20
+            const intervalMs = 500
+            let counter = 1
+            const sub = client.subscribe({
+                stream: stream.id,
+            }, (parsedContent, streamMessage) => {
+                assert.strictEqual(parsedContent.i, counter)
+                counter += 1
+
+                // Check signature stuff
+                assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+                assert(streamMessage.getPublisherId())
+                assert(streamMessage.signature)
+
+                if (counter === nbMessages) {
+                    // All good, unsubscribe
+                    client.unsubscribe(sub)
+                    sub.on('unsubscribed', async () => {
+                        await client.disconnect()
+                        setTimeout(done, 1000)
+                    })
+                }
+            })
+
+            const sleep = (ms) => {
+                return new Promise((resolve) => setTimeout(resolve, ms))
+            }
+            const f = async (index) => {
+                await sleep(intervalMs)
+                await stream.publish({
+                    i: index,
+                })
+            }
+
+            // Publish after subscribed
+            sub.once('subscribed', () => {
+                let i
+                const loop = async () => {
+                    for (i = 1; i <= nbMessages; i++) {
+                        /* eslint-disable no-await-in-loop */
+                        await f(i)
+                        /* eslint-enable no-await-in-loop */
+                    }
+                }
+                return loop()
+            })
+        }, 600000)
+
+        it('client.subscribe (realtime with resend)', (done) => {
+            client.once('error', done)
+            const id = Date.now()
+            const sub = client.subscribe({
+                stream: stream.id,
+                resend: {
+                    last: 1,
+                },
+            }, (parsedContent, streamMessage) => {
+                assert.equal(parsedContent.id, id)
+
+                // Check signature stuff
+                assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+                assert(streamMessage.getPublisherId())
+                assert(streamMessage.signature)
+
+                // All good, unsubscribe
+                client.unsubscribe(sub)
+                sub.on('unsubscribed', () => {
+                    done()
+                })
+            })
+
+            // Publish after subscribed
+            sub.on('subscribed', () => {
+                stream.publish({
+                    id,
+                })
+            })
+        }, 10000)
 
         it('client.subscribe can decrypt encrypted messages if it knows the group key', async (done) => {
             client.once('error', done)

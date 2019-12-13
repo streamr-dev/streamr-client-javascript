@@ -6,8 +6,8 @@ import DecryptionKeySequence from './DecryptionKeySequence'
 const { StreamMessage } = MessageLayer
 
 export default class HistoricalSubscription extends AbstractSubscription {
-    constructor(streamId, streamPartition, callback, options, groupKeys, propagationTimeout, resendTimeout) {
-        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
+    constructor(streamId, streamPartition, callback, options, groupKeys, propagationTimeout, resendTimeout, orderMessages = true) {
+        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages)
         this.resendOptions = options
         if (!this.resendOptions || (!this.resendOptions.from && !this.resendOptions.last)) {
             throw new Error('Resend options (either "from", "from" and "to", or "last") must be defined in a historical subscription.')
@@ -81,12 +81,18 @@ export default class HistoricalSubscription extends AbstractSubscription {
         }
     }
 
-    _finishResend() {
-        this._lastMessageHandlerPromise = null
-        if (this.encryptedMsgsQueue.length > 0) { // received all historical messages but not yet the keys to decrypt them
-            this.resendDone = true
+    finishResend(isNoResend = false) {
+        // if after a first resend request no messages are received (received ResendResponseNoResend),
+        // we wait for the response to the second resend request before considering the resend done (messages might have been stored in between)
+        if (isNoResend && !this.firstNoResendReceived) {
+            this.firstNoResendReceived = true
         } else {
-            this.emit('resend done')
+            this._lastMessageHandlerPromise = null
+            if (this.encryptedMsgsQueue.length > 0) { // received all historical messages but not yet the keys to decrypt them
+                this.resendDone = true
+            } else {
+                this.emit('resend done')
+            }
         }
     }
 }

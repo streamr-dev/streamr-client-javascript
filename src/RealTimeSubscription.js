@@ -7,8 +7,8 @@ import UnableToDecryptError from './errors/UnableToDecryptError'
 const debug = debugFactory('StreamrClient::Subscription')
 
 export default class RealTimeSubscription extends AbstractSubscription {
-    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout) {
-        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout)
+    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true) {
+        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages)
         this.resending = false
     }
 
@@ -20,9 +20,11 @@ export default class RealTimeSubscription extends AbstractSubscription {
         return this._catchAndEmitErrors(() => this._handleMessage(msg, verifyFn))
     }
 
-    _finishResend() {
+    finishResend() {
         this._lastMessageHandlerPromise = null
-        this.setResending(false)
+        if (Object.keys(this.pendingResendRequestIds).length === 0) {
+            this.setResending(false)
+        }
     }
 
     _decryptOrRequestGroupKey(msg) {
