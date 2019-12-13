@@ -1,4 +1,4 @@
-module.exports = class AuthFetchError extends Error {
+export default class AuthFetchError extends Error {
     constructor(message, response, body) {
         super(message)
         this.response = response
