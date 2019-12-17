@@ -57,7 +57,8 @@ export default class KeyExchangeUtil {
         }
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
-        if (!this._client.subscribedStreams[parsedContent.streamId]) {
+        // TODO: fix this hack in other PR
+        if (!this._client.subscribedStreamPartitions[parsedContent.streamId + '0']) {
             throw new Error('Received group key response for a stream to which the client is not subscribed.')
         }
 

@@ -148,7 +148,8 @@ export default class StreamrClient extends EventEmitter {
                         const { streamId } = streamMessage.getParsedContent()
                         // A valid publisher of the client's inbox stream could send key responses for other streams to which
                         // the publisher doesn't have write permissions. Thus the following additional check is necessary.
-                        const valid = await this.subscribedStreams[streamId].isValidPublisher(streamMessage.getPublisherId())
+                        // TODO: fix this hack in other PR
+                        const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
                         if (valid) {
                             await this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
                         } else {
@@ -793,7 +794,8 @@ export default class StreamrClient extends EventEmitter {
         if (!current || last.start > current.start) {
             this.options.subscriberGroupKeys[streamId][publisherId] = last
         }
-        this.subscribedStreams[streamId].setSubscriptionsGroupKeys(publisherId, groupKeys.map((obj) => obj.groupKey))
+        // TODO: fix this hack in other PR
+        this.subscribedStreamPartitions[streamId + '0'].setSubscriptionsGroupKeys(publisherId, groupKeys.map((obj) => obj.groupKey))
     }
 
     handleError(msg) {
