@@ -809,6 +809,7 @@ describe('StreamrClient', () => {
 
         it('client.subscribe (realtime with resend)', (done) => {
             client.once('error', done)
+
             const id = Date.now()
             const sub = client.subscribe({
                 stream: stream.id,
@@ -816,6 +817,7 @@ describe('StreamrClient', () => {
                     last: 1,
                 },
             }, (parsedContent, streamMessage) => {
+                console.log(parsedContent)
                 assert.equal(parsedContent.id, id)
 
                 // Check signature stuff
@@ -832,11 +834,12 @@ describe('StreamrClient', () => {
 
             // Publish after subscribed
             sub.on('subscribed', () => {
+                console.log(111111)
                 stream.publish({
                     id,
                 })
             })
-        }, 10000)
+        }, 20000)
 
         it('client.subscribe can decrypt encrypted messages if it knows the group key', async (done) => {
             client.once('error', done)
