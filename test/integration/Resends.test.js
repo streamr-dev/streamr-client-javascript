@@ -18,26 +18,32 @@ const createClient = (opts = {}) => new StreamrClient({
     ...opts,
 })
 
+const MAX_MESSAGES = 10
+
 describe('StreamrClient resends', () => {
     describe('resend', () => {
         let client
         let stream
+        let publishedMessages
 
         beforeEach(async () => {
             client = createClient()
             await client.ensureConnected()
 
+            publishedMessages = []
+
             stream = await client.createStream({
                 name: uuid(),
             })
 
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < MAX_MESSAGES; i++) {
                 const message = {
                     msg: `message${i}`,
                 }
 
                 // eslint-disable-next-line no-await-in-loop
                 await client.publish(stream.id, message)
+                publishedMessages.push(message)
             }
 
             await wait(3000) // wait for messages to (hopefully) land in storage
@@ -49,192 +55,89 @@ describe('StreamrClient resends', () => {
 
         it('resend last using resend function', async (done) => {
             for (let i = 0; i < 10; i++) {
-                const messages = []
+                const receivedMessages = []
 
                 // eslint-disable-next-line no-await-in-loop
                 const sub = await client.resend(
                     {
                         stream: stream.id,
                         resend: {
-                            last: 10,
+                            last: MAX_MESSAGES,
                         },
                     },
                     (message) => {
-                        messages.push(message)
+                        receivedMessages.push(message)
                     },
                 )
 
+                // eslint-disable-next-line no-loop-func
                 sub.once('resent', () => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message0',
-                        },
-                        {
-                            msg: 'message1',
-                        },
-                        {
-                            msg: 'message2',
-                        },
-                        {
-                            msg: 'message3',
-                        },
-                        {
-                            msg: 'message4',
-                        },
-                        {
-                            msg: 'message5',
-                        },
-                        {
-                            msg: 'message6',
-                        },
-                        {
-                            msg: 'message7',
-                        },
-                        {
-                            msg: 'message8',
-                        },
-                        {
-                            msg: 'message9',
-                        }
-                    ])
+                    expect(receivedMessages).toStrictEqual(publishedMessages)
                 })
 
                 // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => messages.length === 10)
+                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
             }
             done()
         }, 50000)
 
         it('resend last using subscribe function', async (done) => {
             for (let i = 0; i < 10; i++) {
-                const messages = []
+                const receivedMessages = []
 
                 // eslint-disable-next-line no-await-in-loop
                 const sub = client.subscribe(
                     {
                         stream: stream.id,
                         resend: {
-                            last: 10,
+                            last: MAX_MESSAGES,
                         },
                     },
                     (message) => {
-                        messages.push(message)
+                        receivedMessages.push(message)
                     },
                 )
 
+                // eslint-disable-next-line no-loop-func
                 sub.once('resent', () => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message0',
-                        },
-                        {
-                            msg: 'message1',
-                        },
-                        {
-                            msg: 'message2',
-                        },
-                        {
-                            msg: 'message3',
-                        },
-                        {
-                            msg: 'message4',
-                        },
-                        {
-                            msg: 'message5',
-                        },
-                        {
-                            msg: 'message6',
-                        },
-                        {
-                            msg: 'message7',
-                        },
-                        {
-                            msg: 'message8',
-                        },
-                        {
-                            msg: 'message9',
-                        }
-                    ])
+                    expect(receivedMessages).toStrictEqual(publishedMessages)
                 })
 
                 // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => messages.length === 10)
+                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
             }
             done()
         }, 50000)
 
-        it('resend last using subscribe function with realtime', async (done) => {
-            const messages = []
+        it('resend last using subscribe and then publish some messages and get them after resend', async (done) => {
+            const receivedMessages = []
 
             client.subscribe({
                 stream: stream.id,
                 resend: {
-                    last: 10,
+                    last: MAX_MESSAGES,
                 },
             }, (message) => {
-                messages.push(message)
+                receivedMessages.push(message)
             })
 
-            await waitForCondition(() => messages.length === 10)
+            // wait for resend MAX_MESSAGES
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
+            expect(receivedMessages).toStrictEqual(publishedMessages)
 
-            for (let i = 10; i < 15; i++) {
+            // publish after resend, realtime messages
+            for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
                 const message = {
                     msg: `message${i}`,
                 }
 
                 // eslint-disable-next-line no-await-in-loop
                 await client.publish(stream.id, message)
+                publishedMessages.push(message)
             }
 
-            await waitForCondition(() => messages.length === 15)
-
-            expect(messages).toEqual([
-                {
-                    msg: 'message0',
-                },
-                {
-                    msg: 'message1',
-                },
-                {
-                    msg: 'message2',
-                },
-                {
-                    msg: 'message3',
-                },
-                {
-                    msg: 'message4',
-                },
-                {
-                    msg: 'message5',
-                },
-                {
-                    msg: 'message6',
-                },
-                {
-                    msg: 'message7',
-                },
-                {
-                    msg: 'message8',
-                },
-                {
-                    msg: 'message9',
-                },
-                {
-                    msg: 'message10',
-                },
-                {
-                    msg: 'message11',
-                },
-                {
-                    msg: 'message12',
-                },
-                {
-                    msg: 'message13',
-                },
-                {
-                    msg: 'message14',
-                }
-            ])
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2)
+            expect(receivedMessages).toStrictEqual(publishedMessages)
             done()
         }, 10000)
     })
