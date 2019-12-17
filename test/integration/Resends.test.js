@@ -54,7 +54,7 @@ describe('StreamrClient resends', () => {
             await client.ensureDisconnected()
         })
 
-        it('resend last using resend function', async (done) => {
+        it('resend last using resend function', async () => {
             for (let i = 0; i < TEST_REPEATS; i++) {
                 const receivedMessages = []
 
@@ -77,12 +77,11 @@ describe('StreamrClient resends', () => {
                 })
 
                 // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
+                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
             }
-            done()
         }, 50000)
 
-        it('resend last using subscribe function', async (done) => {
+        it('resend last using subscribe function', async () => {
             for (let i = 0; i < TEST_REPEATS; i++) {
                 const receivedMessages = []
 
@@ -105,12 +104,11 @@ describe('StreamrClient resends', () => {
                 })
 
                 // eslint-disable-next-line no-await-in-loop
-                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
+                await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
             }
-            done()
         }, 50000)
 
-        it('resend last using subscribe and publish messages after resend', async (done) => {
+        it('resend last using subscribe and publish messages after resend', async () => {
             const receivedMessages = []
 
             client.subscribe({
@@ -123,7 +121,7 @@ describe('StreamrClient resends', () => {
             })
 
             // wait for resend MAX_MESSAGES
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES)
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
             expect(receivedMessages).toStrictEqual(publishedMessages)
 
             // publish after resend, realtime subscription messages
@@ -137,9 +135,8 @@ describe('StreamrClient resends', () => {
                 publishedMessages.push(message)
             }
 
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2)
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
             expect(receivedMessages).toStrictEqual(publishedMessages)
-            done()
         }, 30000)
 
         it('resend last using subscribe and publish realtime messages', async () => {
@@ -166,7 +163,7 @@ describe('StreamrClient resends', () => {
                 }
             })
 
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2)
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
             expect(receivedMessages).toStrictEqual(publishedMessages)
         }, 30000)
     })

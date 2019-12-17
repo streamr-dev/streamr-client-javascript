@@ -817,7 +817,6 @@ describe('StreamrClient', () => {
                     last: 1,
                 },
             }, (parsedContent, streamMessage) => {
-                console.log(parsedContent)
                 assert.equal(parsedContent.id, id)
 
                 // Check signature stuff
@@ -834,7 +833,6 @@ describe('StreamrClient', () => {
 
             // Publish after subscribed
             sub.on('subscribed', () => {
-                console.log(111111)
                 stream.publish({
                     id,
                 })
