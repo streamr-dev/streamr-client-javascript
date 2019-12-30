@@ -4,8 +4,8 @@ import crypto from 'crypto'
 import fetch from 'node-fetch'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
-import uuid from 'uuid/v4'
 
+import { uid } from '../utils'
 import StreamrClient from '../../src'
 
 import config from './config'
@@ -67,7 +67,7 @@ describe('StreamrClient Connection', () => {
             client.once('error', onError)
 
             const stream = await client.createStream({
-                name: uuid(),
+                name: uid('stream')
             }) // this will succeed because it uses restUrl config, not url
 
             // publish should trigger connect
@@ -128,7 +128,7 @@ describe('StreamrClient Connection', () => {
             await client.ensureConnected()
 
             stream = await client.createStream({
-                name: uuid(),
+                name: uid('stream')
             })
 
             timestamps = []
@@ -459,12 +459,12 @@ describe('StreamrClient Connection', () => {
                 client.once('error', done)
 
                 const stream = await client.createStream({
-                    name: uuid(),
+                    name: uid('stream')
                 })
                 await client.ensureDisconnected()
 
                 const message = {
-                    id2: uuid(),
+                    id2: uid('msg')
                 }
                 client.once('connected', () => {
                     // wait in case of delayed errors
@@ -482,11 +482,11 @@ describe('StreamrClient Connection', () => {
                 client.once('error', done)
                 await client.ensureConnected()
                 const stream = await client.createStream({
-                    name: uuid(),
+                    name: uid('stream')
                 })
 
                 const message = {
-                    id1: uuid(),
+                    id1: uid('msg')
                 }
                 const p = client.publish(stream.id, message)
                 setTimeout(async () => {
@@ -506,11 +506,11 @@ describe('StreamrClient Connection', () => {
                 client.once('error', done)
                 await client.ensureConnected()
                 const stream = await client.createStream({
-                    name: uuid(),
+                    name: uid('stream')
                 })
 
                 const message = {
-                    id1: uuid(),
+                    id1: uid('msg')
                 }
 
                 client.publish(stream.id, message).catch((err) => {
@@ -533,7 +533,7 @@ describe('StreamrClient Connection', () => {
                 client.once('error', done)
                 await client.ensureConnected()
                 const stream = await client.createStream({
-                    name: uuid(),
+                    name: uid('stream')
                 })
 
                 const sub = client.subscribe({

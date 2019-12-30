@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
-import uuid from 'uuid/v4'
 
+import { uid } from '../utils'
 import StreamrClient from '../../src'
 
 import config from './config'
@@ -34,7 +34,7 @@ describe('StreamrClient resends', () => {
             publishedMessages = []
 
             stream = await client.createStream({
-                name: uuid(),
+                name: uid('resends')
             })
 
             for (let i = 0; i < MAX_MESSAGES; i++) {
