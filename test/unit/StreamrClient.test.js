@@ -203,11 +203,10 @@ describe('StreamrClient', () => {
             })
 
             it('should not subscribe to unsubscribed streams on reconnect', (done) => {
-                // TODO check
-                // On unsubscribe
-                connection.expect(UnsubscribeRequest.create('stream1'))
                 // On connect
                 connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+                // On unsubscribe
+                connection.expect(UnsubscribeRequest.create('stream1'))
 
                 const sub = client.subscribe('stream1', () => {})
                 client.connect().then(() => {
