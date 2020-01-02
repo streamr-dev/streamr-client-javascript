@@ -12,28 +12,40 @@ on:
       - '*'
 
 jobs:
-  build:
+  docker:
+    name: Installing streamr-docker-dev
+    run: echo 'Installing streamr-docker-dev'
 
-    runs-on: ubuntu-latest
+  build:
+    name: Test on node ${{ matrix.node }} and ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         node-version: [10.x, 12.x]
+#        os: [ubuntu-latest, macOS-latest, windows-latest]
+        max-parallel: 2
 
     steps:
     - uses: actions/checkout@v1
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install
+
+    - name: npm ci
       run: npm ci
+
     - name: eslint
       run: npm run eslint
-    - name: test
-      run: |
-        npm run build --if-present
-        npm run test-unit
-      env:
-        CI: true
+
+    - name: test-unit
+      run: npm run test-unit
+
+    - name: test-integration
+      needs: [docker]
+      run: echo 'test-integration'
+#      run: npm run test-integration
 
