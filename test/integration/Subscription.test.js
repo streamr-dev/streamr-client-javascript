@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import uuid from 'uuid/v4'
+import { wait } from 'streamr-test-utils'
 
 import StreamrClient from '../../src'
 
@@ -17,7 +18,6 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 const throwError = (error) => { throw error }
-const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
 
 const RESEND_ALL = {
     from: {

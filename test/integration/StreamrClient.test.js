@@ -3,6 +3,7 @@ import crypto from 'crypto'
 
 import fetch from 'node-fetch'
 import { MessageLayer } from 'streamr-client-protocol'
+import { wait } from 'streamr-test-utils'
 import { ethers } from 'ethers'
 import uuid from 'uuid/v4'
 
@@ -23,8 +24,6 @@ const createClient = (opts = {}) => new StreamrClient({
     autoDisconnect: false,
     ...opts,
 })
-
-const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
 
 describe('StreamrClient Connection', () => {
     describe('bad config.url', () => {

@@ -5,6 +5,7 @@ import sinon from 'sinon'
 import debug from 'debug'
 import { Wallet } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
+import { wait } from 'streamr-test-utils'
 
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
@@ -30,8 +31,6 @@ const {
 } = ControlLayer
 const { StreamMessage, MessageRef } = MessageLayer
 const mockDebug = debug('mock')
-
-const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
 
 describe('StreamrClient', () => {
     let client
@@ -225,6 +224,29 @@ describe('StreamrClient', () => {
                     })
                     client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
                 })
+            })
+
+            it('should not subscribe to unsubscribed streams on reconnect v2', () => {
+                // // On connect
+                // connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+                // // On unsubscribe
+                // connection.expect(UnsubscribeRequest.create('stream1'))
+                //
+                // const sub = client.subscribe('stream1', () => {})
+                // client.connect().then(async () => {
+                //     // wait for connect handler queue to empty
+                //     // otherwise the below mock SubscribeResponse can arrive before the subscription
+                //     // request was sent, due to async scheduling differences between node v10 and node v8/v12
+                //     await wait(100)
+                //     connection.emitMessage(SubscribeResponse.create(sub.streamId))
+                //     client.unsubscribe(sub)
+                //     sub.on('unsubscribed', async () => {
+                //         await client.disconnect()
+                //         await client.connect()
+                //         done()
+                //     })
+                //     client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
+                // })
             })
         })
 
