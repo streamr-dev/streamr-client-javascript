@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [10.x] # , 12.x]
 #        os: [ubuntu-latest, macOS-latest, windows-latest
 
     steps:
@@ -37,8 +37,8 @@ jobs:
     - name: eslint
       run: npm run eslint
 
-    - name: test-unit
-      run: npm run test-unit
+#    - name: test-unit
+#      run: npm run test-unit
 
     - name: test-integration
       run: |
