@@ -1,7 +1,8 @@
+sudo: required
+dist: xenial
 language: node_js
 node_js:
-  - 10.17.0
-sudo: true
+  - '10'
 branches:
   only:
   - master
