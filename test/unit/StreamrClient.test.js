@@ -31,6 +31,8 @@ const {
 const { StreamMessage, MessageRef } = MessageLayer
 const mockDebug = debug('mock')
 
+const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
+
 describe('StreamrClient', () => {
     let client
     let connection
@@ -209,7 +211,11 @@ describe('StreamrClient', () => {
                 connection.expect(UnsubscribeRequest.create('stream1'))
 
                 const sub = client.subscribe('stream1', () => {})
-                client.connect().then(() => {
+                client.connect().then(async () => {
+                    // wait for connect handler queue to empty
+                    // otherwise the below mock SubscribeResponse can arrive before the subscription
+                    // request was sent, due to async scheduling differences between node v10 and node v8/v12
+                    await wait(100)
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     client.unsubscribe(sub)
                     sub.on('unsubscribed', async () => {
