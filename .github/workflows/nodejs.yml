@@ -14,7 +14,8 @@ on:
 jobs:
   docker:
     name: Installing streamr-docker-dev
-    run: echo 'Installing streamr-docker-dev'
+    steps:
+    - run: echo 'Installing streamr-docker-dev'
 
   build:
     name: Test on node ${{ matrix.node }} and ${{ matrix.os }}
