@@ -15,13 +15,13 @@ jobs:
   build:
     name: Test on node ${{ matrix.node }} and ${{ matrix.os }}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+#    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         node-version: [10.x, 12.x]
-        os: [ubuntu-latest] # , macOS-latest, windows-latest
-        max-parallel: 2
+#        os: [ubuntu-latest, macOS-latest, windows-latest
 
     steps:
     - uses: actions/checkout@v1
