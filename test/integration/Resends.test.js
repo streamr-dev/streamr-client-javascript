@@ -79,7 +79,7 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
-            }, 5000)
+            }, 10000)
         }
 
         for (let i = 0; i < TEST_REPEATS; i++) {
@@ -108,7 +108,7 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
-            }, 5000)
+            }, 10000)
         }
 
         it('resend last using subscribe and publish messages after resend', async () => {
