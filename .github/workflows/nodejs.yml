@@ -13,14 +13,13 @@ on:
 
 jobs:
   build:
-    name: Test on node ${{ matrix.node-version }} and ${{ matrix.os }}
+    name: Test on node ${{ matrix.node-version }} and ubuntu-latest
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [10.x, 12.x]
-        os: [ubuntu-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v1
