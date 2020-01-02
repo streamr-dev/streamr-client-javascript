@@ -39,7 +39,7 @@ describe('StreamrClient resends', () => {
 
             for (let i = 0; i < MAX_MESSAGES; i++) {
                 const message = {
-                    msg: `message${i}`,
+                    msg: uid('message'),
                 }
 
                 // eslint-disable-next-line no-await-in-loop
@@ -54,8 +54,9 @@ describe('StreamrClient resends', () => {
             await client.ensureDisconnected()
         })
 
-        it('resend last using resend function', async () => {
-            for (let i = 0; i < TEST_REPEATS; i++) {
+        for (let i = 0; i < TEST_REPEATS; i++) {
+            // eslint-disable-next-line no-loop-func
+            it(`resend last using resend function on try ${i}`, async () => {
                 const receivedMessages = []
 
                 // eslint-disable-next-line no-await-in-loop
@@ -78,11 +79,12 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
-            }
-        }, 50000)
+            }, 5000)
+        }
 
-        it('resend last using subscribe function', async () => {
-            for (let i = 0; i < TEST_REPEATS; i++) {
+        for (let i = 0; i < TEST_REPEATS; i++) {
+            // eslint-disable-next-line no-loop-func
+            it(`resend last using subscribe function on try ${i}`, async () => {
                 const receivedMessages = []
 
                 // eslint-disable-next-line no-await-in-loop
@@ -100,13 +102,14 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-loop-func
                 sub.once('resent', () => {
-                    expect(receivedMessages).toStrictEqual(publishedMessages)
+                    expect(receivedMessages)
+                        .toStrictEqual(publishedMessages)
                 })
 
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
-            }
-        }, 50000)
+            }, 5000)
+        }
 
         it('resend last using subscribe and publish messages after resend', async () => {
             const receivedMessages = []
@@ -127,7 +130,7 @@ describe('StreamrClient resends', () => {
             // publish after resend, realtime subscription messages
             for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
                 const message = {
-                    msg: `message${i}`,
+                    msg: uid('message'),
                 }
 
                 // eslint-disable-next-line no-await-in-loop
@@ -154,7 +157,7 @@ describe('StreamrClient resends', () => {
             sub.on('subscribed', async () => {
                 for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
                     const message = {
-                        msg: `message${i}`,
+                        msg: uid('message'),
                     }
 
                     // eslint-disable-next-line no-await-in-loop
@@ -164,7 +167,7 @@ describe('StreamrClient resends', () => {
             })
 
             await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
-            expect(receivedMessages).toStrictEqual(publishedMessages)
+            expect(receivedMessages).toEqual(publishedMessages)
         }, 30000)
     })
 })
