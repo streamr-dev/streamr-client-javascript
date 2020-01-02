@@ -3,13 +3,18 @@ import assert from 'assert'
 import EventEmitter from 'eventemitter3'
 import sinon from 'sinon'
 import debug from 'debug'
-import { Wallet } from 'ethers'
+import { ethers, Wallet } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import { wait } from 'streamr-test-utils'
 
-import Connection from '../../src/Connection'
-import Subscription from '../../src/Subscription'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
+import Connection from '../../src/Connection'
+// eslint-disable-next-line import/order
+import Subscription from '../../src/Subscription'
+
+// eslint-disable-next-line import/no-named-as-default-member
+import StreamrClient from '../../src'
+import config from '../integration/config'
 
 // eslint-disable-next-line import/no-named-as-default-member
 import StubbedStreamrClient from './StubbedStreamrClient'
@@ -31,6 +36,17 @@ const {
 } = ControlLayer
 const { StreamMessage, MessageRef } = MessageLayer
 const mockDebug = debug('mock')
+
+const createClient = (opts = {}) => new StreamrClient({
+    url: config.websocketUrl,
+    restUrl: config.restUrl,
+    auth: {
+        privateKey: ethers.Wallet.createRandom().privateKey,
+    },
+    autoConnect: false,
+    autoDisconnect: false,
+    ...opts,
+})
 
 describe('StreamrClient', () => {
     let client
@@ -203,51 +219,7 @@ describe('StreamrClient', () => {
                 return client.ensureConnected()
             })
 
-            it('should not subscribe to unsubscribed streams on reconnect', (done) => {
-                // On connect
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                // On unsubscribe
-                connection.expect(UnsubscribeRequest.create('stream1'))
-
-                const sub = client.subscribe('stream1', () => {})
-                client.connect().then(async () => {
-                    // wait for connect handler queue to empty
-                    // otherwise the below mock SubscribeResponse can arrive before the subscription
-                    // request was sent, due to async scheduling differences between node v10 and node v8/v12
-                    await wait(100)
-                    connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    client.unsubscribe(sub)
-                    sub.on('unsubscribed', async () => {
-                        await client.disconnect()
-                        await client.connect()
-                        done()
-                    })
-                    client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                })
-            })
-
-            it('should not subscribe to unsubscribed streams on reconnect v2', () => {
-                // // On connect
-                // connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                // // On unsubscribe
-                // connection.expect(UnsubscribeRequest.create('stream1'))
-                //
-                // const sub = client.subscribe('stream1', () => {})
-                // client.connect().then(async () => {
-                //     // wait for connect handler queue to empty
-                //     // otherwise the below mock SubscribeResponse can arrive before the subscription
-                //     // request was sent, due to async scheduling differences between node v10 and node v8/v12
-                //     await wait(100)
-                //     connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                //     client.unsubscribe(sub)
-                //     sub.on('unsubscribed', async () => {
-                //         await client.disconnect()
-                //         await client.connect()
-                //         done()
-                //     })
-                //     client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                // })
-            })
+            // TODO convert and move all super mocked tests to integration
         })
 
         describe('disconnected', () => {
