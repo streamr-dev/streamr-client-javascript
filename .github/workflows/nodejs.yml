@@ -12,11 +12,6 @@ on:
       - '*'
 
 jobs:
-  docker:
-    name: Installing streamr-docker-dev
-    steps:
-    - run: echo 'Installing streamr-docker-dev'
-
   build:
     name: Test on node ${{ matrix.node }} and ${{ matrix.os }}
 
@@ -25,7 +20,7 @@ jobs:
     strategy:
       matrix:
         node-version: [10.x, 12.x]
-#        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest] # , macOS-latest, windows-latest
         max-parallel: 2
 
     steps:
@@ -46,7 +41,10 @@ jobs:
       run: npm run test-unit
 
     - name: test-integration
-      needs: [docker]
-      run: echo 'test-integration'
+      run: |
+        git clone https://github.com/streamr-dev/streamr-docker-dev.git
+        sudo ifconfig docker0 10.200.10.1/24
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start 5
+#      run: echo 'test-integration'
 #      run: npm run test-integration
 
