@@ -6,9 +6,9 @@ import debug from 'debug'
 import { Wallet } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 
+import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import FailedToPublishError from '../../src/errors/FailedToPublishError'
 
 // eslint-disable-next-line import/no-named-as-default-member
 import StubbedStreamrClient from './StubbedStreamrClient'
@@ -202,24 +202,7 @@ describe('StreamrClient', () => {
                 return client.ensureConnected()
             })
 
-            it('should not subscribe to unsubscribed streams on reconnect', (done) => {
-                // On connect
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                // On unsubscribe
-                connection.expect(UnsubscribeRequest.create('stream1'))
-
-                const sub = client.subscribe('stream1', () => {})
-                client.connect().then(() => {
-                    connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    client.unsubscribe(sub)
-                    sub.on('unsubscribed', async () => {
-                        await client.disconnect()
-                        await client.connect()
-                        done()
-                    })
-                    client.connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                })
-            })
+            // TODO convert and move all super mocked tests to integration
         })
 
         describe('disconnected', () => {
@@ -738,21 +721,6 @@ describe('StreamrClient', () => {
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                 }, STORAGE_DELAY + 1000)
 
-                it('sends 2 ResendLastRequests if no StreamMessage received after some delay', (done) => {
-                    const sub = setupSubscription('stream1', false, {
-                        resend: {
-                            last: 5,
-                        },
-                    })
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
-                    connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '1', 5, 'session-token'))
-                    setTimeout(() => {
-                        sub.stop()
-                        done()
-                    }, STORAGE_DELAY + 200)
-                }, STORAGE_DELAY + 1000)
-
                 it('sends a second ResendLastRequest if no StreamMessage received and a ResendResponseNoResend received', (done) => {
                     const sub = setupSubscription('stream1', false, {
                         resend: {
@@ -762,7 +730,7 @@ describe('StreamrClient', () => {
                     connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
                     connection.emitMessage(SubscribeResponse.create(sub.streamId))
                     connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, '0'))
-                    connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '1', 5, 'session-token'))
+
                     setTimeout(() => {
                         sub.stop()
                         done()
@@ -966,7 +934,7 @@ describe('StreamrClient', () => {
             client.options.auth.username = 'username'
             client.options.autoConnect = false
             client.publish('stream1', pubMsg).catch((err) => {
-                assert(err instanceof FailedToPublishError)
+                expect(err).toBeInstanceOf(FailedToPublishError)
                 done()
             })
         })
