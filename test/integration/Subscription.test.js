@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
-import uuid from 'uuid/v4'
+import { wait } from 'streamr-test-utils'
 
+import { uid } from '../utils'
 import StreamrClient from '../../src'
 
 import config from './config'
@@ -16,7 +17,6 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 const throwError = (error) => { throw error }
-const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout))
 
 const RESEND_ALL = {
     from: {
@@ -33,7 +33,7 @@ describe('Subscription', () => {
         client = createClient()
         client.on('error', throwError)
         stream = await client.createStream({
-            name: uuid(),
+            name: uid('stream')
         })
     }
 
@@ -81,7 +81,7 @@ describe('Subscription', () => {
 
     async function publishMessage() {
         const message = {
-            message: uuid(),
+            message: uid('msg')
         }
         await stream.publish(message)
         return message
@@ -151,6 +151,6 @@ describe('Subscription', () => {
             subscription.on('no_resend', () => {
                 done('error: got no_resend, expected: resent')
             })
-        }, 10 * 1000)
+        }, 20 * 1000)
     })
 })
