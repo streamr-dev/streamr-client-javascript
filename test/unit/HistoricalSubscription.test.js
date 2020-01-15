@@ -425,8 +425,9 @@ describe('HistoricalSubscription', () => {
                 })
                 return sub.handleResentMessage(msg1, sinon.stub().resolves(true))
             })
-            it('should queue messages when not able to decrypt and handle them once the key is set', async () => {
-                const correctGroupKey = crypto.randomBytes(32)
+            it('should queue messages when not able to decrypt and handle them once the keys are set', async () => {
+                const groupKey1 = crypto.randomBytes(32)
+                const groupKey2 = crypto.randomBytes(32)
                 const data1 = {
                     test: 'data1',
                 }
@@ -435,8 +436,8 @@ describe('HistoricalSubscription', () => {
                 }
                 const msg1 = createMsg(1, 0, null, 0, data1)
                 const msg2 = createMsg(2, 0, 1, 0, data2)
-                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
-                EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
+                EncryptionUtil.encryptStreamMessage(msg1, groupKey1)
+                EncryptionUtil.encryptStreamMessage(msg2, groupKey2)
                 let received1 = null
                 let received2 = null
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
@@ -453,7 +454,7 @@ describe('HistoricalSubscription', () => {
                 // cannot decrypt msg2, queues it.
                 await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
                 // faking the reception of the group key response
-                sub.setGroupKeys('publisherId', [correctGroupKey])
+                sub.setGroupKeys('publisherId', [groupKey1, groupKey2])
                 // try again to decrypt the queued messages but this time with the correct key
                 assert.deepStrictEqual(received1, data1)
                 assert.deepStrictEqual(received2, data2)
@@ -486,6 +487,53 @@ describe('HistoricalSubscription', () => {
                 // faking the reception of the group key response
                 sub.setGroupKeys('publisherId', [wrongGroupKey])
                 assert.deepStrictEqual(undecryptableMsg, msg2)
+            })
+            it('should queue messages when not able to decrypt and handle them once the keys are set (multiple publishers)', async () => {
+                const groupKey1 = crypto.randomBytes(32)
+                const groupKey2 = crypto.randomBytes(32)
+                const groupKey3 = crypto.randomBytes(32)
+                const data1 = {
+                    test: 'data1',
+                }
+                const data2 = {
+                    test: 'data2',
+                }
+                const data3 = {
+                    test: 'data3',
+                }
+                const data4 = {
+                    test: 'data4',
+                }
+                const msg1 = createMsg(1, 0, null, 0, data1, 'publisherId1')
+                const msg2 = createMsg(2, 0, 1, 0, data2, 'publisherId1')
+                const msg3 = createMsg(1, 0, null, 0, data3, 'publisherId2')
+                const msg4 = createMsg(2, 0, 1, 0, data4, 'publisherId2')
+                EncryptionUtil.encryptStreamMessage(msg1, groupKey1)
+                EncryptionUtil.encryptStreamMessage(msg2, groupKey2)
+                EncryptionUtil.encryptStreamMessage(msg3, groupKey3)
+                EncryptionUtil.encryptStreamMessage(msg4, groupKey3)
+                const received = []
+                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                    received.push(content)
+                }, {
+                    last: 1
+                })
+                // cannot decrypt msg1, queues it and emits "groupKeyMissing" (should send group key request).
+                await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+                // cannot decrypt msg2, queues it.
+                await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                // cannot decrypt msg3, queues it and emits "groupKeyMissing" (should send group key request).
+                await sub.handleResentMessage(msg3, sinon.stub().resolves(true))
+                // cannot decrypt msg4, queues it.
+                await sub.handleResentMessage(msg4, sinon.stub().resolves(true))
+                // faking the reception of the group key response
+                sub.setGroupKeys('publisherId2', [groupKey3])
+                sub.setGroupKeys('publisherId1', [groupKey1, groupKey2])
+                // try again to decrypt the queued messages but this time with the correct key
+                assert.deepStrictEqual(received[0], data1)
+                assert.deepStrictEqual(received[1], data2)
+                assert.deepStrictEqual(received[2], data3)
+                assert.deepStrictEqual(received[3], data4)
             })
         })
     })

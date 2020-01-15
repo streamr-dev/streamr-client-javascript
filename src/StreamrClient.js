@@ -448,7 +448,8 @@ export default class StreamrClient extends EventEmitter {
         await this.ensureConnected()
 
         const sub = new HistoricalSubscription(options.stream, options.partition || 0, callback, options.resend,
-            this.options.subscriberGroupKeys[options.stream], this.options.gapFillTimeout, this.options.retryResendAfter, this.options.orderMessages)
+            this.options.subscriberGroupKeys[options.stream], this.options.gapFillTimeout, this.options.retryResendAfter,
+            this.options.orderMessages, options.onUnableToDecrypt)
 
         // TODO remove _addSubscription after uncoupling Subscription and Resend
         this._addSubscription(sub)
@@ -507,11 +508,13 @@ export default class StreamrClient extends EventEmitter {
         if (options.resend) {
             sub = new CombinedSubscription(
                 options.stream, options.partition || 0, callback, options.resend,
-                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter, this.options.orderMessages,
+                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
+                this.options.orderMessages, options.onUnableToDecrypt,
             )
         } else {
             sub = new RealTimeSubscription(options.stream, options.partition || 0, callback,
-                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter, this.options.orderMessages)
+                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
+                this.options.orderMessages, options.onUnableToDecrypt)
         }
         sub.on('gap', (from, to, publisherId, msgChainId) => {
             if (!sub.resending) {

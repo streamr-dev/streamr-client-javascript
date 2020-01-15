@@ -39,9 +39,7 @@ export default class HistoricalSubscription extends AbstractSubscription {
         if (!this.keySequences[msg.getPublisherId()]) {
             const start = msg.getTimestamp()
             const end = this.resendOptions.to ? this.resendOptions.to : Date.now()
-            this.emit('groupKeyMissing', msg.getPublisherId(), start, end)
-            this.waitingForGroupKey[msg.getPublisherId()] = true
-            this.encryptedMsgsQueue.push(msg)
+            this._requestGroupKeyAndQueueMessage(msg, start, end)
             return false
         }
         this.keySequences[msg.getPublisherId()].tryToDecryptResent(msg)
@@ -74,9 +72,7 @@ export default class HistoricalSubscription extends AbstractSubscription {
             throw new Error(`Received historical group keys for publisher ${publisherId} for a second time.`)
         }
         this.keySequences[publisherId] = new DecryptionKeySequence(groupKeys)
-        delete this.waitingForGroupKey[publisherId]
-        this.encryptedMsgsQueue.forEach((msg) => this._inOrderHandler(msg))
-        this.encryptedMsgsQueue = []
+        this._handleEncryptedQueuedMsgs(publisherId)
         if (this.resendDone) { // the messages in the queue were the last ones to handle
             this.emit('resend done')
         }

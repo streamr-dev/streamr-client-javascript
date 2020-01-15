@@ -54,27 +54,45 @@ export default class AbstractSubscription extends Subscription {
     _inOrderHandler(orderedMessage) {
         return this._catchAndEmitErrors(() => {
             if (!this.waitingForGroupKey[orderedMessage.getPublisherId()]) {
-                try {
-                    const success = this._decryptOrRequestGroupKey(orderedMessage)
-                    if (success) {
-                        this.callback(orderedMessage.getParsedContent(), orderedMessage)
-                        if (orderedMessage.isByeMessage()) {
-                            this.emit('done')
-                        }
-                    } else {
-                        console.warn('Failed to decrypt. Requested the correct decryption key(s) and going to try again.')
-                    }
-                } catch (err) {
-                    if (err instanceof UnableToDecryptError) {
-                        this.onUnableToDecrypt(err)
-                    } else {
-                        throw err
-                    }
-                }
+                this._decryptAndHandle(orderedMessage)
             } else {
                 this.encryptedMsgsQueue.push(orderedMessage)
             }
         })
+    }
+
+    _decryptAndHandle(orderedMessage) {
+        try {
+            const success = this._decryptOrRequestGroupKey(orderedMessage)
+            if (success) {
+                this.callback(orderedMessage.getParsedContent(), orderedMessage)
+                if (orderedMessage.isByeMessage()) {
+                    this.emit('done')
+                }
+            } else {
+                console.warn('Failed to decrypt. Requested the correct decryption key(s) and going to try again.')
+            }
+        } catch (err) {
+            if (err instanceof UnableToDecryptError) {
+                this.onUnableToDecrypt(err)
+            } else {
+                throw err
+            }
+        }
+    }
+
+    _requestGroupKeyAndQueueMessage(msg, start, end) {
+        this.emit('groupKeyMissing', msg.getPublisherId(), start, end)
+        this.waitingForGroupKey[msg.getPublisherId()] = true
+        this.encryptedMsgsQueue.push(msg)
+    }
+
+    _handleEncryptedQueuedMsgs(publisherId) {
+        delete this.waitingForGroupKey[publisherId]
+        while (this.encryptedMsgsQueue.length > 0 && !this.waitingForGroupKey[this.encryptedMsgsQueue[0].getPublisherId()]) {
+            this._decryptAndHandle(this.encryptedMsgsQueue[0])
+            this.encryptedMsgsQueue.shift()
+        }
     }
 
     addPendingResendRequestId(requestId) {

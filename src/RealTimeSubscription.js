@@ -38,9 +38,7 @@ export default class RealTimeSubscription extends AbstractSubscription {
             return true
         } catch (e) {
             if (e instanceof UnableToDecryptError && !this.alreadyFailedToDecrypt[msg.getPublisherId()]) {
-                this.emit('groupKeyMissing', msg.getPublisherId())
-                this.waitingForGroupKey[msg.getPublisherId()] = true
-                this.encryptedMsgsQueue.push(msg)
+                this._requestGroupKeyAndQueueMessage(msg)
                 this.alreadyFailedToDecrypt[msg.getPublisherId()] = true
                 return false
             }
@@ -74,8 +72,6 @@ export default class RealTimeSubscription extends AbstractSubscription {
         /* eslint-disable prefer-destructuring */
         this.groupKeys[publisherId] = groupKeys[0]
         /* eslint-enable prefer-destructuring */
-        delete this.waitingForGroupKey[publisherId]
-        this.encryptedMsgsQueue.forEach((msg) => this._inOrderHandler(msg))
-        this.encryptedMsgsQueue = []
+        this._handleEncryptedQueuedMsgs(publisherId)
     }
 }
