@@ -9,7 +9,6 @@ import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
-import UnableToDecryptError from '../../src/errors/UnableToDecryptError'
 
 const { StreamMessage } = MessageLayer
 
@@ -397,9 +396,8 @@ describe('HistoricalSubscription', () => {
                 const data = {
                     foo: 'bar',
                 }
-                const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = EncryptionUtil.encrypt(plaintext, groupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data)
+                EncryptionUtil.encryptStreamMessage(msg1, groupKey)
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
@@ -412,12 +410,10 @@ describe('HistoricalSubscription', () => {
             })
             it('should emit "groupKeyMissing" with range when no historical group keys are set', (done) => {
                 const correctGroupKey = crypto.randomBytes(32)
-                const data = {
+                const msg1 = createMsg(1, 0, null, 0, {
                     foo: 'bar',
-                }
-                const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = EncryptionUtil.encrypt(plaintext, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                })
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
                     last: 1
                 })
@@ -437,12 +433,10 @@ describe('HistoricalSubscription', () => {
                 const data2 = {
                     test: 'data2',
                 }
-                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
-                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
-                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data1)
+                const msg2 = createMsg(2, 0, 1, 0, data2)
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
                 let received1 = null
                 let received2 = null
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
@@ -464,7 +458,7 @@ describe('HistoricalSubscription', () => {
                 assert.deepStrictEqual(received1, data1)
                 assert.deepStrictEqual(received2, data2)
             })
-            it('should throw when not able to decrypt with historical keys set', async (done) => {
+            it('should call "onUnableToDecrypt" when not able to decrypt with historical keys set', async () => {
                 const correctGroupKey = crypto.randomBytes(32)
                 const wrongGroupKey = crypto.randomBytes(32)
                 const data1 = {
@@ -473,20 +467,17 @@ describe('HistoricalSubscription', () => {
                 const data2 = {
                     test: 'data2',
                 }
-                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
-                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
-                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data1)
+                const msg2 = createMsg(2, 0, 1, 0, data2)
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
+                let undecryptableMsg = null
                 const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
                     throw new Error('should not call the handler')
                 }, {
                     last: 1
-                })
-                sub.on('error', (err) => {
-                    assert(err instanceof UnableToDecryptError)
-                    done()
+                }, {}, 5000, 5000, true, (error) => {
+                    undecryptableMsg = error.streamMessage
                 })
                 // cannot decrypt msg1, emits "groupKeyMissing" (should send group key request).
                 await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
@@ -494,6 +485,7 @@ describe('HistoricalSubscription', () => {
                 await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
                 // faking the reception of the group key response
                 sub.setGroupKeys('publisherId', [wrongGroupKey])
+                assert.deepStrictEqual(undecryptableMsg, msg2)
             })
         })
     })

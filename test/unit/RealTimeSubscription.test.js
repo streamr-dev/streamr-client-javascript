@@ -7,7 +7,6 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import RealTimeSubscription from '../../src/RealTimeSubscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
-import UnableToDecryptError from '../../src/errors/UnableToDecryptError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
 
@@ -453,9 +452,8 @@ describe('RealTimeSubscription', () => {
                 const data = {
                     foo: 'bar',
                 }
-                const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = EncryptionUtil.encrypt(plaintext, groupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data)
+                EncryptionUtil.encryptStreamMessage(msg1, groupKey)
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
@@ -467,12 +465,10 @@ describe('RealTimeSubscription', () => {
             it('should emit "groupKeyMissing" when not able to decrypt with the wrong key', (done) => {
                 const correctGroupKey = crypto.randomBytes(32)
                 const wrongGroupKey = crypto.randomBytes(32)
-                const data = {
+                const msg1 = createMsg(1, 0, null, 0, {
                     foo: 'bar',
-                }
-                const plaintext = Buffer.from(JSON.stringify(data), 'utf8')
-                const ciphertext = EncryptionUtil.encrypt(plaintext, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                })
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
                     publisherId: wrongGroupKey,
                 })
@@ -491,12 +487,10 @@ describe('RealTimeSubscription', () => {
                 const data2 = {
                     test: 'data2',
                 }
-                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
-                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
-                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data1)
+                const msg2 = createMsg(2, 0, 1, 0, data2)
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
                 let received1 = null
                 let received2 = null
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
@@ -518,30 +512,25 @@ describe('RealTimeSubscription', () => {
                 assert.deepStrictEqual(received1, data1)
                 assert.deepStrictEqual(received2, data2)
             })
-            it('should throw when not able to decrypt for the second time', async (done) => {
+            it('should call "onUnableToDecrypt" when not able to decrypt for the second time', async () => {
                 const correctGroupKey = crypto.randomBytes(32)
                 const wrongGroupKey = crypto.randomBytes(32)
                 const otherWrongGroupKey = crypto.randomBytes(32)
-                const data1 = {
+                const msg1 = createMsg(1, 0, null, 0, {
                     test: 'data1',
-                }
-                const data2 = {
+                })
+                const msg2 = createMsg(2, 0, 1, 0, {
                     test: 'data2',
-                }
-                const plaintext1 = Buffer.from(JSON.stringify(data1), 'utf8')
-                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, correctGroupKey)
-                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, correctGroupKey)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
-                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                })
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
+                let undecryptableMsg = null
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
                     throw new Error('should not call the handler')
                 }, {
                     publisherId: wrongGroupKey,
-                })
-                sub.on('error', (err) => {
-                    assert(err instanceof UnableToDecryptError)
-                    done()
+                }, 5000, 5000, true, (error) => {
+                    undecryptableMsg = error.streamMessage
                 })
                 // cannot decrypt msg1, emits "groupKeyMissing" (should send group key request).
                 await sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
@@ -549,6 +538,7 @@ describe('RealTimeSubscription', () => {
                 await sub.handleBroadcastMessage(msg2, sinon.stub().resolves(true))
                 // faking the reception of the group key response
                 sub.setGroupKeys('publisherId', [otherWrongGroupKey])
+                assert.deepStrictEqual(undecryptableMsg, msg2)
             })
             it('should decrypt first content, update key and decrypt second content', async (done) => {
                 const groupKey1 = crypto.randomBytes(32)
@@ -559,12 +549,10 @@ describe('RealTimeSubscription', () => {
                 const data2 = {
                     test: 'data2',
                 }
-                const plaintext1 = Buffer.concat([groupKey2, Buffer.from(JSON.stringify(data1), 'utf8')])
-                const ciphertext1 = EncryptionUtil.encrypt(plaintext1, groupKey1)
-                const plaintext2 = Buffer.from(JSON.stringify(data2), 'utf8')
-                const ciphertext2 = EncryptionUtil.encrypt(plaintext2, groupKey2)
-                const msg1 = createMsg(1, 0, null, 0, ciphertext1, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
-                const msg2 = createMsg(2, 0, 1, 0, ciphertext2, 'publisherId', '1', StreamMessage.ENCRYPTION_TYPES.AES)
+                const msg1 = createMsg(1, 0, null, 0, data1)
+                const msg2 = createMsg(2, 0, 1, 0, data2)
+                EncryptionUtil.encryptStreamMessageAndNewKey(groupKey2, msg1, groupKey1)
+                EncryptionUtil.encryptStreamMessage(msg2, groupKey2)
                 let test1Ok = false
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (JSON.stringify(content) === JSON.stringify(data1)) {

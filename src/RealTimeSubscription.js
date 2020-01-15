@@ -7,8 +7,9 @@ import UnableToDecryptError from './errors/UnableToDecryptError'
 const debug = debugFactory('StreamrClient::Subscription')
 
 export default class RealTimeSubscription extends AbstractSubscription {
-    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true) {
-        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages)
+    constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true,
+        onUnableToDecrypt = AbstractSubscription.defaultUnableToDecrypt) {
+        super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages, onUnableToDecrypt)
         this.resending = false
     }
 
