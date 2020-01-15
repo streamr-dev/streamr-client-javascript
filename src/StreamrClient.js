@@ -48,8 +48,8 @@ export default class StreamrClient extends EventEmitter {
         // Default options
         this.options = {
             // The server to connect to
-            url: 'wss://www.streamr.com/api/v1/ws',
-            restUrl: 'https://www.streamr.com/api/v1',
+            url: 'wss://streamr.network/api/v1/ws',
+            restUrl: 'https://streamr.network/api/v1',
             // Automatically connect on first subscribe
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
@@ -694,17 +694,13 @@ export default class StreamrClient extends EventEmitter {
             sub.once('subscribed', async () => {
                 if (sub.hasResendOptions()) {
                     await this._requestResend(sub)
-                    // the requested messages might not have been stored yet, so retry if no answer after 'retryResendAfter' seconds
-                    const secondResend = setTimeout(() => this._requestResend(sub), this.options.retryResendAfter)
                     // once a message is received, gap filling in Subscription.js will check if this satisfies the resend and request
                     // another resend if it doesn't. So we can anyway clear this resend request.
                     const handler = () => {
-                        clearTimeout(secondResend)
                         sub.removeListener('resend done', handler)
                         sub.removeListener('message received', handler)
                         sub.removeListener('unsubscribed', handler)
                         sub.removeListener('error', handler)
-                        sub.finishResend()
                     }
                     sub.once('resend done', handler)
                     sub.once('message received', handler)

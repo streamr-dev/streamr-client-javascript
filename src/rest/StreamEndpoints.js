@@ -143,10 +143,11 @@ export function publishHttp(streamObjectOrId, data, requestOptions = {}, keepAli
     return authFetch(
         `${this.options.restUrl}/streams/${streamId}/data`,
         this.session,
-        Object.assign({}, requestOptions, {
+        {
+            ...requestOptions,
             method: 'POST',
             body: JSON.stringify(data),
             agent: keepAlive ? getKeepAliveAgentForUrl(this.options.restUrl) : undefined,
-        }),
+        },
     )
 }

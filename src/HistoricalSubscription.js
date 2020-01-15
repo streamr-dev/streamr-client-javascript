@@ -81,18 +81,12 @@ export default class HistoricalSubscription extends AbstractSubscription {
         }
     }
 
-    finishResend(isNoResend = false) {
-        // if after a first resend request no messages are received (received ResendResponseNoResend),
-        // we wait for the response to the second resend request before considering the resend done (messages might have been stored in between)
-        if (isNoResend && !this.firstNoResendReceived) {
-            this.firstNoResendReceived = true
+    finishResend() {
+        this._lastMessageHandlerPromise = null
+        if (this.encryptedMsgsQueue.length > 0) { // received all historical messages but not yet the keys to decrypt them
+            this.resendDone = true
         } else {
-            this._lastMessageHandlerPromise = null
-            if (this.encryptedMsgsQueue.length > 0) { // received all historical messages but not yet the keys to decrypt them
-                this.resendDone = true
-            } else {
-                this.emit('resend done')
-            }
+            this.emit('resend done')
         }
     }
 }
