@@ -1070,8 +1070,8 @@ describe('StreamrClient', () => {
                     }
                 }
             }, createConnectionMock())
-            c.subscribedStreams = {
-                streamId: {
+            c.subscribedStreamPartitions = {
+                streamId0: {
                     setSubscriptionsGroupKeys: sinon.stub()
                 }
             }
@@ -1093,8 +1093,8 @@ describe('StreamrClient', () => {
                     }
                 }
             }, createConnectionMock())
-            c.subscribedStreams = {
-                streamId: {
+            c.subscribedStreamPartitions = {
+                streamId0: {
                     setSubscriptionsGroupKeys: sinon.stub()
                 }
             }

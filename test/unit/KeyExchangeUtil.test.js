@@ -28,8 +28,8 @@ function setupClient() {
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 17)
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 25)
     client.keyStorageUtil.addKey('streamId', crypto.randomBytes(32), 35)
-    client.subscribedStreams = {
-        streamId: {
+    client.subscribedStreamPartitions = {
+        streamId0: { // 'streamId' + 0 (stream partition)
             setSubscriptionsGroupKey: sinon.stub(),
         },
     }
