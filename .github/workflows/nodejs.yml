@@ -48,7 +48,7 @@ jobs:
 #        while true; do http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/v1/volume); if [ "$http_code" = 200 ]; then echo "brokers up and running"; break; else echo "brokers not receiving connections"; sleep 5s; fi; done
 #        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start ganache
         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start community-product
-         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
         while true; do http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8085/communities); if [ $http_code = 200 ]; then echo "community products server ready"; break; else echo "community products server not starting"; sleep 1s; fi; done
         echo "started"
 #        npm run test-integration
