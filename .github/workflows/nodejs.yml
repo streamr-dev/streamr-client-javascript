@@ -5,11 +5,7 @@ on:
     # run every day at 00:00
     - cron:  '0 0 * * *'
   push:
-    branches:
-      - master
   pull_request:
-    branches:
-      - '*'
 
 jobs:
   build:
