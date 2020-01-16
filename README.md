@@ -134,7 +134,7 @@ subscriberGroupKeys | {} | Object defining, for each stream id, an object contai
 ### Authentication options
 
 Authenticating with an API key (you can manage your API keys in the [Streamr web app](https://streamr.network)):
-```
+```javascript
 new StreamrClient({
     auth: {
         apiKey: 'your-api-key'
@@ -142,7 +142,7 @@ new StreamrClient({
 })
 ```
 Authenticating with an Ethereum private key by cryptographically signing a challenge. Note the utility function `StreamrClient.generateEthereumAccount()`, which can be used to easily get the address and private key for a newly generated account. Authenticating with Ethereum also automatically creates an associated Streamr user, if it doesn't exist:
-```
+```javascript
 new StreamrClient({
     auth: {
         privateKey: 'your-private-key'
@@ -150,7 +150,7 @@ new StreamrClient({
 })
 ```
 Authenticating with an Ethereum private key contained in an Ethereum (web3) provider:
-```
+```javascript
 new StreamrClient({
     auth: {
         provider: web3.currentProvider,
@@ -158,7 +158,7 @@ new StreamrClient({
 })
 ```
 (Authenticating with an username and password, for internal use by the Streamr app):
-```
+```javascript
 new StreamrClient({
     auth: {
         username: 'my@email.com',
@@ -167,7 +167,7 @@ new StreamrClient({
 })
 ```
 (Authenticating with a pre-existing session token, for internal use by the Streamr app):
-```
+```javascript
 new StreamrClient({
     auth: {
         sessionToken: 'session-token'
@@ -294,7 +294,7 @@ createSecret(communityAddress, secret[, name]) | Create a secret for a community
 communityIsReady(address) | | Wait until community is operated
 addMembers(communityAddress, memberAddressList) | | Add members
 kick(communityAddress, memberAddressList) | | Kick members out from community
-```
+```javascript
 const community = await client.deployCommunity()
 community.address           // already available before deployment
 await community.deployed()  // waits until contract is deployed
@@ -382,7 +382,7 @@ Partitioning (sharding) enables streams to scale horizontally. This section desc
 
 By default, streams only have 1 partition when they are created. The partition count can be set to any positive number (1-100 is reasonable). An example of creating a partitioned stream using the JS client:
 
-```
+```javascript
 client.createStream({
     name: 'My partitioned stream',
     partitions: 10,
@@ -399,7 +399,7 @@ The library allows the user to choose a *partition key*, which simplifies publis
 
 The partition key can be given as an argument to the `publish` methods, and the library assigns a deterministic partition number automatically:
 
-```
+```javascript
 client.publish('my-stream-id', msg, Date.now(), msg.vehicleId)
 
 // or, equivalently
@@ -410,7 +410,7 @@ stream.publish(msg, Date.now(), msg.vehicleId)
 
 By default, the JS client subscribes to the first partition (partition `0`) in a stream. The partition number can be explicitly given in the subscribe call:
 
-```
+```javascript
 client.subscribe(
     {
         stream: 'my-stream-id',
@@ -424,7 +424,7 @@ client.subscribe(
 
 Or, to subscribe to multiple partitions, if the subscriber can handle the volume:
 
-```
+```javascript
 const handler = (payload, streamMessage) => {
     console.log(`Got message ${JSON.stringify(payload)} from partition ${streamMessage.getStreamPartition()}`)
 }
