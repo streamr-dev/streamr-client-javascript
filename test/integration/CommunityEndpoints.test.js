@@ -1,17 +1,13 @@
-import assert from 'assert'
-
 import { Contract, providers, utils, Wallet } from 'ethers'
+import debug from 'debug'
+import { wait } from 'streamr-test-utils'
 
 import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
 
 import config from './config'
 
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms)
-    })
-}
+const log = debug('StreamrClient::CommunityEndpoints::integration-test')
 
 describe('CommunityEndPoints', () => {
     let community
@@ -22,10 +18,10 @@ describe('CommunityEndPoints', () => {
 
     beforeAll(async () => {
         testProvider = new providers.JsonRpcProvider(config.ethereumServerUrl)
-        const network = await testProvider.getNetwork().catch((e) => {
-            throw new Error(`Connecting to Ethereum failed, config = ${JSON.stringify(config)}`, e)
-        })
-        console.log('Connected to Ethereum network: ', JSON.stringify(network))
+        log(`Connecting to Ethereum network, config = ${JSON.stringify(config)}`)
+
+        const network = await testProvider.getNetwork()
+        log('Connected to Ethereum network: ', JSON.stringify(network))
 
         adminWallet = new Wallet(config.privateKey, testProvider)
         adminClient = new StreamrClient({
@@ -37,20 +33,17 @@ describe('CommunityEndPoints', () => {
             ...config.clientOptions,
         })
 
-        console.log('beforeAll done')
+        log('beforeAll done')
     })
     beforeEach(async () => {
-        console.log('starting beforeEach')
         await adminClient.ensureConnected()
-        console.log('deploying new community...')
         community = await adminClient.deployCommunity({
             provider: testProvider,
         })
-        console.log(`Going to deploy to ${community.address}`)
         await community.deployed()
-        console.log(`Deployment done for ${community.address}`)
+        log(`Deployment done for ${community.address}`)
         await community.isReady(2000, 200000)
-        console.log(`Community ${community.address} is ready to roll`)
+        log(`Community ${community.address} is ready to roll`)
         await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
     }, 300000)
 
@@ -65,20 +58,20 @@ describe('CommunityEndPoints', () => {
         ]
 
         it('can add and remove members', async () => {
-            console.log('starting test')
-            await adminClient.communityIsReady(community.address, console.log)
+            log('starting test')
+            await adminClient.communityIsReady(community.address, log)
 
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
             await adminClient.hasJoined(community.address, memberAddressList[0])
             const res = await adminClient.getCommunityStats(community.address)
-            assert.deepStrictEqual(res.memberCount, {
+            expect(res.memberCount).toEqual({
                 total: 3, active: 3, inactive: 0
             })
 
             await adminClient.kick(community.address, memberAddressList.slice(1), testProvider)
-            await sleep(1000) // TODO: instead of sleeping, find a way to check server has registered the parting
+            await wait(1000) // TODO: instead of sleeping, find a way to check server has registered the parting
             const res2 = await adminClient.getCommunityStats(community.address)
-            assert.deepStrictEqual(res2.memberCount, {
+            expect(res2.memberCount).toEqual({
                 total: 3, active: 1, inactive: 2
             })
         }, 300000)
@@ -107,13 +100,15 @@ describe('CommunityEndPoints', () => {
 
             const res = await memberClient.joinCommunity(community.address, 'secret')
             await memberClient.hasJoined(community.address)
-            assert.strictEqual(res.state, 'ACCEPTED')
-            assert.strictEqual(res.memberAddress, memberWallet.address)
-            assert.strictEqual(res.communityAddress, community.address)
+            expect(res).toMatchObject({
+                state: 'ACCEPTED',
+                memberAddress: memberWallet.address,
+                communityAddress: community.address,
+            })
 
-            // too much bother to check this in a separate test...
+            // too much bother to check this in a separate test... TODO: split
             const res2 = await memberClient.getMemberStats(community.address)
-            assert.deepStrictEqual(res2, {
+            expect(res2).toEqual({
                 address: memberWallet.address,
                 earnings: '0',
                 recordedEarnings: '0',
@@ -126,19 +121,19 @@ describe('CommunityEndPoints', () => {
             const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
             const tx = await opToken.mint(community.address, utils.parseEther('1'))
             const tr = await tx.wait(2)
-            assert.strictEqual(tr.events[0].event, 'Transfer')
-            assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
-            assert.strictEqual(tr.events[0].args.to, community.address)
-            assert.strictEqual(tr.events[0].args.value.toString(), '1000000000000000000')
-            await sleep(1000)
+            expect(tr.events[0].event).toBe('Transfer')
+            expect(tr.events[0].args.from).toBe('0x0000000000000000000000000000000000000000')
+            expect(tr.events[0].args.to).toBe(community.address)
+            expect(tr.events[0].args.value.toString()).toBe('1000000000000000000')
+            await wait(1000)
 
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
             let res3 = await memberClient.getMemberStats(community.address)
             while (!res3.withdrawableBlockNumber) {
-                await sleep(4000)
+                await wait(4000)
                 res3 = await memberClient.getMemberStats(community.address)
             }
-            assert.deepStrictEqual(res3, {
+            expect(res3).toEqual({
                 address: memberWallet.address,
                 earnings: '1000000000000000000',
                 recordedEarnings: '1000000000000000000',
@@ -151,18 +146,18 @@ describe('CommunityEndPoints', () => {
             const isValid = await memberClient.validateProof(community.address, {
                 provider: testProvider
             })
-            assert(isValid)
+            expect(isValid).toBeTruthy()
 
             const walletBefore = await opToken.balanceOf(memberWallet.address)
 
             const tr2 = await memberClient.withdraw(community.address, {
                 provider: testProvider
             })
-            assert.strictEqual(tr2.logs[0].address, adminClient.options.tokenAddress)
+            expect(tr2.logs[0].address).toBe(adminClient.options.tokenAddress)
 
             const walletAfter = await opToken.balanceOf(memberWallet.address)
             const diff = walletAfter.sub(walletBefore)
-            assert.strictEqual(diff.toString(), res3.withdrawableEarnings)
+            expect(diff.toString()).toBe(res3.withdrawableEarnings)
         }, 600000)
 
         // TODO: test withdrawTo, withdrawFor, getBalance
@@ -197,27 +192,28 @@ describe('CommunityEndPoints', () => {
             const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
             const tx = await opToken.mint(community.address, utils.parseEther('1'))
             const tr = await tx.wait(2)
-            assert.strictEqual(tr.events[0].event, 'Transfer')
-            assert.strictEqual(tr.events[0].args.from, '0x0000000000000000000000000000000000000000')
-            assert.strictEqual(tr.events[0].args.to, community.address)
+            expect(tr.events[0].event).toBe('Transfer')
+            expect(tr.events[0].args.from).toBe('0x0000000000000000000000000000000000000000')
+            expect(tr.events[0].args.to).toBe(community.address)
 
-            await sleep(1000)
+            await wait(1000)
             let mstats = await client.getMemberStats(community.address, memberAddressList[0])
             while (!mstats.withdrawableBlockNumber) {
-                await sleep(4000)
+                await wait(4000)
                 mstats = await client.getMemberStats(community.address, memberAddressList[0])
             }
 
+            // TODO: clean up asserts
             const cstats = await client.getCommunityStats(community.address)
             const mlist = await client.getMembers(community.address)
 
-            assert.deepStrictEqual(cstats.memberCount, {
+            expect(cstats.memberCount).toEqual({
                 total: 3, active: 3, inactive: 0
             })
-            assert.deepStrictEqual(cstats.totalEarnings, '1000000000000000000')
-            assert.deepStrictEqual(cstats.latestWithdrawableBlock.memberCount, 4)
-            assert.deepStrictEqual(cstats.latestWithdrawableBlock.totalEarnings, '1000000000000000000')
-            assert.deepStrictEqual(mlist, [{
+            expect(cstats.totalEarnings).toBe('1000000000000000000')
+            expect(cstats.latestWithdrawableBlock.memberCount).toBe(4)
+            expect(cstats.latestWithdrawableBlock.totalEarnings).toBe('1000000000000000000')
+            expect(mlist).toEqual([{
                 address: '0x0000000000000000000000000000000000000001',
                 earnings: '333333333333333333'
             },
@@ -229,7 +225,7 @@ describe('CommunityEndPoints', () => {
                 address: '0x000000000000000000000000000000000000bEEF',
                 earnings: '333333333333333333'
             }])
-            assert.deepStrictEqual(mstats, {
+            expect(mstats).toEqual({
                 address: '0x0000000000000000000000000000000000000001',
                 earnings: '333333333333333333',
                 recordedEarnings: '333333333333333333',
