@@ -1,6 +1,9 @@
 import debugFactory from 'debug'
 
 import EncryptionUtil from './EncryptionUtil'
+import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
+import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
+import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
 
 const debug = debugFactory('KeyExchangeUtil')
 const SUBSCRIBERS_EXPIRATION_TIME = 5 * 60 * 1000 // 5 minutes
@@ -14,7 +17,7 @@ export default class KeyExchangeUtil {
         // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
         // does not require signed data for all types of messages.
         if (!streamMessage.signature) {
-            throw new Error('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
+            throw new InvalidGroupKeyRequestError('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
         }
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
@@ -29,12 +32,14 @@ export default class KeyExchangeUtil {
         }
 
         if (keys.length === 0) {
-            throw new Error(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
+            throw new InvalidGroupKeyRequestError(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
         }
         const subscriberId = streamMessage.getPublisherId()
         const valid = await this.isValidSubscriber(parsedContent.streamId, subscriberId)
         if (!valid) {
-            throw new Error(`Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`)
+            throw new InvalidGroupKeyRequestError(
+                `Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`
+            )
         }
 
         const encryptedGroupKeys = []
@@ -53,22 +58,30 @@ export default class KeyExchangeUtil {
         // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
         // does not require signed data for all types of messages.
         if (!streamMessage.signature) {
-            throw new Error('Received unsigned group key response (it must be signed to avoid MitM attacks).')
+            throw new InvalidGroupKeyResponseError('Received unsigned group key response (it must be signed to avoid MitM attacks).')
         }
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
         const parsedContent = streamMessage.getParsedContent()
         // TODO: fix this hack in other PR
         if (!this._client.subscribedStreamPartitions[parsedContent.streamId + '0']) {
-            throw new Error('Received group key response for a stream to which the client is not subscribed.')
+            throw new InvalidGroupKeyResponseError('Received group key response for a stream to which the client is not subscribed.')
         }
 
         if (!this._client.encryptionUtil) {
-            throw new Error('Cannot decrypt group key response without the private key.')
+            throw new InvalidGroupKeyResponseError('Cannot decrypt group key response without the private key.')
         }
         const decryptedGroupKeys = []
         parsedContent.keys.forEach((encryptedGroupKeyObj) => {
             const groupKey = this._client.encryptionUtil.decryptWithPrivateKey(encryptedGroupKeyObj.groupKey, true)
-            EncryptionUtil.validateGroupKey(groupKey)
+            try {
+                EncryptionUtil.validateGroupKey(groupKey)
+            } catch (err) {
+                if (err instanceof InvalidGroupKeyError) {
+                    throw new InvalidGroupKeyResponseError(err.message)
+                } else {
+                    throw err
+                }
+            }
             decryptedGroupKeys.push({
                 groupKey,
                 start: encryptedGroupKeyObj.start

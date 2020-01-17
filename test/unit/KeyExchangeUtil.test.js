@@ -7,6 +7,8 @@ import { MessageLayer } from 'streamr-client-protocol'
 import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
+import InvalidGroupKeyResponseError from '../../src/errors/InvalidGroupKeyResponseError'
+import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
 
 const { StreamMessage } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
@@ -105,6 +107,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.NONE, null,
             )
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
+                assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
                 done()
             })
@@ -118,6 +121,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
+                assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received group key request for stream \'wrong-streamId\' but no group key is set')
                 done()
             })
@@ -131,6 +135,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
+                assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received group key request for stream \'streamId\' from invalid address \'subscriber5\'')
                 done()
             })
@@ -240,6 +245,7 @@ describe('KeyExchangeUtil', () => {
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
+                assert(err instanceof InvalidGroupKeyResponseError)
                 assert.strictEqual(err.message, 'Received unsigned group key response (it must be signed to avoid MitM attacks).')
             }
         })
@@ -257,6 +263,7 @@ describe('KeyExchangeUtil', () => {
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
+                assert(err instanceof InvalidGroupKeyResponseError)
                 assert.strictEqual(err.message, 'Received group key response for a stream to which the client is not subscribed.')
             }
         })
@@ -275,6 +282,7 @@ describe('KeyExchangeUtil', () => {
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
+                assert(err instanceof InvalidGroupKeyResponseError)
                 assert.strictEqual(err.message, 'Group key must have a size of 256 bits, not 128')
             }
         })

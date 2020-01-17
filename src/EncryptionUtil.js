@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
 
 import UnableToDecryptError from './errors/UnableToDecryptError'
+import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
 
 const { StreamMessage } = MessageLayer
 
@@ -157,11 +158,11 @@ export default class EncryptionUtil {
 
     static validateGroupKey(groupKey) {
         if (!(groupKey instanceof Buffer)) {
-            throw new Error(`Group key must be a Buffer: ${groupKey}`)
+            throw new InvalidGroupKeyError(`Group key must be a Buffer: ${groupKey}`)
         }
 
         if (groupKey.length !== 32) {
-            throw new Error(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
+            throw new InvalidGroupKeyError(`Group key must have a size of 256 bits, not ${groupKey.length * 8}`)
         }
     }
 }

@@ -8,6 +8,7 @@ import { MessageLayer } from 'streamr-client-protocol'
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 import Stream from '../../src/rest/domain/Stream'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
+import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
 
 const { StreamMessage } = MessageLayer
 
@@ -397,6 +398,47 @@ describe('MessageCreationUtil', () => {
                 groupKey: 'encrypted-group-key',
                 start: 34524,
             }])
+            assert(streamMessage.signature)
+        })
+    })
+
+    describe('createErrorMessage', () => {
+        const stream = new Stream(null, {
+            id: 'streamId',
+            partitions: 1,
+        })
+        const auth = {
+            username: 'username',
+        }
+        it('should not be able to create unsigned error message', (done) => {
+            const util = new MessageCreationUtil(auth, null, () => Promise.resolve({
+                username: 'username',
+            }), sinon.stub().resolves(stream))
+            util.createErrorMessage('destinationAddress', new Error()).catch((err) => {
+                assert.strictEqual(err.message, 'Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
+                done()
+            })
+        })
+        it('creates correct group key response', async () => {
+            const signer = {
+                signStreamMessage: (streamMessage) => {
+                    /* eslint-disable no-param-reassign */
+                    streamMessage.signatureType = StreamMessage.SIGNATURE_TYPES.ETH
+                    streamMessage.signature = 'signature'
+                    /* eslint-enable no-param-reassign */
+                    return Promise.resolve()
+                },
+            }
+            const util = new MessageCreationUtil(auth, signer, () => Promise.resolve({
+                username: 'username',
+            }), sinon.stub().resolves(stream))
+            const streamMessage = await util.createErrorMessage('destinationAddress', new InvalidGroupKeyRequestError('invalid'))
+            assert.strictEqual(streamMessage.getStreamId(), 'destinationAddress') // sending to subscriber's inbox stream
+            const content = streamMessage.getParsedContent()
+            assert.strictEqual(streamMessage.contentType, StreamMessage.CONTENT_TYPES.ERROR_MSG)
+            assert.strictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NONE)
+            assert.strictEqual(content.code, 'INVALID_GROUP_KEY_REQUEST')
+            assert.deepStrictEqual(content.message, 'invalid')
             assert(streamMessage.signature)
         })
     })
