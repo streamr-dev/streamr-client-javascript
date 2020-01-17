@@ -38,7 +38,7 @@ jobs:
     - name: test-integration
       run: |
         env
-        docker logs -f &
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
         sudo service mysql stop
         git clone https://github.com/streamr-dev/streamr-docker-dev.git
         sudo ifconfig docker0 10.200.10.1/24
