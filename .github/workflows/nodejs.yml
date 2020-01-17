@@ -50,6 +50,11 @@ jobs:
       run: |
         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
 
+    - name: start CPS
+      run: |
+        sleep 1m
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start community-product
+
     - name: lol
       run: |
         echo lol
