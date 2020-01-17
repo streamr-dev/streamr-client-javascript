@@ -35,14 +35,21 @@ jobs:
     - name: eslint
       run: npm run eslint
 
-    - name: test-integration
+    - name: clone dev scripts
+      run: git clone https://github.com/streamr-dev/streamr-docker-dev.git
+
+    - name: start logging
       run: |
         env
         sudo service mysql stop
-        git clone https://github.com/streamr-dev/streamr-docker-dev.git
-        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
         sudo ifconfig docker0 10.200.10.1/24
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
+
+    - name: start services
+      run: |
         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start ganache
         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start community-product
         while true; do http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8085/communities); if [ $http_code = 200 ]; then echo "community products server ready"; break; else echo "community products server not starting"; sleep 1s; fi; done
-        sleep 20s
+
+    - name: lol
+      run: echo lol
