@@ -39,6 +39,9 @@ export default class GroupKeyHistory {
     }
 
     addKey(groupKey, start) {
+        if (this.keys.length > 0 && this.keys[this.keys.length - 1].start > start) {
+            throw new Error(`Cannot add an older key to a group key history (key start time: ${start})`)
+        }
         this.keys.push({
             groupKey,
             start: start || Date.now()

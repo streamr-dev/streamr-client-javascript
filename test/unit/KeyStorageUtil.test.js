@@ -16,6 +16,19 @@ describe('KeyStorageUtil', () => {
             assert.strictEqual(util.hasKey('wrong-streamId'), false)
         })
     })
+    describe('addKey()', () => {
+        it('throws if adding an older key', () => {
+            const util = KeyStorageUtil.getKeyStorageUtil({
+                streamId: {
+                    groupKey: crypto.randomBytes(32),
+                    start: Date.now()
+                }
+            })
+            assert.throws(() => {
+                util.addKey('streamId', crypto.randomBytes(32), 0)
+            }, /Error/)
+        })
+    })
     describe('getLatestKey()', () => {
         it('returns undefined if no key history', () => {
             const util = KeyStorageUtil.getKeyStorageUtil()
