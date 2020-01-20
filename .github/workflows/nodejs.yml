@@ -57,4 +57,4 @@ jobs:
         sleep 1m
 
     - name: run integration test
-      run: npm run test-integration
+      run: env DEBUG=* ./node_modules/.bin/jest test/integration/CommunityEndpoints.test.js
