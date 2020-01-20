@@ -54,8 +54,7 @@ jobs:
       run: |
         sleep 1m
         ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start community-product
-
-    - name: lol
-      run: |
-        echo lol
         sleep 1m
+
+    - name: run integration test
+      run: npm run test-integration
