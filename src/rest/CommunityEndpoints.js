@@ -119,18 +119,13 @@ function parseWalletFromOptions(client, options) {
  */
 export async function deployCommunity(options) {
     const wallet = parseWalletFromOptions(this, options)
-
-    const blockFreezePeriodSeconds = options.blockFreezePeriodSeconds || 0
-    const adminFee = options.adminFee || 0
-    const tokenAddress = options.tokenAddress || this.options.tokenAddress
-    const streamrNodeAddress = options.streamrNodeAddress || this.options.streamrNodeAddress
-    const streamrOperatorAddress = options.streamrOperatorAddress || this.options.streamrOperatorAddress
-    // const {blockFreezePeriodSeconds, adminFeeFraction, tokenAddress, streamrNodeAddress, operatorAddress} = {
-    //     blockFreezePeriodSeconds: 0,
-    //     adminFee: 0,
-    //     ...this.options,
-    //     ...options,
-    // }
+    const {
+        blockFreezePeriodSeconds = 0,
+        adminFee = 0,
+        tokenAddress = this.options.tokenAddress,
+        streamrNodeAddress = this.options.streamrNodeAddress,
+        streamrOperatorAddress = this.options.streamrOperatorAddress
+    } = options
 
     await throwIfNotContract(wallet.provider, tokenAddress, 'options.tokenAddress')
     await throwIfBadAddress(streamrNodeAddress, 'options.streamrNodeAddress')
