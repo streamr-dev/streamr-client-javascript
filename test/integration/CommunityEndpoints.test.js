@@ -47,8 +47,14 @@ describe('CommunityEndPoints', () => {
         await adminClient.createSecret(community.address, 'secret', 'CommunityEndpoints test secret')
     }, 300000)
 
-    afterAll(async () => adminClient.ensureDisconnected())
-    afterAll(() => testProvider.removeAllListeners())
+    afterAll(async () => {
+        if (!adminClient) { return }
+        await adminClient.ensureDisconnected()
+    })
+
+    afterAll(async () => {
+        await testProvider.removeAllListeners()
+    })
 
     describe('Admin', () => {
         const memberAddressList = [
@@ -80,15 +86,11 @@ describe('CommunityEndPoints', () => {
     })
 
     describe('Members', () => {
-        it('can join the community, and get their balances and stats, and check proof, and withdraw', async () => {
-            // send eth so the member can afford to send tx
-            const memberWallet = new Wallet('0x0000000000000000000000000000000000000000000000000000000000000001', testProvider)
-            await adminWallet.sendTransaction({
-                to: memberWallet.address,
-                value: utils.parseEther('1'),
-            })
+        let memberClient
+        const memberWallet = new Wallet('0x0000000000000000000000000000000000000000000000000000000000000001', testProvider)
 
-            const memberClient = new StreamrClient({
+        beforeAll(async () => {
+            memberClient = new StreamrClient({
                 auth: {
                     privateKey: memberWallet.privateKey
                 },
@@ -97,6 +99,19 @@ describe('CommunityEndPoints', () => {
                 ...config.clientOptions,
             })
             await memberClient.ensureConnected()
+        })
+
+        afterAll(async () => {
+            if (!memberClient) { return }
+            await memberClient.ensureDisconnected()
+        })
+
+        it('can join the community, and get their balances and stats, and check proof, and withdraw', async () => {
+            // send eth so the member can afford to send tx
+            await adminWallet.sendTransaction({
+                to: memberWallet.address,
+                value: utils.parseEther('1'),
+            })
 
             const res = await memberClient.joinCommunity(community.address, 'secret')
             await memberClient.hasJoined(community.address)
@@ -181,7 +196,10 @@ describe('CommunityEndPoints', () => {
                 ...config.clientOptions,
             })
         })
-        afterAll(async () => client.ensureDisconnected())
+        afterAll(async () => {
+            if (!client) { return }
+            await client.ensureDisconnected()
+        })
 
         it('can get community stats, member list, and member stats', async () => {
             await adminClient.addMembers(community.address, memberAddressList, testProvider)
