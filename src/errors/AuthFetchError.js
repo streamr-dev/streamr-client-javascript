@@ -1,6 +1,6 @@
 export default class AuthFetchError extends Error {
     constructor(message, response, body) {
-        super(message)
+        super(message + (typeof body === 'string' ? body : JSON.stringify(body)))
         this.response = response
         this.body = body
 
