@@ -35,7 +35,7 @@ function throwIfBadAddress(address, variableDescription) {
     try {
         return getAddress(address)
     } catch (e) {
-        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}`)
+        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}. Original error: ${e.stack}.`)
     }
 }
 
@@ -119,18 +119,13 @@ function parseWalletFromOptions(client, options) {
  */
 export async function deployCommunity(options) {
     const wallet = parseWalletFromOptions(this, options)
-
-    const blockFreezePeriodSeconds = options.blockFreezePeriodSeconds || 0
-    const adminFee = options.adminFee || 0
-    const tokenAddress = options.tokenAddress || this.options.tokenAddress
-    const streamrNodeAddress = options.streamrNodeAddress || this.options.streamrNodeAddress
-    const streamrOperatorAddress = options.streamrOperatorAddress || this.options.streamrOperatorAddress
-    // const {blockFreezePeriodSeconds, adminFeeFraction, tokenAddress, streamrNodeAddress, operatorAddress} = {
-    //     blockFreezePeriodSeconds: 0,
-    //     adminFee: 0,
-    //     ...this.options,
-    //     ...options,
-    // }
+    const {
+        blockFreezePeriodSeconds = 0,
+        adminFee = 0,
+        tokenAddress = this.options.tokenAddress,
+        streamrNodeAddress = this.options.streamrNodeAddress,
+        streamrOperatorAddress = this.options.streamrOperatorAddress
+    } = options
 
     await throwIfNotContract(wallet.provider, tokenAddress, 'options.tokenAddress')
     await throwIfBadAddress(streamrNodeAddress, 'options.streamrNodeAddress')
@@ -163,20 +158,19 @@ export async function deployCommunity(options) {
  * Await this function when you want to make sure a community is deployed and ready to use
  * @param {EthereumAddress} address of the community
  * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if community is ready
- * @param {Number} timeoutMs (optional, default: 60000) give up
+ * @param {Number} retryTimeoutMs (optional, default: 60000) give up sending more retries
  * @return {Promise} resolves when community server is ready to operate the community (or fails with HTTP error)
  */
-export async function communityIsReady(address, pollingIntervalMs, timeoutMs) {
+export async function communityIsReady(address, pollingIntervalMs = 1000, retryTimeoutMs = 60000) {
     let stats = await get(this, address, '/stats')
-    const timeout = timeoutMs || 60000
     const startTime = Date.now()
-    while (stats.error && Date.now() < startTime + timeout) {
+    while (stats.error && Date.now() < startTime + retryTimeoutMs) {
         debug(`Waiting for community ${address} to start. Status: ${JSON.stringify(stats)}`)
-        await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
+        await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
         stats = await get(this, address, '/stats') // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
-        throw new Error(`Community failed to start within ${timeout} ms. Status: ${JSON.stringify(stats)}`)
+        throw new Error(`Community failed to start, retried for ${retryTimeoutMs} ms. Status: ${JSON.stringify(stats)}`)
     }
 }
 
@@ -243,10 +237,10 @@ export async function joinCommunity(communityAddress, secret) {
  * @param {EthereumAddress} communityAddress
  * @param {EthereumAddress} memberAddress (optional, default is StreamrClient's auth: privateKey)
  * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
- * @param {Number} timeoutMs (optional, default: 60000) give up
+ * @param {Number} retryTimeoutMs (optional, default: 60000) give up
  * @return {Promise} resolves when member is in the community (or fails with HTTP error)
  */
-export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs, timeoutMs) {
+export async function hasJoined(communityAddress, memberAddress, pollingIntervalMs = 1000, retryTimeoutMs = 60000) {
     let address = memberAddress
     if (!address) {
         const authKey = this.options.auth && this.options.auth.privateKey
@@ -258,13 +252,13 @@ export async function hasJoined(communityAddress, memberAddress, pollingInterval
 
     let stats = await get(this, communityAddress, `/members/${address}`)
     const startTime = Date.now()
-    while (stats.error && Date.now() < startTime + (timeoutMs || 60000)) {
+    while (stats.error && Date.now() < startTime + retryTimeoutMs) {
         debug(`Waiting for member ${address} to be accepted into community ${communityAddress}. Status: ${JSON.stringify(stats)}`)
-        await sleep(pollingIntervalMs || 1000) // eslint-disable-line no-await-in-loop
+        await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
         stats = await get(this, communityAddress, `/members/${address}`) // eslint-disable-line no-await-in-loop
     }
     if (stats.error) {
-        throw new Error(`Member failed to join within ${timeoutMs} ms. Status: ${JSON.stringify(stats)}`)
+        throw new Error(`Member failed to join, retried for ${retryTimeoutMs} ms. Status: ${JSON.stringify(stats)}`)
     }
 }
 
@@ -388,7 +382,7 @@ export async function getWithdrawTx(communityAddress, options) {
     const wallet = parseWalletFromOptions(this, options)
     const stats = await this.getMemberStats(communityAddress, wallet.address) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
-        throw new Error('No earnings to withdraw.')
+        throw new Error(`No earnings to withdraw. Server response: ${JSON.stringify(stats)}`)
     }
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
     return contract.withdrawAll(stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof)
@@ -415,7 +409,7 @@ export async function withdrawFor(memberAddress, communityAddress, options) {
 export async function getWithdrawTxFor(memberAddress, communityAddress, options) {
     const stats = await this.getMemberStats(communityAddress, memberAddress) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
-        throw new Error('No earnings to withdraw.')
+        throw new Error(`No earnings to withdraw. Server response: ${JSON.stringify(stats)}`)
     }
     const wallet = parseWalletFromOptions(this, options)
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
@@ -445,7 +439,7 @@ export async function getWithdrawTxTo(recipientAddress, communityAddress, option
     const wallet = parseWalletFromOptions(this, options)
     const stats = await this.getMemberStats(communityAddress, wallet.address) // throws on connection errors
     if (!stats.withdrawableBlockNumber) {
-        throw new Error('No earnings to withdraw.')
+        throw new Error(`No earnings to withdraw. Server response: ${JSON.stringify(stats)}`)
     }
     const contract = new Contract(communityAddress, CommunityProduct.abi, wallet)
     return contract.withdrawAllTo(recipientAddress, stats.withdrawableBlockNumber, stats.withdrawableEarnings, stats.proof, options)
