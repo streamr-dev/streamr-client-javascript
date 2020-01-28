@@ -933,7 +933,7 @@ describe('StreamrClient', () => {
                     }, Date.now())
                 })
             })
-        }, 150000)
+        })
         it('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
             client.once('error', done)
             const id = Date.now()
