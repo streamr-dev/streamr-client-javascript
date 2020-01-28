@@ -171,7 +171,7 @@ export default class StreamrClient extends EventEmitter {
                     debug('WARN: %s', err.message)
                     // we don't notify the error to the originator if the message is unauthenticated.
                     if (streamMessage.signature) {
-                        const errorMessage = this.msgCreationUtil.createErrorMessage(streamMessage.getPublisherId(), err)
+                        const errorMessage = await this.msgCreationUtil.createErrorMessage(streamMessage.getPublisherId(), err)
                         this.publishStreamMessage(errorMessage)
                     }
                 }
