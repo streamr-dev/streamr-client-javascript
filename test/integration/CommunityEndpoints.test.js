@@ -124,6 +124,7 @@ describe('CommunityEndPoints', () => {
             // too much bother to check this in a separate test... TODO: split
             const res2 = await memberClient.getMemberStats(community.address)
             expect(res2).toEqual({
+                active: true,
                 address: memberWallet.address,
                 earnings: '0',
                 recordedEarnings: '0',
@@ -149,6 +150,7 @@ describe('CommunityEndPoints', () => {
                 res3 = await memberClient.getMemberStats(community.address)
             }
             expect(res3).toEqual({
+                active: true,
                 address: memberWallet.address,
                 earnings: '1000000000000000000',
                 recordedEarnings: '1000000000000000000',
@@ -232,18 +234,22 @@ describe('CommunityEndPoints', () => {
             expect(cstats.latestWithdrawableBlock.memberCount).toBe(4)
             expect(cstats.latestWithdrawableBlock.totalEarnings).toBe('1000000000000000000')
             expect(mlist).toEqual([{
+                active: true,
                 address: '0x0000000000000000000000000000000000000001',
                 earnings: '333333333333333333'
             },
             {
+                active: true,
                 address: '0x0000000000000000000000000000000000000002',
                 earnings: '333333333333333333'
             },
             {
+                active: true,
                 address: '0x000000000000000000000000000000000000bEEF',
                 earnings: '333333333333333333'
             }])
             expect(mstats).toEqual({
+                active: true,
                 address: '0x0000000000000000000000000000000000000001',
                 earnings: '333333333333333333',
                 recordedEarnings: '333333333333333333',
