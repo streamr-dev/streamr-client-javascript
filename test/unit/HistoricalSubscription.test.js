@@ -567,7 +567,7 @@ describe('HistoricalSubscription', () => {
     })
 
     describe('handleResent()', () => {
-        it('arms the Subscription to emit the resent event and resend done event on last message (message handler completes BEFORE resent)', async (done) => {
+        it('emits the "resent" + "resend done" events on last message (message handler completes BEFORE resent)', async (done) => {
             const handler = sinon.stub()
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
@@ -611,7 +611,9 @@ describe('HistoricalSubscription', () => {
             sub.addPendingResendRequestId('requestId1')
             sub.addPendingResendRequestId('requestId2')
             let counter = 0
-            sub.on('resent', () => counter++)
+            sub.on('resent', () => {
+                counter += 1
+            })
             sub.on('resend done', () => {
                 assert.strictEqual(counter, 2)
                 done()
@@ -653,7 +655,9 @@ describe('HistoricalSubscription', () => {
             sub.addPendingResendRequestId('requestId1')
             sub.addPendingResendRequestId('requestId2')
             let counter = 0
-            sub.on('no_resend', () => counter++)
+            sub.on('no_resend', () => {
+                counter += 1
+            })
             sub.on('resend done', () => {
                 assert.strictEqual(counter, 2)
                 done()
