@@ -567,13 +567,13 @@ describe('HistoricalSubscription', () => {
     })
 
     describe('handleResent()', () => {
-        it('arms the Subscription to emit the resent event on last message (message handler completes BEFORE resent)', async (done) => {
+        it('arms the Subscription to emit the resent event and resend done event on last message (message handler completes BEFORE resent)', async (done) => {
             const handler = sinon.stub()
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
                 last: 1
             })
             sub.addPendingResendRequestId('requestId')
-            sub.on('resent', () => done())
+            sub.on('resent', () => sub.on('resend done', () => done()))
             await sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
         })
@@ -588,16 +588,79 @@ describe('HistoricalSubscription', () => {
             sub.handleResentMessage(msg, sinon.stub().resolves(true))
             sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
         })
+
+        it('should not emit "resend done" after receiving "resent" if there are still pending resend requests', async (done) => {
+            const handler = sinon.stub()
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
+            sub.addPendingResendRequestId('requestId1')
+            sub.addPendingResendRequestId('requestId2')
+            sub.on('resend done', () => {
+                throw new Error('resend is not done yet! (still waiting for answer to requestId2)')
+            })
+            sub.on('resent', () => setTimeout(done, 2000))
+            await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId1'))
+        })
+        it('emits 2 "resent" and 1 "resend done" after receiving 2 pending resend response', async (done) => {
+            const handler = sinon.stub()
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
+            sub.addPendingResendRequestId('requestId1')
+            sub.addPendingResendRequestId('requestId2')
+            let counter = 0
+            sub.on('resent', () => counter++)
+            sub.on('resend done', () => {
+                assert.strictEqual(counter, 2)
+                done()
+            })
+            await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId1'))
+            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId2'))
+        })
     })
 
     describe('handleNoResend()', () => {
-        it('emits the no_resend event', (done) => {
+        it('emits the no_resend event and then the resend done event', (done) => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1
             })
             sub.addPendingResendRequestId('requestId')
-            sub.on('no_resend', () => done())
+            sub.on('no_resend', () => sub.on('resend done', () => done()))
             sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
+        })
+        it('should not emit "resend done" after receiving "resent" if there are still pending resend requests', async (done) => {
+            const handler = sinon.stub()
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
+            sub.addPendingResendRequestId('requestId1')
+            sub.addPendingResendRequestId('requestId2')
+            sub.on('resend done', () => {
+                throw new Error('resend is not done yet! (still waiting for answer to requestId2)')
+            })
+            sub.on('no_resend', () => setTimeout(done, 2000))
+            await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId1'))
+        })
+        it('emits 2 "resent" and 1 "resend done" after receiving 2 pending resend response', async (done) => {
+            const handler = sinon.stub()
+            const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), handler, {
+                last: 1
+            })
+            sub.addPendingResendRequestId('requestId1')
+            sub.addPendingResendRequestId('requestId2')
+            let counter = 0
+            sub.on('no_resend', () => counter++)
+            sub.on('resend done', () => {
+                assert.strictEqual(counter, 2)
+                done()
+            })
+            await sub.handleResentMessage(msg, sinon.stub().resolves(true))
+            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId1'))
+            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId2'))
         })
     })
 })
