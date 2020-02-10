@@ -51,3 +51,6 @@ jobs:
         while true; do http_code=$(curl -sS -o /dev/null -w "%{http_code}" http://localhost:8085/communities || true); if [ $http_code = 200 ]; then echo "community products server ready"; break; else echo "community products server not starting"; sleep 1s; fi; done
         echo 'running tests...'
         npm run test-integration
+
+    - name: test-build
+      run: npm run build
