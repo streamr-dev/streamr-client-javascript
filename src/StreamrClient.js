@@ -403,7 +403,7 @@ export default class StreamrClient extends EventEmitter {
         // TODO remove _addSubscription after uncoupling Subscription and Resend
         sub.setState(Subscription.State.subscribed)
         this._addSubscription(sub)
-        sub.on('initial_resend_done', () => this._removeSubscription(sub))
+        sub.once('initial_resend_done', () => this._removeSubscription(sub))
         await this._requestResend(sub)
         return sub
     }
