@@ -510,6 +510,7 @@ export default class StreamrClient extends EventEmitter {
 
         if (options.groupKeys) {
             Object.keys(options.groupKeys).forEach((publisherId) => {
+                EncryptionUtil.validateGroupKey(options.groupKeys[publisherId])
                 if (!this.options.subscriberGroupKeys[options.stream]) {
                     this.options.subscriberGroupKeys[options.stream] = {}
                 }
@@ -520,17 +521,22 @@ export default class StreamrClient extends EventEmitter {
             })
         }
 
+        const groupKeys = {}
+        Object.keys(this.options.subscriberGroupKeys[options.stream]).forEach((publisherId) => {
+            groupKeys[publisherId] = this.options.subscriberGroupKeys[options.stream][publisherId].groupKey
+        })
+
         // Create the Subscription object and bind handlers
         let sub
         if (options.resend) {
             sub = new CombinedSubscription(
                 options.stream, options.partition || 0, callback, options.resend,
-                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
+                groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
                 this.options.orderMessages, options.onUnableToDecrypt,
             )
         } else {
             sub = new RealTimeSubscription(options.stream, options.partition || 0, callback,
-                options.groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
+                groupKeys, this.options.gapFillTimeout, this.options.retryResendAfter,
                 this.options.orderMessages, options.onUnableToDecrypt)
         }
         sub.on('gap', (from, to, publisherId, msgChainId) => {

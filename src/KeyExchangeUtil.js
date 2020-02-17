@@ -88,7 +88,7 @@ export default class KeyExchangeUtil {
             })
         })
         /* eslint-disable no-underscore-dangle */
-        this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), decryptedGroupKeys)
+        this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId().toLowerCase(), decryptedGroupKeys)
         /* eslint-enable no-underscore-dangle */
         debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
     }

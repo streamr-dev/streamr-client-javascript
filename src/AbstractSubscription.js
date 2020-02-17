@@ -63,7 +63,7 @@ export default class AbstractSubscription extends Subscription {
 
     _decryptAndHandle(orderedMessage) {
         try {
-            const success = this._decryptOrRequestGroupKey(orderedMessage)
+            const success = this._decryptOrRequestGroupKey(orderedMessage, orderedMessage.getPublisherId().toLowerCase())
             if (success) {
                 this.callback(orderedMessage.getParsedContent(), orderedMessage)
                 if (orderedMessage.isByeMessage()) {

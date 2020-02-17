@@ -31,18 +31,19 @@ export default class HistoricalSubscription extends AbstractSubscription {
         })
     }
 
-    _decryptOrRequestGroupKey(msg) {
+    // passing publisherId separately to ensure it is lowercase (See call of this function in AbstractSubscription.js)
+    _decryptOrRequestGroupKey(msg, publisherId) {
         if (msg.encryptionType !== StreamMessage.ENCRYPTION_TYPES.AES && msg.encryptionType !== StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES) {
             return true
         }
 
-        if (!this.keySequences[msg.getPublisherId()]) {
+        if (!this.keySequences[publisherId]) {
             const start = msg.getTimestamp()
             const end = this.resendOptions.to ? this.resendOptions.to : Date.now()
             this._requestGroupKeyAndQueueMessage(msg, start, end)
             return false
         }
-        this.keySequences[msg.getPublisherId()].tryToDecryptResent(msg)
+        this.keySequences[publisherId].tryToDecryptResent(msg)
         return true
     }
 
