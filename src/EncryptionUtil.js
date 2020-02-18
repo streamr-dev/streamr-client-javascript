@@ -130,11 +130,11 @@ export default class EncryptionUtil {
         const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
-                type: 'pkcs1',
+                type: 'spki',
                 format: 'pem',
             },
             privateKeyEncoding: {
-                type: 'pkcs1',
+                type: 'pkcs8',
                 format: 'pem',
             },
         })
@@ -143,16 +143,16 @@ export default class EncryptionUtil {
     }
 
     static validatePublicKey(publicKey) {
-        if (typeof publicKey !== 'string' || !publicKey.startsWith('-----BEGIN RSA PUBLIC KEY-----')
-            || !publicKey.endsWith('-----END RSA PUBLIC KEY-----\n')) {
-            throw new Error('"publicKey" must be a PKCS #1 RSA public key as a string in the PEM format')
+        if (typeof publicKey !== 'string' || !publicKey.startsWith('-----BEGIN PUBLIC KEY-----')
+            || !publicKey.endsWith('-----END PUBLIC KEY-----\n')) {
+            throw new Error('"publicKey" must be a PKCS#8 RSA public key as a string in the PEM format')
         }
     }
 
     static validatePrivateKey(privateKey) {
-        if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----')
-            || !privateKey.endsWith('-----END RSA PRIVATE KEY-----\n')) {
-            throw new Error('"privateKey" must be a PKCS #1 RSA public key as a string in the PEM format')
+        if (typeof privateKey !== 'string' || !privateKey.startsWith('-----BEGIN PRIVATE KEY-----')
+            || !privateKey.endsWith('-----END PRIVATE KEY-----\n')) {
+            throw new Error('"privateKey" must be a PKCS#8 RSA public key as a string in the PEM format')
         }
     }
 

@@ -69,10 +69,10 @@ export default class HistoricalSubscription extends AbstractSubscription {
     }
 
     setGroupKeys(publisherId, groupKeys) {
-        if (this.keySequences[publisherId]) {
+        if (this.keySequences[publisherId.toLowerCase()]) {
             throw new Error(`Received historical group keys for publisher ${publisherId} for a second time.`)
         }
-        this.keySequences[publisherId] = new DecryptionKeySequence(groupKeys)
+        this.keySequences[publisherId.toLowerCase()] = new DecryptionKeySequence(groupKeys)
         this._handleEncryptedQueuedMsgs(publisherId)
         if (this.resendDone) { // the messages in the queue were the last ones to handle
             this.emit('resend done')

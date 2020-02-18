@@ -631,16 +631,17 @@ describe('StreamrClient', () => {
             it('sets the group keys if passed as arguments', () => {
                 connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
+                const groupKey = crypto.randomBytes(32)
                 const sub = client.subscribe({
                     stream: 'stream1',
                     groupKeys: {
-                        publisherId: 'group-key'
+                        publisherId: groupKey
                     }
                 }, () => {
                 })
                 assert(client.options.subscriberGroupKeys.stream1.publisherId.start)
-                assert.strictEqual(client.options.subscriberGroupKeys.stream1.publisherId.groupKey, 'group-key')
-                assert.strictEqual(sub.groupKeys.publisherId, 'group-key')
+                assert.strictEqual(client.options.subscriberGroupKeys.stream1.publisherId.groupKey, groupKey)
+                assert.strictEqual(sub.groupKeys['publisherId'.toLowerCase()], groupKey)
             })
             it('sends a subscribe request for a given partition', () => {
                 connection.expect(SubscribeRequest.create('stream1', 5, 'session-token'))

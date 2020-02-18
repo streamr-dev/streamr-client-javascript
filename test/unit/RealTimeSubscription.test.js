@@ -603,7 +603,7 @@ describe('RealTimeSubscription', () => {
                 let test1Ok = false
                 const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (JSON.stringify(content) === JSON.stringify(data1)) {
-                        assert.deepStrictEqual(sub.groupKeys.publisherId, groupKey2)
+                        assert.deepStrictEqual(sub.groupKeys[msg1.getPublisherId().toLowerCase()], groupKey2)
                         test1Ok = true
                     } else if (test1Ok && JSON.stringify(content) === JSON.stringify(data2)) {
                         done()

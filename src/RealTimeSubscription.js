@@ -10,6 +10,7 @@ export default class RealTimeSubscription extends AbstractSubscription {
     constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true,
         onUnableToDecrypt = AbstractSubscription.defaultUnableToDecrypt) {
         super(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages, onUnableToDecrypt)
+        this.alreadyFailedToDecrypt = {}
         this.resending = false
     }
 
@@ -71,7 +72,7 @@ export default class RealTimeSubscription extends AbstractSubscription {
             throw new Error('Received multiple group keys for a real time subscription (expected one).')
         }
         /* eslint-disable prefer-destructuring */
-        this.groupKeys[publisherId] = groupKeys[0]
+        this.groupKeys[publisherId.toLowerCase()] = groupKeys[0]
         /* eslint-enable prefer-destructuring */
         this._handleEncryptedQueuedMsgs(publisherId)
     }

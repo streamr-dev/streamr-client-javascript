@@ -836,7 +836,7 @@ describe('StreamrClient', () => {
                 }
                 return loop()
             })
-        }, 600000)
+        }, 20000)
 
         it('client.subscribe (realtime with resend)', (done) => {
             client.once('error', done)
@@ -950,7 +950,7 @@ describe('StreamrClient', () => {
                 assert(streamMessage.signature)
 
                 // Now the subscriber knows the group key
-                assert.deepStrictEqual(sub.groupKeys[streamMessage.getPublisherId()], groupKey)
+                assert.deepStrictEqual(sub.groupKeys[streamMessage.getPublisherId().toLowerCase()], groupKey)
 
                 // All good, unsubscribe
                 client.unsubscribe(sub)
@@ -965,7 +965,7 @@ describe('StreamrClient', () => {
                     id,
                 }, Date.now(), null, groupKey)
             })
-        }, 2 * TIMEOUT * 20)
+        }, 2 * TIMEOUT)
 
         it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
             client.once('error', done)

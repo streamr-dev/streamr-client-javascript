@@ -3,7 +3,6 @@ import { Errors, Utils } from 'streamr-client-protocol'
 
 import VerificationFailedError from './errors/VerificationFailedError'
 import InvalidSignatureError from './errors/InvalidSignatureError'
-import EncryptionUtil from './EncryptionUtil'
 import Subscription from './Subscription'
 import UnableToDecryptError from './errors/UnableToDecryptError'
 
@@ -47,7 +46,6 @@ export default class AbstractSubscription extends Subscription {
         })
 
         this.encryptedMsgsQueue = []
-        this.alreadyFailedToDecrypt = {}
         this.waitingForGroupKey = {}
     }
 

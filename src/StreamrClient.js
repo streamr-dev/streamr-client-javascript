@@ -522,9 +522,11 @@ export default class StreamrClient extends EventEmitter {
         }
 
         const groupKeys = {}
-        Object.keys(this.options.subscriberGroupKeys[options.stream]).forEach((publisherId) => {
-            groupKeys[publisherId] = this.options.subscriberGroupKeys[options.stream][publisherId].groupKey
-        })
+        if (this.options.subscriberGroupKeys[options.stream]) {
+            Object.keys(this.options.subscriberGroupKeys[options.stream]).forEach((publisherId) => {
+                groupKeys[publisherId] = this.options.subscriberGroupKeys[options.stream][publisherId].groupKey
+            })
+        }
 
         // Create the Subscription object and bind handlers
         let sub
