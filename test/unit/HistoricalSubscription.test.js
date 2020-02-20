@@ -379,11 +379,15 @@ describe('HistoricalSubscription', () => {
         })
 
         describe('decryption', () => {
+            let sub
+            afterEach(() => {
+                sub.stop()
+            })
             it('should read clear text content without trying to decrypt', (done) => {
                 const msg1 = createMsg(1, 0, null, 0, {
                     foo: 'bar',
                 })
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, msg1.getParsedContent())
                     done()
                 }, {
@@ -398,7 +402,7 @@ describe('HistoricalSubscription', () => {
                 }
                 const msg1 = createMsg(1, 0, null, 0, data)
                 EncryptionUtil.encryptStreamMessage(msg1, groupKey)
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
                 }, {
@@ -414,7 +418,7 @@ describe('HistoricalSubscription', () => {
                     foo: 'bar',
                 })
                 EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
                     last: 1
                 })
                 sub.on('groupKeyMissing', (publisherId, start, end) => {
@@ -440,7 +444,7 @@ describe('HistoricalSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg2, groupKey2)
                 let received1 = null
                 let received2 = null
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (!received1) {
                         received1 = content
                     } else {
@@ -473,7 +477,7 @@ describe('HistoricalSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
                 EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
                 let undecryptableMsg = null
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
                     throw new Error('should not call the handler')
                 }, {
                     last: 1
@@ -513,7 +517,7 @@ describe('HistoricalSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg3, groupKey3)
                 EncryptionUtil.encryptStreamMessage(msg4, groupKey3)
                 const received = []
-                const sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new HistoricalSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     received.push(content)
                 }, {
                     last: 1

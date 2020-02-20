@@ -9,6 +9,7 @@ import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
+import AbstractSubscription from '../../src/AbstractSubscription'
 
 const { StreamMessage } = MessageLayer
 
@@ -437,11 +438,15 @@ describe('RealTimeSubscription', () => {
         })
 
         describe('decryption', () => {
+            let sub
+            afterEach(() => {
+                sub.stop()
+            })
             it('should read clear text content without trying to decrypt', (done) => {
                 const msg1 = createMsg(1, 0, null, 0, {
                     foo: 'bar',
                 })
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, msg1.getParsedContent())
                     done()
                 })
@@ -454,7 +459,7 @@ describe('RealTimeSubscription', () => {
                 }
                 const msg1 = createMsg(1, 0, null, 0, data)
                 EncryptionUtil.encryptStreamMessage(msg1, groupKey)
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     assert.deepStrictEqual(content, data)
                     done()
                 }, {
@@ -469,12 +474,62 @@ describe('RealTimeSubscription', () => {
                     foo: 'bar',
                 })
                 EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
                     publisherId: wrongGroupKey,
                 })
                 sub.on('groupKeyMissing', (publisherId) => {
                     assert.strictEqual(publisherId, msg1.getPublisherId())
                     done()
+                })
+                return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+            })
+            it('emits "groupKeyMissing" multiple times before response received', (done) => {
+                const correctGroupKey = crypto.randomBytes(32)
+                const wrongGroupKey = crypto.randomBytes(32)
+                let counter = 0
+                const msg1 = createMsg(1, 0, null, 0, {
+                    foo: 'bar',
+                })
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
+                    publisherId: wrongGroupKey,
+                }, 200)
+                sub.on('groupKeyMissing', (publisherId) => {
+                    if (counter < 3) {
+                        assert.strictEqual(publisherId, msg1.getPublisherId())
+                        counter += 1
+                    } else {
+                        // fake group key response after 3 requests
+                        sub.setGroupKeys(publisherId, [correctGroupKey])
+                        setTimeout(() => {
+                            if (counter > 3) {
+                                throw new Error('Sent additional group key request after response received.')
+                            }
+                            done()
+                        }, 1000)
+                    }
+                })
+                return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
+            })
+            it('emits "groupKeyMissing" MAX_NB_GROUP_KEY_REQUESTS times before response received', (done) => {
+                const correctGroupKey = crypto.randomBytes(32)
+                const wrongGroupKey = crypto.randomBytes(32)
+                let counter = 0
+                const msg1 = createMsg(1, 0, null, 0, {
+                    foo: 'bar',
+                })
+                const timeout = 200
+                EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
+                    publisherId: wrongGroupKey,
+                }, timeout)
+                sub.on('groupKeyMissing', (publisherId) => {
+                    assert.strictEqual(publisherId, msg1.getPublisherId())
+                    counter += 1
+                    setTimeout(() => {
+                        assert.strictEqual(counter, AbstractSubscription.MAX_NB_GROUP_KEY_REQUESTS)
+                        done()
+                    }, timeout * (AbstractSubscription.MAX_NB_GROUP_KEY_REQUESTS + 2))
                 })
                 return sub.handleBroadcastMessage(msg1, sinon.stub().resolves(true))
             })
@@ -493,7 +548,7 @@ describe('RealTimeSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
                 let received1 = null
                 let received2 = null
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (!received1) {
                         received1 = content
                     } else {
@@ -537,7 +592,7 @@ describe('RealTimeSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg3, groupKey2)
                 EncryptionUtil.encryptStreamMessage(msg4, groupKey2)
                 const received = []
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     received.push(content)
                 }, {
                     publisherId1: wrongGroupKey,
@@ -588,7 +643,7 @@ describe('RealTimeSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg1Pub2, groupKey2)
                 EncryptionUtil.encryptStreamMessage(msg2Pub2, groupKey2)
                 const received = []
-                const sub = new RealTimeSubscription(msg1Pub1.getStreamId(), msg1Pub1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1Pub1.getStreamId(), msg1Pub1.getStreamPartition(), (content) => {
                     received.push(content)
                 }, {
                     publisherId1: wrongGroupKey,
@@ -621,7 +676,7 @@ describe('RealTimeSubscription', () => {
                 EncryptionUtil.encryptStreamMessage(msg1, correctGroupKey)
                 EncryptionUtil.encryptStreamMessage(msg2, correctGroupKey)
                 let undecryptableMsg = null
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), () => {
                     throw new Error('should not call the handler')
                 }, {
                     publisherId: wrongGroupKey,
@@ -650,7 +705,7 @@ describe('RealTimeSubscription', () => {
                 EncryptionUtil.encryptStreamMessageAndNewKey(groupKey2, msg1, groupKey1)
                 EncryptionUtil.encryptStreamMessage(msg2, groupKey2)
                 let test1Ok = false
-                const sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
+                sub = new RealTimeSubscription(msg1.getStreamId(), msg1.getStreamPartition(), (content) => {
                     if (JSON.stringify(content) === JSON.stringify(data1)) {
                         assert.deepStrictEqual(sub.groupKeys[msg1.getPublisherId().toLowerCase()], groupKey2)
                         test1Ok = true

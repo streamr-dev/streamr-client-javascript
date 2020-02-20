@@ -15,6 +15,8 @@ const defaultUnableToDecrypt = (error) => {
     console.warn(`Unable to decrypt: ${toDisplay}`)
 }
 
+const MAX_NB_GROUP_KEY_REQUESTS = 10
+
 export default class AbstractSubscription extends Subscription {
     constructor(streamId, streamPartition, callback, groupKeys, propagationTimeout, resendTimeout, orderMessages = true,
         onUnableToDecrypt = defaultUnableToDecrypt) {
@@ -45,9 +47,9 @@ export default class AbstractSubscription extends Subscription {
             this._clearGaps()
         })
 
-        this.encryptedMsgsQueue = []
         this.encryptedMsgsQueues = {}
         this.waitingForGroupKey = {}
+        this.nbGroupKeyRequests = {}
     }
 
     _addMsgToQueue(encryptedMsg) {
@@ -70,7 +72,7 @@ export default class AbstractSubscription extends Subscription {
 
     _inOrderHandler(orderedMessage) {
         return this._catchAndEmitErrors(() => {
-            if (!this.waitingForGroupKey[orderedMessage.getPublisherId()]) {
+            if (!this.waitingForGroupKey[orderedMessage.getPublisherId().toLowerCase()]) {
                 this._decryptAndHandle(orderedMessage)
             } else {
                 this._addMsgToQueue(orderedMessage)
@@ -100,17 +102,34 @@ export default class AbstractSubscription extends Subscription {
 
     _requestGroupKeyAndQueueMessage(msg, start, end) {
         this.emit('groupKeyMissing', msg.getPublisherId(), start, end)
-        this.waitingForGroupKey[msg.getPublisherId()] = true
+        const publisherId = msg.getPublisherId().toLowerCase()
+        this.nbGroupKeyRequests[publisherId] = 1
+        const timer = setInterval(() => {
+            if (this.nbGroupKeyRequests[publisherId] < MAX_NB_GROUP_KEY_REQUESTS) {
+                this.nbGroupKeyRequests[publisherId] += 1
+                this.emit('groupKeyMissing', msg.getPublisherId(), start, end)
+            } else {
+                console.warn(`Failed to receive group key response from ${publisherId} after ${MAX_NB_GROUP_KEY_REQUESTS} requests.`)
+                this._cancelGroupKeyRequest(publisherId)
+            }
+        }, this.propagationTimeout)
+        this.waitingForGroupKey[publisherId] = timer
         this._addMsgToQueue(msg)
     }
 
     _handleEncryptedQueuedMsgs(publisherId) {
-        delete this.waitingForGroupKey[publisherId]
+        this._cancelGroupKeyRequest(publisherId.toLowerCase())
         const queue = this.encryptedMsgsQueues[publisherId.toLowerCase()]
         while (queue.length > 0) {
             this._decryptAndHandle(queue[0])
             queue.shift()
         }
+    }
+
+    _cancelGroupKeyRequest(publisherId) {
+        clearInterval(this.waitingForGroupKey[publisherId])
+        this.waitingForGroupKey[publisherId] = undefined
+        delete this.waitingForGroupKey[publisherId]
     }
 
     addPendingResendRequestId(requestId) {
@@ -177,6 +196,7 @@ export default class AbstractSubscription extends Subscription {
         if (this.orderingUtil) {
             this.orderingUtil.clearGaps()
         }
+        Object.keys(this.waitingForGroupKey).forEach((publisherId) => this._cancelGroupKeyRequest(publisherId))
     }
 
     stop() {
@@ -240,3 +260,4 @@ export default class AbstractSubscription extends Subscription {
     }
 }
 AbstractSubscription.defaultUnableToDecrypt = defaultUnableToDecrypt
+AbstractSubscription.MAX_NB_GROUP_KEY_REQUESTS = MAX_NB_GROUP_KEY_REQUESTS

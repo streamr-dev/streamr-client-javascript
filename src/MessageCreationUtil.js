@@ -62,10 +62,10 @@ export default class MessageCreationUtil {
     async getPublisherId() {
         if (!this.publisherId) {
             if (this.auth.privateKey !== undefined) {
-                this.publisherId = ethers.utils.computeAddress(this.auth.privateKey)
+                this.publisherId = ethers.utils.computeAddress(this.auth.privateKey).toLowerCase()
             } else if (this.auth.provider !== undefined) {
                 const provider = new ethers.providers.Web3Provider(this.auth.provider)
-                this.publisherId = provider.getSigner().address
+                this.publisherId = provider.getSigner().address.toLowerCase()
             } else if (this.auth.apiKey !== undefined) {
                 const hexString = ethers.utils.hexlify(Buffer.from(await this.getUsername(), 'utf8'))
                 this.publisherId = ethers.utils.sha256(hexString)
@@ -155,7 +155,7 @@ export default class MessageCreationUtil {
                 end,
             }
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(publisherAddress, publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(publisherAddress.toLowerCase(), publisherId)
         const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
             StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
         await this._signer.signStreamMessage(streamMessage)
@@ -171,7 +171,7 @@ export default class MessageCreationUtil {
             streamId,
             keys: encryptedGroupKeys,
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(subscriberAddress, publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(subscriberAddress.toLowerCase(), publisherId)
         const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
             StreamMessage.ENCRYPTION_TYPES.RSA, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
         await this._signer.signStreamMessage(streamMessage)
@@ -187,7 +187,7 @@ export default class MessageCreationUtil {
             code: MessageCreationUtil.getErrorCodeFromError(error),
             message: error.message,
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(destinationAddress, publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(destinationAddress.toLowerCase(), publisherId)
         const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.ERROR_MSG,
             StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
         await this._signer.signStreamMessage(streamMessage)
