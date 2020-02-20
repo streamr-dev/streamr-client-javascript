@@ -554,10 +554,59 @@ describe('RealTimeSubscription', () => {
                 sub.setGroupKeys('publisherId2', [groupKey2])
                 sub.setGroupKeys('publisherId1', [groupKey1])
                 // try again to decrypt the queued messages but this time with the correct key
+                assert.deepStrictEqual(received[0], data3)
+                assert.deepStrictEqual(received[1], data4)
+                assert.deepStrictEqual(received[2], data1)
+                assert.deepStrictEqual(received[3], data2)
+            })
+            it('should queue messages when cannot decrypt and handle them once the keys are updated (multiple publishers interleaved)', async () => {
+                const groupKey1 = crypto.randomBytes(32)
+                const groupKey2 = crypto.randomBytes(32)
+                const wrongGroupKey = crypto.randomBytes(32)
+                const data1 = {
+                    test: 'data1',
+                }
+                const data2 = {
+                    test: 'data2',
+                }
+                const data3 = {
+                    test: 'data3',
+                }
+                const data4 = {
+                    test: 'data4',
+                }
+                const data5 = {
+                    test: 'data5',
+                }
+                const msg1Pub1 = createMsg(1, 0, null, 0, data1, 'publisherId1')
+                const msg2Pub1 = createMsg(2, 0, 1, 0, data2, 'publisherId1')
+                const msg3Pub1 = createMsg(3, 0, 2, 0, data3, 'publisherId1')
+                const msg1Pub2 = createMsg(1, 0, null, 0, data4, 'publisherId2')
+                const msg2Pub2 = createMsg(2, 0, 1, 0, data5, 'publisherId2')
+                EncryptionUtil.encryptStreamMessage(msg1Pub1, groupKey1)
+                EncryptionUtil.encryptStreamMessage(msg2Pub1, groupKey1)
+                EncryptionUtil.encryptStreamMessage(msg1Pub2, groupKey2)
+                EncryptionUtil.encryptStreamMessage(msg2Pub2, groupKey2)
+                const received = []
+                const sub = new RealTimeSubscription(msg1Pub1.getStreamId(), msg1Pub1.getStreamPartition(), (content) => {
+                    received.push(content)
+                }, {
+                    publisherId1: wrongGroupKey,
+                })
+                await sub.handleBroadcastMessage(msg1Pub1, sinon.stub().resolves(true))
+                await sub.handleBroadcastMessage(msg1Pub2, sinon.stub().resolves(true))
+                await sub.handleBroadcastMessage(msg2Pub1, sinon.stub().resolves(true))
+                sub.setGroupKeys('publisherId1', [groupKey1])
+                await sub.handleBroadcastMessage(msg3Pub1, sinon.stub().resolves(true))
+                await sub.handleBroadcastMessage(msg2Pub2, sinon.stub().resolves(true))
+                sub.setGroupKeys('publisherId2', [groupKey2])
+
+                // try again to decrypt the queued messages but this time with the correct key
                 assert.deepStrictEqual(received[0], data1)
                 assert.deepStrictEqual(received[1], data2)
                 assert.deepStrictEqual(received[2], data3)
                 assert.deepStrictEqual(received[3], data4)
+                assert.deepStrictEqual(received[4], data5)
             })
             it('should call "onUnableToDecrypt" when not able to decrypt for the second time', async () => {
                 const correctGroupKey = crypto.randomBytes(32)

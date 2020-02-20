@@ -74,14 +74,14 @@ export default class HistoricalSubscription extends AbstractSubscription {
         }
         this.keySequences[publisherId.toLowerCase()] = new DecryptionKeySequence(groupKeys)
         this._handleEncryptedQueuedMsgs(publisherId)
-        if (this.resendDone) { // the messages in the queue were the last ones to handle
+        if (this.resendDone && this._emptyMsgQueues()) { // the messages in the queue were the last ones to handle
             this.emit('resend done')
         }
     }
 
     finishResend() {
         this._lastMessageHandlerPromise = null
-        if (this.encryptedMsgsQueue.length > 0) { // received all historical messages but not yet the keys to decrypt them
+        if (!this._emptyMsgQueues()) { // received all historical messages but not yet the keys to decrypt them
             this.resendDone = true
         } else {
             this.emit('resend done')

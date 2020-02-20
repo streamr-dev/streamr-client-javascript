@@ -46,7 +46,26 @@ export default class AbstractSubscription extends Subscription {
         })
 
         this.encryptedMsgsQueue = []
+        this.encryptedMsgsQueues = {}
         this.waitingForGroupKey = {}
+    }
+
+    _addMsgToQueue(encryptedMsg) {
+        const publisherId = encryptedMsg.getPublisherId().toLowerCase()
+        if (!this.encryptedMsgsQueues[publisherId]) {
+            this.encryptedMsgsQueues[publisherId] = []
+        }
+        this.encryptedMsgsQueues[publisherId].push(encryptedMsg)
+    }
+
+    _emptyMsgQueues() {
+        const queues = Object.values(this.encryptedMsgsQueues)
+        for (let i = 0; i < queues.length; i++) {
+            if (queues[i].length > 0) {
+                return false
+            }
+        }
+        return true
     }
 
     _inOrderHandler(orderedMessage) {
@@ -54,7 +73,7 @@ export default class AbstractSubscription extends Subscription {
             if (!this.waitingForGroupKey[orderedMessage.getPublisherId()]) {
                 this._decryptAndHandle(orderedMessage)
             } else {
-                this.encryptedMsgsQueue.push(orderedMessage)
+                this._addMsgToQueue(orderedMessage)
             }
         })
     }
@@ -82,14 +101,15 @@ export default class AbstractSubscription extends Subscription {
     _requestGroupKeyAndQueueMessage(msg, start, end) {
         this.emit('groupKeyMissing', msg.getPublisherId(), start, end)
         this.waitingForGroupKey[msg.getPublisherId()] = true
-        this.encryptedMsgsQueue.push(msg)
+        this._addMsgToQueue(msg)
     }
 
     _handleEncryptedQueuedMsgs(publisherId) {
         delete this.waitingForGroupKey[publisherId]
-        while (this.encryptedMsgsQueue.length > 0 && !this.waitingForGroupKey[this.encryptedMsgsQueue[0].getPublisherId()]) {
-            this._decryptAndHandle(this.encryptedMsgsQueue[0])
-            this.encryptedMsgsQueue.shift()
+        const queue = this.encryptedMsgsQueues[publisherId.toLowerCase()]
+        while (queue.length > 0) {
+            this._decryptAndHandle(queue[0])
+            queue.shift()
         }
     }
 
