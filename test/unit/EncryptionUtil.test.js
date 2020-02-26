@@ -13,19 +13,19 @@ describe('EncryptionUtil', () => {
         const encryptionUtil = new EncryptionUtil()
         const plaintext = 'some random text'
         const ciphertext = EncryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'), encryptionUtil.getPublicKey())
-        assert.deepStrictEqual(encryptionUtil.decryptWithPrivateKey(ciphertext).toString('utf8'), plaintext)
+        expect(encryptionUtil.decryptWithPrivateKey(ciphertext).toString('utf8')).toStrictEqual(plaintext)
     })
     it('rsa decryption after encryption equals the initial plaintext (hex strings)', () => {
         const encryptionUtil = new EncryptionUtil()
         const plaintext = 'some random text'
         const ciphertext = EncryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'), encryptionUtil.getPublicKey(), true)
-        assert.deepStrictEqual(encryptionUtil.decryptWithPrivateKey(ciphertext, true).toString('utf8'), plaintext)
+        expect(encryptionUtil.decryptWithPrivateKey(ciphertext, true).toString('utf8')).toStrictEqual(plaintext)
     })
     it('aes decryption after encryption equals the initial plaintext', () => {
         const key = crypto.randomBytes(32)
         const plaintext = 'some random text'
         const ciphertext = EncryptionUtil.encrypt(Buffer.from(plaintext, 'utf8'), key)
-        assert.deepStrictEqual(EncryptionUtil.decrypt(ciphertext, key).toString('utf8'), plaintext)
+        expect(EncryptionUtil.decrypt(ciphertext, key).toString('utf8')).toStrictEqual(plaintext)
     })
     it('aes encryption preserves size (plus iv)', () => {
         const key = crypto.randomBytes(32)
@@ -33,15 +33,15 @@ describe('EncryptionUtil', () => {
         const plaintextBuffer = Buffer.from(plaintext, 'utf8')
         const ciphertext = EncryptionUtil.encrypt(plaintextBuffer, key)
         const ciphertextBuffer = ethers.utils.arrayify(`0x${ciphertext}`)
-        assert.deepStrictEqual(ciphertextBuffer.length, plaintextBuffer.length + 16)
+        expect(ciphertextBuffer.length).toStrictEqual(plaintextBuffer.length + 16)
     })
     it('multiple same encrypt() calls use different ivs and produce different ciphertexts', () => {
         const key = crypto.randomBytes(32)
         const plaintext = 'some random text'
         const ciphertext1 = EncryptionUtil.encrypt(Buffer.from(plaintext, 'utf8'), key)
         const ciphertext2 = EncryptionUtil.encrypt(Buffer.from(plaintext, 'utf8'), key)
-        assert.notDeepStrictEqual(ciphertext1.slice(0, 32), ciphertext2.slice(0, 32))
-        assert.notDeepStrictEqual(ciphertext1.slice(32), ciphertext2.slice(32))
+        expect(ciphertext1.slice(0, 32)).not.toStrictEqual(ciphertext2.slice(0, 32))
+        expect(ciphertext1.slice(32)).not.toStrictEqual(ciphertext2.slice(32))
     })
     it('StreamMessage gets encrypted', () => {
         const key = crypto.randomBytes(32)
@@ -52,8 +52,8 @@ describe('EncryptionUtil', () => {
             }, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
         EncryptionUtil.encryptStreamMessage(streamMessage, key)
-        assert.notDeepStrictEqual(streamMessage.getSerializedContent(), '{"foo":"bar"}')
-        assert.deepStrictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.AES)
+        expect(streamMessage.getSerializedContent()).not.toStrictEqual('{"foo":"bar"}')
+        expect(streamMessage.encryptionType).toStrictEqual(StreamMessage.ENCRYPTION_TYPES.AES)
     })
     it('StreamMessage decryption after encryption equals the initial StreamMessage', () => {
         const key = crypto.randomBytes(32)
@@ -65,9 +65,9 @@ describe('EncryptionUtil', () => {
         )
         EncryptionUtil.encryptStreamMessage(streamMessage, key)
         const newKey = EncryptionUtil.decryptStreamMessage(streamMessage, key)
-        assert.deepStrictEqual(newKey, null)
-        assert.deepStrictEqual(streamMessage.getSerializedContent(), '{"foo":"bar"}')
-        assert.deepStrictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NONE)
+        expect(newKey).toBe(null)
+        expect(streamMessage.getSerializedContent()).toStrictEqual('{"foo":"bar"}')
+        expect(streamMessage.encryptionType).toStrictEqual(StreamMessage.ENCRYPTION_TYPES.NONE)
     })
     it('StreamMessage gets encrypted with new key', () => {
         const key = crypto.randomBytes(32)
@@ -79,8 +79,8 @@ describe('EncryptionUtil', () => {
             }, StreamMessage.SIGNATURE_TYPES.NONE, null,
         )
         EncryptionUtil.encryptStreamMessageAndNewKey(newKey, streamMessage, key)
-        assert.notDeepStrictEqual(streamMessage.getSerializedContent(), '{"foo":"bar"}')
-        assert.deepStrictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
+        expect(streamMessage.getSerializedContent()).not.toStrictEqual('{"foo":"bar"}')
+        expect(streamMessage.encryptionType).toStrictEqual(StreamMessage.ENCRYPTION_TYPES.NEW_KEY_AND_AES)
     })
     it('StreamMessage decryption after encryption equals the initial StreamMessage (with new key)', () => {
         const key = crypto.randomBytes(32)
@@ -93,19 +93,19 @@ describe('EncryptionUtil', () => {
         )
         EncryptionUtil.encryptStreamMessageAndNewKey(newKey, streamMessage, key)
         const newKeyReceived = EncryptionUtil.decryptStreamMessage(streamMessage, key)
-        assert.deepStrictEqual(newKeyReceived, newKey)
-        assert.deepStrictEqual(streamMessage.getSerializedContent(), '{"foo":"bar"}')
-        assert.deepStrictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NONE)
+        expect(newKeyReceived).toStrictEqual(newKey)
+        expect(streamMessage.getSerializedContent()).toStrictEqual('{"foo":"bar"}')
+        expect(streamMessage.encryptionType).toStrictEqual(StreamMessage.ENCRYPTION_TYPES.NONE)
     })
     it('throws if invalid public key passed in the constructor', () => {
         const keys = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
-                type: 'pkcs1',
+                type: 'spki',
                 format: 'pem',
             },
             privateKeyEncoding: {
-                type: 'pkcs1',
+                type: 'pkcs8',
                 format: 'pem',
             },
         })
@@ -115,17 +115,17 @@ describe('EncryptionUtil', () => {
                 privateKey: keys.privateKey,
                 publicKey: 'wrong public key',
             })
-        }, /Error/)
+        }, /Error: "publicKey" must be a PKCS#8 RSA public key as a string in the PEM format/)
     })
     it('throws if invalid private key passed in the constructor', () => {
         const keys = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
-                type: 'pkcs1',
+                type: 'spki',
                 format: 'pem',
             },
             privateKeyEncoding: {
-                type: 'pkcs1',
+                type: 'pkcs8',
                 format: 'pem',
             },
         })
@@ -135,7 +135,7 @@ describe('EncryptionUtil', () => {
                 privateKey: 'wrong private key',
                 publicKey: keys.publicKey,
             })
-        }, /Error/)
+        }, /Error: "privateKey" must be a PKCS#8 RSA public key as a string in the PEM format/)
     })
     it('does not throw if valid key pair passed in the constructor', () => {
         const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
@@ -158,12 +158,12 @@ describe('EncryptionUtil', () => {
     it('validateGroupKey() throws if key is the wrong size', () => {
         assert.throws(() => {
             EncryptionUtil.validateGroupKey(crypto.randomBytes(16))
-        }, /Error/)
+        }, /Error: Group key must have a size of 256 bits/)
     })
     it('validateGroupKey() throws if key is not a buffer', () => {
         assert.throws(() => {
             EncryptionUtil.validateGroupKey(ethers.utils.hexlify(crypto.randomBytes(32)))
-        }, /Error/)
+        }, /Error: Group key must be a Buffer/)
     })
     it('validateGroupKey() does not throw', () => {
         EncryptionUtil.validateGroupKey(crypto.randomBytes(32))

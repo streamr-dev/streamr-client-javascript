@@ -31,13 +31,9 @@ export default class RealTimeSubscription extends AbstractSubscription {
 
     // passing publisherId separately to ensure it is lowercase (See call of this function in AbstractSubscription.js)
     _decryptOrRequestGroupKey(msg, publisherId) {
+        let newGroupKey
         try {
-            const newGroupKey = EncryptionUtil.decryptStreamMessage(msg, this.groupKeys[publisherId])
-            delete this.alreadyFailedToDecrypt[publisherId]
-            if (newGroupKey) {
-                this.groupKeys[publisherId] = newGroupKey
-            }
-            return true
+            newGroupKey = EncryptionUtil.decryptStreamMessage(msg, this.groupKeys[publisherId])
         } catch (e) {
             if (e instanceof UnableToDecryptError && !this.alreadyFailedToDecrypt[publisherId]) {
                 this._requestGroupKeyAndQueueMessage(msg)
@@ -46,6 +42,11 @@ export default class RealTimeSubscription extends AbstractSubscription {
             }
             throw e
         }
+        delete this.alreadyFailedToDecrypt[publisherId]
+        if (newGroupKey) {
+            this.groupKeys[publisherId] = newGroupKey
+        }
+        return true
     }
 
     /* eslint-disable class-methods-use-this */

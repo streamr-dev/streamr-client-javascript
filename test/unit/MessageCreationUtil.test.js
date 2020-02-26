@@ -29,7 +29,7 @@ describe('MessageCreationUtil', () => {
             }
             const msgCreationUtil = new MessageCreationUtil(client.options.auth, undefined, client.getUserInfo())
             const publisherId = await msgCreationUtil.getPublisherId()
-            assert.strictEqual(publisherId, wallet.address)
+            assert.strictEqual(publisherId, wallet.address.toLowerCase())
         })
         it('use hash of username', async () => {
             const client = {
@@ -340,7 +340,7 @@ describe('MessageCreationUtil', () => {
                 username: 'username',
             }), sinon.stub().resolves(stream))
             const streamMessage = await util.createGroupKeyRequest('publisherId', 'streamId', 'rsaPublicKey', 1354155, 2344155)
-            assert.strictEqual(streamMessage.getStreamId(), 'publisherId') // sending to publisher's inbox stream
+            assert.strictEqual(streamMessage.getStreamId(), 'publisherId'.toLowerCase()) // sending to publisher's inbox stream
             const content = streamMessage.getParsedContent()
             assert.strictEqual(streamMessage.contentType, StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST)
             assert.strictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NONE)
@@ -389,7 +389,7 @@ describe('MessageCreationUtil', () => {
                 groupKey: 'encrypted-group-key',
                 start: 34524,
             }])
-            assert.strictEqual(streamMessage.getStreamId(), 'subscriberId') // sending to subscriber's inbox stream
+            assert.strictEqual(streamMessage.getStreamId(), 'subscriberId'.toLowerCase()) // sending to subscriber's inbox stream
             const content = streamMessage.getParsedContent()
             assert.strictEqual(streamMessage.contentType, StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE)
             assert.strictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.RSA)
@@ -433,7 +433,7 @@ describe('MessageCreationUtil', () => {
                 username: 'username',
             }), sinon.stub().resolves(stream))
             const streamMessage = await util.createErrorMessage('destinationAddress', new InvalidGroupKeyRequestError('invalid'))
-            assert.strictEqual(streamMessage.getStreamId(), 'destinationAddress') // sending to subscriber's inbox stream
+            assert.strictEqual(streamMessage.getStreamId(), 'destinationAddress'.toLowerCase()) // sending to subscriber's inbox stream
             const content = streamMessage.getParsedContent()
             assert.strictEqual(streamMessage.contentType, StreamMessage.CONTENT_TYPES.ERROR_MSG)
             assert.strictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.NONE)

@@ -1023,7 +1023,8 @@ describe('StreamrClient', () => {
                     privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
                 },
             }, connection)
-            connection.expect(SubscribeRequest.create('0x650EBB201f635652b44E4afD1e0193615922381D', 0, 'session-token'))
+            c.connect()
+            connection.expect(SubscribeRequest.create('0x650EBB201f635652b44E4afD1e0193615922381D'.toLowerCase(), 0, 'session-token'))
             c.session = {
                 getSessionToken: sinon.stub().resolves('session-token')
             }

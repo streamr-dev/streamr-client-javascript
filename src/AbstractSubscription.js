@@ -81,22 +81,23 @@ export default class AbstractSubscription extends Subscription {
     }
 
     _decryptAndHandle(orderedMessage) {
+        let success
         try {
-            const success = this._decryptOrRequestGroupKey(orderedMessage, orderedMessage.getPublisherId().toLowerCase())
-            if (success) {
-                this.callback(orderedMessage.getParsedContent(), orderedMessage)
-                if (orderedMessage.isByeMessage()) {
-                    this.emit('done')
-                }
-            } else {
-                console.warn('Failed to decrypt. Requested the correct decryption key(s) and going to try again.')
-            }
+            success = this._decryptOrRequestGroupKey(orderedMessage, orderedMessage.getPublisherId().toLowerCase())
         } catch (err) {
             if (err instanceof UnableToDecryptError) {
                 this.onUnableToDecrypt(err)
             } else {
                 throw err
             }
+        }
+        if (success) {
+            this.callback(orderedMessage.getParsedContent(), orderedMessage)
+            if (orderedMessage.isByeMessage()) {
+                this.emit('done')
+            }
+        } else {
+            console.warn('Failed to decrypt. Requested the correct decryption key(s) and going to try again.')
         }
     }
 

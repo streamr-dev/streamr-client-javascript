@@ -42,6 +42,7 @@ import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
+import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -138,45 +139,6 @@ export default class StreamrClient extends EventEmitter {
             )
         }
 
-        if (this.options.auth.privateKey || this.options.auth.provider) {
-            // subscribing to own inbox stream
-            this.getPublisherId().then((ethAddress) => this.subscribe(ethAddress, async (parsedContent, streamMessage) => {
-                try {
-                    if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
-                        if (this.keyExchangeUtil) {
-                            await this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
-                        }
-                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
-                        if (this.keyExchangeUtil) {
-                            const { streamId } = streamMessage.getParsedContent()
-                            // A valid publisher of the client's inbox stream could send key responses for other streams to which
-                            // the publisher doesn't have write permissions. Thus the following additional check is necessary.
-                            // TODO: fix this hack in other PR (and move logic to keyExchangeUtil)
-                            const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
-                            if (valid) {
-                                await this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
-                            } else {
-                                throw new InvalidGroupKeyResponseError(
-                                    `Received group key from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
-                                )
-                            }
-                        }
-                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.ERROR_MSG) {
-                        debug('WARN: Received error of type %s from %s: %s',
-                            streamMessage.getParsedContent().code, streamMessage.getPublisherId(), streamMessage.getParsedContent().message)
-                    } else {
-                        throw new InvalidContentTypeError(`Cannot handle message with content type: ${streamMessage.contentType}`)
-                    }
-                } catch (err) {
-                    debug('WARN: %s', err.message)
-                    // we don't notify the error to the originator if the message is unauthenticated.
-                    if (streamMessage.signature) {
-                        const errorMessage = await this.msgCreationUtil.createErrorMessage(streamMessage.getPublisherId(), err)
-                        this.publishStreamMessage(errorMessage)
-                    }
-                }
-            }))
-        }
         this.resendUtil = new ResendUtil()
         this.resendUtil.on('error', (err) => this.emit('error', err))
 
@@ -277,9 +239,11 @@ export default class StreamrClient extends EventEmitter {
         })
 
         // On connect/reconnect, send pending subscription requests
-        this.connection.on('connected', () => {
+        this.connection.on('connected', async () => {
             debug('Connected!')
             this.emit('connected')
+
+            await this._subscribeToInboxStream()
 
             // Check pending subscriptions
             Object.keys(this.subscribedStreamPartitions)
@@ -333,6 +297,55 @@ export default class StreamrClient extends EventEmitter {
                 console.error(errorObject)
             }
         })
+    }
+
+    async _subscribeToInboxStream() {
+        if (this.options.auth.privateKey || this.options.auth.provider) {
+            // subscribing to own inbox stream
+            const ethAddress = await this.getPublisherId()
+            this.subscribe(ethAddress, async (parsedContent, streamMessage) => {
+                try {
+                    if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
+                        if (this.keyExchangeUtil) {
+                            await this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
+                        }
+                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
+                        if (this.keyExchangeUtil) {
+                            const { streamId } = streamMessage.getParsedContent()
+                            // A valid publisher of the client's inbox stream could send key responses for other streams to which
+                            // the publisher doesn't have write permissions. Thus the following additional check is necessary.
+                            // TODO: fix this hack in other PR (and move logic to keyExchangeUtil)
+                            const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
+                            if (valid) {
+                                await this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                            } else {
+                                throw new InvalidGroupKeyResponseError(
+                                    `Received group key from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
+                                )
+                            }
+                        }
+                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.ERROR_MSG) {
+                        debug('WARN: Received error of type %s from %s: %s',
+                            streamMessage.getParsedContent().code, streamMessage.getPublisherId(), streamMessage.getParsedContent().message)
+                    } else {
+                        throw new InvalidContentTypeError(`Cannot handle message with content type: ${streamMessage.contentType}`)
+                    }
+                } catch (err) {
+                    if (err instanceof InvalidGroupKeyRequestError
+                        || err instanceof InvalidGroupKeyResponseError
+                        || err instanceof InvalidContentTypeError) {
+                        debug('WARN: %s', err.message)
+                        // we don't notify the error to the originator if the message is unauthenticated.
+                        if (streamMessage.signature) {
+                            const errorMessage = await this.msgCreationUtil.createErrorMessage(streamMessage.getPublisherId(), err)
+                            this.publishStreamMessage(errorMessage)
+                        }
+                    } else {
+                        throw err
+                    }
+                }
+            })
+        }
     }
 
     _getSubscribedStreamPartition(streamId, streamPartition) {
@@ -509,6 +522,7 @@ export default class StreamrClient extends EventEmitter {
         }
 
         if (options.groupKeys) {
+            const now = Date.now()
             Object.keys(options.groupKeys).forEach((publisherId) => {
                 EncryptionUtil.validateGroupKey(options.groupKeys[publisherId])
                 if (!this.options.subscriberGroupKeys[options.stream]) {
@@ -516,7 +530,7 @@ export default class StreamrClient extends EventEmitter {
                 }
                 this.options.subscriberGroupKeys[options.stream][publisherId] = {
                     groupKey: options.groupKeys[publisherId],
-                    start: Date.now()
+                    start: now
                 }
             })
         }
