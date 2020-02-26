@@ -454,9 +454,9 @@ describe('HistoricalSubscription', () => {
                     last: 1
                 })
                 // cannot decrypt msg1, queues it and emits "groupKeyMissing" (should send group key request).
-                await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+                await sub.handleResentMessage(msg1, 'requestId', sinon.stub().resolves(true))
                 // cannot decrypt msg2, queues it.
-                await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                await sub.handleResentMessage(msg2, 'requestId', sinon.stub().resolves(true))
                 // faking the reception of the group key response
                 sub.setGroupKeys('publisherId', [groupKey1, groupKey2])
                 // try again to decrypt the queued messages but this time with the correct key
@@ -485,9 +485,9 @@ describe('HistoricalSubscription', () => {
                     undecryptableMsg = error.streamMessage
                 })
                 // cannot decrypt msg1, emits "groupKeyMissing" (should send group key request).
-                await sub.handleResentMessage(msg1, sinon.stub().resolves(true))
+                await sub.handleResentMessage(msg1, 'requestId', sinon.stub().resolves(true))
                 // cannot decrypt msg2, queues it.
-                await sub.handleResentMessage(msg2, sinon.stub().resolves(true))
+                await sub.handleResentMessage(msg2, 'requestId', sinon.stub().resolves(true))
                 // faking the reception of the group key response
                 sub.setGroupKeys('publisherId', [wrongGroupKey])
                 assert.deepStrictEqual(undecryptableMsg, msg2)

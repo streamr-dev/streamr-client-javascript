@@ -430,9 +430,12 @@ describe('StreamrClient Connection', () => {
                 await client.ensureDisconnected()
 
                 // check whole list of calls after reconnect and disconnect
-                expect(connectionEventSpy.mock.calls.length).toEqual(2)
+                expect(connectionEventSpy.mock.calls.length).toEqual(3)
                 expect(connectionEventSpy.mock.calls[0]).toEqual([SubscribeRequest.create(stream.id, 0, sessionToken)])
                 expect(connectionEventSpy.mock.calls[1]).toEqual([UnsubscribeRequest.create(stream.id, 0, sessionToken)])
+                // inbox stream subscription:
+                const publisherId = await client.getPublisherId()
+                expect(connectionEventSpy.mock.calls[2]).toEqual([SubscribeRequest.create(publisherId, 0, sessionToken)])
 
                 done()
             })
@@ -462,13 +465,15 @@ describe('StreamrClient Connection', () => {
                     await client.ensureDisconnected()
 
                     // check whole list of calls after reconnect and disconnect
-                    expect(connectionEventSpy.mock.calls.length).toEqual(1)
+                    expect(connectionEventSpy.mock.calls.length).toEqual(2)
                     expect(connectionEventSpy.mock.calls[0]).toEqual([ResendLastRequest.create(stream.id, 0, '0', 10, sessionToken)])
-
+                    // inbox stream subscription:
+                    const publisherId = await client.getPublisherId()
+                    expect(connectionEventSpy.mock.calls[1]).toEqual([SubscribeRequest.create(publisherId, 0, sessionToken)])
                     done()
                 }, 2000)
             })
-        }, 9999999)
+        }, 5000)
 
         it('does not try to reconnect', async (done) => {
             client = createClient()
