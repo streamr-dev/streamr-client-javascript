@@ -168,7 +168,7 @@ export default class StreamrClient extends EventEmitter {
                 if (sub && stream.getSubscription(sub.id)) {
                     // sub.handleResentMessage never rejects: on any error it emits an 'error' event on the Subscription
                     sub.handleResentMessage(
-                        msg.streamMessage,
+                        msg.streamMessage, msg.requestId,
                         once(() => stream.verifyStreamMessage(msg.streamMessage)), // ensure verification occurs only once
                     )
                 } else {
@@ -270,7 +270,7 @@ export default class StreamrClient extends EventEmitter {
                     const stream = this.subscribedStreamPartitions[key]
                     stream.setSubscribing(false)
                     stream.getSubscriptions().forEach((sub) => {
-                        sub.setState(Subscription.State.unsubscribed)
+                        sub.onDisconnected()
                     })
                 })
         })
@@ -482,9 +482,10 @@ export default class StreamrClient extends EventEmitter {
             this.options.orderMessages, options.onUnableToDecrypt)
 
         // TODO remove _addSubscription after uncoupling Subscription and Resend
+        sub.setState(Subscription.State.subscribed)
         this._addSubscription(sub)
+        sub.once('initial_resend_done', () => this._removeSubscription(sub))
         await this._requestResend(sub)
-
         return sub
     }
 
@@ -739,12 +740,12 @@ export default class StreamrClient extends EventEmitter {
                     // once a message is received, gap filling in Subscription.js will check if this satisfies the resend and request
                     // another resend if it doesn't. So we can anyway clear this resend request.
                     const handler = () => {
-                        sub.removeListener('resend done', handler)
+                        sub.removeListener('initial_resend_done', handler)
                         sub.removeListener('message received', handler)
                         sub.removeListener('unsubscribed', handler)
                         sub.removeListener('error', handler)
                     }
-                    sub.once('resend done', handler)
+                    sub.once('initial_resend_done', handler)
                     sub.once('message received', handler)
                     sub.once('unsubscribed', handler)
                     sub.once('error', handler)

@@ -1,5 +1,6 @@
 import debugFactory from 'debug'
 
+import Subscription from './Subscription'
 import AbstractSubscription from './AbstractSubscription'
 import EncryptionUtil from './EncryptionUtil'
 import UnableToDecryptError from './errors/UnableToDecryptError'
@@ -23,10 +24,7 @@ export default class RealTimeSubscription extends AbstractSubscription {
     }
 
     finishResend() {
-        this._lastMessageHandlerPromise = null
-        if (Object.keys(this.pendingResendRequestIds).length === 0) {
-            this.setResending(false)
-        }
+        this.setResending(false)
     }
 
     // passing publisherId separately to ensure it is lowercase (See call of this function in AbstractSubscription.js)
@@ -76,5 +74,9 @@ export default class RealTimeSubscription extends AbstractSubscription {
         this.groupKeys[publisherId.toLowerCase()] = groupKeys[0]
         /* eslint-enable prefer-destructuring */
         this._handleEncryptedQueuedMsgs(publisherId)
+    }
+
+    onDisconnected() {
+        this.setState(Subscription.State.unsubscribed)
     }
 }

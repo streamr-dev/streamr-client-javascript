@@ -50,6 +50,12 @@ export default class Subscription extends EventEmitter {
         this.state = state
         this.emit(state)
     }
+
+    /* eslint-disable class-methods-use-this */
+    onDisconnected() {
+        throw new Error('Must be defined in child class')
+    }
+    /* eslint-enable class-methods-use-this */
 }
 
 Subscription.State = {

@@ -83,8 +83,12 @@ export default class HistoricalSubscription extends AbstractSubscription {
         this._lastMessageHandlerPromise = null
         if (!this._emptyMsgQueues()) { // received all historical messages but not yet the keys to decrypt them
             this.resendDone = true
-        } else {
-            this.emit('resend done')
+        } else if (Object.keys(this.pendingResendRequestIds).length === 0) {
+            this.emit('initial_resend_done')
         }
     }
+
+    /* eslint-disable class-methods-use-this */
+    onDisconnected() {}
+    /* eslint-enable class-methods-use-this */
 }
