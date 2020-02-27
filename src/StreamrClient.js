@@ -317,7 +317,7 @@ export default class StreamrClient extends EventEmitter {
                             // TODO: fix this hack in other PR (and move logic to keyExchangeUtil)
                             const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
                             if (valid) {
-                                await this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                                this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
                             } else {
                                 throw new InvalidGroupKeyResponseError(
                                     `Received group key from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
