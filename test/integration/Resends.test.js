@@ -54,6 +54,66 @@ describe('StreamrClient resends', () => {
             await client.ensureDisconnected()
         })
 
+        it('can issue resend and subscribe at the same time', async () => {
+            const resentMessages = []
+            const realtimeMessages = []
+
+            const realtimeMessage = {
+                msg: uid('realtimeMessage'),
+            }
+
+            await client.resend({
+                stream: stream.id,
+                resend: {
+                    last: MAX_MESSAGES,
+                },
+            }, (message) => {
+                resentMessages.push(message)
+            })
+
+            client.subscribe({
+                stream: stream.id,
+            }, (message) => {
+                realtimeMessages.push(message)
+            })
+
+            await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
+            await client.publish(stream.id, realtimeMessage)
+            await waitForCondition(() => realtimeMessages.length === 1, 10000)
+            expect(resentMessages).toStrictEqual(publishedMessages)
+            expect(realtimeMessages).toStrictEqual([realtimeMessage])
+        }, 10000)
+
+        it('can issue subscribe with resend and subscribe at the same time', async () => {
+            const resentMessages = []
+            const realtimeMessages = []
+
+            const realtimeMessage = {
+                msg: uid('realtimeMessage'),
+            }
+
+            client.subscribe({
+                stream: stream.id,
+                resend: {
+                    last: MAX_MESSAGES,
+                },
+            }, (message) => {
+                resentMessages.push(message)
+            })
+
+            client.subscribe({
+                stream: stream.id,
+            }, (message) => {
+                realtimeMessages.push(message)
+            })
+
+            await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
+            await client.publish(stream.id, realtimeMessage)
+            await waitForCondition(() => realtimeMessages.length === 1, 10000)
+            expect(resentMessages).toStrictEqual([...publishedMessages, realtimeMessage])
+            expect(realtimeMessages).toStrictEqual([realtimeMessage])
+        }, 10000)
+
         for (let i = 0; i < TEST_REPEATS; i++) {
             // eslint-disable-next-line no-loop-func
             it(`resend last using resend function on try ${i}`, async () => {
