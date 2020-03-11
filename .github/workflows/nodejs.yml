@@ -43,13 +43,7 @@ jobs:
         sudo service mysql stop
         git clone https://github.com/streamr-dev/streamr-docker-dev.git
         sudo ifconfig docker0 10.200.10.1/24
-        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start 5
-        while true; do http_code=$(curl -sS -o /dev/null -w "%{http_code}" http://localhost/api/v1/products?publicAccess=true || true); if [ $http_code = 200 ]; then echo "EE up and running"; break; else echo "EE not receiving connections"; sleep 5s; fi; done
-        while true; do http_code=$(curl -sS -o /dev/null -w "%{http_code}" http://localhost/api/v1/volume || true); if [ "$http_code" = 200 ]; then echo "brokers up and running"; break; else echo "brokers not receiving connections"; sleep 5s; fi; done
-        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start ganache
-        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start community-product
-        while true; do http_code=$(curl -sS -o /dev/null -w "%{http_code}" http://localhost:8085/communities || true); if [ $http_code = 200 ]; then echo "community products server ready"; break; else echo "community products server not starting"; sleep 1s; fi; done
-        echo 'running tests...'
+        ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait
         npm run test-integration
 
     - name: test-build

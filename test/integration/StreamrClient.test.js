@@ -667,6 +667,9 @@ describe('StreamrClient', () => {
         client = createClient()
         await client.ensureConnected()
         stream = await createStream()
+        const publisherId = await client.getPublisherId()
+        const res = await client.isStreamPublisher(stream.id, publisherId.toLowerCase())
+        assert.strictEqual(res, true)
     })
 
     afterEach(async () => {
