@@ -78,12 +78,14 @@ describe('StreamrClient resends', () => {
                     realtimeMessages.push(message)
                 })
 
-                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
-                await client.publish(stream.id, realtimeMessage)
-                await waitForCondition(() => realtimeMessages.length === 1, 10000)
+                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 5000)
+                await Promise.all([
+                    client.publish(stream.id, realtimeMessage),
+                    waitForCondition(() => realtimeMessages.length === 1, 10000)
+                ])
                 expect(resentMessages).toStrictEqual(publishedMessages)
                 expect(realtimeMessages).toStrictEqual([realtimeMessage])
-            }, 10000)
+            }, 18000)
 
             it('works with subscribe -> resend', async () => {
                 const resentMessages = []
@@ -109,12 +111,14 @@ describe('StreamrClient resends', () => {
                     resentMessages.push(message)
                 })
 
-                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
-                await client.publish(stream.id, realtimeMessage)
-                await waitForCondition(() => realtimeMessages.length === 1, 10000)
+                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 5000)
+                await Promise.all([
+                    client.publish(stream.id, realtimeMessage),
+                    waitForCondition(() => realtimeMessages.length === 1, 5000)
+                ])
                 expect(resentMessages).toStrictEqual(publishedMessages)
                 expect(realtimeMessages).toStrictEqual([realtimeMessage])
-            }, 10000)
+            }, 15000)
 
             it('works with subscribe+resend -> subscribe', async () => {
                 const resentMessages = []
@@ -139,12 +143,14 @@ describe('StreamrClient resends', () => {
                     realtimeMessages.push(message)
                 })
 
-                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
-                await client.publish(stream.id, realtimeMessage)
-                await waitForCondition(() => realtimeMessages.length === 1, 10000)
+                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 5000)
+                await Promise.all([
+                    client.publish(stream.id, realtimeMessage),
+                    waitForCondition(() => realtimeMessages.length === 1, 5000)
+                ])
                 expect(resentMessages).toStrictEqual([...publishedMessages, realtimeMessage])
                 expect(realtimeMessages).toStrictEqual([realtimeMessage])
-            }, 10000)
+            }, 15000)
 
             it('works with subscribe -> subscribe+resend', async () => {
                 const resentMessages = []
@@ -170,12 +176,14 @@ describe('StreamrClient resends', () => {
                     resentMessages.push(message)
                 })
 
-                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 10000)
-                await client.publish(stream.id, realtimeMessage)
-                await waitForCondition(() => realtimeMessages.length === 1, 10000)
+                await waitForCondition(() => resentMessages.length === MAX_MESSAGES, 5000)
+                await Promise.all([
+                    client.publish(stream.id, realtimeMessage),
+                    waitForCondition(() => realtimeMessages.length === 1, 5000)
+                ])
                 expect(resentMessages).toStrictEqual([...publishedMessages, realtimeMessage])
                 expect(realtimeMessages).toStrictEqual([realtimeMessage])
-            }, 10000)
+            }, 15000)
         })
 
         for (let i = 0; i < TEST_REPEATS; i++) {
