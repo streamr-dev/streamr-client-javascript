@@ -34,7 +34,8 @@ describe('CommunityEndPoints', () => {
         })
 
         log('beforeAll done')
-    })
+    }, 10000)
+
     beforeEach(async () => {
         await adminClient.ensureConnected()
         community = await adminClient.deployCommunity({
@@ -118,7 +119,7 @@ describe('CommunityEndPoints', () => {
             expect(res).toMatchObject({
                 state: 'ACCEPTED',
                 memberAddress: memberWallet.address,
-                communityAddress: community.address,
+                contractAddress: community.address,
             })
 
             // too much bother to check this in a separate test... TODO: split
