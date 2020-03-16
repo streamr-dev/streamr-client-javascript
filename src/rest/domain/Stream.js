@@ -52,7 +52,7 @@ export default class Stream {
         return permissions.find((p) => {
             if (p.operation !== operation) { return false }
 
-            if (userId === undefined) {
+            if (userIdCaseInsensitive === undefined) {
                 return !!p.anonymous // match nullish userId against p.anonymous
             }
             return p.user && p.user.toLowerCase() === userIdCaseInsensitive // match against userId
@@ -65,7 +65,7 @@ export default class Stream {
         }
         const userIdCaseInsensitive = typeof userId === 'string' ? userId.toLowerCase() : undefined
 
-        if (userId != null) {
+        if (userIdCaseInsensitive !== undefined) {
             permissionObject.user = userIdCaseInsensitive
         } else {
             permissionObject.anonymous = true
