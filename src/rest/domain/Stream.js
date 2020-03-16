@@ -55,7 +55,7 @@ export default class Stream {
             if (userId === undefined) {
                 return !!p.anonymous // match nullish userId against p.anonymous
             }
-            return p.user.toLowerCase() === userIdCaseInsensitive // match against userId
+            return p.user && p.user.toLowerCase() === userIdCaseInsensitive // match against userId
         })
     }
 
