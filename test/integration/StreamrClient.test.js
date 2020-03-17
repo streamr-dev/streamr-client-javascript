@@ -246,7 +246,7 @@ describe('StreamrClient Connection', () => {
                 ])
                 done()
             })
-        })
+        }, 10000)
     })
 
     describe('ensureConnected', () => {
