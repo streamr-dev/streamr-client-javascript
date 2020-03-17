@@ -47,15 +47,16 @@ export default class Stream {
 
     async hasPermission(operation, userId) {
         // eth addresses may be in checksumcase, but userId from server has no case
-        const userIdCaseInsensitive = typeof userId === 'string' ? userId.toLowerCase() : userId
+
+        const userIdCaseInsensitive = typeof userId === 'string' ? userId.toLowerCase() : undefined // if not string then undefined
         const permissions = await this.getPermissions()
         return permissions.find((p) => {
             if (p.operation !== operation) { return false }
 
-            if (userId == null) {
+            if (userIdCaseInsensitive === undefined) {
                 return !!p.anonymous // match nullish userId against p.anonymous
             }
-            return p.user.toLowerCase() === userIdCaseInsensitive // match against userId
+            return p.user && p.user.toLowerCase() === userIdCaseInsensitive // match against userId
         })
     }
 
@@ -63,9 +64,10 @@ export default class Stream {
         const permissionObject = {
             operation,
         }
-        const userIdCaseInsensitive = typeof userId === 'string' ? userId.toLowerCase() : userId
 
-        if (userId != null) {
+        const userIdCaseInsensitive = typeof userId === 'string' ? userId.toLowerCase() : undefined
+
+        if (userIdCaseInsensitive !== undefined) {
             permissionObject.user = userIdCaseInsensitive
         } else {
             permissionObject.anonymous = true
