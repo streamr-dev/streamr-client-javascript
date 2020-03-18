@@ -7,14 +7,8 @@ export default class LatestKeyStorageUtil {
         return this.latestKeys[streamId] !== undefined
     }
 
-    getLatestKey(streamId, withStart = false) {
-        if (this.latestKeys[streamId]) {
-            if (withStart) {
-                return this.latestKeys[streamId]
-            }
-            return this.latestKeys[streamId].groupKey
-        }
-        return undefined
+    getLatestKey(streamId) {
+        return this.latestKeys[streamId]
     }
 
     /* eslint-disable class-methods-use-this */
@@ -25,6 +19,9 @@ export default class LatestKeyStorageUtil {
     /* eslint-enable class-methods-use-this */
 
     addKey(streamId, groupKey, start) {
+        if (this.latestKeys[streamId] && this.latestKeys[streamId].start > start) {
+            throw new Error(`Cannot add an older key as latest key (${this.latestKeys[streamId].start} > ${start})`)
+        }
         this.latestKeys[streamId] = {
             groupKey,
             start

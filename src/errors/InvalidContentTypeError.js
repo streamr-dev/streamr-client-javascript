@@ -1,4 +1,4 @@
-export default class InvalidGroupKeyError extends Error {
+export default class InvalidContentTypeError extends Error {
     constructor(message) {
         super(message)
         if (Error.captureStackTrace) {

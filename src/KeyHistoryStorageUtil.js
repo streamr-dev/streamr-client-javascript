@@ -12,9 +12,9 @@ export default class KeyHistoryStorageUtil {
         return this.groupKeyHistories[streamId] !== undefined
     }
 
-    getLatestKey(streamId, withStart = false) {
+    getLatestKey(streamId) {
         if (this.groupKeyHistories[streamId]) {
-            return this.groupKeyHistories[streamId].getLatestKey(withStart)
+            return this.groupKeyHistories[streamId].getLatestKey()
         }
         return undefined
     }

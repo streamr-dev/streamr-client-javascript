@@ -155,7 +155,7 @@ describe('KeyExchangeUtil', () => {
                     assert.strictEqual(streamId, 'streamId')
                     assert.strictEqual(keys.length, 1)
                     const keyObject = keys[0]
-                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId', true)
+                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId')
                     assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKeyObj.groupKey)
                     assert.deepStrictEqual(keyObject.start, expectedKeyObj.start)
                     return Promise.resolve('fake response')
@@ -217,7 +217,7 @@ describe('KeyExchangeUtil', () => {
                     assert.strictEqual(streamId, 'streamId')
                     assert.strictEqual(keys.length, 1)
                     const keyObject = keys[0]
-                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId', true)
+                    const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId')
                     assert.deepStrictEqual(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true), expectedKeyObj.groupKey)
                     assert.deepStrictEqual(keyObject.start, expectedKeyObj.start)
                     return Promise.resolve('fake response')
