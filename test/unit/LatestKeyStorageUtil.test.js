@@ -62,7 +62,7 @@ describe('LatestKeyStorageUtil', () => {
     describe('getKeysBetween()', () => {
         it('throws since historical keys are not stored', () => {
             const util = KeyStorageUtil.getKeyStorageUtil({}, false)
-            assert.throws(() => (util.getKeysBetween('wrong-streamId', 1, 2), []), /Error/)
+            assert.throws(() => util.getKeysBetween('wrong-streamId', 1, 2), /Error/)
         })
     })
 })
