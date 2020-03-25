@@ -109,14 +109,131 @@ describe('KeyExchangeUtil', () => {
             client.getStreamSubscribers.withArgs('streamId2').onCall(2).resolves(['subscriberId5', 'subscriberId3', 'subscriberId8'])
             client.getStreamSubscribers.withArgs('streamId2').onCall(3).resolves(['subscriberId9', 'subscriberId10', 'subscriberId11'])
 
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 1)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 2)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 2)
-            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 3)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId1'), 1)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId2'), 2)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId1'), 2)
+            assert.strictEqual(await util.nbSubscribersToRevoke('streamId2'), 3)
+        })
+    })
+    describe('keyRevocationNeeded', () => {
+        it('should not revoke if checked recently', async () => {
+            let res = await util.keyRevocationNeeded('streamId')
+            assert(client.getStreamSubscribers.calledOnce)
+            assert(!res)
+            res = await util.keyRevocationNeeded('streamId')
+            assert(client.getStreamSubscribers.calledOnce)
+            assert(!res)
+        })
+        it('should not revoke if enough time elapsed but less than threshold', async () => {
+            const clock = sinon.useFakeTimers()
+            const initialSubscribers = []
+            for (let i = 0; i < KeyExchangeUtil.REVOCATION_THRESHOLD - 1; i++) {
+                initialSubscribers.push(`subscriberId${i}`)
+            }
+            client.getStreamSubscribers.withArgs('streamId3').onCall(0).resolves(initialSubscribers)
+            client.getStreamSubscribers.withArgs('streamId3').onCall(1).resolves([]) // all subscribers need to be revoked
+            let res = await util.keyRevocationNeeded('streamId3')
+            assert(client.getStreamSubscribers.calledOnce)
+            assert(!res)
+            clock.tick(KeyExchangeUtil.REVOCATION_DELAY + 1000)
+            res = await util.keyRevocationNeeded('streamId3')
+            assert(client.getStreamSubscribers.calledTwice)
+            assert(!res)
+            clock.restore()
+        })
+        it('should revoke if threshold reached', async () => {
+            const clock = sinon.useFakeTimers()
+            const initialSubscribers = []
+            for (let i = 0; i < KeyExchangeUtil.REVOCATION_THRESHOLD; i++) {
+                initialSubscribers.push(`subscriberId${i}`)
+            }
+            client.getStreamSubscribers.withArgs('streamId3').onCall(0).resolves(initialSubscribers)
+            client.getStreamSubscribers.withArgs('streamId3').onCall(1).resolves([]) // all subscribers need to be revoked
+            let res = await util.keyRevocationNeeded('streamId3')
+            assert(client.getStreamSubscribers.calledOnce)
+            assert(!res)
+            clock.tick(KeyExchangeUtil.REVOCATION_DELAY + 1000)
+            res = await util.keyRevocationNeeded('streamId3')
+            assert(client.getStreamSubscribers.calledTwice)
+            assert(res)
+            clock.restore()
+        })
+    })
+    describe('revoke', () => {
+        it('should rekey by sending group key resets', async () => {
+            client.isStreamSubscriber.withArgs('streamId4', 'subscriber1').resolves(true)
+            client.isStreamSubscriber.withArgs('streamId4', 'subscriber2').resolves(true)
+            client.isStreamSubscriber.withArgs('streamId4', 'subscriber3').resolves(true)
+            client.getStreamSubscribers.withArgs('streamId4').resolves([])
+            client.keyStorageUtil.addKey('streamId4', crypto.randomBytes(32), 5)
+            util.localSubscribers.streamId4 = ['subscriber1', 'subscriber3'] // fake call to 'keyRevocationNeeded', subscriber2 must be revoked
+
+            const subscriberKeyPair1 = new EncryptionUtil()
+            const request1 = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber1', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                    streamId: 'streamId4',
+                    publicKey: subscriberKeyPair1.getPublicKey(),
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            const subscriberKeyPair2 = new EncryptionUtil()
+            const request2 = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                    streamId: 'streamId4',
+                    publicKey: subscriberKeyPair2.getPublicKey(),
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            const subscriberKeyPair3 = new EncryptionUtil()
+            const request3 = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber3', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                    streamId: 'streamId4',
+                    publicKey: subscriberKeyPair3.getPublicKey(),
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+
+            let resetKeySent1 = null
+            let resetKeySent3 = null
+
+            client.msgCreationUtil = {
+                createGroupKeyResponse: sinon.stub().resolves({}),
+                createGroupKeyReset: (subscriberId, streamId, key) => {
+                    assert.strictEqual(streamId, 'streamId4')
+                    if (subscriberId === 'subscriber1') {
+                        resetKeySent1 = {
+                            groupKey: subscriberKeyPair1.decryptWithPrivateKey(key.groupKey, true),
+                            start: key.start
+                        }
+                        return Promise.resolve('fake reset 1')
+                    }
+                    assert.strictEqual(subscriberId, 'subscriber3')
+                    resetKeySent3 = {
+                        groupKey: subscriberKeyPair3.decryptWithPrivateKey(key.groupKey, true),
+                        start: key.start
+                    }
+                    return Promise.resolve('fake reset 3')
+                },
+            }
+
+            const published = []
+            client.publishStreamMessage = (msg) => {
+                published.push(msg)
+                return Promise.resolve()
+            }
+
+            await util.handleGroupKeyRequest(request1)
+            await util.handleGroupKeyRequest(request2)
+            await util.handleGroupKeyRequest(request3)
+            await util.rekey('streamId4')
+            assert.deepStrictEqual(resetKeySent1, resetKeySent3)
+            assert.deepStrictEqual(resetKeySent1, client.keyStorageUtil.getLatestKey('streamId4'))
+            assert((published[3] === 'fake reset 1' && published[4] === 'fake reset 3')
+                || (published[3] === 'fake reset 3' && published[4] === 'fake reset 1'))
         })
     })
     describe('handleGroupKeyRequest', () => {

@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+
 import debugFactory from 'debug'
 
 import EncryptionUtil from './EncryptionUtil'
@@ -7,11 +9,15 @@ import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
 
 const debug = debugFactory('KeyExchangeUtil')
 const SUBSCRIBERS_EXPIRATION_TIME = 5 * 60 * 1000 // 5 minutes
+const REVOCATION_DELAY = 10 * 60 * 1000 // 10 minutes
+const REVOCATION_THRESHOLD = 5
 export default class KeyExchangeUtil {
     constructor(client) {
         this._client = client
         this.isSubscriberPromises = {}
         this.localSubscribers = {}
+        this.lastCallToCheckRevocation = Number.NEGATIVE_INFINITY // Date in millis
+        this.publicKeysStore = {}
     }
 
     async handleGroupKeyRequest(streamMessage) {
@@ -51,6 +57,7 @@ export default class KeyExchangeUtil {
                 start: keyObj.start,
             })
         })
+        this.publicKeysStore[subscriberId] = parsedContent.publicKey
         const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, encryptedGroupKeys)
         return this._client.publishStreamMessage(response)
     }
@@ -121,6 +128,40 @@ export default class KeyExchangeUtil {
         return counter
     }
 
+    async keyRevocationNeeded(streamId) {
+        const now = Date.now()
+        let res = false
+        if (this.lastCallToCheckRevocation + REVOCATION_DELAY < now) {
+            res = (await this.nbSubscribersToRevoke(streamId)) >= KeyExchangeUtil.REVOCATION_THRESHOLD
+        }
+        this.lastCallToCheckRevocation = now
+        return res
+    }
+
+    async rekey(streamId) {
+        const groupKey = crypto.randomBytes(32)
+        const start = Date.now()
+        const realSubscribersSet = this.localSubscribers[streamId] ? this.localSubscribers[streamId] : []
+
+        const toRevoke = []
+        const promises = []
+        Object.keys(this.publicKeysStore).forEach(async (subscriberId) => { // iterating over local cache of Ethereum address --> RSA public key
+            if (realSubscribersSet.includes(subscriberId)) { // if still valid subscriber, send the new key
+                const encryptedGroupKey = {
+                    groupKey: EncryptionUtil.encryptWithPublicKey(groupKey, this.publicKeysStore[subscriberId], true),
+                    start,
+                }
+                const reset = await this._client.msgCreationUtil.createGroupKeyReset(subscriberId, streamId, encryptedGroupKey)
+                promises.push(this._client.publishStreamMessage(reset))
+            } else { // no longer a valid subscriber, to be removed from local cache
+                toRevoke.push(subscriberId)
+            }
+        })
+        toRevoke.forEach((revokedSubscriberId) => delete this.publicKeysStore[revokedSubscriberId])
+        await Promise.all(promises)
+        this._client.keyStorageUtil.addKey(streamId, groupKey, start)
+    }
+
     async isSubscriber(streamId, subscriberId) {
         if (!this.isSubscriberPromises[streamId]) {
             this.isSubscriberPromises[streamId] = {}
@@ -143,3 +184,5 @@ export default class KeyExchangeUtil {
     }
 }
 KeyExchangeUtil.SUBSCRIBERS_EXPIRATION_TIME = SUBSCRIBERS_EXPIRATION_TIME
+KeyExchangeUtil.REVOCATION_DELAY = REVOCATION_DELAY
+KeyExchangeUtil.REVOCATION_THRESHOLD = REVOCATION_THRESHOLD
