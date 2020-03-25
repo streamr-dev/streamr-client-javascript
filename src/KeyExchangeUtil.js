@@ -6,6 +6,7 @@ import EncryptionUtil from './EncryptionUtil'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
+import InvalidGroupKeyResetError from './errors/InvalidGroupKeyResetError'
 
 const debug = debugFactory('KeyExchangeUtil')
 const SUBSCRIBERS_EXPIRATION_TIME = 5 * 60 * 1000 // 5 minutes
@@ -97,6 +98,42 @@ export default class KeyExchangeUtil {
         })
         /* eslint-disable no-underscore-dangle */
         this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), decryptedGroupKeys)
+        /* eslint-enable no-underscore-dangle */
+        debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
+    }
+
+    handleGroupKeyReset(streamMessage) {
+        // if it was signed, the StreamrClient already checked the signature. If not, StreamrClient accepted it since the stream
+        // does not require signed data for all types of messages.
+        if (!streamMessage.signature) {
+            throw new InvalidGroupKeyResetError('Received unsigned group key reset (it must be signed to avoid MitM attacks).')
+        }
+        // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
+        const parsedContent = streamMessage.getParsedContent()
+        // TODO: fix this hack in other PR
+        if (!this._client.subscribedStreamPartitions[parsedContent.streamId + '0']) {
+            throw new InvalidGroupKeyResetError('Received group key reset for a stream to which the client is not subscribed.')
+        }
+
+        if (!this._client.encryptionUtil) {
+            throw new InvalidGroupKeyResetError('Cannot decrypt group key reset without the private key.')
+        }
+        const groupKey = this._client.encryptionUtil.decryptWithPrivateKey(parsedContent.groupKey, true)
+        try {
+            EncryptionUtil.validateGroupKey(groupKey)
+        } catch (err) {
+            if (err instanceof InvalidGroupKeyError) {
+                throw new InvalidGroupKeyResetError(err.message)
+            } else {
+                throw err
+            }
+        }
+        const decryptedGroupKey = {
+            groupKey,
+            start: parsedContent.start
+        }
+        /* eslint-disable no-underscore-dangle */
+        this._client._setGroupKeys(parsedContent.streamId, streamMessage.getPublisherId(), [decryptedGroupKey])
         /* eslint-enable no-underscore-dangle */
         debug('INFO: Updated group key for stream "%s" and publisher "%s"', parsedContent.streamId, streamMessage.getPublisherId())
     }

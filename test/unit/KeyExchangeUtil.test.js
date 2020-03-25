@@ -9,6 +9,7 @@ import EncryptionUtil from '../../src/EncryptionUtil'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
 import InvalidGroupKeyResponseError from '../../src/errors/InvalidGroupKeyResponseError'
 import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
+import InvalidGroupKeyResetError from '../../src/errors/InvalidGroupKeyResetError'
 
 const { StreamMessage } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
@@ -456,6 +457,81 @@ describe('KeyExchangeUtil', () => {
             }
             /* eslint-enable no-underscore-dangle */
             return util.handleGroupKeyResponse(streamMessage)
+        })
+    })
+    describe('handleGroupKeyReset', () => {
+        it('should reject unsigned reset', () => {
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    groupKey: 'encrypted-group-key',
+                    start: 54256,
+                }, StreamMessage.SIGNATURE_TYPES.NONE, null,
+            )
+            try {
+                util.handleGroupKeyReset(streamMessage)
+            } catch (err) {
+                assert(err instanceof InvalidGroupKeyResetError)
+                assert.strictEqual(err.message, 'Received unsigned group key reset (it must be signed to avoid MitM attacks).')
+            }
+        })
+        it('should reject reset for a stream to which the client is not subscribed', () => {
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'wrong-streamId',
+                    groupKey: 'encrypted-group-key',
+                    start: 54256,
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            try {
+                util.handleGroupKeyReset(streamMessage)
+            } catch (err) {
+                assert(err instanceof InvalidGroupKeyResetError)
+                assert.strictEqual(err.message, 'Received group key reset for a stream to which the client is not subscribed.')
+            }
+        })
+        it('should reject reset with invalid group key', () => {
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    groupKey: encryptedGroupKey,
+                    start: 54256,
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            try {
+                util.handleGroupKeyReset(streamMessage)
+            } catch (err) {
+                assert(err instanceof InvalidGroupKeyResetError)
+                assert.strictEqual(err.message, 'Group key must have a size of 256 bits, not 128')
+            }
+        })
+        it('should update client options and subscriptions after reset with received group key', (done) => {
+            const groupKey = crypto.randomBytes(32)
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, client.encryptionUtil.getPublicKey(), true)
+            const streamMessage = StreamMessage.create(
+                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    streamId: 'streamId',
+                    groupKey: encryptedGroupKey,
+                    start: 54256,
+                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            )
+            /* eslint-disable no-underscore-dangle */
+            client._setGroupKeys = (streamId, publisherId, keys) => {
+                assert.strictEqual(streamId, 'streamId')
+                assert.strictEqual(publisherId, 'publisherId')
+                assert.deepStrictEqual(keys, [{
+                    groupKey,
+                    start: 54256
+                }])
+                done()
+            }
+            /* eslint-enable no-underscore-dangle */
+            return util.handleGroupKeyReset(streamMessage)
         })
     })
 })
