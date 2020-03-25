@@ -11,6 +11,7 @@ export default class KeyExchangeUtil {
     constructor(client) {
         this._client = client
         this.isSubscriberPromises = {}
+        this.localSubscribers = {}
     }
 
     async handleGroupKeyRequest(streamMessage) {
@@ -105,6 +106,19 @@ export default class KeyExchangeUtil {
             this.lastAccess = Date.now()
         }
         return this.subscribersPromise
+    }
+
+    async nbSubscribersToRevoke(streamId) {
+        const realSubscribersSet = await this._client.getStreamSubscribers(streamId)
+        let counter = 0
+        const localSubscribersSet = this.localSubscribers[streamId] ? this.localSubscribers[streamId] : []
+        localSubscribersSet.forEach((subscriber) => {
+            if (!realSubscribersSet.includes(subscriber)) {
+                counter += 1
+            }
+        })
+        this.localSubscribers[streamId] = realSubscribersSet
+        return counter
     }
 
     async isSubscriber(streamId, subscriberId) {

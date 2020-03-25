@@ -98,6 +98,27 @@ describe('KeyExchangeUtil', () => {
             assert(client.isStreamSubscriber.calledTwice)
         })
     })
+    describe('nbSubscribersToRevoke', () => {
+        it('correctly returns the number of subscribers to revoke at each call', async () => {
+            client.getStreamSubscribers.withArgs('streamId1').onCall(0).resolves(['subscriberId1', 'subscriberId2'])
+            client.getStreamSubscribers.withArgs('streamId1').onCall(1).resolves(['subscriberId1', 'subscriberId3'])
+            client.getStreamSubscribers.withArgs('streamId1').onCall(2).resolves(['subscriberId1', 'subscriberId3', 'subscriber8'])
+            client.getStreamSubscribers.withArgs('streamId1').onCall(3).resolves(['subscriberId4', 'subscriberId3', 'subscriberId2'])
+            client.getStreamSubscribers.withArgs('streamId2').onCall(0).resolves(['subscriberId1', 'subscriberId2'])
+            client.getStreamSubscribers.withArgs('streamId2').onCall(1).resolves(['subscriberId1', 'subscriberId2'])
+            client.getStreamSubscribers.withArgs('streamId2').onCall(2).resolves(['subscriberId5', 'subscriberId3', 'subscriberId8'])
+            client.getStreamSubscribers.withArgs('streamId2').onCall(3).resolves(['subscriberId9', 'subscriberId10', 'subscriberId11'])
+
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 1)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 0)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 0)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 2)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId1'), 2)
+            assert.deepStrictEqual(await util.nbSubscribersToRevoke('streamId2'), 3)
+        })
+    })
     describe('handleGroupKeyRequest', () => {
         it('should reject unsigned request', (done) => {
             const streamMessage = StreamMessage.create(
