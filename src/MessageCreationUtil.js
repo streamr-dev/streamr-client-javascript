@@ -178,6 +178,23 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
+    async createGroupKeyReset(subscriberAddress, streamId, encryptedGroupKey) {
+        if (!this._signer) {
+            throw new Error('Cannot create unsigned group key reset. Must authenticate with "privateKey" or "provider"')
+        }
+        const publisherId = await this.getPublisherId()
+        const data = {
+            streamId,
+            groupKey: encryptedGroupKey.groupKey,
+            start: encryptedGroupKey.start,
+        }
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(subscriberAddress.toLowerCase(), publisherId)
+        const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE,
+            StreamMessage.ENCRYPTION_TYPES.RSA, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
+        await this._signer.signStreamMessage(streamMessage)
+        return streamMessage
+    }
+
     async createErrorMessage(destinationAddress, error) {
         if (!this._signer) {
             throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')

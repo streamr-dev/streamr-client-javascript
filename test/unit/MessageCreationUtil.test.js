@@ -402,6 +402,54 @@ describe('MessageCreationUtil', () => {
         })
     })
 
+    describe('createGroupKeyReset', () => {
+        const stream = new Stream(null, {
+            id: 'streamId',
+            partitions: 1,
+        })
+        const auth = {
+            username: 'username',
+        }
+        it('should not be able to create unsigned group key reset', (done) => {
+            const util = new MessageCreationUtil(auth, null, () => Promise.resolve({
+                username: 'username',
+            }), sinon.stub().resolves(stream))
+            util.createGroupKeyReset('subscriberId', 'streamId', {
+                groupKey: 'group-key',
+                start: 34524,
+            }).catch((err) => {
+                assert.strictEqual(err.message, 'Cannot create unsigned group key reset. Must authenticate with "privateKey" or "provider"')
+                done()
+            })
+        })
+        it('creates correct group key reset', async () => {
+            const signer = {
+                signStreamMessage: (streamMessage) => {
+                    /* eslint-disable no-param-reassign */
+                    streamMessage.signatureType = StreamMessage.SIGNATURE_TYPES.ETH
+                    streamMessage.signature = 'signature'
+                    /* eslint-enable no-param-reassign */
+                    return Promise.resolve()
+                },
+            }
+            const util = new MessageCreationUtil(auth, signer, () => Promise.resolve({
+                username: 'username',
+            }), sinon.stub().resolves(stream))
+            const streamMessage = await util.createGroupKeyReset('subscriberId', 'streamId', {
+                groupKey: 'encrypted-group-key',
+                start: 34524,
+            })
+            assert.strictEqual(streamMessage.getStreamId(), 'subscriberId'.toLowerCase()) // sending to subscriber's inbox stream
+            const content = streamMessage.getParsedContent()
+            assert.strictEqual(streamMessage.contentType, StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE)
+            assert.strictEqual(streamMessage.encryptionType, StreamMessage.ENCRYPTION_TYPES.RSA)
+            assert.strictEqual(content.streamId, 'streamId')
+            assert.deepStrictEqual(content.groupKey, 'encrypted-group-key')
+            assert.deepStrictEqual(content.start, 34524)
+            assert(streamMessage.signature)
+        })
+    })
+
     describe('createErrorMessage', () => {
         const stream = new Stream(null, {
             id: 'streamId',
