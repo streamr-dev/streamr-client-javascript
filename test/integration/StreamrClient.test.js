@@ -1006,6 +1006,52 @@ describe('StreamrClient', () => {
             })
         }, 2 * TIMEOUT)
 
+        it('client.subscribe can get the new group key after a group key reset', async (done) => {
+            client.once('error', done)
+            const groupKey = crypto.randomBytes(32)
+            // subscribe without knowing the group key to decrypt stream messages
+            let receivedFirst = false
+            const sub = client.subscribe({
+                stream: stream.id,
+            }, (parsedContent, streamMessage) => {
+                // Check signature stuff
+                assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+                assert(streamMessage.getPublisherId())
+                assert(streamMessage.signature)
+
+                if (!receivedFirst) {
+                    assert.strictEqual(parsedContent.data, 'msg1')
+                    // Now the subscriber knows the initial group key
+                    assert.deepStrictEqual(sub.groupKeys[streamMessage.getPublisherId().toLowerCase()], groupKey)
+                    receivedFirst = true
+                } else {
+                    assert.strictEqual(parsedContent.data, 'msg2')
+                    // Now the subscriber knows another group key after reset
+                    assert.notDeepStrictEqual(sub.groupKeys[streamMessage.getPublisherId().toLowerCase()], groupKey)
+
+                    // All good, unsubscribe
+                    client.unsubscribe(sub)
+                    sub.on('unsubscribed', () => {
+                        done()
+                    })
+                }
+            })
+
+            // Publish after subscribed
+            sub.on('subscribed', async () => {
+                await client.publish(stream.id, {
+                    data: 'msg1',
+                }, Date.now(), null, groupKey)
+                setTimeout(async () => {
+                    await client.rekey(stream.id)
+                    // publishing second message with the newly generated key
+                    await client.publish(stream.id, {
+                        data: 'msg2'
+                    })
+                }, 2000)
+            })
+        }, 2 * TIMEOUT)
+
         it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
             client.once('error', done)
             // Publish encrypted messages with different keys

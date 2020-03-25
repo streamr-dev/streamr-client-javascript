@@ -175,10 +175,10 @@ export default class KeyExchangeUtil {
         return res
     }
 
-    async rekey(streamId) {
+    async rekey(streamId, getSubscribersLocally = true) {
         const groupKey = crypto.randomBytes(32)
         const start = Date.now()
-        const realSubscribersSet = this.localSubscribers[streamId] ? this.localSubscribers[streamId] : []
+        const realSubscribersSet = getSubscribersLocally ? this.localSubscribers[streamId] : (await this._client.getStreamSubscribers(streamId))
 
         const toRevoke = []
         const promises = []

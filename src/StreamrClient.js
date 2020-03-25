@@ -43,6 +43,7 @@ import ResendUtil from './ResendUtil'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
+import InvalidGroupKeyResetError from './errors/InvalidGroupKeyResetError'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
@@ -69,6 +70,7 @@ export default class StreamrClient extends EventEmitter {
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
             keyExchange: {},
+            autoRevoke: true,
             streamrNodeAddress: '0xf3E5A65851C3779f468c9EcB32E6f25D9D68601a',
             streamrOperatorAddress: '0xc0aa4dC0763550161a6B59fa430361b5a26df28C',
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
@@ -320,7 +322,22 @@ export default class StreamrClient extends EventEmitter {
                                 this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
                             } else {
                                 throw new InvalidGroupKeyResponseError(
-                                    `Received group key from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
+                                    `Received group key response from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
+                                )
+                            }
+                        }
+                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESET_SIMPLE) {
+                        if (this.keyExchangeUtil) {
+                            const { streamId } = streamMessage.getParsedContent()
+                            // A valid publisher of the client's inbox stream could send key resets for other streams to which
+                            // the publisher doesn't have write permissions. Thus the following additional check is necessary.
+                            // TODO: fix this hack in other PR (and move logic to keyExchangeUtil)
+                            const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
+                            if (valid) {
+                                this.keyExchangeUtil.handleGroupKeyReset(streamMessage)
+                            } else {
+                                throw new InvalidGroupKeyResetError(
+                                    `Received group key reset from an invalid publisher ${streamMessage.getPublisherId()} for stream ${streamId}`
                                 )
                             }
                         }
@@ -426,6 +443,12 @@ export default class StreamrClient extends EventEmitter {
 
         if (this.isConnected()) {
             // If connected, emit a publish request
+            if (this.options.autoRevoke && this.keyExchangeUtil) {
+                const res = await this.keyExchangeUtil.keyRevocationNeeded(streamId)
+                if (res) {
+                    await this.keyExchangeUtil.rekey(streamId)
+                }
+            }
             return this._requestPublish(streamMessage, sessionToken)
         }
 
@@ -462,6 +485,13 @@ export default class StreamrClient extends EventEmitter {
             data,
             'Wait for the "connected" event before calling publish, or set autoConnect to true!',
         )
+    }
+
+    async rekey(streamId) {
+        if (!this.keyExchangeUtil) {
+            throw new Error('options.keyExchange must be defined in the StreamrClient constructor to use this function.')
+        }
+        return this.keyExchangeUtil.rekey(streamId, false)
     }
 
     async resend(optionsOrStreamId, callback) {
