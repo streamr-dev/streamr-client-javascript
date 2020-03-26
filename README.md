@@ -132,6 +132,7 @@ publisherGroupKeys | {} | Object defining the group key as a hex string used to 
 publisherStoreKeyHistory | true | If `true`, the client will locally store every key used to encrypt messages at some point. If set to `false`, the client will not be able to answer subscribers asking for historical keys during resend requests.
 subscriberGroupKeys | {} | Object defining, for each stream id, an object containing the group key used to decrypt for each publisher id. Not needed if `keyExchange` is defined.
 keyExchange | {} | Defines RSA key pair to use for group key exchange. Can define `publicKey` and `privateKey` fields as strings in the PEM format, or stay empty to generate a key pair automatically. Can be set to `null` if no key exchange is required.
+autoRevoke | true | If set to true, periodically rekeys streams when publishing if the number of subscribers to revoke reaches a threshold of 5. Can also manually trigger a rekey with `client.rekey(streamId)`.
 
 ### Authentication options
 
