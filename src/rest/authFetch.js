@@ -2,6 +2,17 @@ import fetch from 'node-fetch'
 import debugFactory from 'debug'
 
 import AuthFetchError from '../errors/AuthFetchError'
+import pkg from '../../package.json'
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+const STREAMR_CLIENT_USER_AGENT = `streamr-client-javascript/${pkg.version}${!isProduction ? 'dev' : ''}`
+
+export const DEFAULT_HEADERS = {
+    'User-Agent': global.navigator
+        ? `${global.navigator.userAgent} ${STREAMR_CLIENT_USER_AGENT}` // append to browser useragent
+        : `Node ${process.version} ${STREAMR_CLIENT_USER_AGENT}` // server user agent
+}
 
 const debug = debugFactory('StreamrClient:utils')
 
@@ -14,6 +25,7 @@ const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
             ...(session && !session.options.unauthenticated ? {
                 Authorization: `Bearer ${await session.getSessionToken(requireNewToken)}`,
             } : {}),
+            ...DEFAULT_HEADERS,
             ...opts.headers,
         },
     })
