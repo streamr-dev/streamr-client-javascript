@@ -7,9 +7,20 @@ import { MessageLayer } from 'streamr-client-protocol'
 import UnableToDecryptError from './errors/UnableToDecryptError'
 import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
 
-const generateKeyPair = util.promisify(crypto.generateKeyPair)
-
 const { StreamMessage } = MessageLayer
+
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf))
+}
+
+async function exportCryptoKey(key, { isPrivate = false } = {}) {
+    const keyType = isPrivate ? 'pkcs8' : 'spki'
+    const exported = await global.crypto.subtle.exportKey(keyType, key)
+    const exportedAsString = ab2str(exported)
+    const exportedAsBase64 = global.btoa(exportedAsString)
+    const TYPE = isPrivate ? 'PRIVATE' : 'PUBLIC'
+    return `-----BEGIN ${TYPE} KEY-----\n${exportedAsBase64}\n-----END ${TYPE} KEY-----`
+}
 
 export default class EncryptionUtil {
     constructor(options = {}) {
@@ -178,8 +189,12 @@ export default class EncryptionUtil {
             hash: 'SHA-256'
         }, true, ['encrypt', 'decrypt'])
 
-        this.privateKey = global.crypto.subtle.exportKey('spki', privateKey)
-        this.publicKey = global.crypto.subtle.exportKey('pkcs8', publicKey)
+        this.privateKey = await exportCryptoKey(privateKey, {
+            isPrivate: true,
+        })
+        this.publicKey = await exportCryptoKey(publicKey, {
+            isPrivate: false,
+        })
     }
 
     static validatePublicKey(publicKey) {
