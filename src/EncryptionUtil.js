@@ -148,11 +148,12 @@ export default class EncryptionUtil {
     }
 
     async __generateKeyPair() {
-        if (process.isBrowser) { return this._keyPairBrowser() }
+        if (process.browser) { return this._keyPairBrowser() }
         return this._keyPairServer()
     }
 
     async _keyPairServer() {
+        const generateKeyPair = util.promisify(crypto.generateKeyPair)
         const { publicKey, privateKey } = await generateKeyPair('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
