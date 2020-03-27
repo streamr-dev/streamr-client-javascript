@@ -1,10 +1,13 @@
 import crypto from 'crypto'
+import util from 'util'
 
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
 
 import UnableToDecryptError from './errors/UnableToDecryptError'
 import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
+
+const generateKeyPair = util.promisify(crypto.generateKeyPair)
 
 const { StreamMessage } = MessageLayer
 
@@ -20,8 +23,18 @@ export default class EncryptionUtil {
         }
     }
 
+    async onReady() {
+        if (this.isReady()) { return undefined }
+        return this._generateKeyPair()
+    }
+
+    isReady() {
+        return !!this.privateKey
+    }
+
     // Returns a Buffer
     decryptWithPrivateKey(ciphertext, isHexString = false) {
+        if (!this.isReady()) { throw new Error('EncryptionUtil not ready.') }
         let ciphertextBuffer = ciphertext
         if (isHexString) {
             ciphertextBuffer = ethers.utils.arrayify(`0x${ciphertext}`)
@@ -31,6 +44,7 @@ export default class EncryptionUtil {
 
     // Returns a String (base64 encoding)
     getPublicKey() {
+        if (!this.isReady()) { throw new Error('EncryptionUtil not ready.') }
         return this.publicKey
     }
 
@@ -126,8 +140,20 @@ export default class EncryptionUtil {
         /* eslint-enable no-param-reassign */
     }
 
-    _generateKeyPair() {
-        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+    async _generateKeyPair() {
+        if (!this._generateKeyPairPromise) {
+            this._generateKeyPairPromise = this.__generateKeyPair()
+        }
+        return this._generateKeyPairPromise
+    }
+
+    async __generateKeyPair() {
+        if (process.isBrowser) { return this._keyPairBrowser() }
+        return this._keyPairServer()
+    }
+
+    async _keyPairServer() {
+        const { publicKey, privateKey } = await generateKeyPair('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
                 type: 'spki',
@@ -138,8 +164,21 @@ export default class EncryptionUtil {
                 format: 'pem',
             },
         })
+
         this.privateKey = privateKey
         this.publicKey = publicKey
+    }
+
+    async _keyPairBrowser() {
+        const { publicKey, privateKey } = await global.crypto.subtle.generateKey({
+            name: 'RSA-OAEP',
+            modulusLength: 4096,
+            publicExponent: new Uint8Array([1, 0, 1]), // 65537
+            hash: 'SHA-256'
+        }, true, ['encrypt', 'decrypt'])
+
+        this.privateKey = global.crypto.subtle.exportKey('spki', privateKey)
+        this.publicKey = global.crypto.subtle.exportKey('pkcs8', publicKey)
     }
 
     static validatePublicKey(publicKey) {
