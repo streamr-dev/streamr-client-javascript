@@ -9,14 +9,16 @@ import EncryptionUtil from '../../src/EncryptionUtil'
 const { StreamMessage } = MessageLayer
 
 describe('EncryptionUtil', () => {
-    it('rsa decryption after encryption equals the initial plaintext', () => {
+    it('rsa decryption after encryption equals the initial plaintext', async () => {
         const encryptionUtil = new EncryptionUtil()
+        await encryptionUtil.onReady()
         const plaintext = 'some random text'
         const ciphertext = EncryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'), encryptionUtil.getPublicKey())
         expect(encryptionUtil.decryptWithPrivateKey(ciphertext).toString('utf8')).toStrictEqual(plaintext)
     })
-    it('rsa decryption after encryption equals the initial plaintext (hex strings)', () => {
+    it('rsa decryption after encryption equals the initial plaintext (hex strings)', async () => {
         const encryptionUtil = new EncryptionUtil()
+        await encryptionUtil.onReady()
         const plaintext = 'some random text'
         const ciphertext = EncryptionUtil.encryptWithPublicKey(Buffer.from(plaintext, 'utf8'), encryptionUtil.getPublicKey(), true)
         expect(encryptionUtil.decryptWithPrivateKey(ciphertext, true).toString('utf8')).toStrictEqual(plaintext)
