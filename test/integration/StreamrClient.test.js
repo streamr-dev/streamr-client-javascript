@@ -1052,15 +1052,15 @@ describe('StreamrClient', () => {
             })
         }, 2 * TIMEOUT)
 
-        it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
+        it('client.subscribe with resend last can get the historical keys for previous encrypted messages', async (done) => {
             client.once('error', done)
             // Publish encrypted messages with different keys
             const groupKey1 = crypto.randomBytes(32)
             const groupKey2 = crypto.randomBytes(32)
-            client.publish(stream.id, {
+            await client.publish(stream.id, {
                 test: 'resent msg 1',
             }, Date.now(), null, groupKey1)
-            client.publish(stream.id, {
+            await client.publish(stream.id, {
                 test: 'resent msg 2',
             }, Date.now(), null, groupKey2)
 
