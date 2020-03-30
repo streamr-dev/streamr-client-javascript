@@ -68,6 +68,7 @@
     "heap": "^0.2.6",
     "lodash.uniqueid": "^4.0.1",
     "node-fetch": "^2.6.0",
+    "node-webcrypto-shim": "0.0.1",
     "once": "^1.4.0",
     "qs": "^6.9.1",
     "randomstring": "^1.1.5",

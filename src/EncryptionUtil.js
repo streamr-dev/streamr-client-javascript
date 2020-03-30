@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import util from 'util'
 
+import WebCrypto from 'node-webcrypto-shim'
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
 
@@ -15,11 +16,11 @@ function ab2str(buf) {
 
 async function exportCryptoKey(key, { isPrivate = false } = {}) {
     const keyType = isPrivate ? 'pkcs8' : 'spki'
-    const exported = await global.crypto.subtle.exportKey(keyType, key)
+    const exported = await WebCrypto.subtle.exportKey(keyType, key)
     const exportedAsString = ab2str(exported)
     const exportedAsBase64 = global.btoa(exportedAsString)
     const TYPE = isPrivate ? 'PRIVATE' : 'PUBLIC'
-    return `-----BEGIN ${TYPE} KEY-----\n${exportedAsBase64}\n-----END ${TYPE} KEY-----`
+    return `-----BEGIN ${TYPE} KEY-----\n${exportedAsBase64}\n-----END ${TYPE} KEY-----\n`
 }
 
 export default class EncryptionUtil {
@@ -182,7 +183,7 @@ export default class EncryptionUtil {
     }
 
     async _keyPairBrowser() {
-        const { publicKey, privateKey } = await global.crypto.subtle.generateKey({
+        const { publicKey, privateKey } = await WebCrypto.subtle.generateKey({
             name: 'RSA-OAEP',
             modulusLength: 4096,
             publicExponent: new Uint8Array([1, 0, 1]), // 65537
