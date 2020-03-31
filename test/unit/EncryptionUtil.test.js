@@ -8,14 +8,18 @@ import EncryptionUtil from '../../src/EncryptionUtil'
 
 const { StreamMessage } = MessageLayer
 
+// wrap these tests so can run same tests as if in browser
 function TestEncryptionUtil({ isBrowser = false } = {}) {
-    describe('EncryptionUtil', () => {
+    describe(`EncryptionUtil ${isBrowser ? 'Browser' : 'Server'}`, () => {
         beforeAll(() => {
+            // this is the toggle used in EncryptionUtil to
+            // use the webcrypto apis
             process.browser = !!isBrowser
         })
         afterAll(() => {
             process.browser = !isBrowser
         })
+
         it('rsa decryption after encryption equals the initial plaintext', async () => {
             const encryptionUtil = new EncryptionUtil()
             await encryptionUtil.onReady()
@@ -180,5 +184,10 @@ function TestEncryptionUtil({ isBrowser = false } = {}) {
     })
 }
 
-TestEncryptionUtil({ isBrowser: false })
-TestEncryptionUtil({ isBrowser: true })
+TestEncryptionUtil({
+    isBrowser: false,
+})
+
+TestEncryptionUtil({
+    isBrowser: true,
+})

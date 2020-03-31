@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import util from 'util'
 
-import WebCrypto from 'node-webcrypto-shim'
+import WebCrypto from 'node-webcrypto-shim' // this allows us to run tests in node against browser API
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
 
