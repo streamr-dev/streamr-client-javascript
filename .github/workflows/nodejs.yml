@@ -39,7 +39,7 @@ jobs:
       run: npm run test-unit
 
     - name: test-build
-      run: npm run build && npm run build-example
+      run: npm run build && npm run install-example && npm run build-example
 
     - name: test-integration
       run: |
