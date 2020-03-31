@@ -1,1 +1,3 @@
-module.exports = window.crypto
+module.exports = function() {
+    return window.crypto
+}

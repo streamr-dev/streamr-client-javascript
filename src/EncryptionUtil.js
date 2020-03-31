@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import util from 'util'
 
 // this is shimmed out for actual browser build allows us to run tests in node against browser API
-import WebCrypto from 'node-webcrypto-ossl'
+import { Crypto } from 'node-webcrypto-ossl'
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
 
@@ -15,11 +15,26 @@ function ab2str(buf) {
     return String.fromCharCode.apply(null, new Uint8Array(buf))
 }
 
+// shim browser btoa for node
+function btoa(str) {
+    if (global.btoa) { return global.btoa(str) }
+    let buffer
+
+    if (str instanceof Buffer) {
+        buffer = str
+    } else {
+        buffer = Buffer.from(str.toString(), 'binary')
+    }
+
+    return buffer.toString('base64')
+}
+
 async function exportCryptoKey(key, { isPrivate = false } = {}) {
+    const WebCrypto = new Crypto()
     const keyType = isPrivate ? 'pkcs8' : 'spki'
     const exported = await WebCrypto.subtle.exportKey(keyType, key)
     const exportedAsString = ab2str(exported)
-    const exportedAsBase64 = global.btoa(exportedAsString)
+    const exportedAsBase64 = btoa(exportedAsString)
     const TYPE = isPrivate ? 'PRIVATE' : 'PUBLIC'
     return `-----BEGIN ${TYPE} KEY-----\n${exportedAsBase64}\n-----END ${TYPE} KEY-----\n`
 }
@@ -184,6 +199,7 @@ export default class EncryptionUtil {
     }
 
     async _keyPairBrowser() {
+        const WebCrypto = new Crypto()
         const { publicKey, privateKey } = await WebCrypto.subtle.generateKey({
             name: 'RSA-OAEP',
             modulusLength: 4096,
