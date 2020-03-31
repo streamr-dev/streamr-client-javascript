@@ -19,7 +19,8 @@
     "test": "jest --detectOpenHandles",
     "test-unit": "jest test/unit --detectOpenHandles",
     "coverage": "jest --coverage",
-    "test-integration": "jest test/integration --detectOpenHandles"
+    "test-integration": "jest test/integration --detectOpenHandles",
+    "build-example": "cd examples/webpack && npm run build-with-parent"
   },
   "engines": {
     "node": ">= 10"
