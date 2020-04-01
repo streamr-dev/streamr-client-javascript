@@ -5,7 +5,7 @@
   "scripts": {
     "build": "NODE_ENV=production webpack --mode=production --progress",
     "dev": "webpack --progress --colors --watch",
-    "build-with-parent": "npm ci && cp -Rpfv ../../dist ./node_modules/streamr-client/ && rm node_modules/streamr-client/package.json; cp ../../package.json ./node_modules/streamr-client/package.json && npm run build"
+    "build-with-parent": "cp -Rpfv ../../dist ./node_modules/streamr-client/ && rm node_modules/streamr-client/package.json; cp ../../package.json ./node_modules/streamr-client/package.json && npm run build"
   },
   "engines": {
     "node": ">= 8"
