@@ -118,11 +118,14 @@ describe('StreamrClient', () => {
         })
 
         c.send = (msgToSend) => {
-            const next = c.expectedMessagesToSend.shift()
-            if (!next) {
-                throw new Error(`Sending unexpected message: ${JSON.stringify(msgToSend)}`)
-            }
-            next.verificationFunction(msgToSend, next.msgToExpect)
+            return new Promise((resolve, reject) => {
+                const next = c.expectedMessagesToSend.shift()
+                if (!next) {
+                    throw new Error(`Sending unexpected message: ${JSON.stringify(msgToSend)}`)
+                }
+                next.verificationFunction(msgToSend, next.msgToExpect)
+                resolve()
+            })
         }
 
         c.emitMessage = (message) => {
