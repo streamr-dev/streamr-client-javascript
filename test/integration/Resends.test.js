@@ -8,9 +8,7 @@ import config from './config'
 const { wait, waitForCondition } = require('streamr-test-utils')
 
 const createClient = (opts = {}) => new StreamrClient({
-    auth: {
-        privateKey: ethers.Wallet.createRandom().privateKey,
-    },
+    apiKey: 'tester1-api-key',
     autoConnect: false,
     autoDisconnect: false,
     ...config.clientOptions,
