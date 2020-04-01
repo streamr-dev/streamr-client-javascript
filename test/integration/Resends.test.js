@@ -1,5 +1,3 @@
-import { ethers } from 'ethers'
-
 import { uid } from '../utils'
 import StreamrClient from '../../src'
 
