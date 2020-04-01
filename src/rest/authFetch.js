@@ -6,12 +6,8 @@ import pkg from '../../package.json'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-const STREAMR_CLIENT_USER_AGENT = `streamr-client-javascript/${pkg.version}${!isProduction ? 'dev' : ''}`
-
 export const DEFAULT_HEADERS = {
-    'User-Agent': global.navigator
-        ? `${global.navigator.userAgent} ${STREAMR_CLIENT_USER_AGENT}` // append to browser useragent
-        : `Node ${process.version} ${STREAMR_CLIENT_USER_AGENT}` // server user agent
+    'Streamr-Client': `streamr-client-javascript/${pkg.version}${!isProduction ? 'dev' : ''}`
 }
 
 const debug = debugFactory('StreamrClient:utils')
