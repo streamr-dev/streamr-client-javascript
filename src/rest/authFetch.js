@@ -2,12 +2,10 @@ import fetch from 'node-fetch'
 import debugFactory from 'debug'
 
 import AuthFetchError from '../errors/AuthFetchError'
-import pkg from '../../package.json'
-
-const isProduction = process.env.NODE_ENV === 'production'
+import { getVersionString } from '../utils'
 
 export const DEFAULT_HEADERS = {
-    'Streamr-Client': `streamr-client-javascript/${pkg.version}${!isProduction ? 'dev' : ''}`
+    'Streamr-Client': `streamr-client-javascript/${getVersionString()}`
 }
 
 const debug = debugFactory('StreamrClient:utils')
