@@ -186,7 +186,7 @@ describe('StreamrClient resends', () => {
             await client.ensureDisconnected()
 
             // messages landing to DB
-            await wait(10000)
+            await wait(100)
 
             // resend LAST LONG_RESEND messages
             await client.ensureConnected()
@@ -197,7 +197,9 @@ describe('StreamrClient resends', () => {
                 {
                     stream: stream.id,
                     resend: {
-                        last: LONG_RESEND,
+                        from: {
+                            timestamp: 0,
+                        },
                     },
                 },
                 (message) => {
