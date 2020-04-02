@@ -124,7 +124,10 @@ class Connection extends EventEmitter {
         return new Promise((resolve) => {
             this.updateState(Connection.State.DISCONNECTING)
             this.socket.events.once('close', resolve)
-            this.socket.close()
+
+            // The only way to land all message in underlying socket
+            // eslint-disable-next-line no-underscore-dangle
+            this.socket._socket.end()
         })
     }
 

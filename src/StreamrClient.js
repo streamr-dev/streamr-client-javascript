@@ -717,6 +717,7 @@ export default class StreamrClient extends EventEmitter {
         if (this.isDisconnecting()) {
             return waitFor(this, 'disconnected')
         }
+
         return this.disconnect()
     }
 

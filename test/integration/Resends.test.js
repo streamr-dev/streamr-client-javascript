@@ -164,5 +164,54 @@ describe('StreamrClient resends', () => {
             await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
             expect(receivedMessages).toEqual(publishedMessages)
         }, 30000)
+
+        it('long resend', async () => {
+            const LONG_RESEND = 50000
+            publishedMessages = []
+
+            stream = await client.createStream({
+                name: uid('resends')
+            })
+
+            for (let i = 0; i < LONG_RESEND; i++) {
+                const message = {
+                    msg: uid('message'),
+                }
+
+                // eslint-disable-next-line no-await-in-loop
+                await client.publish(stream.id, message)
+                publishedMessages.push(message)
+            }
+
+            await client.ensureDisconnected()
+
+            // messages landing to DB
+            await wait(10000)
+
+            // resend LAST LONG_RESEND messages
+            await client.ensureConnected()
+            const receivedMessages = []
+
+            // eslint-disable-next-line no-await-in-loop
+            const sub = await client.resend(
+                {
+                    stream: stream.id,
+                    resend: {
+                        last: LONG_RESEND,
+                    },
+                },
+                (message) => {
+                    receivedMessages.push(message)
+                },
+            )
+
+            // eslint-disable-next-line no-loop-func
+            sub.once('resent', () => {
+                expect(receivedMessages.length).toBe(publishedMessages.length)
+            })
+
+            // eslint-disable-next-line no-await-in-loop
+            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 100000)
+        }, 100000)
     })
 })
