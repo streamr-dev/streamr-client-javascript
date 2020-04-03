@@ -183,10 +183,13 @@ describe('StreamrClient resends', () => {
                 publishedMessages.push(message)
             }
 
+            await wait(5000)
             await client.ensureDisconnected()
 
+            console.log(stream.id)
+
             // messages landing to DB
-            await wait(10000)
+            await wait(5000)
 
             // resend from LONG_RESEND messages
             await client.ensureConnected()
@@ -212,7 +215,7 @@ describe('StreamrClient resends', () => {
             })
 
             // eslint-disable-next-line no-await-in-loop
-            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 50000)
-        }, 50000)
+            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 100000)
+        }, 100000)
     })
 })
