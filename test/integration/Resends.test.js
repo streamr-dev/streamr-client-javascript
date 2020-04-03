@@ -186,13 +186,12 @@ describe('StreamrClient resends', () => {
             await client.ensureDisconnected()
 
             // messages landing to DB
-            await wait(100)
+            await wait(10000)
 
-            // resend LAST LONG_RESEND messages
+            // resend from LONG_RESEND messages
             await client.ensureConnected()
             const receivedMessages = []
 
-            // eslint-disable-next-line no-await-in-loop
             const sub = await client.resend(
                 {
                     stream: stream.id,
@@ -213,7 +212,7 @@ describe('StreamrClient resends', () => {
             })
 
             // eslint-disable-next-line no-await-in-loop
-            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 100000)
-        }, 100000)
+            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 50000)
+        }, 50000)
     })
 })
