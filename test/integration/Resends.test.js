@@ -183,13 +183,8 @@ describe('StreamrClient resends', () => {
                 publishedMessages.push(message)
             }
 
-            await wait(5000)
+            await wait(15000)
             await client.ensureDisconnected()
-
-            console.log(stream.id)
-
-            // messages landing to DB
-            await wait(5000)
 
             // resend from LONG_RESEND messages
             await client.ensureConnected()
