@@ -166,7 +166,7 @@ describe('StreamrClient resends', () => {
         }, 30000)
 
         it('long resend', async () => {
-            const LONG_RESEND = 50000
+            const LONG_RESEND = 10000
             publishedMessages = []
 
             stream = await client.createStream({
