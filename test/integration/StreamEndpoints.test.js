@@ -151,22 +151,22 @@ describe('StreamEndpoints', () => {
     describe('Stream permissions', () => {
         it('Stream.getPermissions', async () => {
             const permissions = await createdStream.getPermissions()
-            assert.equal(permissions.length, 3) // read, write, share for the owner
+            assert.equal(permissions.length, 6, `Unexpected number of permissions: ${JSON.stringify(permissions)}`) // get, edit, delete, subscribe, publish, share
         })
 
         it('Stream.hasPermission', async () => {
-            assert(await createdStream.hasPermission('share', wallet.address))
+            assert(await createdStream.hasPermission('stream_share', wallet.address))
         })
 
         it('Stream.grantPermission', async () => {
-            await createdStream.grantPermission('read', null) // public read
-            assert(await createdStream.hasPermission('read', null))
+            await createdStream.grantPermission('stream_subscribe', null) // public read
+            assert(await createdStream.hasPermission('stream_subscribe', null))
         })
 
         it('Stream.revokePermission', async () => {
-            const publicRead = await createdStream.hasPermission('read', null)
+            const publicRead = await createdStream.hasPermission('stream_subscribe', null)
             await createdStream.revokePermission(publicRead.id)
-            assert(!(await createdStream.hasPermission('read', null)))
+            assert(!(await createdStream.hasPermission('stream_subscribe', null)))
         })
     })
 
