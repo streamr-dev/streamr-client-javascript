@@ -17,10 +17,9 @@ describe('StreamEndpoints', () => {
     let wallet
 
     const createClient = (opts = {}) => new StreamrClient({
-        url: config.websocketUrl,
-        restUrl: config.restUrl,
         autoConnect: false,
         autoDisconnect: false,
+        ...config.clientOptions,
         ...opts,
     })
 
@@ -76,6 +75,21 @@ describe('StreamEndpoints', () => {
 
     it('client.isStreamPublisher should return false', async () => {
         const valid = await client.isStreamPublisher(createdStream.id, 'some-wrong-address')
+        assert(!valid)
+    })
+
+    it('client.getStreamSubscribers should retrieve itself', async () => {
+        const subscribers = await client.getStreamSubscribers(createdStream.id)
+        assert.deepStrictEqual(subscribers, [client.signer.address.toLowerCase()])
+    })
+
+    it('client.isStreamSubscriber should return true', async () => {
+        const valid = await client.isStreamSubscriber(createdStream.id, client.signer.address.toLowerCase())
+        assert(valid)
+    })
+
+    it('client.isStreamSubscriber should return false', async () => {
+        const valid = await client.isStreamSubscriber(createdStream.id, 'some-wrong-address')
         assert(!valid)
     })
 
