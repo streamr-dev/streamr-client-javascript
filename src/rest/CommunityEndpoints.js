@@ -19,7 +19,7 @@ import {
 } from 'ethers'
 import debugFactory from 'debug'
 
-import * as CommunityProduct from '../../contracts/CommunityProduct.json'
+import * as CommunityProduct from '../../contracts/DataunionVault.json'
 
 import authFetch from './authFetch'
 
