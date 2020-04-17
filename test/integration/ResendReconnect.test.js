@@ -1,10 +1,11 @@
 import { ethers } from 'ethers'
+
 import { uid } from '../utils'
 import StreamrClient from '../../src'
 
 import config from './config'
 
-const { wait, waitForCondition } = require('streamr-test-utils')
+const { wait } = require('streamr-test-utils')
 
 const createClient = (opts = {}) => new StreamrClient({
     auth: {
@@ -20,7 +21,6 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 const MAX_MESSAGES = 3
-const TEST_REPEATS = 10
 
 describe('resend/reconnect', () => {
     let client
