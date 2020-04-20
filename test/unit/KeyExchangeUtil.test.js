@@ -174,6 +174,7 @@ describe('KeyExchangeUtil', () => {
             util.localSubscribers.streamId4 = ['subscriber1', 'subscriber3'] // fake call to 'keyRevocationNeeded', subscriber2 must be revoked
 
             const subscriberKeyPair1 = new EncryptionUtil()
+            await subscriberKeyPair1.onReady()
             const request1 = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'subscriber1', ''], null,
                 StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
@@ -182,6 +183,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
             const subscriberKeyPair2 = new EncryptionUtil()
+            await subscriberKeyPair2.onReady()
             const request2 = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
                 StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
@@ -190,6 +192,7 @@ describe('KeyExchangeUtil', () => {
                 }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
             )
             const subscriberKeyPair3 = new EncryptionUtil()
+            await subscriberKeyPair3.onReady()
             const request3 = StreamMessage.create(
                 ['clientInboxAddress', 0, Date.now(), 0, 'subscriber3', ''], null,
                 StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
