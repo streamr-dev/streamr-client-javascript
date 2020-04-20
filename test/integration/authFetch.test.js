@@ -14,7 +14,7 @@ describe('authFetch', () => {
         await client.ensureDisconnected()
     })
 
-    it('sends user-agent header', async () => {
+    it('sends Streamr-Client header', async () => {
         client = new StreamrClient({
             auth: {
                 privateKey: ethers.Wallet.createRandom().privateKey,
@@ -29,7 +29,7 @@ describe('authFetch', () => {
             expect(typeof url).toEqual('string')
             expect(opts).toMatchObject({
                 headers: {
-                    'User-Agent': expect.stringMatching('streamr-client-javascript'),
+                    'Streamr-Client': expect.stringMatching('streamr-client-javascript'),
                 },
             })
         })
