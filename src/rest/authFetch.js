@@ -12,6 +12,7 @@ const debug = debugFactory('StreamrClient:utils')
 
 const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
     const options = {
+        ...opts,
         headers: {
             ...DEFAULT_HEADERS,
             ...opts.headers,
