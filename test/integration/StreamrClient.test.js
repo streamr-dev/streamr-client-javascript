@@ -165,20 +165,18 @@ describe('StreamrClient Connection', () => {
             )
 
             sub.once('resent', () => {
-                setTimeout(() => {
-                    expect(messages).toEqual([
-                        {
-                            msg: 'message2',
-                        },
-                        {
-                            msg: 'message3',
-                        },
-                        {
-                            msg: 'message4',
-                        },
-                    ])
-                    done()
-                }, 2000)
+                expect(messages).toEqual([
+                    {
+                        msg: 'message2',
+                    },
+                    {
+                        msg: 'message3',
+                    },
+                    {
+                        msg: 'message4',
+                    },
+                ])
+                done()
             })
         }, 10000)
 
