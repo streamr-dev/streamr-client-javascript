@@ -32,7 +32,7 @@ import SubscribedStreamPartition from './SubscribedStreamPartition'
 import Stream from './rest/domain/Stream'
 import FailedToPublishError from './errors/FailedToPublishError'
 import MessageCreationUtil from './MessageCreationUtil'
-import { waitFor } from './utils'
+import { waitFor, getVersionString } from './utils'
 import RealTimeSubscription from './RealTimeSubscription'
 import CombinedSubscription from './CombinedSubscription'
 import Subscription from './Subscription'
@@ -92,6 +92,9 @@ export default class StreamrClient extends EventEmitter {
                 this.options.url = `${this.options.url}&messageLayerVersion=31`
             }
         }
+
+        // always add streamrClient version
+        this.options.url = `${this.options.url}&streamrClient=${getVersionString()}`
 
         // Backwards compatibility for option 'authKey' => 'apiKey'
         if (this.options.authKey && !this.options.apiKey) {
@@ -569,6 +572,7 @@ export default class StreamrClient extends EventEmitter {
         })
         sub.on('groupKeyMissing', async (publisherId, start, end) => {
             if (this.encryptionUtil) {
+                await this.encryptionUtil.onReady()
                 const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(
                     publisherId, sub.streamId, this.encryptionUtil.getPublicKey(), start, end,
                 )
@@ -757,7 +761,16 @@ export default class StreamrClient extends EventEmitter {
 
     async _requestSubscribe(sub) {
         const sp = this._getSubscribedStreamPartition(sub.streamId, sub.streamPartition)
-        const subscribedSubs = sp.getSubscriptions().filter((it) => it.getState() === Subscription.State.subscribed)
+        let subscribedSubs = []
+        // never reuse subscriptions when incoming subscription needs resends
+        // i.e. only reuse realtime subscriptions
+        if (!sub.hasResendOptions()) {
+            subscribedSubs = sp.getSubscriptions().filter((it) => (
+                it.getState() === Subscription.State.subscribed
+                // don't resuse subscriptions currently resending
+                && !it.isResending()
+            ))
+        }
 
         const sessionToken = await this.session.getSessionToken()
 
