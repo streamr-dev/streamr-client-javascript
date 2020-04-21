@@ -145,7 +145,6 @@ describe('StreamrClient Connection', () => {
             }
 
             await wait(5000) // wait for messages to (probably) land in storage
-            await client.ensureConnected()
         }, 10 * 1000)
 
         afterEach(async () => {
