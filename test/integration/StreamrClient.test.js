@@ -111,10 +111,12 @@ describe('StreamrClient Connection', () => {
 
     it('can disconnect before connected', async (done) => {
         const client = createClient()
-        client.once('error', done)
+        client.once('error', (err) => {
+            expect(err).toEqual('Failed to send subscribe request: Error: WebSocket is not open: readyState 3 (CLOSED)')
+            done()
+        })
         client.connect()
-        await client.disconnect()
-        done()
+        await client.ensureDisconnected()
     })
 
     describe('resend', () => {
