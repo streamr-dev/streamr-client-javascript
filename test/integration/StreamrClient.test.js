@@ -3,7 +3,7 @@ import crypto from 'crypto'
 
 import fetch from 'node-fetch'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
-import { wait } from 'streamr-test-utils'
+import { wait, waitForCondition } from 'streamr-test-utils'
 import { ethers } from 'ethers'
 
 import { uid } from '../utils'
@@ -143,6 +143,7 @@ describe('StreamrClient Connection', () => {
             }
 
             await wait(5000) // wait for messages to (probably) land in storage
+            await client.ensureConnected()
         }, 10 * 1000)
 
         afterEach(async () => {
@@ -178,6 +179,8 @@ describe('StreamrClient Connection', () => {
                 ])
                 done()
             })
+
+            await waitForCondition(() => messages.length === 3)
         }, 10000)
 
         it('resend from', async (done) => {
@@ -208,6 +211,8 @@ describe('StreamrClient Connection', () => {
                 ])
                 done()
             })
+
+            await waitForCondition(() => messages.length === 2)
         }, 10000)
 
         it('resend range', async (done) => {
@@ -244,6 +249,8 @@ describe('StreamrClient Connection', () => {
                 ])
                 done()
             })
+
+            await waitForCondition(() => messages.length === 3)
         }, 10000)
     })
 

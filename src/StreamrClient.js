@@ -796,7 +796,10 @@ export default class StreamrClient extends EventEmitter {
     async _requestUnsubscribe(sub) {
         debug('Client unsubscribing stream %o partition %o', sub.streamId, sub.streamPartition)
         const unsubscribeRequest = UnsubscribeRequest.create(sub.streamId, sub.streamPartition)
-        await this.connection.send(unsubscribeRequest).catch((err) => console.error(`Failed to send unsubscribe request: ${err}`))
+        await this.connection.send(unsubscribeRequest).catch((err) => {
+            sub.setState(Subscription.State.subscribed)
+            this.handleError(`Failed to send unsubscribe request: ${err}`)
+        })
     }
 
     async _requestResend(sub, resendOptions) {
