@@ -146,7 +146,7 @@ describe('StreamrClient Connection', () => {
         }, 10 * 1000)
 
         afterEach(async () => {
-            await client.disconnect()
+            await client.ensureDisconnected()
         })
 
         it('resend last', async (done) => {
