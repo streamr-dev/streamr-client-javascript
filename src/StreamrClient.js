@@ -766,7 +766,10 @@ export default class StreamrClient extends EventEmitter {
             const request = SubscribeRequest.create(sub.streamId, sub.streamPartition, sessionToken)
             debug('_requestSubscribe: subscribing client: %o', request)
             sp.setSubscribing(true)
-            await this.connection.send(request).catch((err) => console.error(`Failed to send subscribe request: ${err}`))
+            await this.connection.send(request).catch((err) => {
+                sub.setState(Subscription.State.unsubscribed)
+                this.emit('error', `Failed to send subscribe request: ${err}`)
+            })
         } else if (subscribedSubs.length > 0) {
             // If there already is a subscribed subscription for this stream, this new one will just join it immediately
             debug('_requestSubscribe: another subscription for same stream: %s, insta-subscribing', sub.streamId)
@@ -808,7 +811,9 @@ export default class StreamrClient extends EventEmitter {
 
         if (request) {
             debug('_requestResend: %o', request)
-            await this.connection.send(request).catch((err) => console.error(`Failed to send resend request: ${err}`))
+            await this.connection.send(request).catch((err) => {
+                this.handleError(`Failed to send resend request: ${err}`)
+            })
         } else {
             this.handleError("Can't _requestResend without resendOptions")
         }

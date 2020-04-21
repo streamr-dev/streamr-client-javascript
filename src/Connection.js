@@ -140,6 +140,10 @@ class Connection extends EventEmitter {
                         resolve(controlLayerRequest)
                     }
                 })
+
+                if (process.browser) {
+                    resolve()
+                }
             } catch (err) {
                 this.emit('error', err)
                 reject(err)
