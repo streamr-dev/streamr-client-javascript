@@ -1,6 +1,7 @@
 const { Benchmark } = require('benchmark')
 const { ethers } = require('ethers')
 
+// eslint-disable-next-line import/no-unresolved
 const StreamrClient = require('../../dist/streamr-client')
 const config = require('../integration/config')
 
