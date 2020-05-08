@@ -1,6 +1,8 @@
 import { ethers } from 'ethers'
 
+import { uid } from '../utils'
 import StreamrClient from '../../src'
+import { wait, waitForCondition } from 'streamr-test-utils'
 
 import config from './config'
 
@@ -58,5 +60,44 @@ describe('Session', () => {
                 auth: {},
             }).session.getSessionToken()).resolves.toBeUndefined()
         })
+    })
+
+    describe('expired session handling', () => {
+        it('reauthenticates on Authentication failed', async (done) => {
+            const client = createClient({
+                auth: {
+                    privateKey: ethers.Wallet.createRandom().privateKey,
+                },
+            })
+            await client.session.getSessionToken()
+            await client.ensureConnected()
+            const stream = await client.createStream({
+                name: uid('stream'),
+            })
+            const message = {
+                msg: uid('message'),
+            }
+            // invalidate session but step around client logout internals
+            await client.logoutEndpoint()
+            client.once('error', done) // optional, test below also verifies success
+            await client.publish(stream.id, message)
+            await wait(5000) // hope it maybe got published
+            const messages = []
+            // issue resend to verify message arrived
+            const sub = await client.resend({
+                stream: stream.id,
+                resend: {
+                    last: 1,
+                },
+            }, (msg) => {
+                messages.push(msg)
+            })
+
+            sub.once('initial_resend_done', async () => {
+                expect(messages).toEqual([message])
+                await client.ensureDisconnected()
+                done()
+            })
+        }, 15000)
     })
 })
