@@ -78,6 +78,8 @@ describe('Session', () => {
                 msg: uid('message'),
             }
             // invalidate session but step around client logout internals
+            // so long as we don't open a websocket connection to the broker e.g. via subscribe
+            // then we can get the desired state where client falsely believes it's authenticated
             await client.logoutEndpoint()
             client.once('error', done) // optional, test below also verifies success
             await client.publish(stream.id, message)
