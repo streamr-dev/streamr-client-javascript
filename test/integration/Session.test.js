@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { wait, waitForCondition } from 'streamr-test-utils'
+import { wait } from 'streamr-test-utils'
 
 import { uid } from '../utils'
 import StreamrClient from '../../src'
