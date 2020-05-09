@@ -1,8 +1,8 @@
 import { ethers } from 'ethers'
+import { wait, waitForCondition } from 'streamr-test-utils'
 
 import { uid } from '../utils'
 import StreamrClient from '../../src'
-import { wait, waitForCondition } from 'streamr-test-utils'
 
 import config from './config'
 
