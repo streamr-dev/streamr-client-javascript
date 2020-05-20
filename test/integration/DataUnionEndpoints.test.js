@@ -249,7 +249,7 @@ describe('DataUnionEndPoints', () => {
                 address: '0x000000000000000000000000000000000000bEEF',
                 earnings: '333333333333333333'
             }])
-            expect(mstats).toEqual({
+            expect(mstats).toMatchObject({
                 active: true,
                 address: '0x0000000000000000000000000000000000000001',
                 earnings: '333333333333333333',
@@ -257,10 +257,6 @@ describe('DataUnionEndPoints', () => {
                 withdrawableEarnings: '333333333333333333',
                 frozenEarnings: '0',
                 withdrawableBlockNumber: cstats.latestWithdrawableBlock.blockNumber,
-                proof: [
-                    '0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4',
-                    '0xe482f62a15e13774223a74cc4db3abb30d4ec3af8bf89f2f56116b9af1dbbe05',
-                ]
             })
         }, 300000)
     })
