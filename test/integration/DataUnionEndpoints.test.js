@@ -150,7 +150,7 @@ describe('DataUnionEndPoints', () => {
                 await wait(4000)
                 res3 = await memberClient.getMemberStats(dataUnion.address)
             }
-            expect(res3).toEqual({
+            expect(res3).toMatchObject({
                 active: true,
                 address: memberWallet.address,
                 earnings: '1000000000000000000',
@@ -158,7 +158,6 @@ describe('DataUnionEndPoints', () => {
                 withdrawableEarnings: '1000000000000000000',
                 frozenEarnings: '0',
                 withdrawableBlockNumber: res3.withdrawableBlockNumber,
-                proof: ['0xb7238c98e8baedc7aae869ecedd9900b1c2a767bbb482df81ef7539dbe71abe4']
             })
 
             const isValid = await memberClient.validateProof(dataUnion.address, {
