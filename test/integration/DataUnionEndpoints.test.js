@@ -9,6 +9,47 @@ import config from './config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 
+function Test(client, id, log) {
+  return new Promise(async (resolve) => {
+    client = client || new StreamrClient({
+        //auth: {
+            //privateKey: config.privateKey,
+        //},
+        autoConnect: false,
+        autoDisconnect: false,
+        ...config.clientOptions,
+    })
+    log('connecting')
+    await client.ensureConnected()
+    console.log('connected')
+    const sub = client.subscribe({
+        stream: id,
+        orderMessages: false,
+        retryResendAfter: 1000,
+        resend: {
+            from: {
+                timestamp: 0,
+                sequenceNumber: 0,
+            },
+        },
+    }, (m) => {
+        log({ message: m })
+    }).on('subscribed', () => {
+        log('subscribed to ', id)
+        resolve()
+    })
+        //.on('error', (error) => log('error', error))
+        //.on('no_resend', () => log('no_resend'))
+        //.on('resent', () => log('resent'))
+        //.on('groupKeyMissing', (...args) => log('groupKeyMissing', ...args))
+        //.on('unsubscribed', () => log('unsubscribed'))
+        //.on('gap', (...args) => log('gap', ...args))
+        //.on('disconnected', () => log('disconnected'))
+        //.on('done', () => log('done'))
+    })
+}
+
+
 describe('DataUnionEndPoints', () => {
     let dataUnion
 
@@ -26,7 +67,7 @@ describe('DataUnionEndPoints', () => {
         adminWallet = new Wallet(config.privateKey, testProvider)
         adminClient = new StreamrClient({
             auth: {
-                privateKey: adminWallet.privateKey
+                privateKey: config.privateKey,
             },
             autoConnect: false,
             autoDisconnect: false,
@@ -57,17 +98,23 @@ describe('DataUnionEndPoints', () => {
         await testProvider.removeAllListeners()
     })
 
-    describe('Admin', () => {
-        const memberAddressList = [
-            '0x0000000000000000000000000000000000000001',
-            '0x0000000000000000000000000000000000000002',
-            '0x000000000000000000000000000000000000bEEF',
-        ]
-
+    describe.only('Admin', () => {
         it('can add and remove members', async () => {
-            log('starting test')
+            const memberAddressList = [
+                Wallet.createRandom().connect(testProvider).address,
+                Wallet.createRandom().connect(testProvider).address,
+                Wallet.createRandom().connect(testProvider).address,
+            ]
+            log({ dataUnion: dataUnion.address, memberAddressList })
             await adminClient.dataUnionIsReady(dataUnion.address, log)
 
+            const joinPartStreamId = await adminClient.getJoinPartStreamId(dataUnion.address, testProvider)
+            await Promise.all([
+                Test(adminClient, joinPartStreamId, debug('Streamr::adminClient')),
+                //Test(undefined, joinPartStreamId, debug('Streamr::otherClient')),
+            ])
+
+            //await wait(5000)
             await adminClient.addMembers(dataUnion.address, memberAddressList, testProvider)
             await adminClient.hasJoined(dataUnion.address, memberAddressList[0])
             const res = await adminClient.getDataUnionStats(dataUnion.address)
@@ -88,9 +135,10 @@ describe('DataUnionEndPoints', () => {
 
     describe('Members', () => {
         let memberClient
-        const memberWallet = new Wallet('0x1000000000000000000000000000000000000000000000000000000000000001', testProvider)
+        let memberWallet
 
         beforeAll(async () => {
+            memberWallet = Wallet.createRandom().connect(testProvider)
             memberClient = new StreamrClient({
                 auth: {
                     privateKey: memberWallet.privateKey
@@ -134,7 +182,7 @@ describe('DataUnionEndPoints', () => {
             })
 
             // add revenue, just to see some action
-            const opWallet = new Wallet('0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0', testProvider)
+            const opWallet = Wallet.createRandom().connect(testProvider)
             const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
             const tx = await opToken.mint(dataUnion.address, utils.parseEther('1'))
             const tr = await tx.wait(2)
@@ -182,9 +230,9 @@ describe('DataUnionEndPoints', () => {
 
     describe('Anyone', () => {
         const memberAddressList = [
-            '0x0000000000000000000000000000000000000001',
-            '0x0000000000000000000000000000000000000002',
-            '0x000000000000000000000000000000000000bEEF',
+            Wallet.createRandom().connect(testProvider).address,
+            Wallet.createRandom().connect(testProvider).address,
+            Wallet.createRandom().connect(testProvider).address,
         ]
 
         let client
@@ -208,7 +256,7 @@ describe('DataUnionEndPoints', () => {
             await adminClient.hasJoined(dataUnion.address, memberAddressList[0])
 
             // mint tokens to dataUnion to generate revenue
-            const opWallet = new Wallet('0x5e98cce00cff5dea6b454889f359a4ec06b9fa6b88e9d69b86de8e1c81887da0', testProvider)
+            const opWallet = Wallet.createRandom().connect(testProvider)
             const opToken = new Contract(adminClient.options.tokenAddress, Token.abi, opWallet)
             const tx = await opToken.mint(dataUnion.address, utils.parseEther('1'))
             const tr = await tx.wait(2)
@@ -235,22 +283,22 @@ describe('DataUnionEndPoints', () => {
             expect(cstats.latestWithdrawableBlock.totalEarnings).toBe('1000000000000000000')
             expect(mlist).toEqual([{
                 active: true,
-                address: '0x0000000000000000000000000000000000000001',
+                address: memberAddressList[0],
                 earnings: '333333333333333333'
             },
             {
                 active: true,
-                address: '0x0000000000000000000000000000000000000002',
+                address: memberAddressList[1],
                 earnings: '333333333333333333'
             },
             {
                 active: true,
-                address: '0x000000000000000000000000000000000000bEEF',
+                address: memberAddressList[2],
                 earnings: '333333333333333333'
             }])
             expect(mstats).toMatchObject({
                 active: true,
-                address: '0x0000000000000000000000000000000000000001',
+                address: memberAddressList[0],
                 earnings: '333333333333333333',
                 recordedEarnings: '333333333333333333',
                 withdrawableEarnings: '333333333333333333',

@@ -51,7 +51,7 @@ function sleep(ms) {
     })
 }
 
-async function get(client, dataUnionContractAddress, endpoint, opts = {}) {
+async function get(client, dataUnionContractAddress, endpoint = '', opts = {}) {
     const url = `${client.options.restUrl}/communities/${dataUnionContractAddress}${endpoint}`
     const response = await fetch(url, {
         ...opts,
@@ -339,6 +339,11 @@ export async function getMembers(dataUnionContractAddress) {
 
 export async function getDataUnionStats(dataUnionContractAddress) {
     return getOrThrow(this, dataUnionContractAddress, '/stats')
+}
+
+export async function getJoinPartStreamId(dataUnionContractAddress, provider) {
+    const contract = new Contract(dataUnionContractAddress, DataUnion.abi, provider || getDefaultProvider())
+    return contract.joinPartStream()
 }
 
 // //////////////////////////////////////////////////////////////////
