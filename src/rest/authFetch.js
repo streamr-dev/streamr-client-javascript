@@ -6,7 +6,6 @@ import { getVersionString } from '../utils'
 
 export const DEFAULT_HEADERS = {
     'Streamr-Client': `streamr-client-javascript/${getVersionString()}`,
-    'Content-Type': 'application/json',
 }
 
 const debug = debugFactory('StreamrClient:utils')
@@ -18,6 +17,10 @@ const authFetch = async (url, session, opts = {}, requireNewToken = false) => {
             ...DEFAULT_HEADERS,
             ...opts.headers,
         }
+    }
+    // add default 'Content-Type: application/json' header for requests with a body
+    if (options.body != null && !options.headers['Content-Type']) {
+        options.headers['Content-Type'] = 'application/json'
     }
 
     debug('authFetch: ', url, opts)
