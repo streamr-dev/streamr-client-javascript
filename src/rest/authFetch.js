@@ -5,7 +5,8 @@ import AuthFetchError from '../errors/AuthFetchError'
 import { getVersionString } from '../utils'
 
 export const DEFAULT_HEADERS = {
-    'Streamr-Client': `streamr-client-javascript/${getVersionString()}`
+    'Streamr-Client': `streamr-client-javascript/${getVersionString()}`,
+    'Content-Type': 'application/json',
 }
 
 const debug = debugFactory('StreamrClient:utils')
