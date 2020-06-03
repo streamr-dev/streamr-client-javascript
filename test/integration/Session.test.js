@@ -3,14 +3,15 @@ import { wait } from 'streamr-test-utils'
 
 import { uid } from '../utils'
 import StreamrClient from '../../src'
+import Session from '../../src/Session'
 
 import config from './config'
 
 describe('Session', () => {
     const createClient = (opts = {}) => new StreamrClient({
+        ...config.clientOptions,
         autoConnect: false,
         autoDisconnect: false,
-        ...config.clientOptions,
         ...opts,
     })
 
@@ -74,7 +75,13 @@ describe('Session', () => {
             const stream = await client.createStream({
                 name: uid('stream'),
             })
-            const message = {
+            const message1 = {
+                msg: uid('message'),
+            }
+            const message2 = {
+                msg: uid('message'),
+            }
+            const message3 = {
                 msg: uid('message'),
             }
             // invalidate session but step around client logout internals
@@ -82,7 +89,13 @@ describe('Session', () => {
             // then we can get the desired state where client falsely believes it's authenticated
             await client.logoutEndpoint()
             client.once('error', done) // optional, test below also verifies success
-            await client.publish(stream.id, message)
+            client.publish(stream.id, message1) // sacrificial message, can't recover
+            await client.publish(stream.id, message2) // also sacrificial
+            // wait for session to reconnect
+            await new Promise((resolve) => {
+                client.session.once(Session.State.LOGGED_IN, resolve)
+            })
+            await client.publish(stream.id, message3)
             await wait(5000) // hope it maybe got published
             const messages = []
             // issue resend to verify message arrived
@@ -96,7 +109,8 @@ describe('Session', () => {
             })
 
             sub.once('initial_resend_done', async () => {
-                expect(messages).toEqual([message])
+                // message1 & message2 are gone forever, sorry
+                expect(messages).toEqual([message3])
                 await client.ensureDisconnected()
                 done()
             })

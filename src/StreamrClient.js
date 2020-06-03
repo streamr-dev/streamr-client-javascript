@@ -283,6 +283,10 @@ export default class StreamrClient extends EventEmitter {
         })
 
         this.connection.on(ControlMessage.TYPES.ErrorResponse, (err) => {
+            if (err.errorMessage.startsWith('Authentication failed')) {
+                this.session.getSessionToken(true)
+                return
+            }
             const errorObject = new Error(err.errorMessage)
             this.emit('error', errorObject)
         })
