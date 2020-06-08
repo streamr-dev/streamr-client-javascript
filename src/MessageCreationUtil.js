@@ -121,8 +121,15 @@ export default class MessageCreationUtil {
         const publisherId = await this.getPublisherId()
         const idAndPrevRef = this.createMsgIdAndPrevRef(stream.id, streamPartition, timestamp, publisherId)
 
-        const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.MESSAGE,
-            StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
+        const streamMessage = new StreamMessage({
+            messageId: idAndPrevRef[0],
+            prevMsgRef: idAndPrevRef[1],
+            contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            content: data,
+            signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            signature: null,
+        })
 
         if (groupKey && this.keyStorageUtil.hasKey(stream.id) && groupKey !== this.keyStorageUtil.getLatestKey(stream.id).groupKey) {
             EncryptionUtil.encryptStreamMessageAndNewKey(groupKey, streamMessage, this.keyStorageUtil.getLatestKey(stream.id).groupKey)
@@ -156,8 +163,15 @@ export default class MessageCreationUtil {
             }
         }
         const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(publisherAddress.toLowerCase(), publisherId)
-        const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
-            StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
+        const streamMessage = new StreamMessage({
+            messageId: idAndPrevRef[0],
+            prevMsgRef: idAndPrevRef[1],
+            contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            content: data,
+            signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            signature: null,
+        })
         await this._signer.signStreamMessage(streamMessage)
         return streamMessage
     }
@@ -172,8 +186,15 @@ export default class MessageCreationUtil {
             keys: encryptedGroupKeys,
         }
         const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(subscriberAddress.toLowerCase(), publisherId)
-        const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
-            StreamMessage.ENCRYPTION_TYPES.RSA, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
+        const streamMessage = new StreamMessage({
+            messageId: idAndPrevRef[0],
+            prevMsgRef: idAndPrevRef[1],
+            contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            content: data,
+            signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            signature: null,
+        })
         await this._signer.signStreamMessage(streamMessage)
         return streamMessage
     }
@@ -188,8 +209,16 @@ export default class MessageCreationUtil {
             message: error.message,
         }
         const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(destinationAddress.toLowerCase(), publisherId)
-        const streamMessage = StreamMessage.create(idAndPrevRef[0], idAndPrevRef[1], StreamMessage.CONTENT_TYPES.ERROR_MSG,
-            StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE, null)
+        const streamMessage = new StreamMessage({
+            messageId: idAndPrevRef[0],
+            prevMsgRef: idAndPrevRef[1],
+            contentType: StreamMessage.CONTENT_TYPES.ERROR_MSG,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+            content: data,
+            signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            signature: null,
+        })
+
         await this._signer.signStreamMessage(streamMessage)
         return streamMessage
     }

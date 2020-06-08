@@ -1,17 +1,18 @@
 import EventEmitter from 'eventemitter3'
-import { ControlLayer } from 'streamr-client-protocol'
+import { ControlMessage } from 'streamr-client-protocol'
+import uniqueId from 'lodash.uniqueid'
+
+const uuid = `p${process.pid != null ? process.pid : Date.now()}`
 
 export default class ResendUtil extends EventEmitter {
     constructor() {
         super()
         this.subForRequestId = {}
-        this.counter = 0
+        this.id = uniqueId(`${uuid}.client`)
     }
 
     generateRequestId() {
-        const id = this.counter
-        this.counter += 1
-        return id.toString()
+        return uniqueId(`${this.id}-r`)
     }
 
     _subForRequestIdExists(requestId) {
@@ -29,9 +30,15 @@ export default class ResendUtil extends EventEmitter {
 
     deleteDoneSubsByResponse(response) {
         // TODO: replace with response.requestId
-        if (response.type === ControlLayer.ResendResponseResent.TYPE || response.type === ControlLayer.ResendResponseNoResend.TYPE) {
+        if (response.type === ControlMessage.TYPES.ResendResponseResent || response.type === ControlMessage.TYPES.ResendResponseNoResend) {
             delete this.subForRequestId[response.requestId]
         }
+    }
+
+    findRequestIdForSub(sub) {
+        return Object.keys(this.subForRequestId).find((id) => (
+            this.subForRequestId[id] === sub
+        ))
     }
 
     registerResendRequestForSub(sub) {
