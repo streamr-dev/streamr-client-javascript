@@ -10,6 +10,8 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
+//import StreamrClient from '../../src/StreamrClient'
+import { uid } from '../utils'
 
 // eslint-disable-next-line import/no-named-as-default-member
 import StubbedStreamrClient from './StubbedStreamrClient'
@@ -32,10 +34,14 @@ const {
 const { StreamMessage, MessageRef } = MessageLayer
 const mockDebug = debug('mock')
 
+
 describe('StreamrClient', () => {
     let client
     let connection
     let asyncs = []
+
+    const streamPartition = 0
+    const sessionToken = 'session-token'
 
     function async(func) {
         const me = setTimeout(() => {
@@ -53,13 +59,24 @@ describe('StreamrClient', () => {
         asyncs = []
     }
 
+    function matchObject(a, b) {
+        expect(a).matchObject(b)
+    }
+
     function setupSubscription(
         streamId, emitSubscribed = true, subscribeOptions = {}, handler = sinon.stub(),
         expectSubscribeRequest = !client.getSubscriptions(streamId).length,
     ) {
         assert(client.isConnected(), 'setupSubscription: Client is not connected!')
+        const requestId = uid('request')
+
         if (expectSubscribeRequest) {
-            connection.expect(SubscribeRequest.create(streamId, 0, 'session-token'))
+            connection.expect(new SubscribeRequest({
+                requestId,
+                streamId,
+                streamPartition,
+                sessionToken,
+            }))
         }
         const sub = client.subscribe({
             stream: streamId,
@@ -67,26 +84,41 @@ describe('StreamrClient', () => {
         }, handler)
 
         if (emitSubscribed) {
-            connection.emitMessage(SubscribeResponse.create(sub.streamId))
+            connection.emitMessage(new SubscribeResponse({
+                streamId: sub.streamId,
+                requestId,
+                streamPartition,
+            }))
         }
         return sub
     }
 
     function getStreamMessage(streamId = 'stream1', content = {}, publisherId = '') {
         const timestamp = Date.now()
-        return StreamMessage.create(
-            [streamId, 0, timestamp, 0, publisherId, ''], [timestamp - 100, 0],
-            StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, content, StreamMessage.SIGNATURE_TYPES.NONE,
-        )
+        return new StreamMessage({
+            messageId: [streamId, 0, timestamp, 0, publisherId, ''],
+            prevMesssageRef: [timestamp - 100, 0],
+            content,
+            contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+            signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            requestId,
+        })
     }
 
     function msg(streamId = 'stream1', content = {}, requestId) {
         const streamMessage = getStreamMessage(streamId, content)
         if (requestId !== undefined) {
-            return UnicastMessage.create(requestId, streamMessage)
+            return new UnicastMessage({
+                streamMessage,
+                requestId,
+            })
         }
 
-        return BroadcastMessage.create(streamMessage)
+        return new BroadcastMessage({
+            streamMessage,
+            requestId,
+        })
     }
 
     function createConnectionMock() {
@@ -180,31 +212,46 @@ describe('StreamrClient', () => {
     })
 
     describe('Connection event handling', () => {
-        describe('connected', () => {
+        describe.only('connected', () => {
             it('should emit an event on client', (done) => {
                 client.on('connected', done)
                 client.connect()
             })
 
-            it('should not send anything if not subscribed to anything', (done) => {
-                client.connect()
-                connection.on('connected', done)
-            })
+            //it('should not send anything if not subscribed to anything', (done) => {
+                //client.connect()
+                //connection.on('connected', done)
+            //})
 
             it('should send pending subscribes', (done) => {
-                client.subscribe('stream1', () => {})
+                //client.send = jest.fn()
+                const sub = client.subscribe('stream1', () => {})
+                //client.resendUtil.findRequestIdForSub(sub)
 
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-
+                connection.on('connected', () => {
+                    expect(client.send.mock.calls[0]).toMatchObject({
+                        streamId: 'stream1',
+                        streamPartition,
+                        sessionToken,
+                    })
+                })
                 client.connect()
-                connection.on('connected', done)
             })
 
             it('should send pending subscribes when disconnected and then reconnected', async () => {
                 // On connect
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+                connection.expect({
+                    streamId: 'stream1',
+                    streamPartition,
+                    sessionToken,
+                }, matchObject)
+
                 // On reconnect
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+                connection.expect({
+                    streamId: 'stream1',
+                    streamPartition,
+                    sessionToken,
+                }, matchObject)
 
                 client.subscribe('stream1', () => {})
                 await client.ensureConnected()
