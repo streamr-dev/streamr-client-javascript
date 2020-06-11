@@ -10,6 +10,7 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
+import { wait } from 'streamr-test-utils'
 //import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
 
@@ -17,6 +18,7 @@ import { uid } from '../utils'
 import StubbedStreamrClient from './StubbedStreamrClient'
 
 const {
+    ControlMessage,
     BroadcastMessage,
     UnicastMessage,
     SubscribeRequest,
@@ -31,7 +33,8 @@ const {
     ResendResponseNoResend,
     ErrorResponse,
 } = ControlLayer
-const { StreamMessage, MessageRef } = MessageLayer
+
+const { StreamMessage, MessageRef, MessageIDStrict } = MessageLayer
 const mockDebug = debug('mock')
 
 
@@ -95,13 +98,15 @@ describe('StreamrClient', () => {
 
     function getStreamMessage(streamId = 'stream1', content = {}, publisherId = '') {
         const timestamp = Date.now()
+        const requestId = uid('streamMessage')
         return new StreamMessage({
-            messageId: [streamId, 0, timestamp, 0, publisherId, ''],
-            prevMesssageRef: [timestamp - 100, 0],
+            messageId: new MessageIDStrict(streamId, 0, timestamp, 0, publisherId, ''),
+            prevMesssageRef: new MessageRef(timestamp - 100, 0),
             content,
             contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
             encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+            signature: '',
             requestId,
         })
     }
@@ -109,15 +114,11 @@ describe('StreamrClient', () => {
     function msg(streamId = 'stream1', content = {}, requestId) {
         const streamMessage = getStreamMessage(streamId, content)
         if (requestId !== undefined) {
-            return new UnicastMessage({
-                streamMessage,
-                requestId,
-            })
+            return UnicastMessage(requestId, streamMessage)
         }
 
         return new BroadcastMessage({
             streamMessage,
-            requestId,
         })
     }
 
@@ -151,38 +152,44 @@ describe('StreamrClient', () => {
             })
         })
 
-        c.send = async (msgToSend) => {
-            const next = c.expectedMessagesToSend.shift()
-            if (!next) {
-                throw new Error(`Sending unexpected message: ${JSON.stringify(msgToSend)}`)
-            }
-            next.verificationFunction(msgToSend, next.msgToExpect)
-        }
+        c.send = jest.fn(async () => {
+
+        })
+
+        //c.send = async (msgToSend) => {
+            //const next = c.expectedMessagesToSend.shift()
+            //if (!next) {
+                //throw new Error(`Sending unexpected message: ${JSON.stringify(msgToSend)}`)
+            //}
+            //next.verificationFunction(msgToSend, next.msgToExpect)
+        //}
 
         c.emitMessage = (message) => {
             c.emit(message.type, message)
         }
 
-        c.expect = (msgToExpect, verificationFunction = (msgToSend, expected) => assert.deepEqual(
-            msgToSend, expected,
-            `Sending unexpected message: ${JSON.stringify(msgToSend)}
-                Expected: ${JSON.stringify(expected)}
-                Queue: ${JSON.stringify(c.expectedMessagesToSend)}`,
-        )) => {
-            c.expectedMessagesToSend.push({
-                msgToExpect,
-                verificationFunction,
-            })
-        }
+        //c.expect = (msgToExpect, verificationFunction = (msgToSend, expected) => assert.deepEqual(
+            //msgToSend, expected,
+            //`Sending unexpected message: ${JSON.stringify(msgToSend)}
+                //Expected: ${JSON.stringify(expected)}
+                //Queue: ${JSON.stringify(c.expectedMessagesToSend)}`,
+        //)) => {
+            //c.expectedMessagesToSend.push({
+                //msgToExpect,
+                //verificationFunction,
+            //})
+        //}
 
-        c.checkSentMessages = () => {
-            assert.equal(c.expectedMessagesToSend.length, 0, `Expected messages not sent: ${JSON.stringify(c.expectedMessagesToSend)}`)
-        }
+        //c.checkSentMessages = () => {
+            //assert.equal(c.expectedMessagesToSend.length, 0, `Expected messages not sent: ${JSON.stringify(c.expectedMessagesToSend)}`)
+        //}
 
         return c
     }
 
     const STORAGE_DELAY = 2000
+
+    let errors = []
 
     beforeEach(() => {
         clearAsync()
@@ -196,157 +203,223 @@ describe('StreamrClient', () => {
                 sessionToken: 'session-token',
             },
         }, connection)
+        errors = []
+        client.on('error', (error) => {
+            errors.push(error)
+        })
     })
 
-    afterEach((done) => {
-        // Allow the event queue to be processed before checking sent messages
-        setTimeout(() => {
-            try {
-                connection.checkSentMessages()
-                client.disconnect()
+    afterEach(async () => {
+        expect(errors[0]).toBeFalsy()
+        expect(errors).toHaveLength(0)
+        await client.ensureDisconnected()
+    })
+
+    describe.only('connecting behaviour', () => {
+        it('connected event should emit an event on client', (done) => {
+            client.once('connected', () => {
                 done()
-            } catch (err) {
-                done(err)
-            }
+            })
+            client.connect()
+        })
+
+        it('should not send anything if not subscribed to anything', async () => {
+            await client.ensureConnected()
+            expect(connection.send).not.toHaveBeenCalled()
+        })
+
+        it('should send pending subscribes', async () => {
+            client.subscribe('stream1', () => {})
+
+            await client.ensureConnected()
+            await wait()
+            expect(connection.send.mock.calls).toHaveLength(1)
+            expect(connection.send.mock.calls[0][0]).toMatchObject({
+                streamId: 'stream1',
+                streamPartition,
+                sessionToken,
+            })
+        })
+
+        it('should send pending subscribes when disconnected and then reconnected', async () => {
+            client.subscribe('stream1', () => {})
+            await client.ensureConnected()
+            await connection.disconnect()
+            await client.ensureConnected()
+            await wait()
+            expect(connection.send.mock.calls).toHaveLength(2)
+            // On connect
+            expect(connection.send.mock.calls[0][0]).toMatchObject({
+                streamId: 'stream1',
+                streamPartition,
+                sessionToken,
+            })
+
+            // On reconnect
+            expect(connection.send.mock.calls[1][0]).toMatchObject({
+                streamId: 'stream1',
+                streamPartition,
+                sessionToken,
+            })
+        })
+        // TODO convert and move all super mocked tests to integration
+    })
+
+    describe.only('disconnection behaviour', () => {
+        beforeEach(async () => client.ensureConnected())
+
+        it('emits disconnected event on client', async (done) => {
+            client.once('disconnected', done)
+            connection.emit('disconnected')
+        })
+
+        it('does not remove subscriptions', async () => {
+            const sub = client.subscribe('stream1', () => {})
+            connection.emit('disconnected')
+            assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
+        })
+
+        it('sets subscription state to unsubscribed', async () => {
+            const sub = client.subscribe('stream1', () => {})
+            connection.emit('disconnected')
+            assert.equal(sub.getState(), Subscription.State.unsubscribed)
         })
     })
 
     describe('Connection event handling', () => {
-        describe.only('connected', () => {
-            it('should emit an event on client', (done) => {
-                client.on('connected', done)
-                client.connect()
-            })
-
-            //it('should not send anything if not subscribed to anything', (done) => {
-                //client.connect()
-                //connection.on('connected', done)
-            //})
-
-            it('should send pending subscribes', (done) => {
-                //client.send = jest.fn()
-                const sub = client.subscribe('stream1', () => {})
-                //client.resendUtil.findRequestIdForSub(sub)
-
-                connection.on('connected', () => {
-                    expect(client.send.mock.calls[0]).toMatchObject({
-                        streamId: 'stream1',
-                        streamPartition,
-                        sessionToken,
-                    })
-                })
-                client.connect()
-            })
-
-            it('should send pending subscribes when disconnected and then reconnected', async () => {
-                // On connect
-                connection.expect({
-                    streamId: 'stream1',
-                    streamPartition,
-                    sessionToken,
-                }, matchObject)
-
-                // On reconnect
-                connection.expect({
-                    streamId: 'stream1',
-                    streamPartition,
-                    sessionToken,
-                }, matchObject)
-
-                client.subscribe('stream1', () => {})
-                await client.ensureConnected()
-                await connection.disconnect()
-                return client.ensureConnected()
-            })
-
-            // TODO convert and move all super mocked tests to integration
-        })
-
-        describe('disconnected', () => {
-            beforeEach(() => client.connect())
-
-            it('emits event on client', (done) => {
-                client.on('disconnected', done)
-                connection.emit('disconnected')
-            })
-
-            it('does not remove subscriptions', () => {
-                const sub = setupSubscription('stream1')
-                connection.emit('disconnected')
-                assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
-            })
-
-            it('sets subscription state to unsubscribed', () => {
-                const sub = setupSubscription('stream1')
-                connection.emit('disconnected')
-                assert.equal(sub.getState(), Subscription.State.unsubscribed)
-            })
-        })
-
         describe('SubscribeResponse', () => {
-            beforeEach(() => client.connect())
+            beforeEach(async () => client.ensureConnected())
+            function mockSubscription(...opts) {
+                let sub
+                connection.send = jest.fn(async (request) => {
+                    await wait()
+                    connection.emitMessage(new SubscribeResponse({
+                        streamId: sub.streamId,
+                        requestId: request.requestId,
+                        streamPartition,
+                    }))
+                })
+                sub = client.subscribe(...opts)
+                return sub
+            }
 
-            it('marks Subscriptions as subscribed', () => {
-                const sub = setupSubscription('stream1')
-                assert.equal(sub.getState(), Subscription.State.subscribed)
+            it('marks Subscriptions as subscribed', async (done) => {
+                const sub = mockSubscription('stream1', () => {})
+                sub.once('subscribed', () => {
+                    assert.equal(sub.getState(), Subscription.State.subscribed)
+                    done()
+                })
             })
 
-            it('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
-                const sub = setupSubscription('stream1', false, {
+            it.only('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
+                const sub = mockSubscription({
+                    stream: 'stream1',
                     resend: {
                         last: 1,
                     },
+                }, () => {})
+                sub.once('subscribed', async () => {
+                    await wait(200)
+                    const requestId = client.resendUtil.findRequestIdForSub(sub)
+                    const streamMessage = getStreamMessage(sub.streamId, {})
+                    connection.emitMessage(new UnicastMessage({
+                        requestId,
+                        streamMessage,
+                    }))
+                    await wait(STORAGE_DELAY)
+                    sub.stop()
+                    await wait()
+                    expect(connection.send.mock.calls).toHaveLength(2) // sub + resend
+                    expect(connection.send.mock.calls[1][0]).toMatchObject({
+                        type: ControlMessage.TYPES.ResendLastRequest,
+                        streamId: sub.streamId,
+                        streamPartition: sub.streamPartition,
+                        requestId,
+                        numberLast: 1,
+                        sessionToken: 'session-token'
+                    })
+                    done()
                 })
-                sub.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, '0')), 200)
-                    setTimeout(() => {
-                        sub.stop()
-                        done()
-                    }, STORAGE_DELAY + 200)
-                })
-                connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 1, 'session-token'))
-                connection.emitMessage(SubscribeResponse.create(sub.streamId))
             }, STORAGE_DELAY + 1000)
 
-            it('emits multiple resend requests as per multiple subscriptions. No second resends if messages are received.', (done) => {
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-
-                const sub1 = client.subscribe({
+            it.only('emits multiple resend requests as per multiple subscriptions. No second resends if messages are received.', async (done) => {
+                const sub1 = mockSubscription({
                     stream: 'stream1',
                     resend: {
                         last: 2,
                     },
                 }, () => {})
-                const sub2 = client.subscribe({
+                const sub2 = mockSubscription({
                     stream: 'stream1',
                     resend: {
                         last: 1,
                     },
                 }, () => {})
 
-                sub1.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub1.streamId, {}, '0')), 200)
+                let requestId1
+                let requestId2
+
+                await Promise.all([
+                    new Promise((resolve) => {
+                        sub1.once('subscribed', () => {
+                            setTimeout(() => {
+                                requestId1 = client.resendUtil.findRequestIdForSub(sub1)
+                                const streamMessage = getStreamMessage(sub1.streamId, {})
+                                connection.emitMessage(new UnicastMessage({
+                                    requestId: requestId1,
+                                    streamMessage,
+                                }))
+                                resolve()
+                            }, 200)
+                        })
+                    }),
+                    new Promise((resolve) => {
+                        sub2.once('subscribed', () => {
+                            setTimeout(() => {
+                                requestId2 = client.resendUtil.findRequestIdForSub(sub2)
+                                const streamMessage = getStreamMessage(sub2.streamId, {})
+                                connection.emitMessage(new UnicastMessage({
+                                    requestId: requestId2,
+                                    streamMessage,
+                                }))
+                                resolve()
+                            }, 200)
+                        })
+                    })
+                ])
+
+                await wait(STORAGE_DELAY + 400)
+                sub1.stop()
+                sub2.stop()
+
+                const expectedResponses = [
+                    new ResendLastRequest({
+                        streamId: sub1.streamId,
+                        streamPartition: sub1.streamPartition,
+                        requestId: requestId1,
+                        numberLast: 2,
+                        sessionToken: 'session-token',
+                    }),
+                    new ResendLastRequest({
+                        streamId: sub2.streamId,
+                        streamPartition: sub2.streamPartition,
+                        requestId: requestId2,
+                        numberLast: 1,
+                        sessionToken: 'session-token',
+                    })
+                ]
+                // eslint-disable-next-line semi-style
+                ;[connection.send.mock.calls[1][0], connection.send.mock.calls[2][0]].forEach((actual, index) => {
+                    const expected = expectedResponses[index]
+                    expect(actual).toMatchObject({
+                        requestId: expected.requestId,
+                        streamId: expected.streamId,
+                        streamPartition: expected.streamPartition,
+                        numberLast: expected.numberLast,
+                        sessionToken: expected.sessionToken,
+                    })
                 })
-                sub2.once('subscribed', () => {
-                    setTimeout(() => connection.emitMessage(msg(sub2.streamId, {}, '1')), 200)
-                })
-
-                const compFunction = (m1, m2) => {
-                    assert.deepStrictEqual(m1.streamId, m2.streamId, 'wrong stream id')
-                    assert.deepStrictEqual(m1.streamPartition, m2.streamPartition, 'wrong stream partition')
-                    assert.deepStrictEqual(m1.numberLast, m2.numberLast, 'wrong numberLast')
-                    assert.deepStrictEqual(m1.sessionToken, m2.sessionToken, 'wrong session token')
-                }
-
-                connection.expect(ResendLastRequest.create(sub1.streamId, sub1.streamPartition, '0', 2, 'session-token'), compFunction)
-                connection.expect(ResendLastRequest.create(sub2.streamId, sub2.streamPartition, '0', 1, 'session-token'), compFunction)
-
-                connection.emitMessage(SubscribeResponse.create(sub1.streamId))
-                setTimeout(() => {
-                    sub1.stop()
-                    sub2.stop()
-                    done()
-                }, STORAGE_DELAY + 400)
+                done()
             }, STORAGE_DELAY + 1000)
         })
 

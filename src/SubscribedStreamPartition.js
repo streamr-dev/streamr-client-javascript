@@ -46,11 +46,6 @@ export default class SubscribedStreamPartition {
     }
 
     async verifyStreamMessage(msg) {
-        if (msg.version !== 31) {
-            debug(`Can handle only StreamMessageV31, not version ${msg.version}`)
-            return false
-        }
-
         if (this._client.options.verifySignatures === 'always') {
             if (msg.signatureType && msg.signatureType !== 0 && msg.signature) {
                 const isValid = await this.isValidPublisher(msg.getPublisherId().toLowerCase())
