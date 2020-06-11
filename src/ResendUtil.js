@@ -1,6 +1,8 @@
 import EventEmitter from 'eventemitter3'
-import { ControlMessage } from 'streamr-client-protocol'
+import { ControlLayer } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
+
+const { ControlMessage } = ControlLayer
 
 const uuid = `p${process.pid != null ? process.pid : Date.now()}`
 
