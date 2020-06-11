@@ -542,31 +542,37 @@ describe('StreamrClient', () => {
             })
         })
 
-        describe('UnicastMessage', () => {
+        describe.only('UnicastMessage', () => {
             let sub
 
-            beforeEach(async () => {
+            beforeEach(async (done) => {
                 await client.connect()
-                sub = setupSubscription('stream1', true, {
+                sub = mockSubscription({
+                    stream: 'stream1',
                     resend: {
                         last: 5,
                     },
-                })
-                connection.expect(ResendLastRequest.create('stream1', 0, '0', 5, 'session-token'))
+                }, () => {})
+                    .once('subscribed', () => done())
             })
 
-            it('should call the message handler of specified Subscription', () => {
+            it.only('should call the message handler of specified Subscription', async () => {
                 // this sub's handler must be called
-                sub.handleResentMessage = sinon.stub()
+                sub.handleResentMessage = jest.fn()
+                const requestId = client.resendUtil.findRequestIdForSub(sub)
+                expect(requestId).toBeTruthy()
 
                 // this sub's handler must not be called
-                const sub2 = setupSubscription('stream1')
-                connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                sub2.handleResentMessage = sinon.stub().throws()
-
-                const msg1 = msg(sub.streamId, {}, '0')
+                const sub2 = mockSubscription('stream1', () => {})
+                sub2.handleResentMessage = jest.fn()
+                const msg1 = new UnicastMessage({
+                    streamMessage: getStreamMessage(sub.streamId, {}),
+                    requestId,
+                })
                 connection.emitMessage(msg1)
-                sinon.assert.calledWithMatch(sub.handleResentMessage, msg1.streamMessage, '0', sinon.match.func)
+                await wait(1000)
+                expect(sub.handleResentMessage).toHaveBeenCalledWith(msg1.streamMessage, requestId, expect.any(Function))
+                expect(sub2.handleResentMessage).not.toHaveBeenCalled()
             })
 
             it('ignores messages for unknown Subscriptions', () => {
