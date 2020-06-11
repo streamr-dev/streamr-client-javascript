@@ -432,27 +432,26 @@ describe('StreamrClient', () => {
             }, STORAGE_DELAY + 1000)
         })
 
-        describe('UnsubscribeResponse', () => {
+        describe.only('UnsubscribeResponse', () => {
             // Before each test, client is connected, subscribed, and unsubscribe() is called
             let sub
-            beforeEach(async () => {
+            beforeEach(async (done) => {
                 await client.ensureConnected()
-                sub = setupSubscription('stream1')
+                sub = mockSubscription('stream1', () => {})
 
-                sub.on('subscribed', () => {
-                    connection.expect(UnsubscribeRequest.create(sub.streamId))
-                    client.unsubscribe(sub)
-                })
+                sub.once('subscribed', () => done())
             })
 
-            it('removes the subscription', () => {
-                connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                assert.deepEqual(client.getSubscriptions(sub.streamId), [])
+            it('removes the subscription', async () => {
+                client.unsubscribe(sub)
+                await wait()
+                expect(client.getSubscriptions(sub.streamId)).toEqual([])
             })
 
-            it('sets Subscription state to unsubscribed', () => {
-                connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-                assert.equal(sub.getState(), Subscription.State.unsubscribed)
+            it('sets Subscription state to unsubscribed', async () => {
+                client.unsubscribe(sub)
+                await wait()
+                expect(sub.getState()).toEqual(Subscription.State.unsubscribed)
             })
 
             describe('automatic disconnection after last unsubscribe', () => {
@@ -461,9 +460,10 @@ describe('StreamrClient', () => {
                         client.options.autoDisconnect = true
                     })
 
-                    it('calls connection.disconnect() when no longer subscribed to any streams', () => {
+                    it('calls connection.disconnect() when no longer subscribed to any streams', async () => {
                         const disconnect = jest.spyOn(connection, 'disconnect')
-                        connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
+                        client.unsubscribe(sub)
+                        await wait()
                         expect(disconnect).toHaveBeenCalled()
                     })
                 })
@@ -473,54 +473,71 @@ describe('StreamrClient', () => {
                         client.options.autoDisconnect = false
                     })
 
-                    it('should not disconnect if autoDisconnect is set to false', () => {
+                    it('should not disconnect if autoDisconnect is set to false', async () => {
                         const disconnect = jest.spyOn(connection, 'disconnect')
-                        connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
+                        client.unsubscribe(sub)
+                        await wait()
                         expect(disconnect).not.toHaveBeenCalled()
                     })
                 })
             })
         })
 
-        describe('BroadcastMessage', () => {
+        describe.only('BroadcastMessage', () => {
             let sub
 
             beforeEach(async () => {
                 await client.connect()
-                sub = setupSubscription('stream1')
+                sub = mockSubscription('stream1', () => {})
             })
 
             it('should call the message handler of each subscription', () => {
-                sub.handleBroadcastMessage = sinon.stub()
+                sub.handleBroadcastMessage = jest.fn()
 
                 const sub2 = setupSubscription('stream1')
-                sub2.handleBroadcastMessage = sinon.stub()
-
-                const msg1 = msg()
+                sub2.handleBroadcastMessage = jest.fn()
+                const requestId = uid('broadcastMessage')
+                const msg1 = new BroadcastMessage({
+                    streamMessage: getStreamMessage(sub.streamId, {}),
+                    requestId,
+                })
                 connection.emitMessage(msg1)
 
-                sinon.assert.calledWithMatch(sub.handleBroadcastMessage, msg1.streamMessage, sinon.match.func)
+                expect(sub.handleBroadcastMessage).toHaveBeenCalledWith(msg1.streamMessage, expect.any(Function))
             })
 
             it('should not crash if messages are received for unknown streams', () => {
-                connection.emitMessage(msg('unexpected-stream'))
+                const requestId = uid('broadcastMessage')
+                const msg1 = new BroadcastMessage({
+                    streamMessage: getStreamMessage('unexpected-stream', {}),
+                    requestId,
+                })
+                connection.emitMessage(msg1)
             })
 
             it('should ensure that the promise returned by the verification function is cached and returned for all handlers', (done) => {
                 let firstResult
                 sub.handleBroadcastMessage = (message, verifyFn) => {
                     firstResult = verifyFn()
-                    assert(firstResult instanceof Promise, `firstResult is: ${firstResult}`)
-                    assert.strictEqual(firstResult, verifyFn())
+                    expect(firstResult).toBeInstanceOf(Promise)
+                    expect(verifyFn()).toBe(firstResult)
                 }
-                const sub2 = setupSubscription('stream1')
+                const sub2 = mockSubscription('stream1', () => {})
                 sub2.handleBroadcastMessage = (message, verifyFn) => {
+                    firstResult = verifyFn()
+                    expect(firstResult).toBeInstanceOf(Promise)
+                    expect(verifyFn()).toBe(firstResult)
                     const secondResult = verifyFn()
-                    assert(secondResult instanceof Promise)
-                    assert.strictEqual(firstResult, secondResult)
+                    expect(firstResult).toBeInstanceOf(Promise)
+                    expect(secondResult).toBe(firstResult)
                     done()
                 }
-                const msg1 = msg()
+
+                const requestId = uid('broadcastMessage')
+                const msg1 = new BroadcastMessage({
+                    streamMessage: getStreamMessage('stream1', {}),
+                    requestId,
+                })
                 connection.emitMessage(msg1)
             })
         })
