@@ -282,7 +282,6 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on(ControlMessage.TYPES.ErrorResponse, (err) => {
             const errorObject = new Error(err.errorMessage)
             this.emit('error', errorObject)
-            console.error(errorObject)
         })
 
         this.connection.on('error', async (err) => {
@@ -298,7 +297,6 @@ export default class StreamrClient extends EventEmitter {
                 // if it looks like an error emit as-is, otherwise wrap in new Error
                 const errorObject = (err && err.stack && err.message) ? err : new Error(err)
                 this.emit('error', errorObject)
-                console.error(errorObject)
             }
         })
     }
