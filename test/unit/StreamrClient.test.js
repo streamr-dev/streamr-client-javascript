@@ -62,10 +62,6 @@ describe('StreamrClient', () => {
         asyncs = []
     }
 
-    function matchObject(a, b) {
-        expect(a).matchObject(b)
-    }
-
     function setupSubscription(
         streamId, emitSubscribed = true, subscribeOptions = {}, handler = sinon.stub(),
         expectSubscribeRequest = !client.getSubscriptions(streamId).length,
@@ -187,9 +183,36 @@ describe('StreamrClient', () => {
         return c
     }
 
-    const STORAGE_DELAY = 2000
-
     let errors = []
+    function onError(error) {
+        errors.push(error)
+    }
+
+    function mockSubscription(...opts) {
+        let sub
+        connection.send = jest.fn(async (request) => {
+            await wait()
+            if (request.type === ControlMessage.TYPES.SubscribeRequest) {
+                connection.emitMessage(new SubscribeResponse({
+                    streamId: sub.streamId,
+                    requestId: request.requestId,
+                    streamPartition,
+                }))
+            }
+
+            if (request.type === ControlMessage.TYPES.UnsubscribeRequest) {
+                connection.emitMessage(new UnsubscribeResponse({
+                    streamId: sub.streamId,
+                    requestId: request.requestId,
+                    streamPartition,
+                }))
+            }
+        })
+        sub = client.subscribe(...opts).once('error', onError)
+        return sub
+    }
+
+    const STORAGE_DELAY = 2000
 
     beforeEach(() => {
         clearAsync()
@@ -204,15 +227,14 @@ describe('StreamrClient', () => {
             },
         }, connection)
         errors = []
-        client.on('error', (error) => {
-            errors.push(error)
-        })
+        client.on('error', onError)
     })
 
     afterEach(async () => {
+        client.removeListener('error', onError)
+        await client.ensureDisconnected()
         expect(errors[0]).toBeFalsy()
         expect(errors).toHaveLength(0)
-        await client.ensureDisconnected()
     })
 
     describe.only('connecting behaviour', () => {
@@ -229,7 +251,7 @@ describe('StreamrClient', () => {
         })
 
         it('should send pending subscribes', async () => {
-            client.subscribe('stream1', () => {})
+            client.subscribe('stream1', () => {}).once('error', onError)
 
             await client.ensureConnected()
             await wait()
@@ -242,7 +264,7 @@ describe('StreamrClient', () => {
         })
 
         it('should send pending subscribes when disconnected and then reconnected', async () => {
-            client.subscribe('stream1', () => {})
+            client.subscribe('stream1', () => {}).once('error', onError)
             await client.ensureConnected()
             await connection.disconnect()
             await client.ensureConnected()
@@ -274,34 +296,21 @@ describe('StreamrClient', () => {
         })
 
         it('does not remove subscriptions', async () => {
-            const sub = client.subscribe('stream1', () => {})
+            const sub = client.subscribe('stream1', () => {}).once('error', onError)
             connection.emit('disconnected')
             assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
         })
 
         it('sets subscription state to unsubscribed', async () => {
-            const sub = client.subscribe('stream1', () => {})
+            const sub = client.subscribe('stream1', () => {}).once('error', onError)
             connection.emit('disconnected')
             assert.equal(sub.getState(), Subscription.State.unsubscribed)
         })
     })
 
-    describe('Connection event handling', () => {
+    describe.only('Connection event handling', () => {
         describe('SubscribeResponse', () => {
             beforeEach(async () => client.ensureConnected())
-            function mockSubscription(...opts) {
-                let sub
-                connection.send = jest.fn(async (request) => {
-                    await wait()
-                    connection.emitMessage(new SubscribeResponse({
-                        streamId: sub.streamId,
-                        requestId: request.requestId,
-                        streamPartition,
-                    }))
-                })
-                sub = client.subscribe(...opts)
-                return sub
-            }
 
             it('marks Subscriptions as subscribed', async (done) => {
                 const sub = mockSubscription('stream1', () => {})
@@ -311,7 +320,7 @@ describe('StreamrClient', () => {
                 })
             })
 
-            it.only('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
+            it('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
                 const sub = mockSubscription({
                     stream: 'stream1',
                     resend: {
@@ -342,7 +351,7 @@ describe('StreamrClient', () => {
                 })
             }, STORAGE_DELAY + 1000)
 
-            it.only('emits multiple resend requests as per multiple subscriptions. No second resends if messages are received.', async (done) => {
+            it('emits multiple resend requests as per multiple subscriptions. No second resends if messages are received.', async (done) => {
                 const sub1 = mockSubscription({
                     stream: 'stream1',
                     resend: {
