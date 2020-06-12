@@ -1170,63 +1170,94 @@ describe('StreamrClient', () => {
                 })
             })
 
-            //describe('Subscription event handling', () => {
-                //describe('gap', () => {
-                    //it('sends resend request', () => {
-                        //const sub = setupSubscription('stream1')
-                        //const fromRef = new MessageRef(1, 0)
-                        //const toRef = new MessageRef(5, 0)
-                        //connection.expect(ResendRangeRequest.create(
-                            //sub.streamId, sub.streamPartition, '0',
-                            //fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId', 'session-token',
-                        //))
-                        //const fromRefObject = {
-                            //timestamp: fromRef.timestamp,
-                            //sequenceNumber: fromRef.sequenceNumber,
-                        //}
-                        //const toRefObject = {
-                            //timestamp: toRef.timestamp,
-                            //sequenceNumber: toRef.sequenceNumber,
-                        //}
-                        //sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
-                    //})
+            describe('Subscription event handling', () => {
+                describe('gap', () => {
+                    it('sends resend request', (done) => {
+                        const sub = mockSubscription('streamId', () => {})
+                        sub.once('subscribed', async () => {
+                            await wait()
+                            const fromRef = new MessageRef(1, 0)
+                            const toRef = new MessageRef(5, 0)
 
-                    //it('does not send another resend request while resend is in progress', () => {
-                        //const sub = setupSubscription('stream1')
-                        //const fromRef = new MessageRef(1, 0)
-                        //const toRef = new MessageRef(5, 0)
-                        //connection.expect(ResendRangeRequest.create(
-                            //sub.streamId, sub.streamPartition, '0',
-                            //fromRef.toArray(), toRef.toArray(), 'publisherId', 'msgChainId', 'session-token',
-                        //))
-                        //const fromRefObject = {
-                            //timestamp: fromRef.timestamp,
-                            //sequenceNumber: fromRef.sequenceNumber,
-                        //}
-                        //const toRefObject = {
-                            //timestamp: toRef.timestamp,
-                            //sequenceNumber: toRef.sequenceNumber,
-                        //}
-                        //sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
-                        //sub.emit('gap', fromRefObject, {
-                            //timestamp: 10,
-                            //sequenceNumber: 0,
-                        //}, 'publisherId', 'msgChainId')
-                    //})
-                //})
+                            const fromRefObject = {
+                                timestamp: fromRef.timestamp,
+                                sequenceNumber: fromRef.sequenceNumber,
+                            }
+                            const toRefObject = {
+                                timestamp: toRef.timestamp,
+                                sequenceNumber: toRef.sequenceNumber,
+                            }
+                            sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
+                            await wait(100)
 
-                //describe('done', () => {
-                    //it('unsubscribes', (done) => {
-                        //const sub = setupSubscription('stream1')
+                            expect(requests).toHaveLength(2)
+                            const lastRequest = requests[requests.length - 1]
+                            expect(lastRequest).toEqual(new ResendRangeRequest({
+                                streamId: sub.streamId,
+                                streamPartition: sub.streamPartition,
+                                requestId: lastRequest.requestId,
+                                fromMsgRef: fromRef,
+                                toMsgRef: toRef,
+                                msgChainId: lastRequest.msgChainId,
+                                publisherId: lastRequest.publisherId,
+                                sessionToken,
+                            }))
+                            done()
+                        })
+                    })
 
-                        //client.unsubscribe = (unsub) => {
-                            //assert.equal(sub, unsub)
-                            //done()
-                        //}
-                        //sub.emit('done')
-                    //})
-                //})
-            //})
+                    it('does not send another resend request while resend is in progress', (done) => {
+                        const sub = mockSubscription('streamId', () => {})
+                        sub.once('subscribed', async () => {
+                            await wait()
+                            const fromRef = new MessageRef(1, 0)
+                            const toRef = new MessageRef(5, 0)
+                            const fromRefObject = {
+                                timestamp: fromRef.timestamp,
+                                sequenceNumber: fromRef.sequenceNumber,
+                            }
+                            const toRefObject = {
+                                timestamp: toRef.timestamp,
+                                sequenceNumber: toRef.sequenceNumber,
+                            }
+                            sub.emit('gap', fromRefObject, toRefObject, 'publisherId', 'msgChainId')
+                            sub.emit('gap', fromRefObject, {
+                                timestamp: 10,
+                                sequenceNumber: 0,
+                            }, 'publisherId', 'msgChainId')
+                            await wait()
+                            expect(requests).toHaveLength(2)
+                            const lastRequest = requests[requests.length - 1]
+                            expect(lastRequest).toEqual(new ResendRangeRequest({
+                                streamId: sub.streamId,
+                                streamPartition: sub.streamPartition,
+                                requestId: lastRequest.requestId,
+                                fromMsgRef: fromRef,
+                                toMsgRef: toRef,
+                                msgChainId: lastRequest.msgChainId,
+                                publisherId: lastRequest.publisherId,
+                                sessionToken,
+                            }))
+                            done()
+                        })
+                    })
+                })
+
+                describe('done', () => {
+                    it('unsubscribes', (done) => {
+                        const sub = mockSubscription('stream1', () => {})
+
+                        client.unsubscribe = (unsub) => {
+                            expect(sub).toBe(unsub)
+                            done()
+                        }
+                        sub.once('subscribed', async () => {
+                            await wait()
+                            sub.emit('done')
+                        })
+                    })
+                })
+            })
         })
     })
 
