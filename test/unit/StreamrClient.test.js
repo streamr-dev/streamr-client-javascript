@@ -1261,73 +1261,99 @@ describe('StreamrClient', () => {
         })
     })
 
-    //describe('unsubscribe()', () => {
-        //// Before each, client is connected and subscribed
-        //let sub
-        //beforeEach(async () => {
-            //await client.connect()
-            //sub = setupSubscription('stream1', true, {}, sinon.stub().throws())
-        //})
+    describe('unsubscribe()', () => {
+        // Before each, client is connected and subscribed
+        let sub
+        beforeEach(async (done) => {
+            await client.connect()
+            sub = mockSubscription('stream1', () => {
+                errors.push(new Error('should not fire message handler'))
+            })
+            sub.once('subscribed', () => done())
+        })
 
-        //it('sends an unsubscribe request', () => {
-            //connection.expect(UnsubscribeRequest.create(sub.streamId))
-            //client.unsubscribe(sub)
-        //})
+        it('sends an unsubscribe request', async () => {
+            client.unsubscribe(sub)
+            await wait()
+            expect(requests).toHaveLength(2)
+            const lastRequest = requests[requests.length - 1]
+            expect(lastRequest).toEqual(new UnsubscribeRequest({
+                streamId: sub.streamId,
+                streamPartition: sub.streamPartition,
+                requestId: lastRequest.requestId,
+                sessionToken,
+            }))
+        })
 
-        //it('does not send unsubscribe request if there are other subs remaining for the stream', () => {
-            //client.subscribe({
-                //stream: sub.streamId,
-            //}, () => {})
+        it('does not send unsubscribe request if there are other subs remaining for the stream', async () => {
+            client.subscribe({
+                stream: sub.streamId,
+            }, () => {})
 
-            //client.unsubscribe(sub)
-        //})
+            client.unsubscribe(sub)
+            await wait()
+            expect(requests).toHaveLength(1)
+        })
 
-        //it('sends unsubscribe request when the last subscription is unsubscribed', (done) => {
-            //const sub2 = client.subscribe({
-                //stream: sub.streamId,
-            //}, () => {})
+        it('sends unsubscribe request when the last subscription is unsubscribed', (done) => {
+            const sub2 = client.subscribe({
+                stream: sub.streamId,
+            }, () => {})
 
-            //sub2.once('subscribed', () => {
-                //client.unsubscribe(sub)
+            sub2.once('subscribed', async () => {
+                client.unsubscribe(sub)
+                client.unsubscribe(sub2)
+                await wait()
+                const lastRequest = requests[requests.length - 1]
+                expect(lastRequest).toEqual(new UnsubscribeRequest({
+                    streamId: sub.streamId,
+                    streamPartition: sub.streamPartition,
+                    requestId: lastRequest.requestId,
+                    sessionToken,
+                }))
+                done()
+            })
+        })
 
-                //connection.expect(UnsubscribeRequest.create(sub.streamId))
-                //client.unsubscribe(sub2)
-                //done()
-            //})
-        //})
+        it('does not send an unsubscribe request again if unsubscribe is called multiple times', async () => {
+            client.unsubscribe(sub)
+            client.unsubscribe(sub)
+            await wait()
+            expect(requests).toHaveLength(2)
+            const lastRequest = requests[requests.length - 1]
+            expect(lastRequest).toEqual(new UnsubscribeRequest({
+                streamId: sub.streamId,
+                streamPartition: sub.streamPartition,
+                requestId: lastRequest.requestId,
+                sessionToken,
+            }))
+        })
 
-        //it('does not send an unsubscribe request again if unsubscribe is called multiple times', () => {
-            //connection.expect(UnsubscribeRequest.create(sub.streamId))
+        it('does not send another unsubscribed event if the same Subscription is already unsubscribed', async () => {
+            const handler = jest.fn()
 
-            //client.unsubscribe(sub)
-            //client.unsubscribe(sub)
-        //})
+            sub.on('unsubscribed', handler)
+            client.unsubscribe(sub)
+            await wait()
+            expect(sub.getState()).toEqual(Subscription.State.unsubscribed)
 
-        //it('does not send another unsubscribed event if the same Subscription is already unsubscribed', () => {
-            //connection.expect(UnsubscribeRequest.create(sub.streamId))
-            //const handler = sinon.stub()
+            client.unsubscribe(sub)
+            await wait()
+            expect(handler).toHaveBeenCalledTimes(1)
+        })
 
-            //sub.on('unsubscribed', handler)
-            //client.unsubscribe(sub)
-            //connection.emitMessage(UnsubscribeResponse.create(sub.streamId))
-            //assert.equal(sub.getState(), Subscription.State.unsubscribed)
+        it('throws if no Subscription is given', () => {
+            expect(() => {
+                client.unsubscribe()
+            }).toThrow()
+        })
 
-            //client.unsubscribe(sub)
-            //assert.equal(handler.callCount, 1)
-        //})
-
-        //it('throws if no Subscription is given', () => {
-            //assert.throws(() => {
-                //client.unsubscribe()
-            //})
-        //})
-
-        //it('throws if Subscription is of wrong type', () => {
-            //assert.throws(() => {
-                //client.unsubscribe(sub.streamId)
-            //})
-        //})
-    //})
+        it('throws if Subscription is of wrong type', () => {
+            expect(() => {
+                client.unsubscribe(sub.streamId)
+            }).toThrow()
+        })
+    })
 
     //describe('publish', () => {
         //const pubMsg = {
