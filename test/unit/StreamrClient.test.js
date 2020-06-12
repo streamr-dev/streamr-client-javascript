@@ -187,9 +187,13 @@ describe('StreamrClient', () => {
         errors.push(error)
     }
 
+
+    let requests = []
+
     function mockSubscription(...opts) {
         let sub
         connection.send = jest.fn(async (request) => {
+            requests.push(request)
             await wait()
             if (request.type === ControlMessage.TYPES.SubscribeRequest) {
                 connection.emitMessage(new SubscribeResponse({
@@ -226,6 +230,7 @@ describe('StreamrClient', () => {
             },
         }, connection)
         errors = []
+        requests = []
         client.on('error', onError)
     })
 
@@ -322,6 +327,17 @@ describe('StreamrClient', () => {
             })
         })
 
+        it('generates a requestId without resend', (done) => {
+            const sub = mockSubscription({
+                stream: 'stream1',
+            }, () => {})
+            sub.once('subscribed', () => {
+                const { requestId } = requests[0]
+                expect(requestId).toBeTruthy()
+                done()
+            })
+        })
+
         it('emits a resend request if resend options were given. No second resend if a message is received.', (done) => {
             const sub = mockSubscription({
                 stream: 'stream1',
@@ -330,8 +346,8 @@ describe('StreamrClient', () => {
                 },
             }, () => {})
             sub.once('subscribed', async () => {
-                await wait(200)
-                const requestId = client.resendUtil.findRequestIdForSub(sub)
+                await wait(100)
+                const { requestId } = requests[requests.length - 1]
                 const streamMessage = getStreamMessage(sub.streamId, {})
                 connection.emitMessage(new UnicastMessage({
                     requestId,
@@ -372,29 +388,27 @@ describe('StreamrClient', () => {
 
             await Promise.all([
                 new Promise((resolve) => {
-                    sub1.once('subscribed', () => {
-                        setTimeout(() => {
-                            requestId1 = client.resendUtil.findRequestIdForSub(sub1)
-                            const streamMessage = getStreamMessage(sub1.streamId, {})
-                            connection.emitMessage(new UnicastMessage({
-                                requestId: requestId1,
-                                streamMessage,
-                            }))
-                            resolve()
-                        }, 200)
+                    sub1.once('subscribed', async () => {
+                        await wait(200)
+                        requestId1 = requests[requests.length - 2].requestId
+                        const streamMessage = getStreamMessage(sub1.streamId, {})
+                        connection.emitMessage(new UnicastMessage({
+                            requestId: requestId1,
+                            streamMessage,
+                        }))
+                        resolve()
                     })
                 }),
                 new Promise((resolve) => {
-                    sub2.once('subscribed', () => {
-                        setTimeout(() => {
-                            requestId2 = client.resendUtil.findRequestIdForSub(sub2)
-                            const streamMessage = getStreamMessage(sub2.streamId, {})
-                            connection.emitMessage(new UnicastMessage({
-                                requestId: requestId2,
-                                streamMessage,
-                            }))
-                            resolve()
-                        }, 200)
+                    sub2.once('subscribed', async () => {
+                        await wait(200)
+                        requestId2 = requests[requests.length - 1].requestId
+                        const streamMessage = getStreamMessage(sub2.streamId, {})
+                        connection.emitMessage(new UnicastMessage({
+                            requestId: requestId2,
+                            streamMessage,
+                        }))
+                        resolve()
                     })
                 })
             ])
@@ -560,7 +574,7 @@ describe('StreamrClient', () => {
         it('should call the message handler of specified Subscription', async () => {
             // this sub's handler must be called
             sub.handleResentMessage = jest.fn()
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             expect(requestId).toBeTruthy()
 
             // this sub's handler must not be called
@@ -594,7 +608,7 @@ describe('StreamrClient', () => {
         })
 
         it('should ensure that the promise returned by the verification function is cached', (done) => {
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             sub.handleResentMessage = (message, msgRequestId, verifyFn) => {
                 expect(msgRequestId).toEqual(requestId)
                 const firstResult = verifyFn()
@@ -627,7 +641,7 @@ describe('StreamrClient', () => {
 
         it('emits event on associated subscription', async () => {
             sub.handleResending = jest.fn()
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const resendResponse = new ResendResponseResending({
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
@@ -670,7 +684,7 @@ describe('StreamrClient', () => {
 
         it('calls event handler on subscription', () => {
             sub.handleNoResend = jest.fn()
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const resendResponse = new ResendResponseNoResend({
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
@@ -712,7 +726,7 @@ describe('StreamrClient', () => {
 
         it('calls event handler on subscription', () => {
             sub.handleResent = jest.fn()
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const resendResponse = new ResendResponseResent({
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
@@ -743,7 +757,7 @@ describe('StreamrClient', () => {
 
         beforeEach(async (done) => {
             await client.connect()
-            sub = mockSubscription({
+            mockSubscription({
                 stream: 'stream1',
                 resend: {
                     last: 5,
@@ -752,7 +766,7 @@ describe('StreamrClient', () => {
         })
 
         it('emits an error event on client', (done) => {
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const errorResponse = new ErrorResponse({
                 errorMessage: 'Test error',
                 requestId,
@@ -839,6 +853,7 @@ describe('StreamrClient', () => {
         async function mockResend(...opts) {
             let sub
             connection.send = jest.fn(async (request) => {
+                requests.push(request)
                 await wait()
                 if (request.type === ControlMessage.TYPES.SubscribeRequest) {
                     connection.emitMessage(new SubscribeResponse({
@@ -880,7 +895,7 @@ describe('StreamrClient', () => {
                     last: 10
                 }
             }, () => {})
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const resendResponse = new ResendResponseNoResend({
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
@@ -900,7 +915,7 @@ describe('StreamrClient', () => {
                 }
             }, () => {})
 
-            const requestId = client.resendUtil.findRequestIdForSub(sub)
+            const { requestId } = requests[requests.length - 1]
             const streamMessage = getStreamMessage(sub.streamId, {})
             connection.emitMessage(new UnicastMessage({
                 requestId,

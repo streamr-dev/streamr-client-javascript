@@ -37,12 +37,6 @@ export default class ResendUtil extends EventEmitter {
         }
     }
 
-    findRequestIdForSub(sub) {
-        return Object.keys(this.subForRequestId).find((id) => (
-            this.subForRequestId[id] === sub
-        ))
-    }
-
     registerResendRequestForSub(sub) {
         const requestId = this.generateRequestId()
         this.subForRequestId[requestId] = sub
