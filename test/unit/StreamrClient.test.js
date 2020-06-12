@@ -195,7 +195,7 @@ describe('StreamrClient', () => {
                 connection.emitMessage(new SubscribeResponse({
                     streamId: sub.streamId,
                     requestId: request.requestId,
-                    streamPartition,
+                    streamPartition: request.streamPartition,
                 }))
             }
 
@@ -203,7 +203,7 @@ describe('StreamrClient', () => {
                 connection.emitMessage(new UnsubscribeResponse({
                     streamId: sub.streamId,
                     requestId: request.requestId,
-                    streamPartition,
+                    streamPartition: request.streamPartition,
                 }))
             }
         })
@@ -918,88 +918,97 @@ describe('StreamrClient', () => {
         })
     })
 
-    //describe('subscribe()', () => {
-        //it('should call client.connect() if autoConnect is set to true', (done) => {
-            //client.options.autoConnect = true
-            //client.on('connected', done)
+    describe('subscribe()', () => {
+        it('should call client.connect() if autoConnect is set to true', (done) => {
+            client.options.autoConnect = true
+            client.once('connected', done)
 
-            //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-            //client.subscribe('stream1', () => {})
-        //})
+            client.subscribe('stream1', () => {})
+        })
 
-        //describe('when connected', () => {
-            //beforeEach(() => client.connect())
+        describe('when connected', () => {
+            beforeEach(() => client.connect())
 
-            //it('throws an error if no options are given', () => {
-                //assert.throws(() => {
-                    //client.subscribe(undefined, () => {})
-                //})
-            //})
+            it('throws an error if no options are given', () => {
+                expect(() => {
+                    client.subscribe(undefined, () => {})
+                }).toThrow()
+            })
 
-            //it('throws an error if options is wrong type', () => {
-                //assert.throws(() => {
-                    //client.subscribe(['streamId'], () => {})
-                //})
-            //})
+            it('throws an error if options is wrong type', () => {
+                expect(() => {
+                    client.subscribe(['streamId'], () => {})
+                }).toThrow()
+            })
 
-            //it('throws an error if no callback is given', () => {
-                //assert.throws(() => {
-                    //client.subscribe('stream1')
-                //})
-            //})
+            it('throws an error if no callback is given', () => {
+                expect(() => {
+                    client.subscribe('stream1')
+                }).toThrow()
+            })
 
-            //it('sends a subscribe request', () => {
-                //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+            it('sends a subscribe request', async (done) => {
+                const sub = mockSubscription('stream1', () => {})
+                sub.once('subscribed', () => {
+                    expect(connection.send.mock.calls[0][0]).toMatchObject({
+                        type: ControlMessage.TYPES.SubscribeRequest,
+                        streamId: sub.streamId,
+                        streamPartition: sub.streamPartition,
+                        sessionToken: 'session-token'
+                    })
+                    done()
+                })
+            })
 
-                //client.subscribe({
-                    //stream: 'stream1',
-                //}, () => {})
-            //})
+            it('sets the group keys if passed as arguments', () => {
+                const groupKey = crypto.randomBytes(32)
+                const sub = client.subscribe({
+                    stream: 'stream1',
+                    groupKeys: {
+                        publisherId: groupKey
+                    }
+                }, () => {})
+                expect(client.options.subscriberGroupKeys).toHaveProperty('stream1.publisherId.start')
+                expect(client.options.subscriberGroupKeys.stream1.publisherId.groupKey).toEqual(groupKey)
+                expect(sub.groupKeys['publisherId'.toLowerCase()]).toEqual(groupKey)
+            })
 
-            //it('sets the group keys if passed as arguments', () => {
-                //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+            it('sends a subscribe request for a given partition', (done) => {
+                const sub = mockSubscription({
+                    stream: 'stream1',
+                    partition: 5,
+                }, () => {}).once('subscribed', () => {
+                    expect(connection.send.mock.calls[0][0]).toMatchObject({
+                        type: ControlMessage.TYPES.SubscribeRequest,
+                        streamId: sub.streamId,
+                        streamPartition: 5,
+                        sessionToken: 'session-token'
+                    })
+                    done()
+                })
+            })
 
-                //const groupKey = crypto.randomBytes(32)
-                //const sub = client.subscribe({
-                    //stream: 'stream1',
-                    //groupKeys: {
-                        //publisherId: groupKey
-                    //}
-                //}, () => {
-                //})
-                //assert(client.options.subscriberGroupKeys.stream1.publisherId.start)
-                //assert.strictEqual(client.options.subscriberGroupKeys.stream1.publisherId.groupKey, groupKey)
-                //assert.strictEqual(sub.groupKeys['publisherId'.toLowerCase()], groupKey)
-            //})
-            //it('sends a subscribe request for a given partition', () => {
-                //connection.expect(SubscribeRequest.create('stream1', 5, 'session-token'))
+            it('sends subscribe request for each subscribed partition', async () => {
+                const tasks = []
+                for (let i = 0; i < 3; i++) {
+                    tasks.push(new Promise((resolve) => {
+                        const s = mockSubscription({
+                            stream: 'stream1',
+                            partition: i,
+                        }, () => {})
+                            .once('subscribed', () => resolve(s))
+                    }))
+                }
+                const subs = await Promise.all(tasks)
 
-                //client.subscribe({
-                    //stream: 'stream1',
-                    //partition: 5,
-                //}, () => {})
-            //})
-
-            //it('sends subscribe request for each subscribed partition', async () => {
-                //connection.expect(SubscribeRequest.create('stream1', 2, 'session-token'))
-                //connection.expect(SubscribeRequest.create('stream1', 3, 'session-token'))
-                //connection.expect(SubscribeRequest.create('stream1', 4, 'session-token'))
-
-                //client.subscribe({
-                    //stream: 'stream1',
-                    //partition: 2,
-                //}, () => {})
-
-                //client.subscribe({
-                    //stream: 'stream1',
-                    //partition: 3,
-                //}, () => {})
-
-                //client.subscribe({
-                    //stream: 'stream1',
-                    //partition: 4,
-                //}, () => {})
-            //})
+                subs.forEach((sub, i) => {
+                    expect(connection.send.mock.calls[i][0]).toMatchObject({
+                        type: ControlMessage.TYPES.SubscribeRequest,
+                        streamId: sub.streamId,
+                        streamPartition: i,
+                    })
+                })
+            })
 
             //it('accepts stream id as first argument instead of object', () => {
                 //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
@@ -1158,8 +1167,8 @@ describe('StreamrClient', () => {
                     //})
                 //})
             //})
-        //})
-    //})
+        })
+    })
 
     //describe('unsubscribe()', () => {
         //// Before each, client is connected and subscribed
