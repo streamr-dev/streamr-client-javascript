@@ -753,8 +753,6 @@ describe('StreamrClient', () => {
     })
 
     describe('ErrorResponse', () => {
-        let sub
-
         beforeEach(async (done) => {
             await client.connect()
             mockSubscription({
@@ -838,14 +836,18 @@ describe('StreamrClient', () => {
             expect(connection.connect).toHaveBeenCalledTimes(1)
         })
 
-        it('should reject promise while connecting', (done) => {
+        it('should reject promise while connecting', async () => {
             connection.state = Connection.State.CONNECTING
-            client.connect().catch(() => done())
+            await expect(() => (
+                client.connect()
+            )).rejects.toThrow()
         })
 
-        it('should reject promise when connected', (done) => {
+        it('should reject promise when connected', async () => {
             connection.state = Connection.State.CONNECTED
-            client.connect().catch(() => done())
+            await expect(() => (
+                client.connect()
+            )).rejects.toThrow()
         })
     })
 
@@ -929,7 +931,7 @@ describe('StreamrClient', () => {
             connection.emitMessage(resendResponse)
             await client.pause()
             await client.connect()
-            expect(connection.send.mock.calls.filter(([arg]) => arg.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
+            expect(requests.filter((req) => req.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
         })
     })
 
@@ -962,7 +964,7 @@ describe('StreamrClient', () => {
                 }).toThrow()
             })
 
-            it('sends a subscribe request', async (done) => {
+            it('sends a subscribe request', (done) => {
                 const sub = mockSubscription('stream1', () => {})
                 sub.once('subscribed', () => {
                     expect(connection.send.mock.calls[0][0]).toMatchObject({
