@@ -967,12 +967,13 @@ describe('StreamrClient', () => {
             it('sends a subscribe request', (done) => {
                 const sub = mockSubscription('stream1', () => {})
                 sub.once('subscribed', () => {
-                    expect(connection.send.mock.calls[0][0]).toMatchObject({
-                        type: ControlMessage.TYPES.SubscribeRequest,
+                    const lastRequest = requests[requests.length - 1]
+                    expect(lastRequest).toEqual(new SubscribeRequest({
                         streamId: sub.streamId,
                         streamPartition: sub.streamPartition,
+                        requestId: lastRequest.requestId,
                         sessionToken: 'session-token'
-                    })
+                    }))
                     done()
                 })
             })
@@ -995,12 +996,13 @@ describe('StreamrClient', () => {
                     stream: 'stream1',
                     partition: 5,
                 }, () => {}).once('subscribed', () => {
-                    expect(connection.send.mock.calls[0][0]).toMatchObject({
-                        type: ControlMessage.TYPES.SubscribeRequest,
+                    const lastRequest = requests[requests.length - 1]
+                    expect(lastRequest).toEqual(new SubscribeRequest({
                         streamId: sub.streamId,
                         streamPartition: 5,
-                        sessionToken: 'session-token'
-                    })
+                        requestId: lastRequest.requestId,
+                        sessionToken,
+                    }))
                     done()
                 })
             })
@@ -1019,11 +1021,13 @@ describe('StreamrClient', () => {
                 const subs = await Promise.all(tasks)
 
                 subs.forEach((sub, i) => {
-                    expect(connection.send.mock.calls[i][0]).toMatchObject({
-                        type: ControlMessage.TYPES.SubscribeRequest,
+                    const request = requests[i]
+                    expect(request).toEqual(new SubscribeRequest({
                         streamId: sub.streamId,
                         streamPartition: i,
-                    })
+                        requestId: request.requestId,
+                        sessionToken,
+                    }))
                 })
             })
 
