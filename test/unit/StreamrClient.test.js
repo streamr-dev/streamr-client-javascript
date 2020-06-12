@@ -1037,99 +1037,138 @@ describe('StreamrClient', () => {
                 //client.subscribe('stream1', () => {})
             //})
 
-            //it('sends only one subscribe request to server even if there are multiple subscriptions for same stream', () => {
-                //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                //client.subscribe('stream1', () => {})
-                //client.subscribe('stream1', () => {})
-            //})
+            it('sends only one subscribe request to server even if there are multiple subscriptions for same stream', async () => {
+                const sub = mockSubscription('stream1', () => {})
+                const sub2 = mockSubscription('stream1', () => {})
+                await Promise.all([
+                    new Promise((resolve) => sub.once('subscribed', resolve)),
+                    new Promise((resolve) => sub2.once('subscribed', resolve))
+                ])
+                expect(requests).toHaveLength(1)
+                const request = requests[0]
+                expect(request).toEqual(new SubscribeRequest({
+                    streamId: sub.streamId,
+                    streamPartition: sub.streamPartition,
+                    requestId: request.requestId,
+                    sessionToken,
+                }))
+                // sets subscribed state on subsequent subscriptions without further subscribe requests
+                expect(sub.getState()).toEqual(Subscription.State.subscribed)
+                expect(sub2.getState()).toEqual(Subscription.State.subscribed)
+            })
 
-            //it('sets subscribed state on subsequent subscriptions without further subscribe requests', (done) => {
-                //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-                //const sub = client.subscribe('stream1', () => {})
-                //connection.emitMessage(SubscribeResponse.create(sub.streamId))
+            describe('with resend options', () => {
+                it('supports resend.from', (done) => {
+                    const ref = new MessageRef(5, 0)
+                    const sub = mockSubscription({
+                        stream: 'stream1',
+                        resend: {
+                            from: {
+                                timestamp: ref.timestamp,
+                                sequenceNumber: ref.sequenceNumber,
+                            },
+                            publisherId: 'publisherId',
+                        },
+                    }, () => {})
+                    sub.once('subscribed', async () => {
+                        await wait(200)
+                        const lastRequest = requests[requests.length - 1]
+                        expect(lastRequest).toEqual(new ResendFromRequest({
+                            streamId: sub.streamId,
+                            streamPartition: sub.streamPartition,
+                            requestId: lastRequest.requestId,
+                            publisherId: 'publisherId',
+                            fromMsgRef: ref,
+                            sessionToken,
+                        }))
+                        const streamMessage = getStreamMessage(sub.streamId, {})
+                        connection.emitMessage(new UnicastMessage({
+                            requestId: lastRequest.requestId,
+                            streamMessage,
+                        }))
+                        // TODO validate message
+                        await wait(STORAGE_DELAY + 200)
+                        sub.stop()
+                        done()
+                    })
+                }, STORAGE_DELAY + 1000)
 
-                //const sub2 = client.subscribe(sub.streamId, () => {})
-                //sub2.on('subscribed', () => {
-                    //assert.equal(sub2.getState(), Subscription.State.subscribed)
-                    //done()
-                //})
-            //})
+                it('supports resend.last', (done) => {
+                    const sub = mockSubscription({
+                        stream: 'stream1',
+                        resend: {
+                            last: 5,
+                        },
+                    }, () => {})
+                    sub.once('subscribed', async () => {
+                        await wait(200)
+                        const lastRequest = requests[requests.length - 1]
+                        expect(lastRequest).toEqual(new ResendLastRequest({
+                            streamId: sub.streamId,
+                            streamPartition: sub.streamPartition,
+                            requestId: lastRequest.requestId,
+                            numberLast: 5,
+                            sessionToken,
+                        }))
+                        const streamMessage = getStreamMessage(sub.streamId, {})
+                        connection.emitMessage(new UnicastMessage({
+                            requestId: lastRequest.requestId,
+                            streamMessage,
+                        }))
+                        // TODO validate message
+                        await wait(STORAGE_DELAY + 200)
+                        sub.stop()
+                        done()
+                    })
+                }, STORAGE_DELAY + 1000)
 
-            //describe('with resend options', () => {
-                //it('supports resend.from', (done) => {
-                    //const ref = new MessageRef(5, 0)
-                    //const sub = setupSubscription('stream1', false, {
-                        //resend: {
-                            //from: {
-                                //timestamp: ref.timestamp,
-                                //sequenceNumber: ref.sequenceNumber,
-                            //},
-                            //publisherId: 'publisherId',
-                            //msgChainId: '1',
-                        //},
-                    //})
-                    //sub.once('subscribed', () => {
-                        //setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, '0')), 200)
-                        //setTimeout(() => {
-                            //sub.stop()
-                            //done()
-                        //}, STORAGE_DELAY + 200)
-                    //})
-                    //connection.expect(ResendFromRequest.create(
-                        //sub.streamId, sub.streamPartition, '0', ref.toArray(),
-                        //'publisherId', '1', 'session-token',
-                    //))
-                    //connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                //}, STORAGE_DELAY + 1000)
+                it.skip('sends a second ResendLastRequest if no StreamMessage received and a ResendResponseNoResend received', async () => {
+                    const sub = mockSubscription({
+                        stream: 'stream1',
+                        resend: {
+                            last: 5,
+                        },
+                    }, () => {}).once('subscribed', async () => {
+                        await wait()
+                        const lastRequest = requests[requests.length - 1]
+                        const resendResponse = new ResendResponseNoResend({
+                            streamId: sub.streamId,
+                            streamPartition: sub.streamPartition,
+                            requestId: lastRequest.requestId
+                        })
+                        connection.emitMessage(resendResponse)
+                    })
 
-                //it('supports resend.last', (done) => {
-                    //const sub = setupSubscription('stream1', false, {
-                        //resend: {
-                            //last: 5,
-                        //},
-                    //})
-                    //sub.once('subscribed', () => {
-                        //setTimeout(() => connection.emitMessage(msg(sub.streamId, {}, '0')), 200)
-                        //setTimeout(() => {
-                            //sub.stop()
-                            //done()
-                        //}, STORAGE_DELAY + 200)
-                    //})
-                    //connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
-                    //connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                //}, STORAGE_DELAY + 1000)
+                    await wait(STORAGE_DELAY + 200)
+                    sub.stop()
+                    const lastTwoRequests = requests.slice(-2)
+                    expect(lastTwoRequests).toHaveLength(2)
+                    lastTwoRequests.forEach((request) => {
+                        expect(request).toEqual(new ResendLastRequest({
+                            streamId: sub.streamId,
+                            streamPartition: sub.streamPartition,
+                            requestId: request.requestId,
+                            numberLast: 5,
+                            sessionToken,
+                        }))
+                    })
+                }, STORAGE_DELAY + 1000)
 
-                //it('sends a second ResendLastRequest if no StreamMessage received and a ResendResponseNoResend received', (done) => {
-                    //const sub = setupSubscription('stream1', false, {
-                        //resend: {
-                            //last: 5,
-                        //},
-                    //})
-                    //connection.expect(ResendLastRequest.create(sub.streamId, sub.streamPartition, '0', 5, 'session-token'))
-                    //connection.emitMessage(SubscribeResponse.create(sub.streamId))
-                    //connection.emitMessage(ResendResponseNoResend.create(sub.streamId, sub.streamPartition, '0'))
-
-                    //setTimeout(() => {
-                        //sub.stop()
-                        //done()
-                    //}, STORAGE_DELAY + 200)
-                //}, STORAGE_DELAY + 1000)
-
-                //it('throws if multiple resend options are given', () => {
-                    //assert.throws(() => {
-                        //client.subscribe({
-                            //stream: 'stream1',
-                            //resend: {
-                                //from: {
-                                    //timestamp: 1,
-                                    //sequenceNumber: 0,
-                                //},
-                                //last: 5,
-                            //},
-                        //}, () => {})
-                    //})
-                //})
-            //})
+                it('throws if multiple resend options are given', () => {
+                    expect(() => {
+                        client.subscribe({
+                            stream: 'stream1',
+                            resend: {
+                                from: {
+                                    timestamp: 1,
+                                    sequenceNumber: 0,
+                                },
+                                last: 5,
+                            },
+                        }, () => {})
+                    }).toThrow()
+                })
+            })
 
             //describe('Subscription event handling', () => {
                 //describe('gap', () => {

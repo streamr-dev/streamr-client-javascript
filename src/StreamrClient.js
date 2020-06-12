@@ -21,7 +21,7 @@ const {
     ErrorResponse,
     ControlMessage,
 } = ControlLayer
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageRef } = MessageLayer
 const debug = debugFactory('StreamrClient')
 
 import HistoricalSubscription from './HistoricalSubscription'
@@ -835,7 +835,7 @@ export default class StreamrClient extends EventEmitter {
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
                 requestId,
-                fromMsgRef: [options.from.timestamp, options.from.sequenceNumber],
+                fromMsgRef: new MessageRef(options.from.timestamp, options.from.sequenceNumber),
                 publisherId: options.publisherId || null,
                 msgChainId: options.msgChainId || null,
                 sessionToken,
@@ -845,8 +845,8 @@ export default class StreamrClient extends EventEmitter {
                 streamId: sub.streamId,
                 streamPartition: sub.streamPartition,
                 requestId,
-                fromMsgRef: [options.from.timestamp, options.from.sequenceNumber],
-                toMsgRef: [options.to.timestamp, options.to.sequenceNumber],
+                fromMsgRef: new MessageRef(options.from.timestamp, options.from.sequenceNumber),
+                toMsgRef: new MessageRef(options.to.timestamp, options.to.sequenceNumber),
                 publisherId: options.publisherId || null,
                 msgChainId: options.msgChainId || null,
                 sessionToken,
