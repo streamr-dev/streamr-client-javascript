@@ -1461,150 +1461,154 @@ describe('StreamrClient', () => {
         })
     })
 
-    //describe('disconnect()', () => {
-        //beforeEach(() => client.connect())
+    describe('disconnect()', () => {
+        beforeEach(() => client.connect())
 
-        //it('calls connection.disconnect()', (done) => {
-            //connection.disconnect = done
-            //client.disconnect()
-        //})
+        it('calls connection.disconnect()', (done) => {
+            connection.disconnect = () => done()
+            client.disconnect()
+        })
 
-        //it('resets subscriptions', async () => {
-            //const sub = setupSubscription('stream1')
-            //await client.disconnect()
-            //assert.deepEqual(client.getSubscriptions(sub.streamId), [])
-        //})
-    //})
+        it('resets subscriptions', async () => {
+            const sub = mockSubscription('stream1', () => {})
+            await client.disconnect()
+            expect(client.getSubscriptions(sub.streamId)).toEqual([])
+        })
+    })
 
-    //describe('pause()', () => {
-        //beforeEach(() => client.connect())
+    describe('pause()', () => {
+        beforeEach(() => client.connect())
 
-        //it('calls connection.disconnect()', (done) => {
-            //connection.disconnect = done
-            //client.pause()
-        //})
+        it('calls connection.disconnect()', (done) => {
+            connection.disconnect = done
+            client.pause()
+        })
 
-        //it('does not reset subscriptions', async () => {
-            //const sub = setupSubscription('stream1')
-            //await client.pause()
-            //assert.deepEqual(client.getSubscriptions(sub.streamId), [sub])
-        //})
-    //})
+        it('does not reset subscriptions', async () => {
+            const sub = mockSubscription('stream1', () => {})
+            await client.pause()
+            expect(client.getSubscriptions(sub.streamId)).toEqual([sub])
+        })
+    })
 
-    //describe('Fields set', () => {
-        //it('sets auth.apiKey from authKey', () => {
-            //const c = new StubbedStreamrClient({
-                //authKey: 'authKey',
-            //}, createConnectionMock())
-            //assert(c.options.auth.apiKey)
-        //})
-        //it('sets auth.apiKey from apiKey', () => {
-            //const c = new StubbedStreamrClient({
-                //apiKey: 'apiKey',
-            //}, createConnectionMock())
-            //assert(c.options.auth.apiKey)
-        //})
-        //it('sets private key with 0x prefix', (done) => {
-            //connection = createConnectionMock()
-            //const c = new StubbedStreamrClient({
-                //auth: {
-                    //privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-                //},
-            //}, connection)
-            //c.connect()
-            //connection.expect(SubscribeRequest.create('0x650EBB201f635652b44E4afD1e0193615922381D'.toLowerCase(), 0, 'session-token'))
-            //c.session = {
-                //getSessionToken: sinon.stub().resolves('session-token')
-            //}
-            //c.once('connected', () => {
-                //assert(c.options.auth.privateKey.startsWith('0x'))
-                //done()
-            //})
-        //})
-        //it('sets unauthenticated', () => {
-            //const c = new StubbedStreamrClient({}, createConnectionMock())
-            //assert(c.session.options.unauthenticated)
-        //})
-        //it('sets start time of group key', () => {
-            //const groupKey = crypto.randomBytes(32)
-            //const c = new StubbedStreamrClient({
-                //subscriberGroupKeys: {
-                    //streamId: {
-                        //publisherId: groupKey
-                    //}
-                //}
-            //}, createConnectionMock())
-            //assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
-            //assert(c.options.subscriberGroupKeys.streamId.publisherId.start)
-        //})
-        //it('keeps start time passed in the constructor', () => {
-            //const groupKey = crypto.randomBytes(32)
-            //const c = new StubbedStreamrClient({
-                //subscriberGroupKeys: {
-                    //streamId: {
-                        //publisherId: {
-                            //groupKey,
-                            //start: 12
-                        //}
-                    //}
-                //}
-            //}, createConnectionMock())
-            //assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
-            //assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.start, 12)
-        //})
-        //it('updates the latest group key with a more recent key', () => {
-            //const c = new StubbedStreamrClient({
-                //subscriberGroupKeys: {
-                    //streamId: {
-                        //publisherId: crypto.randomBytes(32)
-                    //}
-                //}
-            //}, createConnectionMock())
-            //c.subscribedStreamPartitions = {
-                //streamId0: {
-                    //setSubscriptionsGroupKeys: sinon.stub()
-                //}
-            //}
-            //const newGroupKey = {
-                //groupKey: crypto.randomBytes(32),
-                //start: Date.now() + 2000
-            //}
-            //[> eslint-disable no-underscore-dangle <]
-            //c._setGroupKeys('streamId', 'publisherId', [newGroupKey])
-            //[> eslint-enable no-underscore-dangle <]
-            //assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId, newGroupKey)
-        //})
-        //it('does not update the latest group key with an older key', () => {
-            //const groupKey = crypto.randomBytes(32)
-            //const c = new StubbedStreamrClient({
-                //subscriberGroupKeys: {
-                    //streamId: {
-                        //publisherId: groupKey
-                    //}
-                //}
-            //}, createConnectionMock())
-            //c.subscribedStreamPartitions = {
-                //streamId0: {
-                    //setSubscriptionsGroupKeys: sinon.stub()
-                //}
-            //}
-            //const oldGroupKey = {
-                //groupKey: crypto.randomBytes(32),
-                //start: Date.now() - 2000
-            //}
-            //[> eslint-disable no-underscore-dangle <]
-            //c._setGroupKeys('streamId', 'publisherId', [oldGroupKey])
-            //[> eslint-enable no-underscore-dangle <]
-            //assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
-        //})
-    //})
+    describe('Fields set', () => {
+        it('sets auth.apiKey from authKey', () => {
+            const c = new StubbedStreamrClient({
+                authKey: 'authKey',
+            }, createConnectionMock())
+            expect(c.options.auth.apiKey).toBeTruthy()
+        })
+        it('sets auth.apiKey from apiKey', () => {
+            const c = new StubbedStreamrClient({
+                apiKey: 'apiKey',
+            }, createConnectionMock())
+            expect(c.options.auth.apiKey).toBeTruthy()
+        })
+        it('sets private key with 0x prefix', (done) => {
+            connection = createConnectionMock()
+            const c = new StubbedStreamrClient({
+                auth: {
+                    privateKey: '12345564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
+                },
+            }, connection)
+            c.connect()
+            c.session = {
+                getSessionToken: sinon.stub().resolves('session-token')
+            }
+            c.once('connected', async () => {
+                await wait()
+                expect(requests[0]).toEqual(new SubscribeRequest({
+                    streamId: '0x650EBB201f635652b44E4afD1e0193615922381D'.toLowerCase(),
+                    streamPartition: 0,
+                    sessionToken,
+                    requestId: requests[0].requestId,
+                }))
+                expect(c.options.auth.privateKey.startsWith('0x')).toBeTruthy()
+                done()
+            })
+        })
+        it('sets unauthenticated', () => {
+            const c = new StubbedStreamrClient({}, createConnectionMock())
+            assert(c.session.options.unauthenticated)
+        })
+        it('sets start time of group key', () => {
+            const groupKey = crypto.randomBytes(32)
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: groupKey
+                    }
+                }
+            }, createConnectionMock())
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
+            assert(c.options.subscriberGroupKeys.streamId.publisherId.start)
+        })
+        it('keeps start time passed in the constructor', () => {
+            const groupKey = crypto.randomBytes(32)
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: {
+                            groupKey,
+                            start: 12
+                        }
+                    }
+                }
+            }, createConnectionMock())
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.start, 12)
+        })
+        it('updates the latest group key with a more recent key', () => {
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: crypto.randomBytes(32)
+                    }
+                }
+            }, createConnectionMock())
+            c.subscribedStreamPartitions = {
+                streamId0: {
+                    setSubscriptionsGroupKeys: sinon.stub()
+                }
+            }
+            const newGroupKey = {
+                groupKey: crypto.randomBytes(32),
+                start: Date.now() + 2000
+            }
+            // eslint-disable-next-line no-underscore-dangle
+            c._setGroupKeys('streamId', 'publisherId', [newGroupKey])
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId, newGroupKey)
+        })
+        it('does not update the latest group key with an older key', () => {
+            const groupKey = crypto.randomBytes(32)
+            const c = new StubbedStreamrClient({
+                subscriberGroupKeys: {
+                    streamId: {
+                        publisherId: groupKey
+                    }
+                }
+            }, createConnectionMock())
+            c.subscribedStreamPartitions = {
+                streamId0: {
+                    setSubscriptionsGroupKeys: sinon.stub()
+                }
+            }
+            const oldGroupKey = {
+                groupKey: crypto.randomBytes(32),
+                start: Date.now() - 2000
+            }
+            // eslint-disable-next-line no-underscore-dangle
+            c._setGroupKeys('streamId', 'publisherId', [oldGroupKey])
+            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
+        })
+    })
 
-    //describe('StreamrClient.generateEthereumAccount()', () => {
-        //it('generates a new Ethereum account', () => {
-            //const result = StubbedStreamrClient.generateEthereumAccount()
-            //const wallet = new Wallet(result.privateKey)
-            //assert.equal(result.address, wallet.address)
-        //})
-    //})
+    describe('StreamrClient.generateEthereumAccount()', () => {
+        it('generates a new Ethereum account', () => {
+            const result = StubbedStreamrClient.generateEthereumAccount()
+            const wallet = new Wallet(result.privateKey)
+            expect(result.address).toEqual(wallet.address)
+        })
+    })
 })
 
