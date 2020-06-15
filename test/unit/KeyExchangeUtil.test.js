@@ -10,7 +10,7 @@ import KeyStorageUtil from '../../src/KeyStorageUtil'
 import InvalidGroupKeyResponseError from '../../src/errors/InvalidGroupKeyResponseError'
 import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageIDStrict } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
 const subscribersMap = {}
 subscribers.forEach((p) => {
@@ -60,13 +60,12 @@ describe('KeyExchangeUtil', () => {
             assert(client.getStreamSubscribers.notCalled)
             assert.deepStrictEqual(subscribersMap, retrievedSubscribers)
         })
-        it('should call getStreamPublishers only once when multiple calls made simultaneously', () => {
+        it('should call getStreamPublishers only once when multiple calls made simultaneously', async () => {
             const p1 = util.getSubscribers('streamId')
             const p2 = util.getSubscribers('streamId')
-            return Promise.all([p1, p2]).then(([subscribers1, subscribers2]) => {
-                assert(client.getStreamSubscribers.calledOnce)
-                assert.deepStrictEqual(subscribers1, subscribers2)
-            })
+            const [subscribers1, subscribers2] = await Promise.all([p1, p2])
+            assert(client.getStreamSubscribers.calledOnce)
+            assert.deepStrictEqual(subscribers1, subscribers2)
         })
         it('should use endpoint again after the list of locally stored publishers expires', async () => {
             const clock = sinon.useFakeTimers()
@@ -100,41 +99,59 @@ describe('KeyExchangeUtil', () => {
     })
     describe('handleGroupKeyRequest', () => {
         it('should reject unsigned request', (done) => {
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'streamId',
                     publicKey: 'rsa-public-key',
-                }, StreamMessage.SIGNATURE_TYPES.NONE, null,
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+                signature: null,
+            })
+
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
                 assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
                 done()
             })
         })
+
         it('should reject request for a stream for which the client does not have a group key', (done) => {
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'wrong-streamId',
                     publicKey: 'rsa-public-key',
-                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
                 assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received group key request for stream \'wrong-streamId\' but no group key is set')
                 done()
             })
         })
+
         it('should reject request from invalid subscriber', (done) => {
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'subscriber5', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber5', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'streamId',
                     publicKey: 'rsa-public-key',
-                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
             util.handleGroupKeyRequest(streamMessage).catch((err) => {
                 assert(err instanceof InvalidGroupKeyRequestError)
                 assert.strictEqual(err.message, 'Received group key request for stream \'streamId\' from invalid address \'subscriber5\'')
@@ -144,13 +161,18 @@ describe('KeyExchangeUtil', () => {
         it('should send group key response (latest key)', (done) => {
             const subscriberKeyPair = new EncryptionUtil()
             subscriberKeyPair.onReady().then(() => {
-                const streamMessage = StreamMessage.create(
-                    ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
-                    StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                const streamMessage = new StreamMessage({
+                    messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
+                    prevMsgRef: null,
+                    content: {
                         streamId: 'streamId',
                         publicKey: subscriberKeyPair.getPublicKey(),
-                    }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-                )
+                    },
+                    contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                    signature: 'signature',
+                })
                 client.msgCreationUtil = {
                     createGroupKeyResponse: (subscriberId, streamId, keys) => {
                         assert.strictEqual(subscriberId, 'subscriber2')
@@ -173,17 +195,22 @@ describe('KeyExchangeUtil', () => {
         it('should send group key response (range of keys)', (done) => {
             const subscriberKeyPair = new EncryptionUtil()
             subscriberKeyPair.onReady().then(() => {
-                const streamMessage = StreamMessage.create(
-                    ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
-                    StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                const streamMessage = new StreamMessage({
+                    messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
+                    prevMsgRef: null,
+                    content: {
                         streamId: 'streamId',
                         publicKey: subscriberKeyPair.getPublicKey(),
                         range: {
                             start: 15,
                             end: 27
                         }
-                    }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-                )
+                    },
+                    contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                    signature: 'signature',
+                })
                 client.msgCreationUtil = {
                     createGroupKeyResponse: (subscriberId, streamId, keys) => {
                         assert.strictEqual(subscriberId, 'subscriber2')
@@ -210,13 +237,18 @@ describe('KeyExchangeUtil', () => {
         it('should send group key response (latest key and no storage of past keys)', (done) => {
             const subscriberKeyPair = new EncryptionUtil()
             subscriberKeyPair.onReady().then(() => {
-                const streamMessage = StreamMessage.create(
-                    ['clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''], null,
-                    StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST, StreamMessage.ENCRYPTION_TYPES.NONE, {
+                const streamMessage = new StreamMessage({
+                    messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
+                    prevMsgRef: null,
+                    content: {
                         streamId: 'streamId',
                         publicKey: subscriberKeyPair.getPublicKey(),
-                    }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-                )
+                    },
+                    contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                    signature: 'signature',
+                })
                 client.msgCreationUtil = {
                     createGroupKeyResponse: (subscriberId, streamId, keys) => {
                         assert.strictEqual(subscriberId, 'subscriber2')
@@ -239,16 +271,21 @@ describe('KeyExchangeUtil', () => {
     })
     describe('handleGroupKeyResponse', () => {
         it('should reject unsigned response', () => {
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'streamId',
                     keys: [{
                         groupKey: 'encrypted-group-key',
                         start: 54256,
                     }],
-                }, StreamMessage.SIGNATURE_TYPES.NONE, null,
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+                signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+                signature: null,
+            })
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
@@ -257,16 +294,31 @@ describe('KeyExchangeUtil', () => {
             }
         })
         it('should reject response for a stream to which the client is not subscribed', () => {
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'wrong-streamId',
                     keys: [{
                         groupKey: 'encrypted-group-key',
                         start: 54256,
                     }],
-                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
+            //const streamMessage = StreamMessage.create(
+                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    //streamId: 'wrong-streamId',
+                    //keys: [{
+                        //groupKey: 'encrypted-group-key',
+                        //start: 54256,
+                    //}],
+                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            //)
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
@@ -276,16 +328,31 @@ describe('KeyExchangeUtil', () => {
         })
         it('should reject response with invalid group key', () => {
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'streamId',
                     keys: [{
                         groupKey: encryptedGroupKey,
                         start: 54256,
                     }],
-                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
+            //const streamMessage = StreamMessage.create(
+                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    //streamId: 'streamId',
+                    //keys: [{
+                        //groupKey: encryptedGroupKey,
+                        //start: 54256,
+                    //}],
+                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            //)
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
@@ -296,16 +363,31 @@ describe('KeyExchangeUtil', () => {
         it('should update client options and subscriptions with received group key', (done) => {
             const groupKey = crypto.randomBytes(32)
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, client.encryptionUtil.getPublicKey(), true)
-            const streamMessage = StreamMessage.create(
-                ['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+            const streamMessage = new StreamMessage({
+                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
+                prevMsgRef: null,
+                content: {
                     streamId: 'streamId',
                     keys: [{
                         groupKey: encryptedGroupKey,
                         start: 54256,
                     }],
-                }, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+                },
+                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
+            //const streamMessage = StreamMessage.create(
+                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
+                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
+                    //streamId: 'streamId',
+                    //keys: [{
+                        //groupKey: encryptedGroupKey,
+                        //start: 54256,
+                    //}],
+                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
+            //)
             /* eslint-disable no-underscore-dangle */
             client._setGroupKeys = (streamId, publisherId, keys) => {
                 assert.strictEqual(streamId, 'streamId')
