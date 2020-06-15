@@ -309,16 +309,6 @@ describe('KeyExchangeUtil', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
             })
-            //const streamMessage = StreamMessage.create(
-                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
-                    //streamId: 'wrong-streamId',
-                    //keys: [{
-                        //groupKey: 'encrypted-group-key',
-                        //start: 54256,
-                    //}],
-                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            //)
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
@@ -343,16 +333,6 @@ describe('KeyExchangeUtil', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
             })
-            //const streamMessage = StreamMessage.create(
-                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
-                    //streamId: 'streamId',
-                    //keys: [{
-                        //groupKey: encryptedGroupKey,
-                        //start: 54256,
-                    //}],
-                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            //)
             try {
                 util.handleGroupKeyResponse(streamMessage)
             } catch (err) {
@@ -378,17 +358,7 @@ describe('KeyExchangeUtil', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
             })
-            //const streamMessage = StreamMessage.create(
-                //['clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''], null,
-                //StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE, StreamMessage.ENCRYPTION_TYPES.RSA, {
-                    //streamId: 'streamId',
-                    //keys: [{
-                        //groupKey: encryptedGroupKey,
-                        //start: 54256,
-                    //}],
-                //}, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            //)
-            /* eslint-disable no-underscore-dangle */
+            // eslint-disable-next-line no-underscore-dangle
             client._setGroupKeys = (streamId, publisherId, keys) => {
                 assert.strictEqual(streamId, 'streamId')
                 assert.strictEqual(publisherId, 'publisherId')
@@ -398,7 +368,6 @@ describe('KeyExchangeUtil', () => {
                 }])
                 done()
             }
-            /* eslint-enable no-underscore-dangle */
             return util.handleGroupKeyResponse(streamMessage)
         })
     })
