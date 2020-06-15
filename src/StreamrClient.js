@@ -870,7 +870,7 @@ export default class StreamrClient extends EventEmitter {
 
     _requestPublish(streamMessage, sessionToken) {
         const requestId = this.resendUtil.generateRequestId()
-        const request = ControlLayer.PublishRequest({
+        const request = new ControlLayer.PublishRequest({
             streamMessage,
             requestId,
             sessionToken,

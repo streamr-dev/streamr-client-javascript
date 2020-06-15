@@ -34,13 +34,14 @@ const {
     ErrorResponse,
 } = ControlLayer
 
-const { StreamMessage, MessageRef, MessageIDStrict } = MessageLayer
+const { StreamMessage, MessageRef, MessageID, MessageIDStrict } = MessageLayer
 const mockDebug = debug('mock')
 
 describe('StreamrClient', () => {
     let client
     let connection
     let asyncs = []
+    let requests = []
 
     const streamPartition = 0
     const sessionToken = 'session-token'
@@ -147,8 +148,8 @@ describe('StreamrClient', () => {
             })
         })
 
-        c.send = jest.fn(async () => {
-
+        c.send = jest.fn(async (request) => {
+            requests.push(request)
         })
 
         //c.send = async (msgToSend) => {
@@ -186,9 +187,6 @@ describe('StreamrClient', () => {
     function onError(error) {
         errors.push(error)
     }
-
-
-    let requests = []
 
     function mockSubscription(...opts) {
         let sub
@@ -1355,77 +1353,113 @@ describe('StreamrClient', () => {
         })
     })
 
-    //describe('publish', () => {
-        //const pubMsg = {
-            //foo: 'bar',
-        //}
-        //function getPublishRequest(streamId, timestamp, sequenceNumber, prevMsgRef) {
-            //const streamMessage = StreamMessage.create(
-                //[streamId, 0, timestamp, sequenceNumber, StubbedStreamrClient.hashedUsername, client.msgCreationUtil.msgChainId], prevMsgRef,
-                //StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, pubMsg, StreamMessage.SIGNATURE_TYPES.NONE, null,
-            //)
-            //return ControlLayer.PublishRequest.create(streamMessage, 'session-token')
-        //}
+    describe('publish', () => {
+        function getPublishRequest(content, streamId, timestamp, seqNum, prevMsgRef, requestId) {
+            const messageId = new MessageID(streamId, 0, timestamp, seqNum, StubbedStreamrClient.hashedUsername, client.msgCreationUtil.msgChainId)
+            const streamMessage = new StreamMessage({
+                messageId,
+                prevMsgRef,
+                content,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            })
+            return new ControlLayer.PublishRequest({
+                requestId,
+                streamMessage,
+                sessionToken,
+            })
+        }
 
-        //it('queues messages and sends them once connected', (done) => {
-            //client.options.autoConnect = true
-            //client.options.auth.username = 'username'
-            //const ts = Date.now()
-            //let prevMsgRef = null
-            //for (let i = 0; i < 10; i++) {
-                //connection.expect(getPublishRequest('streamId', ts, i, prevMsgRef))
-                //client.publish('streamId', pubMsg, ts)
-                //prevMsgRef = [ts, i]
-            //}
-            //connection.on('connected', () => {
-                //setTimeout(done, 2000)
-            //})
-        //})
+        it('queues messages and sends them once connected', async (done) => {
+            client.options.autoConnect = true
+            client.options.auth.username = 'username'
+            const ts = Date.now()
+            const messages = []
+            const ITEMS = 10
 
-        //it('accepts timestamp as date instead of number', (done) => {
-            //client.options.autoConnect = true
-            //client.options.auth.username = 'username'
-            //const date = new Date()
-            //connection.expect(getPublishRequest('streamId', date.getTime(), 0, null))
-            //client.publish('streamId', pubMsg, date)
-            //connection.on('connected', () => {
-                //setTimeout(done, 1000)
-            //})
-        //})
+            for (let i = 0; i < ITEMS; i++) {
+                messages.push({
+                    value: uid('msg'),
+                })
+            }
 
-        //it('accepts timestamp as date string instead of number', (done) => {
-            //client.options.autoConnect = true
-            //client.options.auth.username = 'username'
-            //connection.expect(getPublishRequest('streamId', 123, 0, null))
-            //client.publish('streamId', pubMsg, '1970-01-01T00:00:00.123Z')
-            //connection.on('connected', () => {
-                //setTimeout(done, 1000)
-            //})
-        //})
+            connection.once('connected', () => {
+                setTimeout(() => {
+                    let prevMsgRef = null
+                    expect(requests).toHaveLength(ITEMS)
+                    requests.forEach((request, i) => {
+                        expect(request).toEqual(getPublishRequest(messages[i], 'streamId', ts, i, prevMsgRef, request.requestId))
+                        prevMsgRef = new MessageRef(ts, i)
+                    })
+                    done()
+                }, 1000)
+            })
 
-        //it('rejects the promise if autoConnect is false and the client is not connected', (done) => {
-            //client.options.auth.username = 'username'
-            //client.options.autoConnect = false
-            //client.publish('stream1', pubMsg).catch((err) => {
-                //expect(err).toBeInstanceOf(FailedToPublishError)
-                //done()
-            //})
-        //})
+            await Promise.all(messages.map((pubMsg) => (
+                client.publish('streamId', pubMsg, ts)
+            )))
+        })
 
-        //it('subsequent calls to "publish()" should not call "getStream()" (must be cached)', async () => {
-            //client.options.auth.username = 'username'
-            //await client.connect()
+        it('accepts timestamp as date instead of number', async (done) => {
+            client.options.autoConnect = true
+            client.options.auth.username = 'username'
+            const date = new Date()
+            const pubMsg = {
+                value: uid('msg'),
+            }
+            connection.once('connected', () => {
+                setTimeout(() => {
+                    expect(requests).toEqual([
+                        getPublishRequest(pubMsg, 'streamId', date.getTime(), 0, null, requests[0].requestId),
+                    ])
+                    done()
+                }, 1000)
+            })
+            await client.publish('streamId', pubMsg, date)
+        })
 
-            //const ts = Date.now()
-            //connection.expect(getPublishRequest('streamId', ts, 0, null))
-            //await client.publish('streamId', pubMsg, ts)
-            //assert(client.getStream.called)
+        it('accepts timestamp as date string instead of number', async (done) => {
+            client.options.autoConnect = true
+            client.options.auth.username = 'username'
+            const pubMsg = {
+                value: uid('msg'),
+            }
+            connection.once('connected', () => {
+                setTimeout(() => {
+                    expect(requests).toEqual([
+                        getPublishRequest(pubMsg, 'streamId', 123, 0, null, requests[0].requestId),
+                    ])
+                    done()
+                }, 1000)
+            })
+            await client.publish('streamId', pubMsg, '1970-01-01T00:00:00.123Z')
+        })
 
-            //connection.expect(getPublishRequest('streamId', ts, 1, [ts, 0]))
-            //await client.publish('streamId', pubMsg, ts)
-            //assert(client.getStream.calledOnce)
-        //})
-    //})
+        it('rejects the promise if autoConnect is false and the client is not connected', async () => {
+            client.options.auth.username = 'username'
+            client.options.autoConnect = false
+            const pubMsg = {
+                value: uid('msg'),
+            }
+            await expect(() => (
+                client.publish('stream1', pubMsg)
+            )).rejects.toThrow(FailedToPublishError)
+        })
+
+        it('subsequent calls to "publish()" should not call "getStream()" (must be cached)', async () => {
+            client.options.auth.username = 'username'
+            await client.connect()
+
+            const ts = Date.now()
+            const pubMsg = {
+                value: uid('msg'),
+            }
+            await client.publish('streamId', pubMsg, ts)
+            expect(client.getStream.called).toBeTruthy()
+
+            await client.publish('streamId', pubMsg, ts)
+            expect(client.getStream.calledOnce).toBeTruthy()
+        })
+    })
 
     //describe('disconnect()', () => {
         //beforeEach(() => client.connect())

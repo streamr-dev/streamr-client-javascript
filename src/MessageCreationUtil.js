@@ -12,7 +12,7 @@ import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 export default class MessageCreationUtil {
     constructor(auth, signer, userInfoPromise, getStreamFunction, keyStorageUtil) {
@@ -95,7 +95,7 @@ export default class MessageCreationUtil {
             return null
         }
         const prevSequenceNumber = this.getPrevSequenceNumber(key)
-        return [prevTimestamp, prevSequenceNumber]
+        return new MessageRef(prevTimestamp, prevSequenceNumber)
     }
 
     getPrevTimestamp(key) {
@@ -119,14 +119,14 @@ export default class MessageCreationUtil {
         const stream = (streamObjectOrId instanceof Stream) ? streamObjectOrId : await this.getStream(streamObjectOrId)
         const streamPartition = this.computeStreamPartition(stream.partitions, partitionKey)
         const publisherId = await this.getPublisherId()
-        const idAndPrevRef = this.createMsgIdAndPrevRef(stream.id, streamPartition, timestamp, publisherId)
+        const [messageId, prevMsgRef] = this.createMsgIdAndPrevRef(stream.id, streamPartition, timestamp, publisherId)
 
         const streamMessage = new StreamMessage({
-            messageId: idAndPrevRef[0],
-            prevMsgRef: idAndPrevRef[1],
+            messageId,
+            prevMsgRef,
+            content: data,
             contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
             encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
-            content: data,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
             signature: null,
         })
@@ -233,7 +233,7 @@ export default class MessageCreationUtil {
         }
 
         const sequenceNumber = this.getNextSequenceNumber(key, timestamp)
-        const msgId = [streamId, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId]
+        const msgId = new MessageID(streamId, streamPartition, timestamp, sequenceNumber, publisherId, this.msgChainId)
         const prevRef = this.getPrevMsgRef(key)
         this.publishedStreams[key].prevTimestamp = timestamp
         this.publishedStreams[key].prevSequenceNumber = sequenceNumber
