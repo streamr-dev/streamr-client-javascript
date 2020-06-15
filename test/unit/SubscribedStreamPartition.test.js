@@ -7,7 +7,7 @@ import SubscribedStreamPartition from '../../src/SubscribedStreamPartition'
 import Signer from '../../src/Signer'
 import RealTimeSubscription from '../../src/RealTimeSubscription'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 
 describe('SubscribedStreamPartition', () => {
     let subscribedStreamPartition
@@ -131,10 +131,16 @@ describe('SubscribedStreamPartition', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                const msg = StreamMessage.create(
-                    [streamId, 0, timestamp, 0, '', ''], null, StreamMessage.CONTENT_TYPES.MESSAGE,
-                    StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE,
-                )
+                const msg = new StreamMessage({
+                    messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
+                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    content: data,
+                    contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+                    signature: null,
+                })
+
                 await signer.signStreamMessage(msg)
                 const spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
                 subscribedStreamPartition = new SubscribedStreamPartition(setupClientAndStream('auto', true).client, 'streamId')
@@ -158,10 +164,15 @@ describe('SubscribedStreamPartition', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = StreamMessage.create(
-                    [streamId, 0, timestamp, 0, '', ''], null, StreamMessage.CONTENT_TYPES.MESSAGE,
-                    StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE,
-                )
+                msg = new StreamMessage({
+                    messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
+                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    content: data,
+                    contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+                    signature: null,
+                })
                 await signer.signStreamMessage(msg)
                 spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
             })
@@ -199,10 +210,15 @@ describe('SubscribedStreamPartition', () => {
                     field: 'some-data',
                 }
                 const timestamp = Date.now()
-                msg = StreamMessage.create(
-                    [streamId, 0, timestamp, 0, '', ''], null, StreamMessage.CONTENT_TYPES.MESSAGE,
-                    StreamMessage.ENCRYPTION_TYPES.NONE, data, StreamMessage.SIGNATURE_TYPES.NONE,
-                )
+                msg = new StreamMessage({
+                    messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
+                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    content: data,
+                    contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+                    encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                    signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+                    signature: null,
+                })
             })
             afterEach(async () => {
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
