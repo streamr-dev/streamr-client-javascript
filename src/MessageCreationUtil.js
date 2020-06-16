@@ -126,7 +126,7 @@ export default class MessageCreationUtil {
             prevMsgRef,
             content: data,
             contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
-            encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
             signature: null,
         })
@@ -167,7 +167,7 @@ export default class MessageCreationUtil {
             messageId: idAndPrevRef[0],
             prevMsgRef: idAndPrevRef[1],
             contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
-            encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+            encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             content: data,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
             signature: null,

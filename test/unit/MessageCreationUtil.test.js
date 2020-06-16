@@ -10,7 +10,7 @@ import Stream from '../../src/rest/domain/Stream'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
 import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageID, MessageRef } = MessageLayer
 
 describe('MessageCreationUtil', () => {
     const hashedUsername = '0x16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
@@ -154,44 +154,47 @@ describe('MessageCreationUtil', () => {
         })
 
         function getStreamMessage(streamId, timestamp, sequenceNumber, prevMsgRef) {
-            return StreamMessage.create(
-                [streamId, 0, timestamp, sequenceNumber, hashedUsername, msgCreationUtil.msgChainId], prevMsgRef,
-                StreamMessage.CONTENT_TYPES.MESSAGE, StreamMessage.ENCRYPTION_TYPES.NONE, pubMsg, StreamMessage.SIGNATURE_TYPES.ETH, 'signature',
-            )
+            return new StreamMessage({
+                messageId: new MessageID(streamId, 0, timestamp, sequenceNumber, hashedUsername, msgCreationUtil.msgChainId),
+                prevMesssageRef: prevMsgRef,
+                content: pubMsg,
+                contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
+                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
+                signature: 'signature',
+            })
         }
 
-        it('should create messages with increasing sequence numbers', (done) => {
+        it('should create messages with increasing sequence numbers', async () => {
             const ts = Date.now()
             const promises = []
             let prevMsgRef = null
             for (let i = 0; i < 10; i++) {
                 /* eslint-disable no-loop-func */
-                promises.push(msgCreationUtil.createStreamMessage(stream, pubMsg, ts).then((streamMessage) => {
+                prevMsgRef = new MessageRef(ts, i)
+                promises.push(async () => {
+                    const streamMessage = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts)
                     assert.deepStrictEqual(streamMessage, getStreamMessage('streamId', ts, i, prevMsgRef))
-                    prevMsgRef = [ts, i]
-                }))
+                })
                 /* eslint-enable no-loop-func */
             }
-            Promise.all(promises).then(() => {
-                done()
-            })
+            await Promise.all(promises)
         })
 
-        it('should create messages with sequence number 0', (done) => {
+        it('should create messages with sequence number 0', async () => {
             const ts = Date.now()
             const promises = []
             let prevMsgRef = null
             for (let i = 0; i < 10; i++) {
+                prevMsgRef = new MessageRef(ts + i, i)
                 /* eslint-disable no-loop-func */
-                promises.push(msgCreationUtil.createStreamMessage(stream, pubMsg, ts + i).then((streamMessage) => {
+                promises.push(async () => {
+                    const streamMessage = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts + i)
                     assert.deepStrictEqual(streamMessage, getStreamMessage('streamId', ts + i, 0, prevMsgRef))
-                    prevMsgRef = [ts + i, 0]
-                }))
+                })
                 /* eslint-enable no-loop-func */
             }
-            Promise.all(promises).then(() => {
-                done()
-            })
+            await Promise.all(promises)
         })
 
         it('should publish messages with sequence number 0 (different streams)', async () => {
