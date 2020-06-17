@@ -1358,7 +1358,7 @@ describe('StreamrClient', () => {
                 messageId,
                 prevMsgRef,
                 content,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
+                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             })
             return new ControlLayer.PublishRequest({
                 requestId,
