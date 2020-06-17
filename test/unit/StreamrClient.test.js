@@ -94,7 +94,6 @@ describe('StreamrClient', () => {
 
     function getStreamMessage(streamId = 'stream1', content = {}, publisherId = '') {
         const timestamp = Date.now()
-        const requestId = uid('streamMessage')
         return new StreamMessage({
             messageId: new MessageIDStrict(streamId, 0, timestamp, 0, publisherId, ''),
             prevMesssageRef: new MessageRef(timestamp - 100, 0),
@@ -103,7 +102,6 @@ describe('StreamrClient', () => {
             encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
             signature: '',
-            requestId,
         })
     }
 
