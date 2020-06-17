@@ -180,7 +180,7 @@ describe('Connection', () => {
                     requestId: 'requestId',
                     streamMessage: new StreamMessage({
                         messageId: new MessageIDStrict('streamId', 0, timestamp, 0, '', ''),
-                        prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                        prevMsgRef: new MessageRef(timestamp - 100, 0),
                         content,
                         contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                         encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -206,7 +206,7 @@ describe('Connection', () => {
                     requestId: 'requestId',
                     streamMessage: new StreamMessage({
                         messageId: new MessageIDStrict('streamId', 0, timestamp, 0, '', ''),
-                        prevMesssageRef: null,
+                        prevMsgRef: null,
                         content: '{', // bad json
                         contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                         encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
