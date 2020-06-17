@@ -11,18 +11,23 @@ import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
 import AbstractSubscription from '../../src/AbstractSubscription'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {}, publisherId = 'publisherId', msgChainId = '1',
     encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE,
 ) => {
-    const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
-    return StreamMessage.create(
-        ['streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId], prevMsgRef,
-        StreamMessage.CONTENT_TYPES.MESSAGE, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE,
-    )
+    const prevMsgRef = prevTimestamp ? new MessageRef(prevTimestamp, prevSequenceNumber) : null
+    return new StreamMessage({
+        messageId: new MessageIDStrict('streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId),
+        prevMsgRef,
+        content,
+        contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+        encryptionType,
+        signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+        signature: '',
+    })
 }
 
 const msg = createMsg()
@@ -809,7 +814,11 @@ describe('RealTimeSubscription', () => {
             sub.addPendingResendRequestId('requestId')
             sub.on('resending', () => done())
             sub.setResending(true)
-            sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'requestId'))
+            sub.handleResending(new ControlLayer.ResendResponseResending({
+                streamId: 'streamId',
+                streamPartition: 0,
+                requestId: 'requestId',
+            }))
         })
     })
 
@@ -821,7 +830,11 @@ describe('RealTimeSubscription', () => {
             sub.on('resent', () => done())
             sub.setResending(true)
             await sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(true))
-            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
+            sub.handleResent(new ControlLayer.ResendResponseResent({
+                streamId: 'streamId',
+                streamPartition: 0,
+                requestId: 'requestId',
+            }))
         })
 
         it('arms the Subscription to emit the resent event on last message (message handler completes AFTER resent)', async (done) => {
@@ -831,7 +844,11 @@ describe('RealTimeSubscription', () => {
             sub.on('resent', () => done())
             sub.setResending(true)
             sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(true))
-            sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
+            sub.handleResent(new ControlLayer.ResendResponseResent({
+                streamId: 'streamId',
+                streamPartition: 0,
+                requestId: 'requestId',
+            }))
         })
 
         describe('on error', () => {
@@ -857,19 +874,29 @@ describe('RealTimeSubscription', () => {
                 sub.setResending(true)
                 await sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(true))
 
-                await sub.handleResent(ControlLayer.ResendResponseResent.create('streamId', 0, 'requestId'))
+                await sub.handleResent(new ControlLayer.ResendResponseResent({
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    requestId: 'requestId',
+                }))
                 assert(!sub.isResending())
             })
         })
     })
 
     describe('handleNoResend()', () => {
-        it('emits the no_resend event', (done) => {
+        it('emits the no_resend event', async () => {
             const sub = new RealTimeSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub())
             sub.addPendingResendRequestId('requestId')
-            sub.on('no_resend', () => done())
+            const onNoResent = new Promise((resolve) => sub.on('no_resend', resolve))
             sub.setResending(true)
-            sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
+            await sub.handleNoResend(new ControlLayer.ResendResponseNoResend({
+                streamId: 'streamId',
+                streamPartition: 0,
+                requestId: 'requestId',
+            }))
+            assert(!sub.isResending())
+            await onNoResent
         })
 
         describe('on error', () => {
@@ -893,7 +920,11 @@ describe('RealTimeSubscription', () => {
                 sub.on('no_resend', sinon.stub()
                     .throws(error))
                 sub.setResending(true)
-                await sub.handleNoResend(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
+                await sub.handleNoResend(new ControlLayer.ResendResponseNoResend({
+                    streamId: 'streamId',
+                    streamPartition: 0,
+                    requestId: 'requestId',
+                }))
                 assert(!sub.isResending())
             })
         })
