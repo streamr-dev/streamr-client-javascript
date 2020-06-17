@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import assert from 'assert'
 
 import sinon from 'sinon'
 import { ethers } from 'ethers'
@@ -89,30 +88,36 @@ describe('MessageCreationUtil', () => {
             }).toThrow()
         })
 
-        it('should always return partition 0 for all keys if partition count is 1', () => {
-            for (let i = 0; i < 100; i++) {
-                expect(new MessageCreationUtil().computeStreamPartition(1, `foo${i}`)).toEqual(0)
+        it(
+            'should always return partition 0 for all keys if partition count is 1',
+            () => {
+                for (let i = 0; i < 100; i++) {
+                    expect(new MessageCreationUtil().computeStreamPartition(1, `foo${i}`)).toEqual(0)
+                }
             }
-        })
+        )
 
-        it('should use md5 partitioner and produce same results as crypto.createHash(md5).update(string).digest()', () => {
-            const keys = []
-            for (let i = 0; i < 100; i++) {
-                keys.push(`key-${i}`)
+        it(
+            'should use md5 partitioner and produce same results as crypto.createHash(md5).update(string).digest()',
+            () => {
+                const keys = []
+                for (let i = 0; i < 100; i++) {
+                    keys.push(`key-${i}`)
+                }
+                // Results must be the same as those produced by md5
+                const correctResults = [6, 7, 4, 4, 9, 1, 8, 0, 6, 6, 7, 6, 7, 3, 2, 2, 0, 9, 4, 9, 9, 5, 5,
+                    1, 7, 3, 0, 6, 5, 6, 3, 6, 3, 5, 6, 2, 3, 6, 7, 2, 1, 3, 2, 7, 1, 1, 5, 1, 4, 0, 1, 9, 7,
+                    4, 2, 3, 2, 9, 7, 7, 4, 3, 5, 4, 5, 3, 9, 0, 4, 8, 1, 7, 4, 8, 1, 2, 9, 9, 5, 3, 5, 0, 9,
+                    4, 3, 9, 6, 7, 8, 6, 4, 6, 0, 1, 1, 5, 8, 3, 9, 7]
+
+                expect(correctResults.length).toEqual(keys.length)
+
+                for (let i = 0; i < keys.length; i++) {
+                    const partition = new MessageCreationUtil().computeStreamPartition(10, keys[i])
+                    expect(correctResults[i]).toStrictEqual(partition)
+                }
             }
-            // Results must be the same as those produced by md5
-            const correctResults = [6, 7, 4, 4, 9, 1, 8, 0, 6, 6, 7, 6, 7, 3, 2, 2, 0, 9, 4, 9, 9, 5, 5,
-                1, 7, 3, 0, 6, 5, 6, 3, 6, 3, 5, 6, 2, 3, 6, 7, 2, 1, 3, 2, 7, 1, 1, 5, 1, 4, 0, 1, 9, 7,
-                4, 2, 3, 2, 9, 7, 7, 4, 3, 5, 4, 5, 3, 9, 0, 4, 8, 1, 7, 4, 8, 1, 2, 9, 9, 5, 3, 5, 0, 9,
-                4, 3, 9, 6, 7, 8, 6, 4, 6, 0, 1, 1, 5, 8, 3, 9, 7]
-
-            expect(correctResults.length).toEqual(keys.length)
-
-            for (let i = 0; i < keys.length; i++) {
-                const partition = new MessageCreationUtil().computeStreamPartition(10, keys[i])
-                expect(correctResults[i]).toEqual(partition)
-            }
-        })
+        )
     })
 
     describe('createStreamMessage()', () => {
@@ -175,7 +180,7 @@ describe('MessageCreationUtil', () => {
                 prevMsgRef = new MessageRef(ts, i)
                 promises.push(async () => {
                     const streamMessage = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts)
-                    expect(streamMessage).toEqual(getStreamMessage('streamId', ts, i, prevMsgRef))
+                    expect(streamMessage).toStrictEqual(getStreamMessage('streamId', ts, i, prevMsgRef))
                 })
                 /* eslint-enable no-loop-func */
             }
@@ -191,41 +196,47 @@ describe('MessageCreationUtil', () => {
                 /* eslint-disable no-loop-func */
                 promises.push(async () => {
                     const streamMessage = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts + i)
-                    expect(streamMessage).toEqual(getStreamMessage('streamId', ts + i, 0, prevMsgRef))
+                    expect(streamMessage).toStrictEqual(getStreamMessage('streamId', ts + i, 0, prevMsgRef))
                 })
                 /* eslint-enable no-loop-func */
             }
             await Promise.all(promises)
         })
 
-        it('should publish messages with sequence number 0 (different streams)', async () => {
-            const ts = Date.now()
-            const stream2 = new Stream(null, {
-                id: 'streamId2',
-                partitions: 1,
-            })
-            const stream3 = new Stream(null, {
-                id: 'streamId3',
-                partitions: 1,
-            })
-            const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts)
-            const msg2 = await msgCreationUtil.createStreamMessage(stream2, pubMsg, ts)
-            const msg3 = await msgCreationUtil.createStreamMessage(stream3, pubMsg, ts)
-            expect(msg1).toEqual(getStreamMessage('streamId', ts, 0, null))
-            expect(msg2).toEqual(getStreamMessage('streamId2', ts, 0, null))
-            expect(msg3).toEqual(getStreamMessage('streamId3', ts, 0, null))
-        })
+        it(
+            'should publish messages with sequence number 0 (different streams)',
+            async () => {
+                const ts = Date.now()
+                const stream2 = new Stream(null, {
+                    id: 'streamId2',
+                    partitions: 1,
+                })
+                const stream3 = new Stream(null, {
+                    id: 'streamId3',
+                    partitions: 1,
+                })
+                const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, ts)
+                const msg2 = await msgCreationUtil.createStreamMessage(stream2, pubMsg, ts)
+                const msg3 = await msgCreationUtil.createStreamMessage(stream3, pubMsg, ts)
+                expect(msg1).toEqual(getStreamMessage('streamId', ts, 0, null))
+                expect(msg2).toEqual(getStreamMessage('streamId2', ts, 0, null))
+                expect(msg3).toEqual(getStreamMessage('streamId3', ts, 0, null))
+            }
+        )
 
         it('should sign messages if signer is defined', async () => {
             const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
             expect(msg1.signature).toBe('signature')
         })
 
-        it('should create message from a stream id by fetching the stream', async () => {
-            const ts = Date.now()
-            const streamMessage = await msgCreationUtil.createStreamMessage(stream.id, pubMsg, ts)
-            expect(streamMessage).toEqual(getStreamMessage(stream.id, ts, 0, null))
-        })
+        it(
+            'should create message from a stream id by fetching the stream',
+            async () => {
+                const ts = Date.now()
+                const streamMessage = await msgCreationUtil.createStreamMessage(stream.id, pubMsg, ts)
+                expect(streamMessage).toEqual(getStreamMessage(stream.id, ts, 0, null))
+            }
+        )
     })
 
     describe('encryption', () => {
@@ -269,42 +280,51 @@ describe('MessageCreationUtil', () => {
             expect(msg.getParsedContent()).toEqual(pubMsg)
         })
 
-        it('should create encrypted messages when key defined in constructor', async () => {
-            const key = crypto.randomBytes(32)
-            const keyStorageUtil = KeyStorageUtil.getKeyStorageUtil()
-            keyStorageUtil.addKey(stream.id, key)
+        it(
+            'should create encrypted messages when key defined in constructor',
+            async () => {
+                const key = crypto.randomBytes(32)
+                const keyStorageUtil = KeyStorageUtil.getKeyStorageUtil()
+                keyStorageUtil.addKey(stream.id, key)
 
-            const msgCreationUtil = new MessageCreationUtil(
-                client.options.auth, client.signer, client.getUserInfo(), client.getStream, keyStorageUtil,
-            )
-            const msg = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
-            expect(msg.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
-            expect(msg.getSerializedContent().length).toBe(58) // 16*2 + 13*2 (hex string made of IV + msg of 13 chars)
-        })
+                const msgCreationUtil = new MessageCreationUtil(
+                    client.options.auth, client.signer, client.getUserInfo(), client.getStream, keyStorageUtil,
+                )
+                const msg = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
+                expect(msg.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
+                expect(msg.getSerializedContent().length).toBe(58) // 16*2 + 13*2 (hex string made of IV + msg of 13 chars)
+            }
+        )
 
-        it('should throw when using a key with a size smaller than 256 bits', (done) => {
-            const key = crypto.randomBytes(16)
-            const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
-            msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key).catch((err) => {
-                expect(err.toString()).toBe('Error: Group key must have a size of 256 bits, not 128')
-                done()
-            })
-        })
+        it(
+            'should throw when using a key with a size smaller than 256 bits',
+            (done) => {
+                const key = crypto.randomBytes(16)
+                const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
+                msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key).catch((err) => {
+                    expect(err.toString()).toBe('Error: Group key must have a size of 256 bits, not 128')
+                    done()
+                })
+            }
+        )
 
-        it('should create encrypted messages when key defined in createStreamMessage() and use the same key later', async () => {
-            const key = crypto.randomBytes(32)
-            const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
-            const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key)
-            expect(msg1.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
-            expect(msg1.getSerializedContent().length).toBe(58)
-            const msg2 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
-            expect(msg2.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
-            expect(msg2.getSerializedContent().length).toBe(58)
-            // should use different IVs
-            expect(msg1.getSerializedContent().slice(0, 32)).not.toEqual(msg2.getSerializedContent().slice(0, 32))
-            // should produce different ciphertexts even if same plaintexts and same key
-            expect(msg1.getSerializedContent().slice(32)).not.toEqual(msg2.getSerializedContent().slice(32))
-        })
+        it(
+            'should create encrypted messages when key defined in createStreamMessage() and use the same key later',
+            async () => {
+                const key = crypto.randomBytes(32)
+                const msgCreationUtil = new MessageCreationUtil(client.options.auth, client.signer, client.getUserInfo(), client.getStream)
+                const msg1 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now(), null, key)
+                expect(msg1.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
+                expect(msg1.getSerializedContent().length).toBe(58)
+                const msg2 = await msgCreationUtil.createStreamMessage(stream, pubMsg, Date.now())
+                expect(msg2.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.AES)
+                expect(msg2.getSerializedContent().length).toBe(58)
+                // should use different IVs
+                expect(msg1.getSerializedContent().slice(0, 32)).not.toEqual(msg2.getSerializedContent().slice(0, 32))
+                // should produce different ciphertexts even if same plaintexts and same key
+                expect(msg1.getSerializedContent().slice(32)).not.toEqual(msg2.getSerializedContent().slice(32))
+            }
+        )
 
         it('should update the key when redefined', async () => {
             const key1 = crypto.randomBytes(32)
@@ -409,7 +429,7 @@ describe('MessageCreationUtil', () => {
             expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE)
             expect(streamMessage.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.RSA)
             expect(content.streamId).toBe('streamId')
-            expect(content.keys).toEqual([{
+            expect(content.keys).toStrictEqual([{
                 groupKey: 'encrypted-group-key',
                 start: 34524,
             }])

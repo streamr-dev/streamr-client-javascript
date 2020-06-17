@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import { MessageLayer } from 'streamr-client-protocol'
 
 import Signer from '../../src/Signer'
@@ -16,39 +14,46 @@ describe('Signer', () => {
                 privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             })
             const signature = signer.signData('some-data')
-            assert(signature)
+            expect(signature).toBeTruthy()
         })
+
         it('should throw when constructed with nothing', () => {
-            assert.throws(() => {
+            expect(() => {
                 // eslint-disable-next-line no-new
                 new Signer({})
-            }, /Error/)
+            }).toThrow()
         })
+
         it('Should return undefined when "never" option is set', () => {
-            assert.strictEqual(Signer.createSigner({}, 'never'), undefined)
+            expect(Signer.createSigner({}, 'never')).toBe(undefined)
         })
+
         it('Should return undefined when "auto" option is set with no private key or provider', () => {
-            assert.strictEqual(Signer.createSigner({}, 'auto'), undefined)
+            expect(Signer.createSigner({}, 'auto')).toBe(undefined)
         })
+
         it('Should return a Signer when "auto" option is set with private key', () => {
             const signer = Signer.createSigner({
                 privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             }, 'auto')
-            assert(signer instanceof Signer)
+            expect(signer instanceof Signer).toBeTruthy()
         })
+
         it('Should return a Signer when "always" option is set with private key', () => {
             const signer = Signer.createSigner({
                 privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             }, 'always')
-            assert(signer instanceof Signer)
+            expect(signer instanceof Signer).toBeTruthy()
         })
+
         it('Should throw when "always" option is set with no private key or provider', () => {
-            assert.throws(() => Signer.createSigner({}, 'always'), /Error/)
+            expect(() => Signer.createSigner({}, 'always')).toThrow()
         })
+
         it('Should throw when unknown option is set', () => {
-            assert.throws(() => Signer.createSigner({
+            expect(() => Signer.createSigner({
                 privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
-            }, 'unknown'), /Error/)
+            }, 'unknown')).toThrow()
         })
     })
 
@@ -63,15 +68,17 @@ describe('Signer', () => {
             + 'f853ec65e87b38712a2e0f051b62fc2d3064e693df5a46fade3619e592681ad8de1c'
         const wrongSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1'
             + 'c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
+
         beforeEach(() => {
             signer = new Signer({
                 privateKey: '0x348ce564d427a3311b6536bbcff9390d69395b06ed6c486954e971d960fe8709',
             })
         })
+
         it('should return correct signature', async () => {
             const payload = 'data-to-sign'
             const signature = await signer.signData(payload)
-            assert.deepEqual(signature, '0x084b3ac0f2ad17d387ca5bbf5d72d8f1dfd1b372e399ce6b0bfc60793e'
+            expect(signature).toEqual('0x084b3ac0f2ad17d387ca5bbf5d72d8f1dfd1b372e399ce6b0bfc60793e'
                 + 'b717d2431e498294f202d8dfd9f56158391d453c018470aea92ed6a80a23c20ab6f7ac1b')
         })
 
@@ -89,9 +96,9 @@ describe('Signer', () => {
                 + streamMessage.getSerializedContent()
             const expectedSignature = await signer.signData(payload)
             await signer.signStreamMessage(streamMessage)
-            assert.strictEqual(streamMessage.signature, expectedSignature)
-            assert.strictEqual(streamMessage.getPublisherId(), signer.address)
-            assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+            expect(streamMessage.signature).toBe(expectedSignature)
+            expect(streamMessage.getPublisherId()).toBe(signer.address)
+            expect(streamMessage.signatureType).toBe(StreamMessage.SIGNATURE_TYPES.ETH)
         })
 
         it('should sign StreamMessageV31 with non-null previous ref correctly', async () => {
@@ -109,9 +116,9 @@ describe('Signer', () => {
                 + streamMessage.prevMsgRef.timestamp + streamMessage.prevMsgRef.sequenceNumber + streamMessage.getSerializedContent()
             const expectedSignature = await signer.signData(payload)
             await signer.signStreamMessage(streamMessage)
-            assert.strictEqual(streamMessage.signature, expectedSignature)
-            assert.strictEqual(streamMessage.getPublisherId(), signer.address)
-            assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
+            expect(streamMessage.signature).toBe(expectedSignature)
+            expect(streamMessage.getPublisherId()).toBe(signer.address)
+            expect(streamMessage.signatureType).toBe(StreamMessage.SIGNATURE_TYPES.ETH)
         })
 
         it('Should verify correct signature (V31)', () => {
@@ -124,8 +131,8 @@ describe('Signer', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: correctSignatureV30AndV31,
             })
-            assert.strictEqual(signedStreamMessage.signature, correctSignatureV30AndV31)
-            assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage), true)
+            expect(signedStreamMessage.signature).toBe(correctSignatureV30AndV31)
+            expect(Signer.verifyStreamMessage(signedStreamMessage)).toBe(true)
         })
 
         it('Should verify correct signature (V30)', () => {
@@ -138,8 +145,8 @@ describe('Signer', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: correctSignatureV30AndV31,
             })
-            assert.strictEqual(signedStreamMessage.signature, correctSignatureV30AndV31)
-            assert.strictEqual(Signer.verifyStreamMessage(signedStreamMessage), true)
+            expect(signedStreamMessage.signature).toBe(correctSignatureV30AndV31)
+            expect(Signer.verifyStreamMessage(signedStreamMessage)).toBe(true)
         })
 
         it('Should return false if incorrect signature (V31)', () => {
@@ -152,7 +159,7 @@ describe('Signer', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: wrongSignature,
             })
-            assert.strictEqual(Signer.verifyStreamMessage(wrongStreamMessage), false)
+            expect(Signer.verifyStreamMessage(wrongStreamMessage)).toBe(false)
         })
     })
 })

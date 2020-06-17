@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import sinon from 'sinon'
 
 import authFetch from '../../src/rest/authFetch'
@@ -44,26 +42,30 @@ describe('utils', () => {
         it('should return normally when valid session token is passed', async () => {
             session.getSessionToken = sinon.stub().resolves('session-token')
             const res = await authFetch(baseUrl + testUrl, session)
-            assert(session.getSessionToken.calledOnce)
-            assert(res.test)
+            expect(session.getSessionToken.calledOnce).toBeTruthy()
+            expect(res.test).toBeTruthy()
         })
+
         it('should return 401 error when invalid session token is passed twice', (done) => {
             session.getSessionToken = sinon.stub().resolves('invalid token')
             return authFetch(baseUrl + testUrl, session).catch((err) => {
-                assert(session.getSessionToken.calledTwice)
-                assert.equal(err.toString(), `Error: Request to ${baseUrl + testUrl} returned with error code 401. Unauthorized`)
-                assert.equal(err.body, 'Unauthorized')
+                expect(session.getSessionToken.calledTwice).toBeTruthy()
+                expect(err.toString()).toEqual(
+                    `Error: Request to ${baseUrl + testUrl} returned with error code 401. Unauthorized`
+                )
+                expect(err.body).toEqual('Unauthorized')
                 done()
             })
         })
+
         it('should return normally when valid session token is passed after expired session token', async () => {
             session.getSessionToken = sinon.stub()
             session.getSessionToken.onCall(0).resolves('expired-session-token')
             session.getSessionToken.onCall(1).resolves('session-token')
 
             const res = await authFetch(baseUrl + testUrl, session)
-            assert(session.getSessionToken.calledTwice)
-            assert(res.test)
+            expect(session.getSessionToken.calledTwice).toBeTruthy()
+            expect(res.test).toBeTruthy()
         })
     })
 })

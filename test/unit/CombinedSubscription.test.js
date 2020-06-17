@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import sinon from 'sinon'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 
@@ -34,11 +32,11 @@ describe('CombinedSubscription', () => {
         }, {}, 100, 100)
         sub.addPendingResendRequestId('requestId')
         sub.on('gap', (from, to, publisherId) => {
-            assert.equal(from.timestamp, 1)
-            assert.equal(from.sequenceNumber, 1)
-            assert.equal(to.timestamp, 3)
-            assert.equal(to.sequenceNumber, 0)
-            assert.equal(publisherId, 'publisherId')
+            expect(from.timestamp).toEqual(1)
+            expect(from.sequenceNumber).toEqual(1)
+            expect(to.timestamp).toEqual(3)
+            expect(to.sequenceNumber).toEqual(0)
+            expect(publisherId).toEqual('publisherId')
             setTimeout(() => {
                 sub.stop()
                 done()

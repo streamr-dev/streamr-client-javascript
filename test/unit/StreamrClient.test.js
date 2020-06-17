@@ -1,4 +1,3 @@
-import assert from 'assert'
 import crypto from 'crypto'
 
 import EventEmitter from 'eventemitter3'
@@ -6,12 +5,12 @@ import sinon from 'sinon'
 import debug from 'debug'
 import { Wallet } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
+import { wait } from 'streamr-test-utils'
 
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
-import { wait } from 'streamr-test-utils'
-//import StreamrClient from '../../src/StreamrClient'
+// import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -48,7 +47,7 @@ describe('StreamrClient', () => {
 
     function async(func) {
         const me = setTimeout(() => {
-            assert.equal(me, asyncs[0])
+            expect(me).toEqual(asyncs[0])
             asyncs.shift()
             func()
         }, 0)
@@ -66,7 +65,7 @@ describe('StreamrClient', () => {
         streamId, emitSubscribed = true, subscribeOptions = {}, handler = sinon.stub(),
         expectSubscribeRequest = !client.getSubscriptions(streamId).length,
     ) {
-        assert(client.isConnected(), 'setupSubscription: Client is not connected!')
+        expect(client.isConnected()).toBeTruthy()
         const requestId = uid('request')
 
         if (expectSubscribeRequest) {
@@ -105,17 +104,6 @@ describe('StreamrClient', () => {
         })
     }
 
-    function msg(streamId = 'stream1', content = {}, requestId) {
-        const streamMessage = getStreamMessage(streamId, content)
-        if (requestId !== undefined) {
-            return UnicastMessage(requestId, streamMessage)
-        }
-
-        return new BroadcastMessage({
-            streamMessage,
-        })
-    }
-
     function createConnectionMock() {
         const c = new EventEmitter()
         c.state = Connection.State.DISCONNECTED
@@ -150,38 +138,15 @@ describe('StreamrClient', () => {
             requests.push(request)
         })
 
-        //c.send = async (msgToSend) => {
-            //const next = c.expectedMessagesToSend.shift()
-            //if (!next) {
-                //throw new Error(`Sending unexpected message: ${JSON.stringify(msgToSend)}`)
-            //}
-            //next.verificationFunction(msgToSend, next.msgToExpect)
-        //}
-
         c.emitMessage = (message) => {
             c.emit(message.type, message)
         }
-
-        //c.expect = (msgToExpect, verificationFunction = (msgToSend, expected) => assert.deepEqual(
-            //msgToSend, expected,
-            //`Sending unexpected message: ${JSON.stringify(msgToSend)}
-                //Expected: ${JSON.stringify(expected)}
-                //Queue: ${JSON.stringify(c.expectedMessagesToSend)}`,
-        //)) => {
-            //c.expectedMessagesToSend.push({
-                //msgToExpect,
-                //verificationFunction,
-            //})
-        //}
-
-        //c.checkSentMessages = () => {
-            //assert.equal(c.expectedMessagesToSend.length, 0, `Expected messages not sent: ${JSON.stringify(c.expectedMessagesToSend)}`)
-        //}
 
         return c
     }
 
     let errors = []
+
     function onError(error) {
         errors.push(error)
     }
@@ -318,7 +283,7 @@ describe('StreamrClient', () => {
         it('marks Subscriptions as subscribed', async (done) => {
             const sub = mockSubscription('stream1', () => {})
             sub.once('subscribed', () => {
-                assert.equal(sub.getState(), Subscription.State.subscribed)
+                expect(sub.getState()).toEqual(Subscription.State.subscribed)
                 done()
             })
         })
@@ -603,22 +568,25 @@ describe('StreamrClient', () => {
             connection.emitMessage(msg1)
         })
 
-        it('should ensure that the promise returned by the verification function is cached', (done) => {
-            const { requestId } = requests[requests.length - 1]
-            sub.handleResentMessage = (message, msgRequestId, verifyFn) => {
-                expect(msgRequestId).toEqual(requestId)
-                const firstResult = verifyFn()
-                expect(firstResult).toBeInstanceOf(Promise)
-                expect(firstResult).toBe(verifyFn())
-                done()
-            }
+        it(
+            'should ensure that the promise returned by the verification function is cached',
+            (done) => {
+                const { requestId } = requests[requests.length - 1]
+                sub.handleResentMessage = (message, msgRequestId, verifyFn) => {
+                    expect(msgRequestId).toEqual(requestId)
+                    const firstResult = verifyFn()
+                    expect(firstResult).toBeInstanceOf(Promise)
+                    expect(firstResult).toBe(verifyFn())
+                    done()
+                }
 
-            const msg1 = new UnicastMessage({
-                streamMessage: getStreamMessage(sub.streamId, {}),
-                requestId,
-            })
-            connection.emitMessage(msg1)
-        })
+                const msg1 = new UnicastMessage({
+                    streamMessage: getStreamMessage(sub.streamId, {}),
+                    requestId,
+                })
+                connection.emitMessage(msg1)
+            }
+        )
     })
 
     describe('ResendResponseResending', () => {
@@ -731,6 +699,7 @@ describe('StreamrClient', () => {
             connection.emitMessage(resendResponse)
             expect(sub.handleResent).toHaveBeenCalledWith(resendResponse)
         })
+
         it('does not call event handler for unknown subscriptions', (done) => {
             sub.handleResent = jest.fn()
             const resendResponse = new ResendResponseResent({
@@ -886,49 +855,55 @@ describe('StreamrClient', () => {
             expect(connection.send.mock.calls.filter(([arg]) => arg.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
         })
 
-        it('should not send SubscribeRequest after ResendResponseNoResend on reconnection', async () => {
-            const sub = await mockResend({
-                stream: 'stream1',
-                resend: {
-                    last: 10
-                }
-            }, () => {})
-            const { requestId } = requests[requests.length - 1]
-            const resendResponse = new ResendResponseNoResend({
-                streamId: sub.streamId,
-                streamPartition: sub.streamPartition,
-                requestId,
-            })
-            connection.emitMessage(resendResponse)
-            await client.pause()
-            await client.connect()
-            expect(connection.send.mock.calls.filter(([arg]) => arg.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
-        })
+        it(
+            'should not send SubscribeRequest after ResendResponseNoResend on reconnection',
+            async () => {
+                const sub = await mockResend({
+                    stream: 'stream1',
+                    resend: {
+                        last: 10
+                    }
+                }, () => {})
+                const { requestId } = requests[requests.length - 1]
+                const resendResponse = new ResendResponseNoResend({
+                    streamId: sub.streamId,
+                    streamPartition: sub.streamPartition,
+                    requestId,
+                })
+                connection.emitMessage(resendResponse)
+                await client.pause()
+                await client.connect()
+                expect(connection.send.mock.calls.filter(([arg]) => arg.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
+            }
+        )
 
-        it('should not send SubscribeRequest after ResendResponseResent on reconnection', async () => {
-            const sub = await mockResend({
-                stream: 'stream1',
-                resend: {
-                    last: 10
-                }
-            }, () => {})
+        it(
+            'should not send SubscribeRequest after ResendResponseResent on reconnection',
+            async () => {
+                const sub = await mockResend({
+                    stream: 'stream1',
+                    resend: {
+                        last: 10
+                    }
+                }, () => {})
 
-            const { requestId } = requests[requests.length - 1]
-            const streamMessage = getStreamMessage(sub.streamId, {})
-            connection.emitMessage(new UnicastMessage({
-                requestId,
-                streamMessage,
-            }))
-            const resendResponse = new ResendResponseResent({
-                streamId: sub.streamId,
-                streamPartition: sub.streamPartition,
-                requestId,
-            })
-            connection.emitMessage(resendResponse)
-            await client.pause()
-            await client.connect()
-            expect(requests.filter((req) => req.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
-        })
+                const { requestId } = requests[requests.length - 1]
+                const streamMessage = getStreamMessage(sub.streamId, {})
+                connection.emitMessage(new UnicastMessage({
+                    requestId,
+                    streamMessage,
+                }))
+                const resendResponse = new ResendResponseResent({
+                    streamId: sub.streamId,
+                    streamPartition: sub.streamPartition,
+                    requestId,
+                })
+                connection.emitMessage(resendResponse)
+                await client.pause()
+                await client.connect()
+                expect(requests.filter((req) => req.type === ControlMessage.TYPES.SubscribeRequest)).toHaveLength(0)
+            }
+        )
     })
 
     describe('subscribe()', () => {
@@ -1027,11 +1002,11 @@ describe('StreamrClient', () => {
                 })
             })
 
-            //it('accepts stream id as first argument instead of object', () => {
-                //connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
+            // it('accepts stream id as first argument instead of object', () => {
+            // connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
 
-                //client.subscribe('stream1', () => {})
-            //})
+            // client.subscribe('stream1', () => {})
+            // })
 
             it('sends only one subscribe request to server even if there are multiple subscriptions for same stream', async () => {
                 const sub = mockSubscription('stream1', () => {})
@@ -1496,12 +1471,14 @@ describe('StreamrClient', () => {
             }, createConnectionMock())
             expect(c.options.auth.apiKey).toBeTruthy()
         })
+
         it('sets auth.apiKey from apiKey', () => {
             const c = new StubbedStreamrClient({
                 apiKey: 'apiKey',
             }, createConnectionMock())
             expect(c.options.auth.apiKey).toBeTruthy()
         })
+
         it('sets private key with 0x prefix', (done) => {
             connection = createConnectionMock()
             const c = new StubbedStreamrClient({
@@ -1525,10 +1502,12 @@ describe('StreamrClient', () => {
                 done()
             })
         })
+
         it('sets unauthenticated', () => {
             const c = new StubbedStreamrClient({}, createConnectionMock())
-            assert(c.session.options.unauthenticated)
+            expect(c.session.options.unauthenticated).toBeTruthy()
         })
+
         it('sets start time of group key', () => {
             const groupKey = crypto.randomBytes(32)
             const c = new StubbedStreamrClient({
@@ -1538,9 +1517,10 @@ describe('StreamrClient', () => {
                     }
                 }
             }, createConnectionMock())
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
-            assert(c.options.subscriberGroupKeys.streamId.publisherId.start)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId.groupKey).toBe(groupKey)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId.start).toBeTruthy()
         })
+
         it('keeps start time passed in the constructor', () => {
             const groupKey = crypto.randomBytes(32)
             const c = new StubbedStreamrClient({
@@ -1553,9 +1533,10 @@ describe('StreamrClient', () => {
                     }
                 }
             }, createConnectionMock())
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.start, 12)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId.groupKey).toBe(groupKey)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId.start).toBe(12)
         })
+
         it('updates the latest group key with a more recent key', () => {
             const c = new StubbedStreamrClient({
                 subscriberGroupKeys: {
@@ -1575,8 +1556,9 @@ describe('StreamrClient', () => {
             }
             // eslint-disable-next-line no-underscore-dangle
             c._setGroupKeys('streamId', 'publisherId', [newGroupKey])
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId, newGroupKey)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId).toBe(newGroupKey)
         })
+
         it('does not update the latest group key with an older key', () => {
             const groupKey = crypto.randomBytes(32)
             const c = new StubbedStreamrClient({
@@ -1597,7 +1579,7 @@ describe('StreamrClient', () => {
             }
             // eslint-disable-next-line no-underscore-dangle
             c._setGroupKeys('streamId', 'publisherId', [oldGroupKey])
-            assert.strictEqual(c.options.subscriberGroupKeys.streamId.publisherId.groupKey, groupKey)
+            expect(c.options.subscriberGroupKeys.streamId.publisherId.groupKey).toBe(groupKey)
         })
     })
 
