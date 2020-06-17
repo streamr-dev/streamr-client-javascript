@@ -5,18 +5,23 @@ import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 
 import CombinedSubscription from '../../src/CombinedSubscription'
 
-const { StreamMessage } = MessageLayer
+const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {}, publisherId = 'publisherId', msgChainId = '1',
     encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE,
 ) => {
-    const prevMsgRef = prevTimestamp ? [prevTimestamp, prevSequenceNumber] : null
-    return StreamMessage.create(
-        ['streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId], prevMsgRef,
-        StreamMessage.CONTENT_TYPES.MESSAGE, encryptionType, content, StreamMessage.SIGNATURE_TYPES.NONE,
-    )
+    const prevMsgRef = prevTimestamp ? new MessageRef(prevTimestamp, prevSequenceNumber) : null
+    return new StreamMessage({
+        messageId: new MessageIDStrict('streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId),
+        prevMsgRef,
+        content,
+        contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
+        encryptionType,
+        signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
+        signature: '',
+    })
 }
 
 const msg1 = createMsg()
@@ -39,9 +44,17 @@ describe('CombinedSubscription', () => {
                 done()
             }, 100)
         })
-        sub.handleResending(ControlLayer.ResendResponseResending.create('streamId', 0, 'requestId'))
+        sub.handleResending(new ControlLayer.ResendResponseResending({
+            streamId: 'streamId',
+            streamPartition: 0,
+            requestId: 'requestId',
+        }))
         sub.handleResentMessage(msg1, 'requestId', sinon.stub().resolves(true))
         sub.handleBroadcastMessage(msg4, sinon.stub().resolves(true))
-        sub.handleResent(ControlLayer.ResendResponseNoResend.create('streamId', 0, 'requestId'))
+        sub.handleResent(new ControlLayer.ResendResponseNoResend({
+            streamId: 'streamId',
+            streamPartition: 0,
+            requestId: 'requestId',
+        }))
     })
 })
