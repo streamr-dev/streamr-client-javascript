@@ -44,7 +44,6 @@ import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 
-
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {
         super()

@@ -606,7 +606,7 @@ describe('HistoricalSubscription', () => {
             await sub.handleResentMessage(msg3, 'requestId', sinon.stub().resolves(true))
         })
 
-        it( 'if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', async (done) => {
+        it('if an InvalidJsonError AND a gap occur, does not mark it as received and emits gap at the next message', async (done) => {
             const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub(), {
                 last: 1,
             }, {}, 100, 100)
