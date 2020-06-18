@@ -141,7 +141,7 @@ describe('StreamrClient Connection', () => {
 
                 // eslint-disable-next-line no-await-in-loop
                 const rawMessage = await client.publish(stream.id, message)
-                timestamps.push(rawMessage.getStreamMessage().getTimestamp())
+                timestamps.push(rawMessage.streamMessage.getTimestamp())
             }
 
             await wait(5000) // wait for messages to (probably) land in storage
@@ -327,7 +327,7 @@ describe('StreamrClient Connection', () => {
             const client = createClient()
             await client.ensureConnected()
 
-            client.on('disconnected', async () => {
+            client.once('disconnected', async () => {
                 await client.ensureDisconnected()
                 setTimeout(() => {
                     expect(client.isDisconnected()).toBeTruthy()
@@ -444,18 +444,35 @@ describe('StreamrClient Connection', () => {
                 client.unsubscribe(sub)
             })
 
-            sub.on('unsubscribed', async () => {
+            sub.once('unsubscribed', async () => {
                 await client.ensureDisconnected()
                 await client.ensureConnected()
                 await client.ensureDisconnected()
 
                 // check whole list of calls after reconnect and disconnect
                 expect(connectionEventSpy.mock.calls.length).toEqual(3)
-                expect(connectionEventSpy.mock.calls[0]).toEqual([SubscribeRequest.create(stream.id, 0, sessionToken)])
-                expect(connectionEventSpy.mock.calls[1]).toEqual([UnsubscribeRequest.create(stream.id, 0, sessionToken)])
+                expect(connectionEventSpy.mock.calls[0]).toEqual([new SubscribeRequest({
+                    streamId: stream.id,
+                    streamPartition: 0,
+                    sessionToken,
+                    requestId: connectionEventSpy.mock.calls[0][0].requestId,
+                })])
+
+                expect(connectionEventSpy.mock.calls[1]).toEqual([new UnsubscribeRequest({
+                    streamId: stream.id,
+                    streamPartition: 0,
+                    sessionToken,
+                    requestId: connectionEventSpy.mock.calls[1][0].requestId,
+                })])
+
                 // inbox stream subscription:
                 const publisherId = await client.getPublisherId()
-                expect(connectionEventSpy.mock.calls[2]).toEqual([SubscribeRequest.create(publisherId, 0, sessionToken)])
+                expect(connectionEventSpy.mock.calls[2]).toEqual([new SubscribeRequest({
+                    streamId: publisherId,
+                    streamPartition: 0,
+                    sessionToken,
+                    requestId: connectionEventSpy.mock.calls[2][0].requestId,
+                })])
 
                 done()
             })
@@ -486,10 +503,21 @@ describe('StreamrClient Connection', () => {
 
                     // check whole list of calls after reconnect and disconnect
                     expect(connectionEventSpy.mock.calls.length).toEqual(2)
-                    expect(connectionEventSpy.mock.calls[0]).toEqual([ResendLastRequest.create(stream.id, 0, '0', 10, sessionToken)])
+                    expect(connectionEventSpy.mock.calls[0]).toEqual([new ResendLastRequest({
+                        streamId: stream.id,
+                        streamPartition: 0,
+                        sessionToken,
+                        numberLast: 10,
+                        requestId: connectionEventSpy.mock.calls[0][0].requestId,
+                    })])
                     // inbox stream subscription:
                     const publisherId = await client.getPublisherId()
-                    expect(connectionEventSpy.mock.calls[1]).toEqual([SubscribeRequest.create(publisherId, 0, sessionToken)])
+                    expect(connectionEventSpy.mock.calls[1]).toEqual([new SubscribeRequest({
+                        streamId: publisherId,
+                        streamPartition: 0,
+                        sessionToken,
+                        requestId: connectionEventSpy.mock.calls[1][0].requestId,
+                    })])
                     done()
                 }, 2000)
             })
@@ -768,7 +796,7 @@ describe('StreamrClient', () => {
 
                     // All good, unsubscribe
                     client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
+                    sub.once('unsubscribed', () => {
                         assert.strictEqual(client.getSubscriptions(stream.id).length, 0)
                         done()
                     })
@@ -812,7 +840,7 @@ describe('StreamrClient', () => {
 
                     // All good, unsubscribe
                     client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
+                    sub.once('unsubscribed', () => {
                         assert.strictEqual(client.getSubscriptions(stream.id).length, 0)
                         done()
                     })
@@ -835,13 +863,13 @@ describe('StreamrClient', () => {
 
                 // All good, unsubscribe
                 client.unsubscribe(sub)
-                sub.on('unsubscribed', () => {
+                sub.once('unsubscribed', () => {
                     done()
                 })
             })
 
             // Publish after subscribed
-            sub.on('subscribed', () => {
+            sub.once('subscribed', () => {
                 stream.publish({
                     id,
                 })
@@ -867,7 +895,7 @@ describe('StreamrClient', () => {
                 if (counter === nbMessages) {
                     // All good, unsubscribe
                     client.unsubscribe(sub)
-                    sub.on('unsubscribed', async () => {
+                    sub.once('unsubscribed', async () => {
                         await client.disconnect()
                         setTimeout(done, 1000)
                     })
@@ -917,13 +945,13 @@ describe('StreamrClient', () => {
 
                 // All good, unsubscribe
                 client.unsubscribe(sub)
-                sub.on('unsubscribed', () => {
+                sub.once('unsubscribed', () => {
                     done()
                 })
             })
 
             // Publish after subscribed
-            sub.on('subscribed', () => {
+            sub.once('subscribed', () => {
                 stream.publish({
                     id,
                 })
@@ -950,13 +978,13 @@ describe('StreamrClient', () => {
 
                 // All good, unsubscribe
                 client.unsubscribe(sub)
-                sub.on('unsubscribed', () => {
+                sub.once('unsubscribed', () => {
                     done()
                 })
             })
 
             // Publish after subscribed
-            sub.on('subscribed', () => {
+            sub.once('subscribed', () => {
                 client.publish(stream.id, {
                     id,
                 }, Date.now(), null, groupKey)
@@ -974,7 +1002,7 @@ describe('StreamrClient', () => {
             })
 
             // Publish after subscribed
-            sub.on('subscribed', () => {
+            sub.once('subscribed', () => {
                 const sub2 = client.subscribe({
                     stream: publisherId,
                 }, (content) => {
@@ -983,18 +1011,19 @@ describe('StreamrClient', () => {
                     // All good, unsubscribe
 
                     client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
+                    sub.once('unsubscribed', () => {
                         done()
                     })
                 })
-                sub2.on('subscribed', () => {
+                sub2.once('subscribed', () => {
                     client.publish(publisherId, {
                         test: 'works',
                     }, Date.now())
                 })
             })
         })
-        it('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
+
+        it.skip('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
             client.once('error', done)
             const id = Date.now()
             const groupKey = crypto.randomBytes(32)
@@ -1012,22 +1041,23 @@ describe('StreamrClient', () => {
                 // Now the subscriber knows the group key
                 assert.deepStrictEqual(sub.groupKeys[streamMessage.getPublisherId().toLowerCase()], groupKey)
 
-                // All good, unsubscribe
-                client.unsubscribe(sub)
-                sub.on('unsubscribed', () => {
+                sub.once('unsubscribed', () => {
                     done()
                 })
+
+                // All good, unsubscribe
+                client.unsubscribe(sub)
             })
 
             // Publish after subscribed
-            sub.on('subscribed', () => {
+            sub.once('subscribed', () => {
                 client.publish(stream.id, {
                     id,
                 }, Date.now(), null, groupKey)
             })
         }, 2 * TIMEOUT)
 
-        it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
+        it.skip('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
             client.once('error', done)
             // Publish encrypted messages with different keys
             const groupKey1 = crypto.randomBytes(32)
@@ -1057,13 +1087,14 @@ describe('StreamrClient', () => {
                         assert.strictEqual(parsedContent.test, 'resent msg 2')
                     }
 
-                    // All good, unsubscribe
-                    client.unsubscribe(sub)
-                    sub.on('unsubscribed', () => {
+                    sub.once('unsubscribed', () => {
                         // TODO: fix this hack in other PR
                         assert.strictEqual(client.subscribedStreamPartitions[stream.id + '0'], undefined)
                         done()
                     })
+
+                    // All good, unsubscribe
+                    client.unsubscribe(sub)
                 })
             }, TIMEOUT * 0.8)
         }, 2 * TIMEOUT)
