@@ -1002,8 +1002,9 @@ describe('StreamrClient', () => {
                 })
             })
 
-            it('accepts stream id as first argument instead of object', () => {
+            it('accepts stream id as first argument instead of object', async () => {
                 client.subscribe('stream1', () => {})
+                await wait()
                 const request = requests[0]
                 expect(request).toEqual(new SubscribeRequest({
                     streamId: 'stream1',
