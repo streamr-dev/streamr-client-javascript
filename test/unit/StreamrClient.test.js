@@ -1002,11 +1002,16 @@ describe('StreamrClient', () => {
                 })
             })
 
-            // it('accepts stream id as first argument instead of object', () => {
-            // connection.expect(SubscribeRequest.create('stream1', 0, 'session-token'))
-
-            // client.subscribe('stream1', () => {})
-            // })
+             it('accepts stream id as first argument instead of object', () => {
+                 client.subscribe('stream1', () => {})
+                 const request = requests[0]
+                 expect(request).toEqual(new SubscribeRequest({
+                     streamId: 'stream1',
+                     streamPartition: 0,
+                     requestId: request.requestId,
+                     sessionToken,
+                 }))
+             })
 
             it('sends only one subscribe request to server even if there are multiple subscriptions for same stream', async () => {
                 const sub = mockSubscription('stream1', () => {})
