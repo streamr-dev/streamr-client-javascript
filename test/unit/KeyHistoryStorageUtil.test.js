@@ -11,6 +11,7 @@ describe('KeyHistoryStorageUtil', () => {
                     start: Date.now()
                 }
             })
+
             expect(util.hasKey('streamId')).toBe(true)
             expect(util.hasKey('wrong-streamId')).toBe(false)
         })
@@ -24,6 +25,7 @@ describe('KeyHistoryStorageUtil', () => {
                     start: Date.now()
                 }
             })
+
             expect(() => {
                 util.addKey('streamId', crypto.randomBytes(32), 0)
             }).toThrow()
@@ -44,6 +46,7 @@ describe('KeyHistoryStorageUtil', () => {
                     start: 7
                 }
             })
+
             expect(util.getLatestKey('streamId')).toStrictEqual({
                 groupKey: lastKey,
                 start: 7,
@@ -56,6 +59,7 @@ describe('KeyHistoryStorageUtil', () => {
             util.addKey('streamId', crypto.randomBytes(32), 5)
             const lastKey = crypto.randomBytes(32)
             util.addKey('streamId', lastKey, 7)
+
             expect(util.getLatestKey('streamId')).toStrictEqual({
                 groupKey: lastKey,
                 start: 7,
@@ -93,11 +97,13 @@ describe('KeyHistoryStorageUtil', () => {
             const key3 = crypto.randomBytes(32)
             const key4 = crypto.randomBytes(32)
             const key5 = crypto.randomBytes(32)
+
             util.addKey('streamId', key1, 10)
             util.addKey('streamId', key2, 20)
             util.addKey('streamId', key3, 30)
             util.addKey('streamId', key4, 40)
             util.addKey('streamId', key5, 50)
+
             const expectedKeys = [{
                 groupKey: key2,
                 start: 20
@@ -108,6 +114,7 @@ describe('KeyHistoryStorageUtil', () => {
                 groupKey: key4,
                 start: 40
             }]
+
             expect(util.getKeysBetween('streamId', 23, 47)).toStrictEqual(expectedKeys)
             expect(util.getKeysBetween('streamId', 20, 40)).toStrictEqual(expectedKeys)
         })

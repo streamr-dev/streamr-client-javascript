@@ -44,7 +44,7 @@ describe('LatestKeyStorageUtil', () => {
                     start: 7
                 }
             }, false)
-            expect(util.getLatestKey('streamId')).toEqual({
+            expect(util.getLatestKey('streamId')).toStrictEqual({
                 groupKey: lastKey,
                 start: 7,
             })
@@ -56,7 +56,7 @@ describe('LatestKeyStorageUtil', () => {
             util.addKey('streamId', crypto.randomBytes(32), 5)
             const lastKey = crypto.randomBytes(32)
             util.addKey('streamId', lastKey, 7)
-            expect(util.getLatestKey('streamId')).toEqual({
+            expect(util.getLatestKey('streamId')).toStrictEqual({
                 groupKey: lastKey,
                 start: 7,
             })
