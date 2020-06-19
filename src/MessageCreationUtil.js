@@ -8,11 +8,13 @@ import { ethers } from 'ethers'
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
 import KeyStorageUtil from './KeyStorageUtil'
+import KeyExchangeUtil from './KeyExchangeUtil'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
+const { getKeyExchangeStreamId } = KeyExchangeUtil
 
 export default class MessageCreationUtil {
     constructor(auth, signer, userInfoPromise, getStreamFunction, keyStorageUtil) {
@@ -162,7 +164,7 @@ export default class MessageCreationUtil {
                 end,
             }
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(publisherAddress.toLowerCase(), publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(getKeyExchangeStreamId(publisherId), publisherId)
         const streamMessage = new StreamMessage({
             messageId: idAndPrevRef[0],
             prevMsgRef: idAndPrevRef[1],
@@ -185,7 +187,7 @@ export default class MessageCreationUtil {
             streamId,
             keys: encryptedGroupKeys,
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(subscriberAddress.toLowerCase(), publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(getKeyExchangeStreamId(subscriberAddress), publisherId)
         const streamMessage = new StreamMessage({
             messageId: idAndPrevRef[0],
             prevMsgRef: idAndPrevRef[1],

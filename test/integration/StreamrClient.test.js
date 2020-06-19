@@ -8,6 +8,7 @@ import { ethers } from 'ethers'
 
 import { uid } from '../utils'
 import StreamrClient from '../../src'
+import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 
 import config from './config'
 
@@ -15,6 +16,7 @@ const { StreamMessage } = MessageLayer
 const WebSocket = require('ws')
 
 const { SubscribeRequest, UnsubscribeRequest, ResendLastRequest } = ControlLayer
+const { getKeyExchangeStreamId } = KeyExchangeUtil
 
 const createClient = (opts = {}) => new StreamrClient({
     auth: {
@@ -465,10 +467,10 @@ describe('StreamrClient Connection', () => {
                     requestId: connectionEventSpy.mock.calls[1][0].requestId,
                 })])
 
-                // inbox stream subscription:
-                const publisherId = await client.getPublisherId()
+                // key exchange stream subscription:
+                const keyExchangeStreamId = getKeyExchangeStreamId(await client.getPublisherId())
                 expect(connectionEventSpy.mock.calls[2]).toEqual([new SubscribeRequest({
-                    streamId: publisherId,
+                    streamId: keyExchangeStreamId,
                     streamPartition: 0,
                     sessionToken,
                     requestId: connectionEventSpy.mock.calls[2][0].requestId,
@@ -510,10 +512,11 @@ describe('StreamrClient Connection', () => {
                         numberLast: 10,
                         requestId: connectionEventSpy.mock.calls[0][0].requestId,
                     })])
-                    // inbox stream subscription:
-                    const publisherId = await client.getPublisherId()
+
+                    // key exchange stream subscription:
+                    const keyExchangeStreamId = getKeyExchangeStreamId(await client.getPublisherId())
                     expect(connectionEventSpy.mock.calls[1]).toEqual([new SubscribeRequest({
-                        streamId: publisherId,
+                        streamId: keyExchangeStreamId,
                         streamPartition: 0,
                         sessionToken,
                         requestId: connectionEventSpy.mock.calls[1][0].requestId,
@@ -994,7 +997,7 @@ describe('StreamrClient', () => {
         it('client can publish to own inbox', async (done) => {
             client.once('error', done)
             const id = Date.now()
-            const publisherId = await client.getPublisherId()
+            const keyExchangeStreamId = getKeyExchangeStreamId(await client.getPublisherId())
             const sub = client.subscribe({
                 stream: stream.id,
             }, (parsedContent) => {
@@ -1004,7 +1007,7 @@ describe('StreamrClient', () => {
             // Publish after subscribed
             sub.once('subscribed', () => {
                 const sub2 = client.subscribe({
-                    stream: publisherId,
+                    stream: keyExchangeStreamId,
                 }, (content) => {
                     assert.equal(content.test, 'works')
 
@@ -1016,14 +1019,14 @@ describe('StreamrClient', () => {
                     })
                 })
                 sub2.once('subscribed', () => {
-                    client.publish(publisherId, {
+                    client.publish(keyExchangeStreamId, {
                         test: 'works',
                     }, Date.now())
                 })
             })
         })
 
-        it.skip('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
+        it('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
             client.once('error', done)
             const id = Date.now()
             const groupKey = crypto.randomBytes(32)

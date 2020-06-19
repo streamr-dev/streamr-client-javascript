@@ -303,8 +303,9 @@ export default class StreamrClient extends EventEmitter {
     async _subscribeToInboxStream() {
         if (this.options.auth.privateKey || this.options.auth.provider) {
             // subscribing to own inbox stream
-            const ethAddress = await this.getPublisherId()
-            this.subscribe(ethAddress, async (parsedContent, streamMessage) => {
+            const publisherId = await this.getPublisherId()
+            const streamId = KeyExchangeUtil.getKeyExchangeStreamId(publisherId)
+            this.subscribe(streamId, async (parsedContent, streamMessage) => {
                 try {
                     if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
                         if (this.keyExchangeUtil) {
@@ -312,11 +313,11 @@ export default class StreamrClient extends EventEmitter {
                         }
                     } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
                         if (this.keyExchangeUtil) {
-                            const { streamId } = streamMessage.getParsedContent()
+                            const msg = streamMessage.getParsedContent()
                             // A valid publisher of the client's inbox stream could send key responses for other streams to which
                             // the publisher doesn't have write permissions. Thus the following additional check is necessary.
                             // TODO: fix this hack in other PR (and move logic to keyExchangeUtil)
-                            const valid = await this.subscribedStreamPartitions[streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
+                            const valid = await this.subscribedStreamPartitions[msg.streamId + '0'].isValidPublisher(streamMessage.getPublisherId())
                             if (valid) {
                                 this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
                             } else {
@@ -338,7 +339,7 @@ export default class StreamrClient extends EventEmitter {
                         debug('WARN: %s', err.message)
                         // we don't notify the error to the originator if the message is unauthenticated.
                         if (streamMessage.signature) {
-                            const errorMessage = await this.msgCreationUtil.createErrorMessage(streamMessage.getPublisherId(), err)
+                            const errorMessage = await this.msgCreationUtil.createErrorMessage(streamId, err)
                             this.publishStreamMessage(errorMessage)
                         }
                     } else {

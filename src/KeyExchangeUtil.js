@@ -8,6 +8,11 @@ import InvalidGroupKeyError from './errors/InvalidGroupKeyError'
 const debug = debugFactory('KeyExchangeUtil')
 const SUBSCRIBERS_EXPIRATION_TIME = 5 * 60 * 1000 // 5 minutes
 export default class KeyExchangeUtil {
+    static getKeyExchangeStreamId(publisherId) {
+        if (!publisherId || typeof publisherId !== 'string') { throw new Error(`non-empty publisherId string required: ${publisherId}`) }
+        return `SYSTEM/keyexchange/${publisherId.toLowerCase()}`
+    }
+
     constructor(client) {
         this._client = client
         this.isSubscriberPromises = {}

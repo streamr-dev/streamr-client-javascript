@@ -7,9 +7,11 @@ import { MessageLayer } from 'streamr-client-protocol'
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 import Stream from '../../src/rest/domain/Stream'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
+import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
+const { getKeyExchangeStreamId } = KeyExchangeUtil
 
 describe('MessageCreationUtil', () => {
     const hashedUsername = '0x16F78A7D6317F102BBD95FC9A4F3FF2E3249287690B8BDAD6B7810F82B34ACE3'.toLowerCase()
@@ -359,7 +361,7 @@ describe('MessageCreationUtil', () => {
             }), sinon.stub().resolves(stream))
 
             const streamMessage = await util.createGroupKeyRequest('publisherId', 'streamId', 'rsaPublicKey', 1354155, 2344155)
-            expect(streamMessage.getStreamId()).toBe('publisherId'.toLowerCase()) // sending to publisher's inbox stream
+            expect(streamMessage.getStreamId()).toBe(getKeyExchangeStreamId('publisherId')) // sending to publisher's inbox stream
             const content = streamMessage.getParsedContent()
             expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST)
             expect(streamMessage.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.NONE)
@@ -415,7 +417,7 @@ describe('MessageCreationUtil', () => {
                 start: 34524,
             }])
 
-            expect(streamMessage.getStreamId()).toBe('subscriberId'.toLowerCase()) // sending to subscriber's inbox stream
+            expect(streamMessage.getStreamId()).toBe(getKeyExchangeStreamId('subscriberId')) // sending to subscriber's inbox stream
             const content = streamMessage.getParsedContent()
             expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE)
             expect(streamMessage.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.RSA)
