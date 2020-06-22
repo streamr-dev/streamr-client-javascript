@@ -4,6 +4,7 @@ import Receptacle from 'receptacle'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
+import uniqueId from 'lodash.uniqueid'
 
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
@@ -12,6 +13,8 @@ import KeyExchangeUtil from './KeyExchangeUtil'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
+
+const uuid = (prefix) => uniqueId(`p${process.pid != null ? process.pid : Date.now()}.${prefix}`)
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 const { getKeyExchangeStreamId } = KeyExchangeUtil
@@ -149,14 +152,22 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
-    async createGroupKeyRequest(publisherAddress, streamId, rsaPublicKey, start, end) {
+    async createGroupKeyRequest({
+        publisherAddress,
+        streamId,
+        publicKey,
+        start,
+        end,
+    }) {
         if (!this._signer) {
             throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
         }
         const publisherId = await this.getPublisherId()
+        const requestId = uuid(`GroupKeyRequest.${publisherAddress}.${streamId}`)
         const data = {
             streamId,
-            publicKey: rsaPublicKey,
+            requestId,
+            publicKey,
         }
         if (start && end) {
             data.range = {
@@ -178,12 +189,13 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
-    async createGroupKeyResponse(subscriberAddress, streamId, encryptedGroupKeys) {
+    async createGroupKeyResponse({ subscriberAddress, streamId, requestId, encryptedGroupKeys }) {
         if (!this._signer) {
             throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
         }
         const publisherId = await this.getPublisherId()
         const data = {
+            requestId,
             streamId,
             keys: encryptedGroupKeys,
         }
@@ -201,7 +213,7 @@ export default class MessageCreationUtil {
         return streamMessage
     }
 
-    async createErrorMessage(destinationAddress, error) {
+    async createErrorMessage({ destinationAddress, streamId, error, requestId }) {
         if (!this._signer) {
             throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
         }
@@ -209,12 +221,14 @@ export default class MessageCreationUtil {
         const data = {
             code: MessageCreationUtil.getErrorCodeFromError(error),
             message: error.message,
+            streamId,
+            requestId,
         }
         const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(destinationAddress.toLowerCase(), publisherId)
         const streamMessage = new StreamMessage({
             messageId: idAndPrevRef[0],
             prevMsgRef: idAndPrevRef[1],
-            contentType: StreamMessage.CONTENT_TYPES.ERROR_MSG,
+            contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_ERROR_RESPONSE,
             encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
             content: data,
             signatureType: StreamMessage.SIGNATURE_TYPES.NONE,

@@ -2,9 +2,8 @@ import debugFactory from 'debug'
 
 import Signer from './Signer'
 
-const debug = debugFactory('StreamrClient::SubscribedStreamPartition')
-
 const PUBLISHERS_EXPIRATION_TIME = 30 * 60 * 1000 // 30 minutes
+
 export default class SubscribedStreamPartition {
     constructor(client, streamId, streamPartition) {
         this._client = client

@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import sinon from 'sinon'
 import { ethers } from 'ethers'
 import { MessageLayer } from 'streamr-client-protocol'
+import uniqueId from 'lodash.uniqueid'
 
 import MessageCreationUtil from '../../src/MessageCreationUtil'
 import Stream from '../../src/rest/domain/Stream'
@@ -335,11 +336,18 @@ describe('MessageCreationUtil', () => {
             username: 'username',
         }
 
-        it('should not be able to create unsigned group key request', (done) => {
+        it('should not be able to create unsigned group key request', async (done) => {
             const util = new MessageCreationUtil(auth, null, () => Promise.resolve({
                 username: 'username',
             }), sinon.stub().resolves(stream))
-            util.createGroupKeyRequest('publisherId', 'streamId', 'rsaPublicKey', 1354155, 2344155).catch((err) => {
+
+            await util.createGroupKeyRequest({
+                publisherAddress: 'publisherId',
+                streamId: 'streamId',
+                publicKey: 'rsaPublicKey',
+                start: 1354155,
+                end: 2344155,
+            }).catch((err) => {
                 expect(err.message).toBe('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
                 done()
             })
@@ -360,7 +368,14 @@ describe('MessageCreationUtil', () => {
                 username: 'username',
             }), sinon.stub().resolves(stream))
 
-            const streamMessage = await util.createGroupKeyRequest('publisherId', 'streamId', 'rsaPublicKey', 1354155, 2344155)
+            const streamMessage = await util.createGroupKeyRequest({
+                publisherAddress: 'publisherId',
+                streamId: 'streamId',
+                publicKey: 'rsaPublicKey',
+                start: 1354155,
+                end: 2344155,
+            })
+
             expect(streamMessage.getStreamId()).toBe(getKeyExchangeStreamId('publisherId')) // sending to publisher's inbox stream
             const content = streamMessage.getParsedContent()
             expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST)
@@ -383,15 +398,20 @@ describe('MessageCreationUtil', () => {
             username: 'username',
         }
 
-        it('should not be able to create unsigned group key response', (done) => {
+        it('should not be able to create unsigned group key response', async (done) => {
             const util = new MessageCreationUtil(auth, null, () => Promise.resolve({
                 username: 'username',
             }), sinon.stub().resolves(stream))
-
-            util.createGroupKeyResponse('subscriberId', 'streamId', [{
-                groupKey: 'group-key',
-                start: 34524,
-            }]).catch((err) => {
+            const requestId = uniqueId()
+            await util.createGroupKeyResponse({
+                subscriberAddress: 'subscriberId',
+                streamId: 'streamId',
+                requestId,
+                encryptedGroupKeys: [{
+                    groupKey: 'group-key',
+                    start: 34524,
+                }]
+            }).catch((err) => {
                 expect(err.message).toBe('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
                 done()
             })
@@ -412,16 +432,23 @@ describe('MessageCreationUtil', () => {
                 username: 'username',
             }), sinon.stub().resolves(stream))
 
-            const streamMessage = await util.createGroupKeyResponse('subscriberId', 'streamId', [{
-                groupKey: 'encrypted-group-key',
-                start: 34524,
-            }])
+            const requestId = uniqueId()
+            const streamMessage = await util.createGroupKeyResponse({
+                subscriberAddress: 'subscriberId',
+                streamId: 'streamId',
+                requestId,
+                encryptedGroupKeys: [{
+                    groupKey: 'encrypted-group-key',
+                    start: 34524,
+                }]
+            })
 
             expect(streamMessage.getStreamId()).toBe(getKeyExchangeStreamId('subscriberId')) // sending to subscriber's inbox stream
             const content = streamMessage.getParsedContent()
             expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE)
             expect(streamMessage.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.RSA)
             expect(content.streamId).toBe('streamId')
+            expect(content.requestId).toBe(requestId)
             expect(content.keys).toStrictEqual([{
                 groupKey: 'encrypted-group-key',
                 start: 34524,
@@ -440,12 +467,17 @@ describe('MessageCreationUtil', () => {
             username: 'username',
         }
 
-        it('should not be able to create unsigned error message', (done) => {
+        it('should not be able to create unsigned error message', async (done) => {
             const util = new MessageCreationUtil(auth, null, () => Promise.resolve({
                 username: 'username',
             }), sinon.stub().resolves(stream))
 
-            util.createErrorMessage('destinationAddress', new Error()).catch((err) => {
+            await util.createErrorMessage({
+                destinationAddress: 'destinationAddress',
+                error: new Error(),
+                streamId: stream.id,
+                requestId: uniqueId('requestId'),
+            }).catch((err) => {
                 expect(err.message).toBe('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
                 done()
             })
@@ -466,13 +498,22 @@ describe('MessageCreationUtil', () => {
                 username: 'username',
             }), sinon.stub().resolves(stream))
 
-            const streamMessage = await util.createErrorMessage('destinationAddress', new InvalidGroupKeyRequestError('invalid'))
+            const requestId = uniqueId('requestId')
+            const streamMessage = await util.createErrorMessage({
+                destinationAddress: 'destinationAddress',
+                error: new InvalidGroupKeyRequestError('invalid'),
+                streamId: stream.id,
+                requestId,
+            })
+
             expect(streamMessage.getStreamId()).toBe('destinationAddress'.toLowerCase()) // sending to subscriber's inbox stream
 
             const content = streamMessage.getParsedContent()
-            expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.ERROR_MSG)
+            expect(streamMessage.contentType).toBe(StreamMessage.CONTENT_TYPES.GROUP_KEY_ERROR_RESPONSE)
             expect(streamMessage.encryptionType).toBe(StreamMessage.ENCRYPTION_TYPES.NONE)
             expect(content.code).toBe('INVALID_GROUP_KEY_REQUEST')
+            expect(content.requestId).toBe(requestId)
+            expect(content.streamId).toBe(stream.id)
             expect(content.message).toBe('invalid')
             expect(streamMessage.signature).toBeTruthy()
         })

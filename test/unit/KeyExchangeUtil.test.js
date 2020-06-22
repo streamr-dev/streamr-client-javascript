@@ -8,6 +8,7 @@ import EncryptionUtil from '../../src/EncryptionUtil'
 import KeyStorageUtil from '../../src/KeyStorageUtil'
 import InvalidGroupKeyResponseError from '../../src/errors/InvalidGroupKeyResponseError'
 import InvalidGroupKeyRequestError from '../../src/errors/InvalidGroupKeyRequestError'
+import { uid } from '../utils'
 
 const { StreamMessage, MessageIDStrict } = MessageLayer
 const subscribers = ['0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01'.toLowerCase(), 'subscriber2', 'subscriber3']
@@ -104,13 +105,15 @@ describe('KeyExchangeUtil', () => {
     })
 
     describe('handleGroupKeyRequest', () => {
-        it.skip('should reject unsigned request', async (done) => {
+        it('should reject unsigned response', async (done) => {
+            const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'streamId',
                     publicKey: 'rsa-public-key',
+                    requestId,
                 },
                 contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
                 encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -119,19 +122,21 @@ describe('KeyExchangeUtil', () => {
             })
 
             await util.handleGroupKeyRequest(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyRequestError).toBeTruthy()
+                expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
                 expect(err.message).toBe('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
                 done()
             })
         })
 
         it('should reject request for a stream for which the client does not have a group key', async (done) => {
+            const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'wrong-streamId',
                     publicKey: 'rsa-public-key',
+                    requestId,
                 },
                 contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
                 encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -140,33 +145,37 @@ describe('KeyExchangeUtil', () => {
             })
 
             await util.handleGroupKeyRequest(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyRequestError).toBeTruthy()
+                expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
                 expect(err.message).toBe('Received group key request for stream \'wrong-streamId\' but no group key is set')
                 done()
             })
         })
 
         it('should reject request from invalid subscriber', async (done) => {
+            const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber5', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'streamId',
                     publicKey: 'rsa-public-key',
+                    requestId,
                 },
                 contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
                 encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
             })
+
             await util.handleGroupKeyRequest(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyRequestError).toBeTruthy()
+                expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
                 expect(err.message).toBe('Received group key request for stream \'streamId\' from invalid address \'subscriber5\'')
                 done()
             })
         })
 
         it('should send group key response (latest key)', async (done) => {
+            const requestId = uid('requestId')
             const subscriberKeyPair = new EncryptionUtil()
             await subscriberKeyPair.onReady()
             const streamMessage = new StreamMessage({
@@ -175,6 +184,7 @@ describe('KeyExchangeUtil', () => {
                 content: {
                     streamId: 'streamId',
                     publicKey: subscriberKeyPair.getPublicKey(),
+                    requestId,
                 },
                 contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
                 encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -183,11 +193,11 @@ describe('KeyExchangeUtil', () => {
             })
 
             client.msgCreationUtil = {
-                createGroupKeyResponse: (subscriberId, streamId, keys) => {
-                    expect(subscriberId).toBe('subscriber2')
+                createGroupKeyResponse: ({ subscriberAddress, streamId, encryptedGroupKeys }) => {
+                    expect(subscriberAddress).toBe('subscriber2')
                     expect(streamId).toBe('streamId')
-                    expect(keys.length).toBe(1)
-                    const keyObject = keys[0]
+                    expect(encryptedGroupKeys.length).toBe(1)
+                    const keyObject = encryptedGroupKeys[0]
                     const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId')
                     expect(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true)).toStrictEqual(expectedKeyObj.groupKey)
                     expect(keyObject.start).toStrictEqual(expectedKeyObj.start)
@@ -203,6 +213,7 @@ describe('KeyExchangeUtil', () => {
         })
 
         it('should send group key response (range of keys)', async (done) => {
+            const requestId = uid('requestId')
             const subscriberKeyPair = new EncryptionUtil()
             await subscriberKeyPair.onReady()
             const streamMessage = new StreamMessage({
@@ -211,6 +222,7 @@ describe('KeyExchangeUtil', () => {
                 content: {
                     streamId: 'streamId',
                     publicKey: subscriberKeyPair.getPublicKey(),
+                    requestId,
                     range: {
                         start: 15,
                         end: 27
@@ -223,11 +235,11 @@ describe('KeyExchangeUtil', () => {
             })
 
             client.msgCreationUtil = {
-                createGroupKeyResponse: (subscriberId, streamId, keys) => {
-                    expect(subscriberId).toBe('subscriber2')
+                createGroupKeyResponse: ({ subscriberAddress, streamId, encryptedGroupKeys }) => {
+                    expect(subscriberAddress).toBe('subscriber2')
                     expect(streamId).toBe('streamId')
                     const decryptedKeys = []
-                    keys.forEach((keyObj) => {
+                    encryptedGroupKeys.forEach((keyObj) => {
                         const decryptedKey = subscriberKeyPair.decryptWithPrivateKey(keyObj.groupKey, true)
                         decryptedKeys.push({
                             groupKey: decryptedKey,
@@ -248,12 +260,14 @@ describe('KeyExchangeUtil', () => {
         })
 
         it('should send group key response (latest key and no storage of past keys)', async (done) => {
+            const requestId = uid('requestId')
             const subscriberKeyPair = new EncryptionUtil()
             await subscriberKeyPair.onReady()
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
                 prevMsgRef: null,
                 content: {
+                    requestId,
                     streamId: 'streamId',
                     publicKey: subscriberKeyPair.getPublicKey(),
                 },
@@ -263,11 +277,11 @@ describe('KeyExchangeUtil', () => {
                 signature: 'signature',
             })
             client.msgCreationUtil = {
-                createGroupKeyResponse: (subscriberId, streamId, keys) => {
-                    expect(subscriberId).toBe('subscriber2')
+                createGroupKeyResponse: ({ subscriberAddress, streamId, encryptedGroupKeys }) => {
+                    expect(subscriberAddress).toBe('subscriber2')
                     expect(streamId).toBe('streamId')
-                    expect(keys.length).toBe(1)
-                    const keyObject = keys[0]
+                    expect(encryptedGroupKeys.length).toBe(1)
+                    const keyObject = encryptedGroupKeys[0]
                     const expectedKeyObj = client.keyStorageUtil.getLatestKey('streamId')
                     expect(subscriberKeyPair.decryptWithPrivateKey(keyObject.groupKey, true)).toStrictEqual(expectedKeyObj.groupKey)
                     expect(keyObject.start).toStrictEqual(expectedKeyObj.start)
@@ -278,17 +292,19 @@ describe('KeyExchangeUtil', () => {
                 expect(response).toBe('fake response')
                 done()
             }
-            await util.handleGroupKeyRequest(streamMessage)
+            util.handleGroupKeyRequest(streamMessage)
         })
     })
 
     describe('handleGroupKeyResponse', () => {
-        it.skip('should reject unsigned response', async (done) => {
+        it('should reject unsigned response', async (done) => {
+            const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'streamId',
+                    requestId,
                     keys: [{
                         groupKey: 'encrypted-group-key',
                         start: 54256,
@@ -300,19 +316,23 @@ describe('KeyExchangeUtil', () => {
                 signature: null,
             })
 
-            await util.handleGroupKeyResponse(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyResponseError).toBeTruthy()
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                expect(err).toBeInstanceOf(InvalidGroupKeyResponseError)
                 expect(err.message).toBe('Received unsigned group key response (it must be signed to avoid MitM attacks).')
                 done()
-            })
+            }
         })
 
-        it.skip('should reject response for a stream to which the client is not subscribed', async (done) => {
+        it('should reject response for a stream to which the client is not subscribed', async (done) => {
+            const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'wrong-streamId',
+                    requestId,
                     keys: [{
                         groupKey: 'encrypted-group-key',
                         start: 54256,
@@ -324,20 +344,24 @@ describe('KeyExchangeUtil', () => {
                 signature: 'signature',
             })
 
-            await util.handleGroupKeyResponse(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyResponseError).toBeTruthy()
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                expect(err).toBeInstanceOf(InvalidGroupKeyResponseError)
                 expect(err.message).toBe('Received group key response for a stream to which the client is not subscribed.')
                 done()
-            })
+            }
         })
 
-        it.skip('should reject response with invalid group key', async (done) => {
+        it('should reject response with invalid group key', async (done) => {
+            const requestId = uid('requestId')
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(crypto.randomBytes(16), client.encryptionUtil.getPublicKey(), true)
             const streamMessage = new StreamMessage({
                 messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
                 prevMsgRef: null,
                 content: {
                     streamId: 'streamId',
+                    requestId,
                     keys: [{
                         groupKey: encryptedGroupKey,
                         start: 54256,
@@ -348,15 +372,17 @@ describe('KeyExchangeUtil', () => {
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
             })
-
-            await util.handleGroupKeyResponse(streamMessage).catch((err) => {
-                expect(err instanceof InvalidGroupKeyResponseError).toBeTruthy()
+            try {
+                util.handleGroupKeyResponse(streamMessage)
+            } catch (err) {
+                expect(err).toBeInstanceOf(InvalidGroupKeyResponseError)
                 expect(err.message).toBe('Group key must have a size of 256 bits, not 128')
                 done()
-            })
+            }
         })
 
         it('should update client options and subscriptions with received group key', async (done) => {
+            const requestId = uid('requestId')
             const groupKey = crypto.randomBytes(32)
             const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(groupKey, client.encryptionUtil.getPublicKey(), true)
             const streamMessage = new StreamMessage({
@@ -364,6 +390,7 @@ describe('KeyExchangeUtil', () => {
                 prevMsgRef: null,
                 content: {
                     streamId: 'streamId',
+                    requestId,
                     keys: [{
                         groupKey: encryptedGroupKey,
                         start: 54256,

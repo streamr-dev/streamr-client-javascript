@@ -25,37 +25,42 @@ export default class KeyExchangeUtil {
             throw new InvalidGroupKeyRequestError('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
         }
         // No need to check if parsedContent contains the necessary fields because it was already checked during deserialization
-        const parsedContent = streamMessage.getParsedContent()
+        const { streamId, range, requestId, publicKey } = streamMessage.getParsedContent()
         let keys = []
-        if (parsedContent.range) {
-            keys = this._client.keyStorageUtil.getKeysBetween(parsedContent.streamId, parsedContent.range.start, parsedContent.range.end)
+        if (range) {
+            keys = this._client.keyStorageUtil.getKeysBetween(streamId, range.start, range.end)
         } else {
-            const groupKeyObj = this._client.keyStorageUtil.getLatestKey(parsedContent.streamId, true)
+            const groupKeyObj = this._client.keyStorageUtil.getLatestKey(streamId, true)
             if (groupKeyObj) {
                 keys.push(groupKeyObj)
             }
         }
 
         if (keys.length === 0) {
-            throw new InvalidGroupKeyRequestError(`Received group key request for stream '${parsedContent.streamId}' but no group key is set`)
+            throw new InvalidGroupKeyRequestError(`Received group key request for stream '${streamId}' but no group key is set`)
         }
         const subscriberId = streamMessage.getPublisherId()
-        const valid = await this.isValidSubscriber(parsedContent.streamId, subscriberId)
+        const valid = await this.isValidSubscriber(streamId, subscriberId)
         if (!valid) {
             throw new InvalidGroupKeyRequestError(
-                `Received group key request for stream '${parsedContent.streamId}' from invalid address '${subscriberId}'`
+                `Received group key request for stream '${streamId}' from invalid address '${subscriberId}'`
             )
         }
 
         const encryptedGroupKeys = []
         keys.forEach((keyObj) => {
-            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(keyObj.groupKey, parsedContent.publicKey, true)
+            const encryptedGroupKey = EncryptionUtil.encryptWithPublicKey(keyObj.groupKey, publicKey, true)
             encryptedGroupKeys.push({
                 groupKey: encryptedGroupKey,
                 start: keyObj.start,
             })
         })
-        const response = await this._client.msgCreationUtil.createGroupKeyResponse(subscriberId, parsedContent.streamId, encryptedGroupKeys)
+        const response = await this._client.msgCreationUtil.createGroupKeyResponse({
+            subscriberAddress: subscriberId,
+            streamId,
+            encryptedGroupKeys,
+            requestId,
+        })
         return this._client.publishStreamMessage(response)
     }
 

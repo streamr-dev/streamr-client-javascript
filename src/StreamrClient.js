@@ -326,24 +326,30 @@ export default class StreamrClient extends EventEmitter {
                                 )
                             }
                         }
-                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.ERROR_MSG) {
+                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_ERROR_RESPONSE) {
                         debug('WARN: Received error of type %s from %s: %s',
                             streamMessage.getParsedContent().code, streamMessage.getPublisherId(), streamMessage.getParsedContent().message)
                     } else {
                         throw new InvalidContentTypeError(`Cannot handle message with content type: ${streamMessage.contentType}`)
                     }
-                } catch (err) {
-                    if (err instanceof InvalidGroupKeyRequestError
-                        || err instanceof InvalidGroupKeyResponseError
-                        || err instanceof InvalidContentTypeError) {
-                        debug('WARN: %s', err.message)
+                } catch (error) {
+                    if (error instanceof InvalidGroupKeyRequestError
+                        || error instanceof InvalidGroupKeyResponseError
+                        || error instanceof InvalidContentTypeError) {
+                        debug('WARN: %s', error.message)
                         // we don't notify the error to the originator if the message is unauthenticated.
                         if (streamMessage.signature) {
-                            const errorMessage = await this.msgCreationUtil.createErrorMessage(streamId, err)
+                            const msg = streamMessage.getParsedContent()
+                            const errorMessage = await this.msgCreationUtil.createErrorMessage({
+                                destinationAddress: streamId,
+                                requestId: msg.requestId,
+                                streamId: msg.streamId,
+                                error,
+                            })
                             this.publishStreamMessage(errorMessage)
                         }
                     } else {
-                        throw err
+                        throw error
                     }
                 }
             })
@@ -572,9 +578,13 @@ export default class StreamrClient extends EventEmitter {
         sub.on('groupKeyMissing', async (publisherId, start, end) => {
             if (this.encryptionUtil) {
                 await this.encryptionUtil.onReady()
-                const streamMessage = await this.msgCreationUtil.createGroupKeyRequest(
-                    publisherId, sub.streamId, this.encryptionUtil.getPublicKey(), start, end,
-                )
+                const streamMessage = await this.msgCreationUtil.createGroupKeyRequest({
+                    publisherAddress: publisherId,
+                    streamId: sub.streamId,
+                    publicKey: this.encryptionUtil.getPublicKey(),
+                    start,
+                    end,
+                })
                 await this.publishStreamMessage(streamMessage)
             }
         })

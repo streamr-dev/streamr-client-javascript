@@ -10,6 +10,7 @@ import { wait } from 'streamr-test-utils'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Connection from '../../src/Connection'
 import Subscription from '../../src/Subscription'
+import KeyExchangeUtil from '../../src/KeyExchangeUtil'
 // import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
 
@@ -34,6 +35,7 @@ const {
 } = ControlLayer
 
 const { StreamMessage, MessageRef, MessageID, MessageIDStrict } = MessageLayer
+const { getKeyExchangeStreamId } = KeyExchangeUtil
 const mockDebug = debug('mock')
 
 describe('StreamrClient', () => {
@@ -1499,7 +1501,7 @@ describe('StreamrClient', () => {
             c.once('connected', async () => {
                 await wait()
                 expect(requests[0]).toEqual(new SubscribeRequest({
-                    streamId: '0x650EBB201f635652b44E4afD1e0193615922381D'.toLowerCase(),
+                    streamId: getKeyExchangeStreamId('0x650EBB201f635652b44E4afD1e0193615922381D'),
                     streamPartition: 0,
                     sessionToken,
                     requestId: requests[0].requestId,
