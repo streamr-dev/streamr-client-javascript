@@ -164,7 +164,7 @@ export default class MessageCreationUtil {
                 end,
             }
         }
-        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(getKeyExchangeStreamId(publisherId), publisherId)
+        const idAndPrevRef = this.createDefaultMsgIdAndPrevRef(getKeyExchangeStreamId(publisherAddress), publisherId)
         const streamMessage = new StreamMessage({
             messageId: idAndPrevRef[0],
             prevMsgRef: idAndPrevRef[1],
