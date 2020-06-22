@@ -994,38 +994,6 @@ describe('StreamrClient', () => {
             })
         })
 
-        it('client can publish to own inbox', async (done) => {
-            client.once('error', done)
-            const id = Date.now()
-            const keyExchangeStreamId = getKeyExchangeStreamId(await client.getPublisherId())
-            const sub = client.subscribe({
-                stream: stream.id,
-            }, (parsedContent) => {
-                assert.equal(parsedContent.id, id)
-            })
-
-            // Publish after subscribed
-            sub.once('subscribed', () => {
-                const sub2 = client.subscribe({
-                    stream: keyExchangeStreamId,
-                }, (content) => {
-                    assert.equal(content.test, 'works')
-
-                    // All good, unsubscribe
-
-                    client.unsubscribe(sub)
-                    sub.once('unsubscribed', () => {
-                        done()
-                    })
-                })
-                sub2.once('subscribed', () => {
-                    client.publish(keyExchangeStreamId, {
-                        test: 'works',
-                    }, Date.now())
-                })
-            })
-        })
-
         it('client.subscribe can get the group key and decrypt encrypted messages using an RSA key pair', async (done) => {
             client.once('error', done)
             const id = Date.now()
