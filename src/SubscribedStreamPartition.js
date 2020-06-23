@@ -1,8 +1,12 @@
-import debugFactory from 'debug'
+import { Utils } from 'streamr-client-protocol'
+import memoize from 'promise-memoize'
 
-import Signer from './Signer'
+const { CachingStreamMessageValidator } = Utils
 
-const PUBLISHERS_EXPIRATION_TIME = 30 * 60 * 1000 // 30 minutes
+const memoizeOpts = {
+    maxAge: 15 * 60 * 1000,
+    maxErrorAge: 60 * 1000,
+}
 
 export default class SubscribedStreamPartition {
     constructor(client, streamId, streamPartition) {
@@ -10,77 +14,61 @@ export default class SubscribedStreamPartition {
         this.streamId = streamId
         this.streamPartition = streamPartition
         this.subscriptions = {}
-        this.isPublisherPromises = {}
+        this.validator = new CachingStreamMessageValidator({
+            getStream: this.getStream.bind(this),
+            isPublisher: (publisherId, _streamId) => {
+                return this._client.isStreamPublisher(_streamId, publisherId)
+            },
+            isSubscriber: (ethAddress, _streamId) => {
+                return this._client.isStreamSubscriber(_streamId, ethAddress)
+            },
+        })
+        this.getPublishers = memoize(this.getPublishers.bind(this), memoizeOpts)
+        this.getSubscribers = memoize(this.getSubscribers.bind(this), memoizeOpts)
     }
 
     async getPublishers() {
-        if (!this.publishersPromise || (Date.now() - this.lastUpdated) > PUBLISHERS_EXPIRATION_TIME) {
-            this.publishersPromise = this._client.getStreamPublishers(this.streamId).then((publishers) => {
-                const map = {}
-                publishers.forEach((p) => {
-                    map[p] = true
-                })
-                return map
+        const publishers = await this._client.getStreamPublishers(this.streamId)
+        return publishers.reduce((obj, key) => (
+            Object.assign(obj, {
+                [key]: true
             })
-            this.lastUpdated = Date.now()
-        }
-        return this.publishersPromise
+        ), {})
     }
 
-    async _isPublisher(publisherId) {
-        if (!this.isPublisherPromises[publisherId]) {
-            this.isPublisherPromises[publisherId] = this._client.isStreamPublisher(this.streamId, publisherId)
-        }
-        return this.isPublisherPromises[publisherId]
+    async getSubscribers() {
+        const subscribers = await this._client.getStreamSubscribers(this.streamId)
+        return subscribers.reduce((obj, key) => (
+            Object.assign(obj, {
+                [key]: true
+            })
+        ), {})
     }
 
     async isValidPublisher(publisherId) {
-        const cache = await this.getPublishers()
-        if (cache[publisherId]) {
-            return cache[publisherId]
-        }
-        const isValid = await this._isPublisher(publisherId)
-        cache[publisherId] = isValid
-        return isValid
+        return this._client.isStreamPublisher(this.streamId, publisherId)
+    }
+
+    async isValidSubscriber(ethAddress) {
+        return this._client.isStreamSubscriber(this.streamId, ethAddress)
     }
 
     async verifyStreamMessage(msg) {
-        if (this._client.options.verifySignatures === 'always') {
-            if (msg.signatureType && msg.signatureType !== 0 && msg.signature) {
-                const isValid = await this.isValidPublisher(msg.getPublisherId().toLowerCase())
-                if (!isValid) {
-                    return false
-                }
-                return Signer.verifyStreamMessage(msg)
-            }
-            return false
-        }
-
         if (this._client.options.verifySignatures === 'never') {
             return true
         }
-
-        // if this._client.options.verifySignatures === 'auto'
-        if (msg.signatureType && msg.signatureType !== 0 && msg.signature) { // always verify in case the message is signed
-            const isValid = await this.isValidPublisher(msg.getPublisherId().toLowerCase())
-            if (!isValid) {
-                return false
-            }
-            return Signer.verifyStreamMessage(msg)
-        }
-        return !(await this.getVerifySignatures())
+        await this.validator.validate(msg)
+        return true
     }
 
     async getStream() {
-        if (!this.streamPromise) {
-            this.streamPromise = this._client.getStream(this.streamId)
-        }
-        return this.streamPromise
+        return this._client.getStream(this.streamId)
     }
 
     async getVerifySignatures() {
         if (this.requireSignedData === undefined) {
-            const stream = await this.getStream()
+            // use cached validator.getStream
+            const stream = await this.validator.getStream(this.streamId)
             this.requireSignedData = stream.requireSignedData
         }
         return this.requireSignedData
@@ -123,4 +111,5 @@ export default class SubscribedStreamPartition {
         })
     }
 }
-SubscribedStreamPartition.PUBLISHERS_EXPIRATION_TIME = PUBLISHERS_EXPIRATION_TIME
+
+SubscribedStreamPartition.memoizeOpts = memoizeOpts

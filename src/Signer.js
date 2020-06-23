@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/order
-import { MessageLayer } from 'streamr-client-protocol'
+import { MessageLayer, Utils } from 'streamr-client-protocol'
 
 const { StreamMessage } = MessageLayer
 const { SIGNATURE_TYPES } = StreamMessage

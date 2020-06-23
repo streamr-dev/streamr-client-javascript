@@ -1028,7 +1028,7 @@ describe('StreamrClient', () => {
             })
         }, 2 * TIMEOUT)
 
-        it.skip('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
+        it('client.subscribe with resend last can get the historical keys for previous encrypted messages', (done) => {
             client.once('error', done)
             // Publish encrypted messages with different keys
             const groupKey1 = crypto.randomBytes(32)

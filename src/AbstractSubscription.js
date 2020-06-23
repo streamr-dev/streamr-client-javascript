@@ -247,7 +247,7 @@ export default class AbstractSubscription extends Subscription {
         // Make sure the verification is successful before proceeding
         let valid
         try {
-            valid = await verifyFn()
+            valid = await verifyFn(msg)
         } catch (cause) {
             throw new VerificationFailedError(msg, cause)
         }
