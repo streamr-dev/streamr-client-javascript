@@ -5,7 +5,7 @@ import SubscribedStreamPartition from '../../src/SubscribedStreamPartition'
 import Signer from '../../src/Signer'
 import RealTimeSubscription from '../../src/RealTimeSubscription'
 
-const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
+const { StreamMessage, MessageIDStrict } = MessageLayer
 
 describe('SubscribedStreamPartition', () => {
     let subscribedStreamPartition

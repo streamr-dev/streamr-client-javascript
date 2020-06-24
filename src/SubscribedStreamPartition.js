@@ -1,8 +1,6 @@
 import { Utils } from 'streamr-client-protocol'
 import memoize from 'promise-memoize'
 
-import Signer from './Signer'
-
 const { StreamMessageValidator } = Utils
 
 const memoizeOpts = {

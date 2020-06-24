@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/order
-import { MessageLayer, Utils } from 'streamr-client-protocol'
+import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
 
 const { StreamMessage } = MessageLayer
