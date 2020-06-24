@@ -169,22 +169,17 @@ describe('StreamrClient Connection', () => {
             )
 
             sub.once('resent', () => {
-                expect(messages).toEqual([
-                    {
-                        msg: 'message2',
-                    },
-                    {
-                        msg: 'message3',
-                    },
-                    {
-                        msg: 'message4',
-                    },
-                ])
+                expect(messages).toHaveLength(3)
+                expect(messages).toEqual([{
+                    msg: 'message2',
+                }, {
+                    msg: 'message3',
+                }, {
+                    msg: 'message4',
+                }])
                 done()
             })
-
-            await waitForCondition(() => messages.length === 3)
-        }, 10000)
+        }, 15000)
 
         it('resend from', async (done) => {
             const messages = []
