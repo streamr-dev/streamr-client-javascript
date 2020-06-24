@@ -1,10 +1,9 @@
 // eslint-disable-next-line import/order
 import { MessageLayer, Utils } from 'streamr-client-protocol'
+import { ethers } from 'ethers'
 
 const { StreamMessage } = MessageLayer
 const { SIGNATURE_TYPES } = StreamMessage
-
-import { ethers } from 'ethers'
 
 const debug = require('debug')('StreamrClient::Signer')
 

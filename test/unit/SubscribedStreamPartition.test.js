@@ -24,6 +24,9 @@ describe('SubscribedStreamPartition', () => {
         client.getStreamPublishers = sinon.stub()
         client.getStreamPublishers.withArgs('streamId').resolves(publishers)
         client.isStreamPublisher = sinon.stub()
+        client.isStreamPublisher.withArgs('streamId', '0xb8CE9ab6943e0eCED004cDe8e3bBed6568B2Fa01').resolves(true)
+        client.isStreamPublisher.withArgs('streamId', 'publisher2').resolves(true)
+        client.isStreamPublisher.withArgs('streamId', 'publisher3').resolves(true)
         client.isStreamPublisher.withArgs('streamId', 'publisher4').resolves(true)
         client.isStreamPublisher.withArgs('streamId', 'publisher5').resolves(false)
 
@@ -44,40 +47,37 @@ describe('SubscribedStreamPartition', () => {
             beforeEach(() => {
                 ({ client, stream } = setupClientAndStream())
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
+                jest.useRealTimers()
             })
             describe('getPublishers', () => {
                 it('should use endpoint to retrieve publishers', async () => {
                     const retrievedPublishers = await subscribedStreamPartition.getPublishers()
-                    expect(client.getStreamPublishers.calledOnce).toBeTruthy()
+                    expect(client.getStreamPublishers.callCount).toBe(1)
                     expect(publishersMap).toStrictEqual(retrievedPublishers)
-                    expect(await subscribedStreamPartition.publishersPromise).toStrictEqual(publishersMap)
                 })
 
                 it('should use stored publishers and not the endpoint', async () => {
-                    subscribedStreamPartition.publishersPromise = Promise.resolve(publishersMap)
                     const retrievedPublishers = await subscribedStreamPartition.getPublishers()
-                    expect(client.getStreamPublishers.notCalled).toBeTruthy()
+                    await subscribedStreamPartition.getPublishers()
+                    expect(client.getStreamPublishers.callCount).toBe(1)
                     expect(publishersMap).toStrictEqual(retrievedPublishers)
                 })
 
-                it('should call getStreamPublishers only once when multiple calls made simultaneously', () => {
+                it('should call getStreamPublishers only once when multiple calls made simultaneously', async () => {
                     const p1 = subscribedStreamPartition.getPublishers()
                     const p2 = subscribedStreamPartition.getPublishers()
-                    return Promise.all([p1, p2]).then(([publishers1, publishers2]) => {
-                        expect(client.getStreamPublishers.calledOnce).toBeTruthy()
-                        expect(publishers1).toStrictEqual(publishers2)
-                    })
+                    const [publishers1, publishers2] = await Promise.all([p1, p2])
+                    expect(client.getStreamPublishers.callCount).toBe(1)
+                    expect(publishers1).toStrictEqual(publishers2)
                 })
 
                 it('should use endpoint again after the list of locally stored publishers expires', async () => {
-                    const clock = sinon.useFakeTimers()
+                    jest.useFakeTimers()
                     await subscribedStreamPartition.getPublishers()
-                    subscribedStreamPartition.publishersPromise = Promise.resolve(publishersMap)
                     await subscribedStreamPartition.getPublishers()
-                    clock.tick(SubscribedStreamPartition.PUBLISHERS_EXPIRATION_TIME + 100)
+                    jest.advanceTimersByTime(SubscribedStreamPartition.memoizeOpts.maxAge * 2)
                     await subscribedStreamPartition.getPublishers()
-                    expect(client.getStreamPublishers.calledTwice).toBeTruthy()
-                    clock.restore()
+                    expect(client.getStreamPublishers.callCount).toBe(2)
                 })
             })
 
@@ -85,8 +85,8 @@ describe('SubscribedStreamPartition', () => {
                 it('should return cache result if cache hit', async () => {
                     const valid = await subscribedStreamPartition.isValidPublisher('publisher2')
                     expect(valid).toBe(true)
-                    expect(client.getStreamPublishers.calledOnce).toBeTruthy()
-                    expect(client.isStreamPublisher.notCalled).toBeTruthy()
+                    expect(client.isStreamPublisher.callCount).toBe(1)
+                    expect(client.getStreamPublishers.notCalled).toBeTruthy()
                 })
 
                 it('should fetch if cache miss and store result in cache', async () => {
@@ -97,8 +97,8 @@ describe('SubscribedStreamPartition', () => {
                     // calling the function again should use the cache
                     await subscribedStreamPartition.isValidPublisher('publisher4')
                     await subscribedStreamPartition.isValidPublisher('publisher5')
-                    expect(client.getStreamPublishers.calledOnce).toBeTruthy()
-                    expect(client.isStreamPublisher.calledTwice).toBeTruthy()
+                    expect(client.isStreamPublisher.callCount).toBe(2)
+                    expect(client.getStreamPublishers.callCount).toBe(0)
                 })
             })
 
@@ -107,23 +107,14 @@ describe('SubscribedStreamPartition', () => {
                     const retrievedStream = await subscribedStreamPartition.getStream()
                     expect(client.getStream.calledOnce).toBeTruthy()
                     expect(stream).toBe(retrievedStream)
-                    expect(stream).toBe(await subscribedStreamPartition.streamPromise)
                 })
 
-                it('should use stored stream and not the endpoint', async () => {
-                    subscribedStreamPartition.streamPromise = Promise.resolve(stream)
-                    const retrievedStream = await subscribedStreamPartition.getStream()
-                    expect(client.getStream.notCalled).toBeTruthy()
-                    expect(stream).toBe(retrievedStream)
-                })
-
-                it('should call the endpoint only once when multiple calls made simultaneously', () => {
+                it('should call the endpoint only once when multiple calls made simultaneously', async () => {
                     const p1 = subscribedStreamPartition.getStream()
                     const p2 = subscribedStreamPartition.getStream()
-                    return Promise.all([p1, p2]).then(([stream1, stream2]) => {
-                        expect(client.getStream.calledOnce).toBeTruthy()
-                        expect(stream1).toStrictEqual(stream2)
-                    })
+                    const [stream1, stream2] = await Promise.all([p1, p2])
+                    expect(client.getStream.calledOnce).toBeTruthy()
+                    expect(stream1).toStrictEqual(stream2)
                 })
             })
         })
@@ -140,7 +131,7 @@ describe('SubscribedStreamPartition', () => {
                 const timestamp = Date.now()
                 const msg = new StreamMessage({
                     messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
-                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    prevMesssageRef: null,
                     content: data,
                     contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                     encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -175,7 +166,7 @@ describe('SubscribedStreamPartition', () => {
                 const timestamp = Date.now()
                 msg = new StreamMessage({
                     messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
-                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    prevMesssageRef: null,
                     content: data,
                     contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                     encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
@@ -183,11 +174,11 @@ describe('SubscribedStreamPartition', () => {
                     signature: null,
                 })
                 await signer.signStreamMessage(msg)
-                spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
             })
 
             afterEach(async () => {
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
+                spiedVerifyStreamMessage = sinon.spy(subscribedStreamPartition.validator, 'validate')
                 const valid = await subscribedStreamPartition.verifyStreamMessage(msg)
                 expect(valid).toBe(true)
                 expect(spiedExpectedCall()).toBeTruthy()
@@ -227,7 +218,7 @@ describe('SubscribedStreamPartition', () => {
                 const timestamp = Date.now()
                 msg = new StreamMessage({
                     messageId: new MessageIDStrict(streamId, 0, timestamp, 0, '', ''),
-                    prevMesssageRef: new MessageRef(timestamp - 100, 0),
+                    prevMesssageRef: null,
                     content: data,
                     contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                     encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
