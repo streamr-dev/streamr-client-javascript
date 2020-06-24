@@ -1,5 +1,6 @@
 import sinon from 'sinon'
 import { MessageLayer } from 'streamr-client-protocol'
+import { wait } from 'streamr-test-utils'
 
 import SubscribedStreamPartition from '../../src/SubscribedStreamPartition'
 import Signer from '../../src/Signer'
@@ -47,8 +48,8 @@ describe('SubscribedStreamPartition', () => {
             beforeEach(() => {
                 ({ client, stream } = setupClientAndStream())
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
-                jest.useRealTimers()
             })
+
             describe('getPublishers', () => {
                 it('should use endpoint to retrieve publishers', async () => {
                     const retrievedPublishers = await subscribedStreamPartition.getPublishers()
@@ -71,13 +72,29 @@ describe('SubscribedStreamPartition', () => {
                     expect(publishers1).toStrictEqual(publishers2)
                 })
 
-                it('should use endpoint again after the list of locally stored publishers expires', async () => {
-                    jest.useFakeTimers()
-                    await subscribedStreamPartition.getPublishers()
-                    await subscribedStreamPartition.getPublishers()
-                    jest.advanceTimersByTime(SubscribedStreamPartition.memoizeOpts.maxAge * 2)
-                    await subscribedStreamPartition.getPublishers()
-                    expect(client.getStreamPublishers.callCount).toBe(2)
+                describe('expiration', () => {
+                    let oldMaxAge
+                    beforeEach(() => {
+                        // note: for some reason memoize doesn't seem to work with fake timers
+                        oldMaxAge = SubscribedStreamPartition.memoizeOpts.maxAge
+                        // reduce max age to something test-friendly
+                        SubscribedStreamPartition.memoizeOpts.maxAge = 10
+                        subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
+                    })
+
+                    afterEach(() => {
+                        // restore max age
+                        SubscribedStreamPartition.memoizeOpts.maxAge = oldMaxAge
+                    })
+
+                    it('should use endpoint again after the list of locally stored publishers expires', async () => {
+                        await subscribedStreamPartition.getPublishers()
+                        await subscribedStreamPartition.getPublishers()
+                        expect(client.getStreamPublishers.callCount).toBe(1)
+                        await wait(SubscribedStreamPartition.memoizeOpts.maxAge * 2)
+                        await subscribedStreamPartition.getPublishers()
+                        expect(client.getStreamPublishers.callCount).toBe(2)
+                    })
                 })
             })
 
