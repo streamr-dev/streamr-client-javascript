@@ -297,7 +297,7 @@ describe('StreamrClient resends', () => {
             expect(receivedMessages).toEqual(publishedMessages)
         }, 30000)
 
-        it('long resend', async () => {
+        it('long resend', async (done) => {
             const LONG_RESEND = 10000
             publishedMessages = []
 
@@ -336,14 +336,11 @@ describe('StreamrClient resends', () => {
                 },
             )
 
-            await new Promise((resolve) => {
-                sub.once('resent', () => {
-                    expect(receivedMessages.length).toBe(publishedMessages.length)
-                    resolve()
-                })
+            sub.once('resent', () => {
+                expect(receivedMessages.length).toBe(publishedMessages.length)
+                expect(publishedMessages.length).toBe(LONG_RESEND)
+                done()
             })
-
-            await waitForCondition(() => receivedMessages.length === LONG_RESEND, 100000)
         }, 200000)
     })
 })
