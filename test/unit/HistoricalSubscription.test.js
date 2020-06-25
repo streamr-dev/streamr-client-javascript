@@ -2,12 +2,14 @@ import crypto from 'crypto'
 
 import sinon from 'sinon'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
+import { wait } from 'streamr-test-utils'
 
 import HistoricalSubscription from '../../src/HistoricalSubscription'
 import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
 import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
+import { uid } from '../utils'
 
 const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 
@@ -28,9 +30,12 @@ const createMsg = (
     })
 }
 
-const msg = createMsg()
-
 describe('HistoricalSubscription', () => {
+    let msg
+    beforeEach(() => {
+        msg = createMsg()
+    })
+
     describe('message handling', () => {
         describe('handleBroadcastMessage()', () => {
             it('calls the message handler', () => {
@@ -48,7 +53,8 @@ describe('HistoricalSubscription', () => {
                 let sub
 
                 beforeEach(() => {
-                    sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), sinon.stub().throws('should not be called!'), {
+                    const msgHandler = () => { throw new Error('should not be called!') }
+                    sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), msgHandler, {
                         last: 1,
                     })
                     stdError = console.error
@@ -61,29 +67,35 @@ describe('HistoricalSubscription', () => {
                 })
 
                 describe('when message verification returns false', () => {
-                    it(
-                        'does not call the message handler',
-                        async () => sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(false))
-                    )
+                    it('does not call the message handler', async () => {
+                        const messageHandler = jest.fn()
+                        const sub1 = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), messageHandler, {
+                            last: 1,
+                        })
+                        await sub1.handleResentMessage(msg, 'requestId', async () => false)
+                        await wait(0)
+                        expect(messageHandler).not.toHaveBeenCalled()
+                    })
 
-                    it('prints to standard error stream', async () => {
-                        await sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(false))
+                    it('prints to standard error stream', async (done) => {
+                        await sub.handleResentMessage(msg, 'requestId', async () => false)
                         expect(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError))).toBeTruthy()
+                        done()
                     })
 
                     it('emits an error event', async (done) => {
-                        sub.on('error', (err) => {
+                        sub.once('error', (err) => {
                             expect(err instanceof InvalidSignatureError).toBeTruthy()
                             done()
                         })
-                        return sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(false))
+                        return sub.handleResentMessage(msg, 'requestId', async () => false)
                     })
                 })
 
                 describe('when message verification throws', () => {
                     it('emits an error event', async (done) => {
                         const error = new Error('test error')
-                        sub.on('error', (err) => {
+                        sub.once('error', (err) => {
                             expect(err instanceof VerificationFailedError).toBeTruthy()
                             expect(err.cause).toBe(error)
                             done()
@@ -94,16 +106,16 @@ describe('HistoricalSubscription', () => {
 
                 describe('when message handler throws', () => {
                     it('emits an error event', async (done) => {
-                        sub.on('error', (err) => {
-                            expect(err.name).toBe('should not be called!')
+                        sub.once('error', (err) => {
+                            expect(err.message).toContain('should not be called!')
                             done()
                         })
                         return sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(true))
                     })
 
                     it('prints to standard error stream', async (done) => {
-                        sub.on('error', (err) => {
-                            expect(err.name).toBe('should not be called!')
+                        sub.once('error', (err) => {
+                            expect(err.message).toContain('should not be called!')
                             done()
                         })
                         return sub.handleResentMessage(msg, 'requestId', sinon.stub().resolves(true))
@@ -130,6 +142,31 @@ describe('HistoricalSubscription', () => {
                 })
 
                 return Promise.all(msgs.map((m) => sub.handleResentMessage(m, 'requestId', sinon.stub().resolves(true))))
+            })
+
+            it('calls the callback once for each message in order, regardless of verification order', (done) => {
+                const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
+                    timestamp,
+                    timestamp === 1 ? 0 : timestamp - 1,
+                ))
+
+                const received = []
+
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                    received.push(receivedMsg)
+                    if (received.length === 5) {
+                        expect(received).toEqual(msgs)
+                        done()
+                    }
+                }, {
+                    last: 5,
+                })
+
+                return Promise.all(msgs.map((m, index, arr) => sub.handleResentMessage(m, 'requestId', async () => {
+                    // make earlier messages validate after later messages
+                    await wait(10 + (arr.length - index) * 20)
+                    return true
+                })))
             })
         })
 

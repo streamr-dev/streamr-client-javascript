@@ -156,17 +156,14 @@ describe('StreamrClient Connection', () => {
         it('resend last', async (done) => {
             const messages = []
 
-            const sub = await client.resend(
-                {
-                    stream: stream.id,
-                    resend: {
-                        last: 3,
-                    },
+            const sub = await client.resend({
+                stream: stream.id,
+                resend: {
+                    last: 3,
                 },
-                (message) => {
-                    messages.push(message)
-                },
-            )
+            }, (message) => {
+                messages.push(message)
+            })
 
             sub.once('resent', () => {
                 expect(messages).toHaveLength(3)

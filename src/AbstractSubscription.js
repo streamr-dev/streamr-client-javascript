@@ -139,15 +139,14 @@ export default class AbstractSubscription extends Subscription {
     }
 
     async handleResentMessage(msg, requestId, verifyFn) {
-        return this._catchAndEmitErrors(() => {
+        this._lastMessageHandlerPromise[requestId] = this._catchAndEmitErrors(async () => {
             if (!this.isResending()) {
                 throw new Error(`There is no resend in progress, but received resent message ${msg.serialize()}`)
             } else {
-                const handleMessagePromise = this._handleMessage(msg, verifyFn)
-                this._lastMessageHandlerPromise[requestId] = handleMessagePromise
-                return handleMessagePromise
+                await this._handleMessage(msg, verifyFn)
             }
         })
+        return this._lastMessageHandlerPromise[requestId]
     }
 
     async handleResending(response) {
@@ -234,12 +233,11 @@ export default class AbstractSubscription extends Subscription {
 
     async _catchAndEmitErrors(fn) {
         try {
-            return await fn()
+            await fn()
         } catch (err) {
             console.error(err)
             this.emit('error', err)
             // Swallow rejection
-            return Promise.resolve()
         }
     }
 
@@ -257,9 +255,29 @@ export default class AbstractSubscription extends Subscription {
         }
     }
 
+    /**
+     * Ensures validations resolve in order that they were triggered
+     */
+    async _queuedValidate(msg, verifyFn) {
+        // wait for previous validation (if any)
+        const queue = Promise.all([
+            this.validationQueue,
+            // kick off job in parallel
+            AbstractSubscription.validate(msg, verifyFn),
+        ]).then((value) => {
+            this.validationQueue = null // clean up (allow gc)
+            return value
+        }, (err) => {
+            this.validationQueue = null // clean up (allow gc)
+            throw err
+        })
+        this.validationQueue = queue
+        return queue
+    }
+
     async _handleMessage(msg, verifyFn) {
-        await AbstractSubscription.validate(msg, verifyFn)
-        this.emit('message received')
+        await this._queuedValidate(msg, verifyFn)
+        this.emit('message received', msg)
         if (this.orderingUtil) {
             this.orderingUtil.add(msg)
         } else {
@@ -267,5 +285,6 @@ export default class AbstractSubscription extends Subscription {
         }
     }
 }
+
 AbstractSubscription.defaultUnableToDecrypt = defaultUnableToDecrypt
 AbstractSubscription.MAX_NB_GROUP_KEY_REQUESTS = MAX_NB_GROUP_KEY_REQUESTS
