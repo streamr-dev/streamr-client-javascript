@@ -16,13 +16,13 @@ export default class SubscribedStreamPartition {
         this.subscriptions = {}
         this.getStream = memoize(this.getStream.bind(this), memoizeOpts)
         this.validator = new StreamMessageValidator({
-            getStream: this.getStream.bind(this),
-            isPublisher: async (publisherId, _streamId) => (
+            getStream: this.getStream,
+            isPublisher: memoize(async (publisherId, _streamId) => (
                 this._client.isStreamPublisher(_streamId, publisherId)
-            ),
-            isSubscriber: async (ethAddress, _streamId) => (
+            ), memoizeOpts),
+            isSubscriber: memoize(async (ethAddress, _streamId) => (
                 this._client.isStreamSubscriber(_streamId, ethAddress)
-            ),
+            ), memoizeOpts),
         })
         this.getPublishers = memoize(this.getPublishers.bind(this), memoizeOpts)
         this.getSubscribers = memoize(this.getSubscribers.bind(this), memoizeOpts)
