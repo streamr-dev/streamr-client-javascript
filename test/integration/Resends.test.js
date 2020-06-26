@@ -281,7 +281,7 @@ describe('StreamrClient resends', () => {
                 receivedMessages.push(message)
             })
 
-            sub.on('subscribed', async () => {
+            sub.once('subscribed', async () => {
                 for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
                     const message = {
                         msg: uid('message'),
@@ -299,7 +299,7 @@ describe('StreamrClient resends', () => {
 
         it('long resend', async (done) => {
             const LONG_RESEND = 10000
-            publishedMessages = []
+            const publishedMessages2 = []
 
             stream = await client.createStream({
                 name: uid('resends')
@@ -312,7 +312,7 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-await-in-loop
                 await client.publish(stream.id, message)
-                publishedMessages.push(message)
+                publishedMessages2.push(message)
             }
 
             await wait(30000)
@@ -322,25 +322,22 @@ describe('StreamrClient resends', () => {
             await client.ensureConnected()
             const receivedMessages = []
 
-            const sub = await client.resend(
-                {
-                    stream: stream.id,
-                    resend: {
-                        from: {
-                            timestamp: 0,
-                        },
+            const sub = await client.resend({
+                stream: stream.id,
+                resend: {
+                    from: {
+                        timestamp: 0,
                     },
                 },
-                (message) => {
-                    receivedMessages.push(message)
-                },
-            )
+            }, (message) => {
+                receivedMessages.push(message)
+            })
 
             sub.once('resent', () => {
-                expect(receivedMessages.length).toBe(publishedMessages.length)
-                expect(publishedMessages.length).toBe(LONG_RESEND)
+                expect(receivedMessages).toEqual(publishedMessages2)
+                expect(publishedMessages2.length).toBe(LONG_RESEND)
                 done()
             })
-        }, 200000)
+        }, 300000)
     })
 })
