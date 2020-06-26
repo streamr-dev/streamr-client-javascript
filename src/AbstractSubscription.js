@@ -233,11 +233,12 @@ export default class AbstractSubscription extends Subscription {
 
     async _catchAndEmitErrors(fn) {
         try {
-            await fn()
+            return await fn()
         } catch (err) {
             console.error(err)
             this.emit('error', err)
             // Swallow rejection
+            return Promise.resolve()
         }
     }
 
