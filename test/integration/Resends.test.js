@@ -229,8 +229,7 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-loop-func
                 sub.once('resent', () => {
-                    expect(receivedMessages)
-                        .toStrictEqual(publishedMessages)
+                    expect(receivedMessages).toStrictEqual(publishedMessages)
                 })
 
                 // eslint-disable-next-line no-await-in-loop
@@ -251,7 +250,7 @@ describe('StreamrClient resends', () => {
             })
 
             // wait for resend MAX_MESSAGES
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 20000)
             expect(receivedMessages).toStrictEqual(publishedMessages)
 
             // publish after resend, realtime subscription messages
@@ -267,7 +266,7 @@ describe('StreamrClient resends', () => {
 
             await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
             expect(receivedMessages).toStrictEqual(publishedMessages)
-        }, 30000)
+        }, 40000)
 
         it('resend last using subscribe and publish realtime messages', async () => {
             const receivedMessages = []
@@ -281,7 +280,9 @@ describe('StreamrClient resends', () => {
                 receivedMessages.push(message)
             })
 
-            sub.once('subscribed', async () => {
+            sub.once('resent', async () => {
+                expect(receivedMessages).toStrictEqual(publishedMessages)
+                expect(receivedMessages).toHaveLength(MAX_MESSAGES)
                 for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
                     const message = {
                         msg: uid('message'),
@@ -293,9 +294,9 @@ describe('StreamrClient resends', () => {
                 }
             })
 
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 10000)
-            expect(receivedMessages).toEqual(publishedMessages)
-        }, 30000)
+            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 20000)
+            expect(receivedMessages).toStrictEqual(publishedMessages)
+        }, 40000)
 
         it('long resend', async (done) => {
             const LONG_RESEND = 10000
