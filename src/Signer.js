@@ -43,11 +43,12 @@ export default class Signer {
         if (!streamMessage.getTimestamp()) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        const payload = streamMessage.getPayloadToSign()
         /* eslint-disable no-param-reassign */
-        streamMessage.signature = await this.signData(payload, signatureType)
+        // set signature & publisher so getting of payload works correctly
         streamMessage.signatureType = signatureType
-        streamMessage.messageId.publisherId = this.address
+        streamMessage.messageId.publisherId = this.address // mutating the id seems bad
+        const payload = streamMessage.getPayloadToSign()
+        streamMessage.signature = await this.signData(payload, signatureType)
         /* eslint-enable no-param-reassign */
     }
 
