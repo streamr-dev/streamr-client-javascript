@@ -73,7 +73,7 @@
     "qs": "^6.9.3",
     "randomstring": "^1.1.5",
     "receptacle": "^1.3.2",
-    "streamr-client-protocol": "^5.0.0-beta.8",
+    "streamr-client-protocol": "^5.0.0-beta.9",
     "webpack-node-externals": "^1.7.2",
     "ws": "^7.2.3"
   }
