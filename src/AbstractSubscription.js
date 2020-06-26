@@ -277,7 +277,7 @@ export default class AbstractSubscription extends Subscription {
 
     async _handleMessage(msg, verifyFn) {
         await this._queuedValidate(msg, verifyFn)
-        this.emit('message received', msg)
+        this.emit('message received')
         if (this.orderingUtil) {
             this.orderingUtil.add(msg)
         } else {
