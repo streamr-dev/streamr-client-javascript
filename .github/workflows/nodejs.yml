@@ -49,16 +49,18 @@ jobs:
       - name: test-unit
         run: npm run test-unit
 
-      - name: test-integration
+      - name: setup streamr-docker-dev
         run: |
           sudo service mysql stop
           git clone https://github.com/streamr-dev/streamr-docker-dev.git
           sudo ifconfig docker0 10.200.10.1/24
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait
-          npm run test-integration
 
       - name: test-browser
         run: npm run test-browser
+
+      - name: test-integration
+        run: npm run test-integration
 
   streamr-client-testing-tool:
     needs: [test, eslint]
