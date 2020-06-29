@@ -40,6 +40,9 @@ jobs:
     - name: test-build
       run: npm run build && npm run install-example && npm run build-example
 
+    - name: test-browser
+      run: npm run test-browser
+
     - name: test-integration
       run: |
         sudo service mysql stop
