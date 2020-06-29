@@ -177,15 +177,16 @@ describe('HistoricalSubscription', () => {
 
                 const received = []
 
-                let resolver
-                const task = new Promise((resolve) => {
-                    resolver = resolve
+                let resolveLastMessageValidation
+                const lastMessageValidation = new Promise((resolve) => {
+                    resolveLastMessageValidation = resolve
                 })
 
                 const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
                     received.push(receivedMsg)
                     if (received.length === 4) {
-                        resolver()
+                        // only resolve last message when 4th message received
+                        resolveLastMessageValidation()
                     }
 
                     if (received.length === 5) {
@@ -198,7 +199,7 @@ describe('HistoricalSubscription', () => {
 
                 return Promise.all(msgs.map((m, index, arr) => sub.handleResentMessage(m, 'requestId', async () => {
                     if (index === arr.length - 1) {
-                        await task
+                        await lastMessageValidation
                     } else {
                         await wait(50)
                     }
