@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
 const { v4: uuidv4 } = require('uuid')
 
-describe('Ecosia.org Demo', () => {
+describe('StreamrClient', () => {
     const streamName = uuidv4()
 
-    before((browser) => browser.url(`http://localhost:8080?streamName=${streamName}`))
+    before((browser) => browser.url(`http://localhost:8880?streamName=${streamName}`))
 
     test('Test StreamrClient in Chrome Browser', (browser) => {
         browser

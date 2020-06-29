@@ -20,7 +20,7 @@
     "test-unit": "jest test/unit --detectOpenHandles",
     "coverage": "jest --coverage",
     "test-integration": "jest test/integration --detectOpenHandles",
-    "test-browser": "node ./test/browser/server.js browser-testing-server & node node_modules/nightwatch/bin/nightwatch ./test/browser/browser.js && pkill node",
+    "test-browser": "node ./test/browser/server.js & node node_modules/nightwatch/bin/nightwatch ./test/browser/browser.js && pkill node",
     "install-example": "cd examples/webpack && npm ci",
     "build-example": "cd examples/webpack && npm run build-with-parent"
   },
