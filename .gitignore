@@ -36,3 +36,6 @@ examples/webpack/dist/*
 .idea/dictionaries
 .idea/httpRequests
 .idea/dataSources*
+
+reports
+tests_output

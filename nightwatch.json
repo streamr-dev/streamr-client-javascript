@@ -1,21 +1,17 @@
 {
-  "src_folders" : ["tests"],
-  "output_folder" : "reports",
-
-  "selenium" : {
-    "start_process" : true,
-    "server_path" : "./node_modules/selenium-server/lib/runner/selenium-server-standalone-3.141.59.jar",
-    "log_path" : "",
-    "port" : 4444,
-    "cli_args" : {
-      "webdriver.gecko.driver" : "./bin/geckodriver"
-    }
+  "webdriver": {
+    "start_process": true,
+    "server_path": "node_modules/.bin/chromedriver",
+    "cli_args": [
+      "--verbose"
+    ],
+    "port": 9515
   },
+
   "test_settings" : {
     "default" : {
-      "desiredCapabilities": {
-        "browserName" : "firefox",
-        "acceptInsecureCerts": true
+      "desiredCapabilities" : {
+        "browserName" : "chrome"
       }
     }
   }

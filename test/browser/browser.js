@@ -1,14 +1,29 @@
-module.exports = {
-    'Searching nightwatch in youtube': function (browser) {
+/* eslint-disable no-undef */
+const { v4: uuidv4 } = require('uuid')
+
+describe('Ecosia.org Demo', () => {
+    const streamName = uuidv4()
+
+    before((browser) => browser.url(`http://localhost:8080?streamName=${streamName}`))
+
+    test('Demo test ecosia.org', (browser) => {
         browser
-            .url('http://www.youtube.com/')
-            .pause(2000)
-            .setValue('#search', 'Nightwatch js')
-            .pause(2000)
-            .keys(browser.Keys.ENTER)
-            .pause(2000)
-    },
-    after(browser) {
-        browser.end()
-    }
-}
+            .waitForElementVisible('body')
+            .assert.titleContains('Test StreamrClient in Chrome Browser')
+            .click('button[id=connect]')
+            .assert.containsText('#result', 'connected')
+            .click('button[id=create]')
+            .assert.containsText('#result', streamName)
+            .click('button[id=subscribe]')
+            .assert.containsText('#result', 'subscribed')
+            .click('button[id=publish]')
+            .assert.containsText('#result', '[{"msg":0},{"msg":1},{"msg":2},{"msg":3},{"msg":4},{"msg":5},{"msg":6},{"msg":7},{"msg":8},{"msg":9}]')
+            .pause(3000)
+            .click('button[id=resend]')
+            .assert.containsText('#result', 'Resend: [{"msg":0},{"msg":1},{"msg":2},{"msg":3},{"msg":4},{"msg":5},{"msg":6},{"msg":7},{"msg":8},{"msg":9}]')
+            .click('button[id=disconnect]')
+            .assert.containsText('#result', 'disconnected')
+    })
+
+    after((browser) => browser.end())
+})

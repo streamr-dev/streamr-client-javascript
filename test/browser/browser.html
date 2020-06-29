@@ -1,7 +1,12 @@
 <html>
+<head>
+<title>Test StreamrClient in Chrome Browser</title>
 <script src="https://code.jquery.com/jquery-3.5.0.js" integrity="sha256-r/AaFHrszJtwpe+tHyNi/XCfMxYpbsRg2Uqn0x3s2zc=" crossorigin="anonymous"></script>
-<script src="../../dist/streamr-client.web.min.js"></script>
+<script src="/static/streamr-client.web.min.js"></script>
 <script>
+    const urlParams = new URLSearchParams(window.location.search)
+    const streamName = urlParams.get('streamName')
+
     const client = new StreamrClient({
         auth: {
             apiKey: 'tester1-api-key'
@@ -12,6 +17,7 @@
         autoDisconnect: false
     })
 </script>
+</head>
 <body>
     <div id="result"></div>
     <button id="connect">Connect</button>
@@ -27,16 +33,6 @@ let messages = []
 
 const resetResults = () => $('#result').html('')
 
-function uuidv4(){
-    var dt = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (dt + Math.random()*16)%16 | 0;
-        dt = Math.floor(dt/16);
-        return (c=='x' ? r :(r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-}
-
 $('#connect').on('click', async () => {
     resetResults()
     await client.ensureConnected()
@@ -46,10 +42,10 @@ $('#connect').on('click', async () => {
 $('#create').on('click', () => {
     resetResults()
     client.createStream({
-        name: uuidv4()
+        name: streamName
     }).then((newStream) => {
         stream = newStream
-        $('#result').html(stream.id)
+        $('#result').html(stream.name)
     })
 })
 
