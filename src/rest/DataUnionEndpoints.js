@@ -144,10 +144,16 @@ export async function deployDataUnion(options) {
         name: `Join-Part-${wallet.address.slice(0, 10)}-${Date.now()}`
     })
     debug(`Stream created: ${JSON.stringify(stream.toObject())}`)
-    const res1 = await stream.grantPermission('read', null)
-    debug(`Grant read permission response from server: ${JSON.stringify(res1)}`)
-    const res2 = await stream.grantPermission('write', streamrNodeAddress)
-    debug(`Grant write permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res2)}`)
+
+    let res
+    res = await stream.grantPermission('stream_get', null)
+    debug(`Grant stream_get permission response from server: ${JSON.stringify(res)}`)
+    res = await stream.grantPermission('stream_subscribe', null)
+    debug(`Grant stream_subscribe permission response from server: ${JSON.stringify(res)}`)
+    res = await stream.grantPermission('stream_get', streamrNodeAddress)
+    debug(`Grant stream_get permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res)}`)
+    res = await stream.grantPermission('stream_publish', streamrNodeAddress)
+    debug(`Grant stream_publish permission response to ${streamrNodeAddress} from server: ${JSON.stringify(res)}`)
 
     const deployer = new ContractFactory(DataUnion.abi, DataUnion.bytecode, wallet)
     const result = await deployer.deploy(streamrOperatorAddress, stream.id, tokenAddress, blockFreezePeriodSeconds, adminFeeBN)
@@ -170,7 +176,7 @@ export async function deployDataUnion(options) {
 export async function dataUnionIsReady(dataUnionContractAddress, pollingIntervalMs = 1000, retryTimeoutMs = 60000) {
     let stats = await get(this, dataUnionContractAddress, '/stats')
     const startTime = Date.now()
-    while (stats.error && Date.now() < startTime + retryTimeoutMs) {
+    while (stats.error && Date.now() < startTime + retryTimeoutMs && (!stats.dataUnion || stats.dataUnion.state !== 'failed')) {
         debug(`Waiting for data union ${dataUnionContractAddress} to start. Status: ${JSON.stringify(stats)}`)
         await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
         stats = await get(this, dataUnionContractAddress, '/stats') // eslint-disable-line no-await-in-loop
@@ -258,7 +264,7 @@ export async function hasJoined(dataUnionContractAddress, memberAddress, polling
 
     let stats = await get(this, dataUnionContractAddress, `/members/${address}`)
     const startTime = Date.now()
-    while (stats.error && Date.now() < startTime + retryTimeoutMs) {
+    while (stats.error && Date.now() < startTime + retryTimeoutMs && (!stats.dataUnion || stats.dataUnion.state !== 'failed')) {
         debug(`Waiting for member ${address} to be accepted into data union ${dataUnionContractAddress}. Status: ${JSON.stringify(stats)}`)
         await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
         stats = await get(this, dataUnionContractAddress, `/members/${address}`) // eslint-disable-line no-await-in-loop
