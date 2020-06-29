@@ -25,7 +25,7 @@
     "build-example": "cd examples/webpack && npm run build-with-parent"
   },
   "engines": {
-    "node": ">= 10"
+    "node": ">= 12"
   },
   "author": "Streamr",
   "license": "Apache-2.0",
