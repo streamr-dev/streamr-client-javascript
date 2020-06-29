@@ -102,8 +102,8 @@ export default class SubscribedStreamPartition {
         return this.requireSignedData
     }
 
-    getSubscription(requestId) {
-        return this.subscriptions[requestId]
+    getSubscription(subscriptionId) {
+        return this.subscriptions[subscriptionId]
     }
 
     getSubscriptions() {
