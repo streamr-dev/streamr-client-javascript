@@ -6,7 +6,7 @@ describe('Ecosia.org Demo', () => {
 
     before((browser) => browser.url(`http://localhost:8080?streamName=${streamName}`))
 
-    test('Demo test ecosia.org', (browser) => {
+    test('Test StreamrClient in Chrome Browser', (browser) => {
         browser
             .waitForElementVisible('body')
             .assert.titleContains('Test StreamrClient in Chrome Browser')
