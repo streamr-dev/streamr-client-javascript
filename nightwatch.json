@@ -16,7 +16,8 @@
           "args" : [
             "--no-sandbox",
             "--headless",
-            "--disable-dev-shm-usage"]
+            "--disable-dev-shm-usage"
+          ]
         }
       }
     }
