@@ -1095,43 +1095,45 @@ describe('StreamrClient', () => {
                     })
                 }, STORAGE_DELAY + 1000)
 
-                it.skip('sends a second ResendLastRequest if no StreamMessage received and a ResendResponseNoResend received', async () => {
-                    const sub = mockSubscription({
+                it('sends a ResendLastRequest if no StreamMessage received and a ResendResponseNoResend received', async () => {
+                    const sub = client.subscribe({
                         stream: 'stream1',
                         resend: {
                             last: 5,
                         },
-                    }, () => {}).once('subscribed', async () => {
+                    }, () => {})
+                    connection.send = async (request) => {
+                        requests.push(request)
                         await wait()
-                        const lastRequest = requests[requests.length - 1]
-                        const resendResponse = new ResendResponseNoResend({
-                            streamId: sub.streamId,
-                            streamPartition: sub.streamPartition,
-                            requestId: lastRequest.requestId
-                        })
-                        connection.emitMessage(resendResponse)
-                    })
+                        if (request.type === ControlMessage.TYPES.SubscribeRequest) {
+                            connection.emitMessage(new SubscribeResponse({
+                                streamId: sub.streamId,
+                                requestId: request.requestId,
+                                streamPartition: request.streamPartition,
+                            }))
+                        }
+
+                        if (request.type === ControlMessage.TYPES.ResendLastRequest) {
+                            const resendResponse = new ResendResponseNoResend({
+                                streamId: sub.streamId,
+                                streamPartition: sub.streamPartition,
+                                requestId: request.requestId
+                            })
+                            connection.emitMessage(resendResponse)
+                        }
+                    }
 
                     await wait(STORAGE_DELAY + 200)
                     sub.stop()
-                    const lastTwoRequests = requests.slice(-2)
-                    expect(lastTwoRequests).toHaveLength(2)
-                    expect(lastTwoRequests).toEqual([
-                        new ResendLastRequest({
-                            streamId: sub.streamId,
-                            streamPartition: sub.streamPartition,
-                            requestId: lastTwoRequests[0].requestId,
-                            numberLast: 5,
-                            sessionToken,
-                        }),
-                        new ResendLastRequest({
-                            streamId: sub.streamId,
-                            streamPartition: sub.streamPartition,
-                            requestId: lastTwoRequests[1].requestId,
-                            numberLast: 5,
-                            sessionToken,
-                        }),
-                    ])
+                    expect(requests).toHaveLength(2)
+                    const lastRequest = requests[requests.length - 1]
+                    expect(lastRequest).toEqual(new ResendLastRequest({
+                        streamId: sub.streamId,
+                        streamPartition: sub.streamPartition,
+                        requestId: lastRequest.requestId,
+                        numberLast: 5,
+                        sessionToken,
+                    }))
                 }, STORAGE_DELAY + 1000)
 
                 it('throws if multiple resend options are given', () => {
