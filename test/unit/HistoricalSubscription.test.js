@@ -168,6 +168,43 @@ describe('HistoricalSubscription', () => {
                     return true
                 })))
             })
+
+            it('does not wait for future messages before handling message', (done) => {
+                const msgs = [1, 2, 3, 4, 5].map((timestamp) => createMsg(
+                    timestamp,
+                    timestamp === 1 ? 0 : timestamp - 1,
+                ))
+
+                const received = []
+
+                let resolver
+                const task = new Promise((resolve) => {
+                    resolver = resolve
+                })
+
+                const sub = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), (content, receivedMsg) => {
+                    received.push(receivedMsg)
+                    if (received.length === 4) {
+                        resolver()
+                    }
+
+                    if (received.length === 5) {
+                        expect(received).toEqual(msgs)
+                        done()
+                    }
+                }, {
+                    last: 5,
+                })
+
+                return Promise.all(msgs.map((m, index, arr) => sub.handleResentMessage(m, 'requestId', async () => {
+                    if (index === arr.length - 1) {
+                        await task
+                    } else {
+                        await wait(50)
+                    }
+                    return true
+                })))
+            })
         })
 
         describe('duplicate handling', () => {
