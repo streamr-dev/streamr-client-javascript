@@ -83,51 +83,7 @@ describe('KeyExchangeUtil', () => {
         })
     })
 
-    describe('isValidSubscriber', () => {
-        it('should return cache result if cache hit', async () => {
-            const valid = await util.isValidSubscriber('streamId', 'subscriber2')
-            expect(valid).toBe(true)
-            expect(client.getStreamSubscribers.calledOnce).toBeTruthy()
-            expect(client.isStreamSubscriber.notCalled).toBeTruthy()
-        })
-
-        it('should fetch if cache miss and store result in cache', async () => {
-            const valid4 = await util.isValidSubscriber('streamId', 'subscriber4')
-            expect(valid4).toBe(true)
-            const valid5 = await util.isValidSubscriber('streamId', 'subscriber5')
-            expect(valid5).toBe(false)
-            // calling the function again should use the cache
-            await util.isValidSubscriber('streamId', 'subscriber4')
-            await util.isValidSubscriber('streamId', 'subscriber5')
-            expect(client.getStreamSubscribers.calledOnce).toBeTruthy()
-            expect(client.isStreamSubscriber.calledTwice).toBeTruthy()
-        })
-    })
-
     describe('handleGroupKeyRequest', () => {
-        it('should reject unsigned response', async (done) => {
-            const requestId = uid('requestId')
-            const streamMessage = new StreamMessage({
-                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber2', ''),
-                prevMsgRef: null,
-                content: {
-                    streamId: 'streamId',
-                    publicKey: 'rsa-public-key',
-                    requestId,
-                },
-                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
-                signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
-                signature: null,
-            })
-
-            await util.handleGroupKeyRequest(streamMessage).catch((err) => {
-                expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
-                expect(err.message).toBe('Received unsigned group key request (the public key must be signed to avoid MitM attacks).')
-                done()
-            })
-        })
-
         it('should reject request for a stream for which the client does not have a group key', async (done) => {
             const requestId = uid('requestId')
             const streamMessage = new StreamMessage({
@@ -147,29 +103,6 @@ describe('KeyExchangeUtil', () => {
             await util.handleGroupKeyRequest(streamMessage).catch((err) => {
                 expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
                 expect(err.message).toBe('Received group key request for stream \'wrong-streamId\' but no group key is set')
-                done()
-            })
-        })
-
-        it('should reject request from invalid subscriber', async (done) => {
-            const requestId = uid('requestId')
-            const streamMessage = new StreamMessage({
-                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'subscriber5', ''),
-                prevMsgRef: null,
-                content: {
-                    streamId: 'streamId',
-                    publicKey: 'rsa-public-key',
-                    requestId,
-                },
-                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
-                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
-                signature: 'signature',
-            })
-
-            await util.handleGroupKeyRequest(streamMessage).catch((err) => {
-                expect(err).toBeInstanceOf(InvalidGroupKeyRequestError)
-                expect(err.message).toBe('Received group key request for stream \'streamId\' from invalid address \'subscriber5\'')
                 done()
             })
         })
@@ -297,34 +230,6 @@ describe('KeyExchangeUtil', () => {
     })
 
     describe('handleGroupKeyResponse', () => {
-        it('should reject unsigned response', async (done) => {
-            const requestId = uid('requestId')
-            const streamMessage = new StreamMessage({
-                messageId: new MessageIDStrict('clientInboxAddress', 0, Date.now(), 0, 'publisherId', ''),
-                prevMsgRef: null,
-                content: {
-                    streamId: 'streamId',
-                    requestId,
-                    keys: [{
-                        groupKey: 'encrypted-group-key',
-                        start: 54256,
-                    }],
-                },
-                contentType: StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.RSA,
-                signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
-                signature: null,
-            })
-
-            try {
-                util.handleGroupKeyResponse(streamMessage)
-            } catch (err) {
-                expect(err).toBeInstanceOf(InvalidGroupKeyResponseError)
-                expect(err.message).toBe('Received unsigned group key response (it must be signed to avoid MitM attacks).')
-                done()
-            }
-        })
-
         it('should reject response for a stream to which the client is not subscribed', async (done) => {
             const requestId = uid('requestId')
             const streamMessage = new StreamMessage({

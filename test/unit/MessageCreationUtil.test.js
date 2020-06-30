@@ -342,7 +342,7 @@ describe('MessageCreationUtil', () => {
             }), sinon.stub().resolves(stream))
 
             await util.createGroupKeyRequest({
-                publisherAddress: 'publisherId',
+                messagePublisherAddress: 'publisherId',
                 streamId: 'streamId',
                 publicKey: 'rsaPublicKey',
                 start: 1354155,
@@ -369,7 +369,7 @@ describe('MessageCreationUtil', () => {
             }), sinon.stub().resolves(stream))
 
             const streamMessage = await util.createGroupKeyRequest({
-                publisherAddress: 'publisherId',
+                messagePublisherAddress: 'publisherId',
                 streamId: 'streamId',
                 publicKey: 'rsaPublicKey',
                 start: 1354155,
