@@ -298,28 +298,12 @@ export default class StreamrClient extends EventEmitter {
             const publisherId = await this.getPublisherId()
             const streamId = KeyExchangeUtil.getKeyExchangeStreamId(publisherId)
             this.subscribe(streamId, async (parsedContent, streamMessage) => {
-                try {
-                    if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
-                        if (this.keyExchangeUtil) {
+                if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_REQUEST) {
+                    if (this.keyExchangeUtil) {
+                        try {
                             await this.keyExchangeUtil.handleGroupKeyRequest(streamMessage)
-                        }
-                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
-                        if (this.keyExchangeUtil) {
-                            this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
-                        }
-                    } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_ERROR_RESPONSE) {
-                        debug('WARN: Received error of type %s from %s: %s',
-                            streamMessage.getParsedContent().code, streamMessage.getPublisherId(), streamMessage.getParsedContent().message)
-                    } else {
-                        throw new InvalidContentTypeError(`Cannot handle message with content type: ${streamMessage.contentType}`)
-                    }
-                } catch (error) {
-                    if (error instanceof InvalidGroupKeyRequestError
-                        || error instanceof InvalidGroupKeyResponseError
-                        || error instanceof InvalidContentTypeError) {
-                        debug('WARN: %s', error.message)
-                        // we don't notify the error to the originator if the message is unauthenticated.
-                        if (streamMessage.signature) {
+                        } catch (error) {
+                            debug('WARN: %s', error.message)
                             const msg = streamMessage.getParsedContent()
                             const errorMessage = await this.msgCreationUtil.createErrorMessage({
                                 destinationAddress: streamId,
@@ -329,9 +313,16 @@ export default class StreamrClient extends EventEmitter {
                             })
                             this.publishStreamMessage(errorMessage)
                         }
-                    } else {
-                        throw error
                     }
+                } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_RESPONSE_SIMPLE) {
+                    if (this.keyExchangeUtil) {
+                        this.keyExchangeUtil.handleGroupKeyResponse(streamMessage)
+                    }
+                } else if (streamMessage.contentType === StreamMessage.CONTENT_TYPES.GROUP_KEY_ERROR_RESPONSE) {
+                    debug('WARN: Received error of type %s from %s: %s',
+                        streamMessage.getParsedContent().code, streamMessage.getPublisherId(), streamMessage.getParsedContent().message)
+                } else {
+                    throw new InvalidContentTypeError(`Cannot handle message with content type: ${streamMessage.contentType}`)
                 }
             })
         }
@@ -556,11 +547,11 @@ export default class StreamrClient extends EventEmitter {
             debug('done event for sub %d', sub.id)
             this.unsubscribe(sub)
         })
-        sub.on('groupKeyMissing', async (publisherId, start, end) => {
+        sub.on('groupKeyMissing', async (messagePublisherAddress, start, end) => {
             if (this.encryptionUtil) {
                 await this.encryptionUtil.onReady()
                 const streamMessage = await this.msgCreationUtil.createGroupKeyRequest({
-                    publisherAddress: publisherId,
+                    messagePublisherAddress,
                     streamId: sub.streamId,
                     publicKey: this.encryptionUtil.getPublicKey(),
                     start,
@@ -830,8 +821,8 @@ export default class StreamrClient extends EventEmitter {
                 streamPartition: sub.streamPartition,
                 requestId,
                 fromMsgRef: new MessageRef(options.from.timestamp, options.from.sequenceNumber),
-                publisherId: options.publisherId || null,
-                msgChainId: options.msgChainId || null,
+                publisherId: options.publisherId,
+                msgChainId: options.msgChainId,
                 sessionToken,
             })
         } else if (options.from && options.to) {
@@ -841,8 +832,8 @@ export default class StreamrClient extends EventEmitter {
                 requestId,
                 fromMsgRef: new MessageRef(options.from.timestamp, options.from.sequenceNumber),
                 toMsgRef: new MessageRef(options.to.timestamp, options.to.sequenceNumber),
-                publisherId: options.publisherId || null,
-                msgChainId: options.msgChainId || null,
+                publisherId: options.publisherId,
+                msgChainId: options.msgChainId,
                 sessionToken,
             })
         }

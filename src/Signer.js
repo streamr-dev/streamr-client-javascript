@@ -16,10 +16,10 @@ export default class Signer {
         const { privateKey, provider } = this.options
         if (privateKey) {
             this.address = ethers.utils.computeAddress(privateKey)
+            const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
+                ? privateKey.slice(2) // strip leading 0x
+                : privateKey
             this.sign = async (d) => {
-                const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
-                    ? privateKey.slice(2) // strip leading 0x
-                    : privateKey
                 return SigningUtil.sign(d, key)
             }
         } else if (provider) {
@@ -46,7 +46,7 @@ export default class Signer {
         /* eslint-disable no-param-reassign */
         // set signature & publisher so getting of payload works correctly
         streamMessage.signatureType = signatureType
-        streamMessage.messageId.publisherId = this.address // mutating the id seems bad
+        streamMessage.messageId.publisherId = this.address // changing the id seems bad
         const payload = streamMessage.getPayloadToSign()
         streamMessage.signature = await this.signData(payload, signatureType)
         /* eslint-enable no-param-reassign */
