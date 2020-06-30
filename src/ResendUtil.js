@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import { ControlLayer } from 'streamr-client-protocol'
+
 import { uuid } from './utils'
 
 const { ControlMessage } = ControlLayer
