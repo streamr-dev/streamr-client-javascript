@@ -1,6 +1,7 @@
 import sinon from 'sinon'
 
 import authFetch from '../../src/rest/authFetch'
+import { uuid } from '../../src/utils'
 
 const express = require('express')
 
@@ -66,6 +67,19 @@ describe('utils', () => {
             const res = await authFetch(baseUrl + testUrl, session)
             expect(session.getSessionToken.calledTwice).toBeTruthy()
             expect(res.test).toBeTruthy()
+        })
+    })
+
+    describe('uuid', () => {
+        it('generates different ids', () => {
+            expect(uuid('test')).not.toEqual(uuid('test'))
+        })
+        it('includes text', () => {
+            expect(uuid('test')).toContain('test')
+        })
+        it('increments', () => {
+            const uid = uuid('test') // generate new text to ensure count starts at 1
+            expect(uuid(uid) < uuid(uid)).toBeTruthy()
         })
     })
 })

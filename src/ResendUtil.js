@@ -1,20 +1,18 @@
 import EventEmitter from 'eventemitter3'
 import { ControlLayer } from 'streamr-client-protocol'
-import uniqueId from 'lodash.uniqueid'
+import { uuid } from './utils'
 
 const { ControlMessage } = ControlLayer
-
-const uuid = `p${process.pid != null ? process.pid : Date.now()}`
 
 export default class ResendUtil extends EventEmitter {
     constructor() {
         super()
         this.subForRequestId = {}
-        this.id = uniqueId(`${uuid}.client`)
     }
 
+    /* eslint-disable-next-line class-methods-use-this */
     generateRequestId() {
-        return uniqueId(`${this.id}-r`)
+        return uuid('r')
     }
 
     _subForRequestIdExists(requestId) {

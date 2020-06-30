@@ -4,7 +4,6 @@ import Receptacle from 'receptacle'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { ethers } from 'ethers'
-import uniqueId from 'lodash.uniqueid'
 
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
@@ -13,8 +12,7 @@ import KeyExchangeUtil from './KeyExchangeUtil'
 import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
-
-const uuid = (prefix) => uniqueId(`p${process.pid != null ? process.pid : Date.now()}.${prefix}`)
+import { uuid } from './utils'
 
 const { StreamMessage, MessageID, MessageRef } = MessageLayer
 const { getKeyExchangeStreamId } = KeyExchangeUtil
@@ -160,7 +158,7 @@ export default class MessageCreationUtil {
             throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
         }
         const publisherId = await this.getPublisherId()
-        const requestId = uuid(`GroupKeyRequest.${messagePublisherAddress}.${streamId}`)
+        const requestId = uuid('GroupKeyRequest')
         const data = {
             streamId,
             requestId,
