@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 
 import { ethers } from 'ethers'
-import { waitForCondition } from 'streamr-test-utils'
+import { wait, waitForCondition } from 'streamr-test-utils'
 
 import StreamrClient from '../../src'
 import { uid } from '../utils'
@@ -16,6 +16,50 @@ const createClient = (opts = {}) => new StreamrClient({
     autoDisconnect: false,
     ...config.clientOptions,
     ...opts,
+})
+
+describe('key exchange failure', () => {
+    let client
+    afterEach(() => {
+        jest.restoreAllMocks()
+        if (client) {
+            client.ensureDisconnected()
+        }
+    })
+
+    it('can successfully send error', async () => {
+        client = new StreamrClient({
+            auth: {
+                privateKey: ethers.Wallet.createRandom().privateKey
+            },
+            ...config.clientOptions,
+            autoConnect: false,
+            autoDisconnect: false,
+        })
+
+        const error = new Error('expected error')
+        jest.spyOn(client.keyExchangeUtil, 'handleGroupKeyRequest').mockImplementation(async () => {
+            throw error
+        })
+        await client.ensureConnected()
+
+        const groupKey = crypto.randomBytes(32)
+        const msg = {
+            msg: uid('msg'),
+        }
+
+        const stream = await client.createStream({
+            name: uid('stream')
+        })
+        const messages = []
+        const sub = client.subscribe(stream.id, (message) => {
+            messages.push(message)
+        })
+        await new Promise((resolve) => sub.once('subscribed', resolve))
+        await client.publish(stream.id, msg, Date.now(), null, groupKey)
+        await wait(5000)
+        // TODO assert correct behaviour? currently doesn't even get here
+    }, 10000)
 })
 
 describe('group key', () => {
