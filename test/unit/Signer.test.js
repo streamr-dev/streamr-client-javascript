@@ -64,10 +64,6 @@ describe('Signer', () => {
             field: 'some-data',
         }
         const timestamp = 1529549961116
-        const correctSignatureV30AndV31 = '0x62b340bd136726195f9ee9ea58d9e2a58aab48f89c80f5c6d107e87143bf3c'
-            + 'f853ec65e87b38712a2e0f051b62fc2d3064e693df5a46fade3619e592681ad8de1c'
-        const wrongSignature = '0x3d5c221ebed6bf75ecd0ca8751aa18401ac60561034e3b2889dfd7bbc0a2ff3c5f1'
-            + 'c5239113f3fac5b648ab665d152ecece1daaafdd3d94309c2b822ec28369e1c'
 
         beforeEach(() => {
             signer = new Signer({
@@ -124,47 +120,6 @@ describe('Signer', () => {
             expect(streamMessage.signature).toBe(expectedSignature)
             expect(streamMessage.getPublisherId()).toBe(signer.address)
             expect(streamMessage.signatureType).toBe(StreamMessage.SIGNATURE_TYPES.ETH)
-        })
-
-        it('Should verify correct signature (V31)', async () => {
-            const signedStreamMessage = new StreamMessage({
-                version: 31,
-                messageId: new MessageID(streamId, 0, timestamp, 0, signer.address, 'chain-id'),
-                prevMsgRef: null,
-                content: data,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
-                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
-                signature: correctSignatureV30AndV31,
-            })
-            expect(signedStreamMessage.signature).toBe(correctSignatureV30AndV31)
-            expect(await Signer.verifyStreamMessage(signedStreamMessage)).toBe(true)
-        })
-
-        it('Should verify correct signature (V30)', async () => {
-            const signedStreamMessage = new StreamMessage({
-                version: 30,
-                messageId: new MessageID(streamId, 0, timestamp, 0, signer.address, 'chain-id'),
-                prevMsgRef: null,
-                content: data,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
-                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
-                signature: correctSignatureV30AndV31,
-            })
-            expect(signedStreamMessage.signature).toBe(correctSignatureV30AndV31)
-            expect(await Signer.verifyStreamMessage(signedStreamMessage)).toBe(true)
-        })
-
-        it('Should return false if incorrect signature (V31)', async () => {
-            const wrongStreamMessage = new StreamMessage({
-                version: 31,
-                messageId: new MessageID(streamId, 0, timestamp, 0, signer.address, 'chain-id'),
-                prevMsgRef: new MessageRef(timestamp - 10, 0),
-                content: data,
-                encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
-                signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
-                signature: wrongSignature,
-            })
-            expect(await Signer.verifyStreamMessage(wrongStreamMessage)).toBe(false)
         })
     })
 })

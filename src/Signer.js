@@ -52,12 +52,6 @@ export default class Signer {
         /* eslint-enable no-param-reassign */
     }
 
-    static async verifyStreamMessage(msg) {
-        const result = await SigningUtil.verify(msg.getPublisherId(), msg.getPayloadToSign(), msg.signature)
-        debug('verifyStreamMessage: pass: %o, message: %o', result, msg)
-        return result
-    }
-
     static createSigner(options, publishWithSignature) {
         if (publishWithSignature === 'never') {
             return undefined

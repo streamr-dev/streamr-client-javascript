@@ -157,7 +157,7 @@ describe('SubscribedStreamPartition', () => {
                 })
 
                 await signer.signStreamMessage(msg)
-                const spiedVerifyStreamMessage = sinon.spy(Signer, 'verifyStreamMessage')
+                const spiedVerifyStreamMessage = sinon.spy(subscribedStreamPartition.validator, 'validate')
                 subscribedStreamPartition = new SubscribedStreamPartition(setupClientAndStream('auto', true).client, 'streamId')
                 const valid = await subscribedStreamPartition.verifyStreamMessage(msg)
                 expect(valid).toBe(false)
