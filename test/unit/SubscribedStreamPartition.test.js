@@ -159,8 +159,9 @@ describe('SubscribedStreamPartition', () => {
                 await signer.signStreamMessage(msg)
                 const spiedVerifyStreamMessage = sinon.spy(subscribedStreamPartition.validator, 'validate')
                 subscribedStreamPartition = new SubscribedStreamPartition(setupClientAndStream('auto', true).client, 'streamId')
-                const valid = await subscribedStreamPartition.verifyStreamMessage(msg)
-                expect(valid).toBe(false)
+                await expect(() => (
+                    subscribedStreamPartition.verifyStreamMessage(msg)
+                )).rejects.toThrow()
                 expect(spiedVerifyStreamMessage.notCalled).toBeTruthy()
                 spiedVerifyStreamMessage.restore()
             })
@@ -196,8 +197,7 @@ describe('SubscribedStreamPartition', () => {
             afterEach(async () => {
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
                 spiedVerifyStreamMessage = sinon.spy(subscribedStreamPartition.validator, 'validate')
-                const valid = await subscribedStreamPartition.verifyStreamMessage(msg)
-                expect(valid).toBe(true)
+                await subscribedStreamPartition.verifyStreamMessage(msg)
                 expect(spiedExpectedCall()).toBeTruthy()
                 spiedVerifyStreamMessage.restore()
             })
@@ -246,7 +246,13 @@ describe('SubscribedStreamPartition', () => {
 
             afterEach(async () => {
                 subscribedStreamPartition = new SubscribedStreamPartition(client, 'streamId')
-                const valid = await subscribedStreamPartition.verifyStreamMessage(msg)
+                let valid
+                try {
+                    await subscribedStreamPartition.verifyStreamMessage(msg)
+                    valid = true
+                } catch (err) {
+                    valid = false
+                }
                 expect(valid).toBe(expectedValid)
             })
 

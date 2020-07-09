@@ -30,6 +30,7 @@ describe('CombinedSubscription', () => {
         const sub = new CombinedSubscription(msg1.getStreamId(), msg1.getStreamPartition(), sinon.stub(), {
             last: 1
         }, {}, 100, 100)
+        sub.on('error', done)
         sub.addPendingResendRequestId('requestId')
         sub.on('gap', (from, to, publisherId) => {
             expect(from.timestamp).toEqual(1)

@@ -2,7 +2,6 @@ import debugFactory from 'debug'
 import { Errors, Utils } from 'streamr-client-protocol'
 
 import VerificationFailedError from './errors/VerificationFailedError'
-import InvalidSignatureError from './errors/InvalidSignatureError'
 import Subscription from './Subscription'
 import UnableToDecryptError from './errors/UnableToDecryptError'
 
@@ -242,29 +241,16 @@ export default class AbstractSubscription extends Subscription {
         }
     }
 
-    static async validate(msg, verifyFn) {
-        // Make sure the verification is successful before proceeding
-        let valid
-        try {
-            valid = await verifyFn(msg)
-        } catch (cause) {
-            throw new VerificationFailedError(msg, cause)
-        }
-
-        if (!valid) {
-            throw new InvalidSignatureError(msg)
-        }
-    }
-
     /**
      * Ensures validations resolve in order that they were triggered
      */
+
     async _queuedValidate(msg, verifyFn) {
         // wait for previous validation (if any)
         const queue = Promise.all([
             this.validationQueue,
             // kick off job in parallel
-            AbstractSubscription.validate(msg, verifyFn),
+            verifyFn(msg),
         ]).then((value) => {
             this.validationQueue = null // clean up (allow gc)
             return value

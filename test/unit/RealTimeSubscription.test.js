@@ -4,8 +4,6 @@ import sinon from 'sinon'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 
 import RealTimeSubscription from '../../src/RealTimeSubscription'
-import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
-import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
 import AbstractSubscription from '../../src/AbstractSubscription'
@@ -61,31 +59,11 @@ describe('RealTimeSubscription', () => {
                     sub.stop()
                 })
 
-                describe('when message verification returns false', () => {
-                    it('does not call the message handler', async () => (
-                        sub.handleBroadcastMessage(msg, async () => false)
-                    ))
-
-                    it('prints to standard error stream', async () => {
-                        await sub.handleBroadcastMessage(msg, async () => false)
-                        expect(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError))).toBeTruthy()
-                    })
-
-                    it('emits an error event', async (done) => {
-                        sub.once('error', (err) => {
-                            expect(err instanceof InvalidSignatureError).toBeTruthy()
-                            done()
-                        })
-                        return sub.handleBroadcastMessage(msg, async () => false)
-                    })
-                })
-
                 describe('when message verification throws', () => {
                     it('emits an error event', async (done) => {
                         const error = new Error('test error')
                         sub.once('error', (err) => {
-                            expect(err instanceof VerificationFailedError).toBeTruthy()
-                            expect(err.cause).toBe(error)
+                            expect(err).toBe(error)
                             done()
                         })
                         await sub.handleBroadcastMessage(msg, () => { throw error })
@@ -159,31 +137,11 @@ describe('RealTimeSubscription', () => {
                     sub.stop()
                 })
 
-                describe('when message verification returns false', () => {
-                    it('does not call the message handler', async () => (
-                        sub.handleResentMessage(msg, 'requestId', async () => false)
-                    ))
-
-                    it('prints to standard error stream', async () => {
-                        await sub.handleResentMessage(msg, 'requestId', async () => false)
-                        expect(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError))).toBeTruthy()
-                    })
-
-                    it('emits an error event', async (done) => {
-                        sub.once('error', (err) => {
-                            expect(err instanceof InvalidSignatureError).toBeTruthy()
-                            done()
-                        })
-                        return sub.handleResentMessage(msg, 'requestId', async () => false)
-                    })
-                })
-
                 describe('when message verification throws', () => {
                     it('emits an error event', async (done) => {
                         const error = new Error('test error')
                         sub.once('error', (err) => {
-                            expect(err instanceof VerificationFailedError).toBeTruthy()
-                            expect(err.cause).toBe(error)
+                            expect(err).toBe(error)
                             done()
                         })
                         return sub.handleResentMessage(msg, 'requestId', () => { throw error })

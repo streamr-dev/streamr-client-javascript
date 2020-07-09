@@ -1,6 +1,8 @@
 import { Utils, MessageLayer } from 'streamr-client-protocol'
 import memoize from 'promise-memoize'
 
+import SignatureRequiredError from './errors/SignatureRequiredError'
+
 const { StreamMessageValidator } = Utils
 const { StreamMessage } = MessageLayer
 
@@ -58,27 +60,18 @@ export default class SubscribedStreamPartition {
     }
 
     async verifyStreamMessage(msg) {
-        const { options } = this._client
         // Check special cases controlled by the verifySignatures policy
-        if (options.verifySignatures === 'always' && !msg.signature) {
-            return false
+        const { options } = this._client
+        if (options.verifySignatures === 'never' && msg.contentType === StreamMessage.CONTENT_TYPES.MESSAGE) {
+            return // no validation required
         }
 
-        if (options.verifySignatures === 'never' && msg.contentType === StreamMessage.CONTENT_TYPES.MESSAGE) {
-            return true
+        if (options.verifySignatures === 'always' && !msg.signature) {
+            throw new SignatureRequiredError(msg)
         }
 
         // In all other cases validate using the validator
-        try {
-            await this.validator.validate(msg)
-        } catch (err) {
-            // store error for possible introspection later
-            // doesn't ever clear value because can't be async safe without complication
-            this.lastValidationError = err
-            return false
-        }
-
-        return true
+        await this.validator.validate(msg) // will throw with appropriate validation failure
     }
 
     async getStream() {

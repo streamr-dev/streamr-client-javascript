@@ -5,11 +5,8 @@ import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import { wait } from 'streamr-test-utils'
 
 import HistoricalSubscription from '../../src/HistoricalSubscription'
-import InvalidSignatureError from '../../src/errors/InvalidSignatureError'
-import VerificationFailedError from '../../src/errors/VerificationFailedError'
 import EncryptionUtil from '../../src/EncryptionUtil'
 import Subscription from '../../src/Subscription'
-import { uid } from '../utils'
 
 const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 
@@ -66,38 +63,11 @@ describe('HistoricalSubscription', () => {
                     sub.stop()
                 })
 
-                describe('when message verification returns false', () => {
-                    it('does not call the message handler', async () => {
-                        const messageHandler = jest.fn()
-                        const sub1 = new HistoricalSubscription(msg.getStreamId(), msg.getStreamPartition(), messageHandler, {
-                            last: 1,
-                        })
-                        await sub1.handleResentMessage(msg, 'requestId', async () => false)
-                        await wait(0)
-                        expect(messageHandler).not.toHaveBeenCalled()
-                    })
-
-                    it('prints to standard error stream', async (done) => {
-                        await sub.handleResentMessage(msg, 'requestId', async () => false)
-                        expect(console.error.calledWith(sinon.match.instanceOf(InvalidSignatureError))).toBeTruthy()
-                        done()
-                    })
-
-                    it('emits an error event', async (done) => {
-                        sub.once('error', (err) => {
-                            expect(err instanceof InvalidSignatureError).toBeTruthy()
-                            done()
-                        })
-                        return sub.handleResentMessage(msg, 'requestId', async () => false)
-                    })
-                })
-
                 describe('when message verification throws', () => {
                     it('emits an error event', async (done) => {
                         const error = new Error('test error')
                         sub.once('error', (err) => {
-                            expect(err instanceof VerificationFailedError).toBeTruthy()
-                            expect(err.cause).toBe(error)
+                            expect(err).toBe(error)
                             done()
                         })
                         return sub.handleResentMessage(msg, 'requestId', sinon.stub().throws(error))
