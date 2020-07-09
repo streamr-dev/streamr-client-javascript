@@ -32,9 +32,7 @@ import EncryptionUtil from './EncryptionUtil'
 import KeyExchangeUtil from './KeyExchangeUtil'
 import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
-import InvalidGroupKeyResponseError from './errors/InvalidGroupKeyResponseError'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
-import InvalidGroupKeyRequestError from './errors/InvalidGroupKeyRequestError'
 
 export default class StreamrClient extends EventEmitter {
     constructor(options, connection) {

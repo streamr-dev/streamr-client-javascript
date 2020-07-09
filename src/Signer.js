@@ -5,8 +5,6 @@ const { StreamMessage } = MessageLayer
 const { SigningUtil } = Utils
 const { SIGNATURE_TYPES } = StreamMessage
 
-const debug = require('debug')('StreamrClient::Signer')
-
 export default class Signer {
     constructor(options = {}) {
         // copy options to prevent possible later mutation
@@ -48,6 +46,7 @@ export default class Signer {
         streamMessage.signatureType = signatureType
         streamMessage.messageId.publisherId = this.address // changing the id seems bad
         const payload = streamMessage.getPayloadToSign()
+        // eslint-disable-next-line require-atomic-updates
         streamMessage.signature = await this.signData(payload, signatureType)
         /* eslint-enable no-param-reassign */
     }
