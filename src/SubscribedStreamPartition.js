@@ -1,7 +1,8 @@
-import { Utils } from 'streamr-client-protocol'
+import { Utils, MessageLayer } from 'streamr-client-protocol'
 import memoize from 'promise-memoize'
 
 const { StreamMessageValidator } = Utils
+const { StreamMessage } = MessageLayer
 
 const memoizeOpts = {
     maxAge: 15 * 60 * 1000,
@@ -56,7 +57,18 @@ export default class SubscribedStreamPartition {
         return this._client.isStreamSubscriber(this.streamId, ethAddress)
     }
 
-    async _verifyStreamMessage(msg) {
+    async verifyStreamMessage(msg) {
+        const { options } = this._client
+        // Check special cases controlled by the verifySignatures policy
+        if (options.verifySignatures === 'always' && !msg.signature) {
+            return false
+        }
+
+        if (options.verifySignatures === 'never' && msg.contentType === StreamMessage.CONTENT_TYPES.MESSAGE) {
+            return true
+        }
+
+        // In all other cases validate using the validator
         try {
             await this.validator.validate(msg)
         } catch (err) {
@@ -65,41 +77,12 @@ export default class SubscribedStreamPartition {
             this.lastValidationError = err
             return false
         }
+
         return true
-    }
-
-    async verifyStreamMessage(msg) {
-        if (this._client.options.verifySignatures === 'never') {
-            return true
-        }
-
-        if (this._client.options.verifySignatures === 'always') {
-            if (msg.signatureType && msg.signatureType !== 0 && msg.signature) {
-                return this._verifyStreamMessage(msg)
-            }
-            return false
-        }
-
-        if (this._client.options.verifySignatures === 'auto') {
-            if (msg.signatureType && msg.signatureType !== 0 && msg.signature) { // always verify in case the message is signed
-                return this._verifyStreamMessage(msg)
-            }
-        }
-
-        return !(await this.getVerifySignatures())
     }
 
     async getStream() {
         return this._client.getStream(this.streamId)
-    }
-
-    async getVerifySignatures() {
-        if (this.requireSignedData === undefined) {
-            // use cached validator.getStream
-            const stream = await this.validator.getStream(this.streamId)
-            this.requireSignedData = stream.requireSignedData
-        }
-        return this.requireSignedData
     }
 
     getSubscription(subscriptionId) {
