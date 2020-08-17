@@ -190,10 +190,9 @@ export async function dataUnionIsReady(dataUnionContractAddress, pollingInterval
 /**
  * Add a new data union secret
  * @param {EthereumAddress} dataUnionContractAddress
- * @param {String} secret password that can be used to join the data union without manual verification
  * @param {String} name describes the secret
  */
-export async function createSecret(dataUnionContractAddress, secret, name = 'Untitled Data Union Secret') {
+export async function createSecret(dataUnionContractAddress, name = 'Untitled Data Union Secret') {
     const url = `${this.options.restUrl}/communities/${dataUnionContractAddress}/secrets`
     return authFetch(
         url,
@@ -201,8 +200,7 @@ export async function createSecret(dataUnionContractAddress, secret, name = 'Unt
         {
             method: 'POST',
             body: JSON.stringify({
-                name,
-                secret,
+                name
             }),
             headers: {
                 'Content-Type': 'application/json',

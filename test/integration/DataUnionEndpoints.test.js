@@ -12,6 +12,7 @@ const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 
 describe('DataUnionEndPoints', () => {
     let dataUnion
+    let secret
 
     let testProvider
     let adminClient
@@ -46,7 +47,8 @@ describe('DataUnionEndPoints', () => {
         log(`Deployment done for ${dataUnion.address}`)
         await dataUnion.isReady(2000, 200000)
         log(`DataUnion ${dataUnion.address} is ready to roll`)
-        await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
+        const createSecretResponse = await adminClient.createSecret(dataUnion.address, 'DataUnionEndpoints test secret')
+        secret = createSecretResponse.secret
     }, 300000)
 
     afterAll(async () => {
@@ -115,7 +117,7 @@ describe('DataUnionEndPoints', () => {
                 value: utils.parseEther('1'),
             })
 
-            const res = await memberClient.joinDataUnion(dataUnion.address, 'secret')
+            const res = await memberClient.joinDataUnion(dataUnion.address, secret)
             await memberClient.hasJoined(dataUnion.address)
             expect(res).toMatchObject({
                 state: 'ACCEPTED',
