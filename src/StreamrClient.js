@@ -46,6 +46,7 @@ export default class StreamrClient extends EventEmitter {
             // The server to connect to
             url: 'wss://streamr.network/api/v1/ws',
             restUrl: 'https://streamr.network/api/v1',
+            sidechainUrl: null, // TODO: add our default public service sidechain node
             // Automatically connect on first subscribe
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
