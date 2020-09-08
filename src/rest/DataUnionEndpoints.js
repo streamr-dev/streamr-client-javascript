@@ -517,7 +517,7 @@ function parseAddress(client, inputAddress) {
  * @return {Promise} resolves when member is in the data union (or fails with HTTP error)
  */
 export async function hasJoined(dataunionSidechainAddress, memberAddress, pollingIntervalMs = 1000, retryTimeoutMs = 60000) {
-    const address = parseAddress(memberAddress)
+    const address = parseAddress(this, memberAddress)
     const provider = getSidechainProvider(this)
     const duSidechain = new Contract(dataunionSidechainAddress, dataUnionSidechainABI, provider)
 
@@ -541,7 +541,7 @@ export async function hasJoined(dataunionSidechainAddress, memberAddress, pollin
  * @param {EthereumAddress} memberAddress (optional) if not supplied, get the stats of currently logged in StreamrClient (if auth: privateKey)
  */
 export async function getMemberStats(dataunionSidechainAddress, memberAddress) {
-    const address = parseAddress(memberAddress)
+    const address = parseAddress(this, memberAddress)
     const provider = getSidechainProvider(this)
     const duSidechain = new Contract(dataunionSidechainAddress, dataUnionSidechainABI, provider)
     // TODO: parse memberData before returning
@@ -561,7 +561,7 @@ export async function getMemberStats(dataunionSidechainAddress, memberAddress) {
  * @return {Promise<BalanceResponse>}
  */
 export async function getBalance(dataunionSidechainAddress, memberAddress) {
-    const address = parseAddress(memberAddress)
+    const address = parseAddress(this, memberAddress)
     const provider = getSidechainProvider(this)
     const duSidechain = new Contract(dataunionSidechainAddress, dataUnionSidechainABI, provider)
 
