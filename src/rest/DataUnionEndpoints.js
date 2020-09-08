@@ -332,14 +332,15 @@ export async function deployDataUnion(options) {
         [walletMainnet.address],
         duName,
     )
-    const promise = tx.wait().then(() => {
+    const promise = tx.wait().then((tr) => {
         // add method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
         const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, walletSidechain)
         duSidechain.isReady = until(
-            async () => await walletSidechain.getCode(duSidechainAddress) !== '0x',
+            async () => await walletSidechain.provider.getCode(duSidechainAddress) !== '0x',
             sidechainRetryTimeoutMs,
             sidechainPollingIntervalMs
         )
+        duSidechain.deployTxReceipt = tr
         return duSidechain
     })
 
