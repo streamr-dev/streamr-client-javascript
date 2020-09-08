@@ -20,7 +20,7 @@ import {
 } from 'ethers'
 import debug from 'debug'
 
-import until from '../utils'
+import { until } from '../utils'
 
 import authFetch, { DEFAULT_HEADERS } from './authFetch'
 
