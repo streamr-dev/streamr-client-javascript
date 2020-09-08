@@ -193,6 +193,12 @@ const dataUnionSidechainABI = [{
     stateMutability: 'view',
     type: 'function'
 }, {
+    inputs: [],
+    name: 'getStats',
+    outputs: [{ internalType: 'uint256[5]', name: '', type: 'uint256[5]' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
     name: 'getWithdrawableEarnings',
     inputs: [{ type: 'address' }],
     outputs: [{ type: 'uint256' }],
@@ -568,12 +574,17 @@ export async function getMembers(dataunionSidechainAddress) {
 export async function getDataUnionStats(dataunionSidechainAddress) {
     const provider = getSidechainProvider(this)
     const duSidechain = new Contract(dataunionSidechainAddress, dataUnionSidechainABI, provider)
-    const memberCount = await duSidechain.activeMemberCount()
-    const totalEarnings = await duSidechain.totalEarnings()
-    const totalWithdrawable = await duSidechain.totalWithdrawable()
-    const lifetimeMemberEarnings = await duSidechain.lifetimeMemberEarnings()
+    const [
+        totalEarnings,
+        totalEarningsWithdrawn,
+        memberCount,
+        lifetimeMemberEarnings,
+        joinPartAgentCount
+    ] = await duSidechain.getStats()
+    const totalWithdrawable = totalEarnings.sub(totalEarningsWithdrawn)
     return {
         memberCount,
+        joinPartAgentCount,
         totalEarnings,
         totalWithdrawable,
         lifetimeMemberEarnings,
