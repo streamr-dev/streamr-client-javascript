@@ -18,7 +18,7 @@ import {
     BigNumber,
     utils as ethersUtils,
 } from 'ethers'
-import debugFactory from 'debug'
+import debug from 'debug'
 
 import until from '../utils'
 
@@ -26,7 +26,7 @@ import authFetch, { DEFAULT_HEADERS } from './authFetch'
 
 const { computeAddress, getAddress } = ethersUtils
 
-const debug = debugFactory('StreamrClient::DataUnionEndpoints')
+const log = debug('StreamrClient::DataUnionEndpoints')
 
 /** @typedef {String} EthereumAddress */
 
@@ -332,7 +332,7 @@ export async function deployDataUnion(name, options) {
         return duSidechain
     })
 
-    debug(`Data Union "${name}" contract (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployment started`)
+    log(`Data Union "${duName}" contract (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployment started`)
     return promise
 }
 
