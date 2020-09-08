@@ -116,7 +116,7 @@ export default class MessageCreationUtil {
             messageId,
             prevMsgRef,
             content: data,
-            messageType: StreamMessage.CONTENT_TYPES.MESSAGE,
+            contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
         })
 
         if (this._signer) {
