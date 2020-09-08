@@ -156,7 +156,7 @@ describe('MessageCreationUtil', () => {
                 messageId: new MessageID(streamId, 0, timestamp, sequenceNumber, hashedUsername, msgCreationUtil.msgChainId),
                 prevMesssageRef: prevMsgRef,
                 content: pubMsg,
-                messageType: StreamMessage.MESSAGE_TYPES.MESSAGE,
+                contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
                 encryptionType: StreamMessage.ENCRYPTION_TYPES.NONE,
                 signatureType: StreamMessage.SIGNATURE_TYPES.ETH,
                 signature: 'signature',
