@@ -99,6 +99,7 @@ async function getOrThrow(...args) {
  * @property {EthereumAddress} streamrNodeAddress defaults to StreamrClient options
  * @property {EthereumAddress} streamrOperatorAddress defaults to StreamrClient options
  * @property {EthereumAddress} factoryMainnetAddress defaults to StreamrClient options
+ * @property {string} name unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
  */
 /**
  * @typedef {EthereumOptions & AdditionalDeployOptions} DeployOptions
@@ -289,14 +290,14 @@ async function getDataUnionSidechainAddress(dataUnionName, factoryMainnetAddress
 /**
  * Deploy a new DataUnion contract and create the required joinPartStream
  * Note that the Promise resolves with an ethers.js TransactionResponse, so it's only sent to the chain at that point, but not yet deployed
- * @param {string} name unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
  * @param {DeployOptions} options such as adminFee (default: 0)
  * @return {Promise<Contract>} resolves when mainnet transaction is done, has method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
  */
-export async function deployDataUnion(name, options) {
+export async function deployDataUnion(options) {
     const walletMainnet = parseMainnetWalletFromOptions(this, options)
     const walletSidechain = parseSidechainWalletFromOptions(this, options)
     const {
+        dataUnionName,
         adminFee = 0,
         tokenAddress = this.options.tokenAddress,
         factoryMainnetAddress = this.options.factoryMainnetAddress,
@@ -307,25 +308,29 @@ export async function deployDataUnion(name, options) {
     await throwIfNotContract(walletMainnet.provider, tokenAddress, 'options.tokenAddress')
     await throwIfNotContract(walletMainnet.provider, factoryMainnetAddress, 'options.factoryMainnetAddress')
 
-    if (!name) { throw new Error('Data union requires a (unique) name') }
+    let duName = dataUnionName
+    if (!duName) {
+        duName = `DataUnion-${+new Date()}`
+        log(`dataUnionName generated: ${duName}`)
+    }
 
     if (adminFee < 0 || adminFee > 1) { throw new Error('options.adminFeeFraction must be a number between 0...1, got: ' + adminFee) }
     const adminFeeBN = BigNumber.from((adminFee * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
 
     const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, walletMainnet)
 
-    const duMainnetAddress = await getDataUnionMainnetAddress(name, factoryMainnetAddress, walletMainnet)
-    const duSidechainAddress = await getDataUnionSidechainAddress(name, factoryMainnetAddress, walletMainnet)
+    const duMainnetAddress = await getDataUnionMainnetAddress(duName, factoryMainnetAddress, walletMainnet)
+    const duSidechainAddress = await getDataUnionSidechainAddress(duName, factoryMainnetAddress, walletMainnet)
 
     if (await walletMainnet.provider.getCode(duMainnetAddress) !== '0x') {
-        throw new Error(`Mainnet data union "${name}" contract ${duMainnetAddress} already exists!`)
+        throw new Error(`Mainnet data union "${duName}" contract ${duMainnetAddress} already exists!`)
     }
 
     const tx = await factoryMainnet.deployNewDataUnion(
         walletMainnet.address,
         adminFeeBN,
         [walletMainnet.address],
-        name,
+        duName,
     )
     const promise = tx.wait().then(() => {
         // add method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
