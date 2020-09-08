@@ -662,3 +662,19 @@ export async function signWithdrawTo(recipientAddress, dataunionSidechainAddress
     const signature = await wallet.signMessage(message)
     return signature
 }
+
+/**
+ * Member can sign off to "donate" specific amount of earnings to another address such that someone else
+ *   can submit the transaction (and pay for the gas)
+ * @param {BigNumber|number|string} amount that the signature is for (can't be used for less or for more)
+ * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
+ * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
+ */
+export async function signWithdrawAmountTo(amount, recipientAddress, dataunionSidechainAddress, options) {
+    const wallet = parseSidechainWalletFromOptions(this, options)
+    const duSidechain = new Contract(dataunionSidechainAddress, dataUnionSidechainABI, wallet)
+    const withdrawn = await duSidechain.getWithdrawn(wallet.address)
+    const message = recipientAddress + amount.toString(16, 64) + dataunionSidechainAddress.slice(2) + withdrawn.toString(16, 64)
+    const signature = await wallet.signMessage(message)
+    return signature
+}
