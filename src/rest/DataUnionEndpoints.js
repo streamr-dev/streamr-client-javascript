@@ -53,7 +53,7 @@ function sleep(ms) {
 }
 
 async function get(client, dataUnionContractAddress, endpoint, opts = {}) {
-    const url = `${client.options.restUrl}/communities/${dataUnionContractAddress}${endpoint}`
+    const url = `${client.options.restUrl}/dataunions/${dataUnionContractAddress}${endpoint}`
     const response = await fetch(url, {
         ...opts,
         headers: {
@@ -354,7 +354,7 @@ export async function deployDataUnion(options) {
  * @param {String} name describes the secret
  */
 export async function createSecret(dataUnionContractAddress, secret, name = 'Untitled Data Union Secret') {
-    const url = `${this.options.restUrl}/communities/${dataUnionContractAddress}/secrets`
+    const url = `${this.options.restUrl}/dataunions/${dataUnionContractAddress}/secrets`
     return authFetch(
         url,
         this.session,
@@ -479,7 +479,7 @@ export async function joinDataUnion(dataUnionContractAddress, secret) {
     }
     if (secret) { body.secret = secret }
 
-    const url = `${this.options.restUrl}/communities/${dataUnionContractAddress}/joinRequests`
+    const url = `${this.options.restUrl}/dataunions/${dataUnionContractAddress}/joinRequests`
     return authFetch(
         url,
         this.session,
