@@ -103,8 +103,25 @@ async function getOrThrow(...args) {
 /**
  * @typedef {EthereumOptions & AdditionalDeployOptions} DeployOptions
  */
-
 // TODO: gasPrice to overrides (not needed for browser, but would be useful in node.js)
+
+function getMainnetProvider(client, options = {}) {
+    if (options.provider instanceof providers.Provider) {
+        return options.provider
+    }
+
+    const mainnetUrl = options.mainnetUrl || client.options.mainnetUrl
+    if (mainnetUrl) {
+        return new providers.JsonRpcProvider(mainnetUrl)
+    }
+
+    return getDefaultProvider()
+}
+
+function getSidechainProvider(client) {
+    if (!client.options.sidechainUrl) { throw new Error('StreamrClient must be created with a sidechainUrl') }
+    return new providers.JsonRpcProvider(client.options.sidechainUrl)
+}
 
 /**
  * Get a mainnet wallet from options, e.g. by parsing something that looks like a private key
@@ -112,22 +129,19 @@ async function getOrThrow(...args) {
  * @param {EthereumOptions} options includes wallet which is Wallet or private key, or provider so StreamrClient auth: privateKey will be used
  * @returns {Wallet} "wallet with provider" that can be used to sign and send transactions
  */
-function parseWalletFromOptions(client, options = {}) {
+function parseMainnetWalletFromOptions(client, options = {}) {
     if (options.wallet instanceof Wallet) { return options.wallet }
 
+    // TODO: check metamask
+
+    const provider = getMainnetProvider(client, options)
+
     const key = typeof options.wallet === 'string' ? options.wallet : options.key || options.privateKey || client.options.auth.privateKey
-    if (key) {
-        const provider = options.provider instanceof providers.Provider ? options.provider : getDefaultProvider()
-        return new Wallet(key, provider)
+    if (!key) {
+        throw new Error("Please provide options.wallet, or options.privateKey string, if you're not authenticated using a privateKey")
     }
 
-    // TODO: check metamask before erroring!
-    throw new Error("Please provide options.wallet, or options.privateKey string, if you're not authenticated using a privateKey")
-}
-
-function getSidechainProvider(client) {
-    if (!client.options.sidechainUrl) { throw new Error('StreamrClient must be created with a sidechainUrl') }
-    return new providers.JsonRpcProvider(client.options.sidechainUrl)
+    return new Wallet(key, provider)
 }
 
 /**
@@ -274,7 +288,7 @@ async function getDataUnionSidechainAddress(dataUnionName, factoryMainnetAddress
  * @return {Promise<Contract>} resolves when mainnet transaction is done, has method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
  */
 export async function deployDataUnion(name, options) {
-    const walletMainnet = parseWalletFromOptions(this, options)
+    const walletMainnet = parseMainnetWalletFromOptions(this, options)
     const walletSidechain = parseSidechainWalletFromOptions(this, options)
     const {
         adminFee = 0,
