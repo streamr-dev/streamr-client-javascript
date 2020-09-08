@@ -278,7 +278,7 @@ const sidechainAddressCache = {}
 async function getDataUnionSidechainAddress(dataUnionName, factoryMainnetAddress, deployerWallet) {
     if (!sidechainAddressCache[dataUnionName]) {
         const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, deployerWallet)
-        const promise = getDataUnionMainnetAddress(factoryMainnet, deployerWallet.address, dataUnionName)
+        const promise = getDataUnionMainnetAddress(dataUnionName, factoryMainnetAddress, deployerWallet)
             .then((m) => factoryMainnet.sidechainAddress(m))
         sidechainAddressCache[dataUnionName] = promise
         const value = await promise
