@@ -597,6 +597,41 @@ export async function getDataUnionStats(dataunionSidechainAddress) {
     }
 }
 
+/**
+ * Figure out if given mainnet address is old DataUnion (v 1.0) or current 2.0
+ * NOTE: Current version of streamr-client-javascript can only handle current version!
+ * @param {EthereumAddress} contractAddress
+ * @returns {number} 1 for old, 2 for current, zero for "not a data union"
+ */
+export async function getDataUnionVersion(contractAddress) {
+    try {
+        const du = getMainnetContract(this)
+        const addr = await du.amb()
+        getAddress(addr) // throws if address is bad
+        return 2
+    } catch (e) {
+        // continue
+    }
+
+    try {
+        const provider = getMainnetProvider(this)
+        const du = new Contract(contractAddress, [{
+            name: 'operator',
+            inputs: [],
+            outputs: [{ type: 'address' }],
+            stateMutability: 'view',
+            type: 'function'
+        }], provider)
+        const addr = await du.operator()
+        getAddress(addr) // throws if address is bad
+        return 1
+    } catch (e) {
+        // continue
+    }
+
+    return 0
+}
+
 // //////////////////////////////////////////////////////////////////
 //          member: WITHDRAW EARNINGS
 // //////////////////////////////////////////////////////////////////
