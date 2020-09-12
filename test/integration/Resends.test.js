@@ -188,22 +188,16 @@ describe('StreamrClient resends', () => {
                 const receivedMessages = []
 
                 // eslint-disable-next-line no-await-in-loop
-                const sub = await client.resend(
-                    {
-                        stream: stream.id,
-                        resend: {
-                            last: MAX_MESSAGES,
-                        },
+                await client.resend({
+                    stream: stream.id,
+                    resend: {
+                        last: MAX_MESSAGES,
                     },
-                    (message) => {
-                        receivedMessages.push(message)
-                    },
-                )
-
-                // eslint-disable-next-line no-loop-func
-                sub.once('resent', () => {
-                    expect(receivedMessages).toStrictEqual(publishedMessages)
+                }, (message) => {
+                    receivedMessages.push(message)
                 })
+
+                expect(receivedMessages).toStrictEqual(publishedMessages)
 
                 // eslint-disable-next-line no-await-in-loop
                 await waitForCondition(() => receivedMessages.length === MAX_MESSAGES, 10000)
@@ -274,22 +268,18 @@ describe('StreamrClient resends', () => {
                 receivedMessages.push(message)
             })
 
-            sub.once('resent', async () => {
-                expect(receivedMessages).toStrictEqual(publishedMessages)
-                expect(receivedMessages).toHaveLength(MAX_MESSAGES)
-                for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
-                    const message = {
-                        msg: uid('message'),
-                    }
-
-                    // eslint-disable-next-line no-await-in-loop
-                    await client.publish(stream.id, message)
-                    publishedMessages.push(message)
-                }
-            })
-
-            await waitForCondition(() => receivedMessages.length === MAX_MESSAGES * 2, 20000)
+            await waitForEvent(sub, 'resent')
             expect(receivedMessages).toStrictEqual(publishedMessages)
+            expect(receivedMessages).toHaveLength(MAX_MESSAGES)
+            for (let i = MAX_MESSAGES; i < MAX_MESSAGES * 2; i++) {
+                const message = {
+                    msg: uid('message'),
+                }
+
+                // eslint-disable-next-line no-await-in-loop
+                await client.publish(stream.id, message)
+                publishedMessages.push(message)
+            }
         }, 40000)
 
         it('long resend', async (done) => {
@@ -319,7 +309,7 @@ describe('StreamrClient resends', () => {
             await client.ensureConnected()
             const receivedMessages = []
 
-            const sub = await client.resend({
+            await client.resend({
                 stream: stream.id,
                 resend: {
                     from: {
@@ -330,11 +320,8 @@ describe('StreamrClient resends', () => {
                 receivedMessages.push(message)
             })
 
-            sub.once('resent', () => {
-                expect(receivedMessages).toEqual(publishedMessages2)
-                expect(publishedMessages2.length).toBe(LONG_RESEND)
-                done()
-            })
+            expect(receivedMessages).toEqual(publishedMessages2)
+            expect(publishedMessages2.length).toBe(LONG_RESEND)
         }, 300000)
     })
 })

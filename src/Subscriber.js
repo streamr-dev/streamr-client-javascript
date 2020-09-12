@@ -34,6 +34,7 @@ export default class Subscriber {
     }
 
     onBroadcastMessage(msg) {
+        this.debug('onBroadcastMessage')
         // Broadcast messages to all subs listening on stream-partition
         const stream = this._getSubscribedStreamPartition(msg.streamMessage.getStreamId(), msg.streamMessage.getStreamPartition())
         if (!stream) {

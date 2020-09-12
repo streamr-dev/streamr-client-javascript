@@ -231,7 +231,7 @@ describe('StreamrClient', () => {
             it('resend last', async () => {
                 const messages = []
 
-                const sub = await client.resend({
+                await client.resend({
                     stream: stream.id,
                     resend: {
                         last: 3,
@@ -240,7 +240,6 @@ describe('StreamrClient', () => {
                     messages.push(message)
                 })
 
-                await waitForEvent(sub, 'resent')
                 expect(messages).toHaveLength(3)
                 expect(messages).toEqual([{
                     msg: 'message2',
@@ -254,21 +253,17 @@ describe('StreamrClient', () => {
             it('resend from', async () => {
                 const messages = []
 
-                const sub = await client.resend(
-                    {
-                        stream: stream.id,
-                        resend: {
-                            from: {
-                                timestamp: timestamps[3],
-                            },
+                await client.resend({
+                    stream: stream.id,
+                    resend: {
+                        from: {
+                            timestamp: timestamps[3],
                         },
                     },
-                    (message) => {
-                        messages.push(message)
-                    },
-                )
+                }, (message) => {
+                    messages.push(message)
+                })
 
-                await waitForEvent(sub, 'resent')
                 expect(messages).toEqual([
                     {
                         msg: 'message3',
@@ -282,24 +277,20 @@ describe('StreamrClient', () => {
             it('resend range', async () => {
                 const messages = []
 
-                const sub = await client.resend(
-                    {
-                        stream: stream.id,
-                        resend: {
-                            from: {
-                                timestamp: timestamps[0],
-                            },
-                            to: {
-                                timestamp: timestamps[3] - 1,
-                            },
+                await client.resend({
+                    stream: stream.id,
+                    resend: {
+                        from: {
+                            timestamp: timestamps[0],
+                        },
+                        to: {
+                            timestamp: timestamps[3] - 1,
                         },
                     },
-                    (message) => {
-                        messages.push(message)
-                    },
-                )
+                }, (message) => {
+                    messages.push(message)
+                })
 
-                await waitForEvent(sub, 'resent')
                 expect(messages).toEqual([
                     {
                         msg: 'message0',
@@ -550,33 +541,31 @@ describe('StreamrClient', () => {
                 })
 
                 const connectionEventSpy = jest.spyOn(client.connection, 'send')
-                const sub = await client.resend({
+                await client.resend({
                     stream: stream.id,
                     resend: {
                         last: 10
                     }
                 }, () => {})
 
-                sub.once('initial_resend_done', () => {
-                    setTimeout(async () => {
-                        await client.pause() // simulates a disconnection at the websocket level, not on the client level.
-                        await client.connect()
-                        await client.disconnect()
+                setTimeout(async () => {
+                    await client.pause() // simulates a disconnection at the websocket level, not on the client level.
+                    await client.connect()
+                    await client.disconnect()
 
-                        // check whole list of calls after reconnect and disconnect
-                        expect(connectionEventSpy.mock.calls[0]).toEqual([new ResendLastRequest({
-                            streamId: stream.id,
-                            streamPartition: 0,
-                            sessionToken,
-                            numberLast: 10,
-                            requestId: connectionEventSpy.mock.calls[0][0].requestId,
-                        })])
+                    // check whole list of calls after reconnect and disconnect
+                    expect(connectionEventSpy.mock.calls[0]).toEqual([new ResendLastRequest({
+                        streamId: stream.id,
+                        streamPartition: 0,
+                        sessionToken,
+                        numberLast: 10,
+                        requestId: connectionEventSpy.mock.calls[0][0].requestId,
+                    })])
 
-                        // key exchange stream subscription should not have been sent yet
-                        expect(connectionEventSpy.mock.calls.length).toEqual(1)
-                        done()
-                    }, 2000)
-                })
+                    // key exchange stream subscription should not have been sent yet
+                    expect(connectionEventSpy.mock.calls.length).toEqual(1)
+                    done()
+                }, 2000)
             }, 5000)
 
             it('does not try to reconnect', async (done) => {

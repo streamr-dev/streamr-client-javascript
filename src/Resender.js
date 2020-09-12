@@ -100,7 +100,21 @@ export default class Resender {
         )
     }
 
-    async resend(optionsOrStreamId, callback) {
+    async resend(...args) {
+        const sub = await this._sendResend(...args)
+        return this._waitForResend(sub)
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    async _waitForResend(sub) {
+        return new Promise((resolve, reject) => {
+            sub.once('initial_resend_done', resolve)
+            sub.once('no_resend', resolve)
+            sub.once('error', reject)
+        }).then(() => sub)
+    }
+
+    async _sendResend(optionsOrStreamId, callback) {
         // eslint-disable-next-line no-underscore-dangle
         const options = this.client.subscriber._validateParameters(optionsOrStreamId, callback)
 

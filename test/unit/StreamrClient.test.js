@@ -747,7 +747,8 @@ describe('StreamrClient', () => {
         })
     })
 
-    describe('resend()', () => {
+    describe.only('resend()', () => {
+        let sub
         beforeEach(() => {
             client.options.autoConnect = true
         })
@@ -784,7 +785,7 @@ describe('StreamrClient', () => {
         })
 
         it('should not send SubscribeRequest after ResendResponseNoResend on reconnection', async () => {
-            const sub = await mockResend({
+            await mockResend({
                 stream: 'stream1',
                 resend: {
                     last: 10
@@ -804,7 +805,7 @@ describe('StreamrClient', () => {
         })
 
         it('should not send SubscribeRequest after ResendResponseResent on reconnection', async () => {
-            const sub = await mockResend({
+            await mockResend({
                 stream: 'stream1',
                 resend: {
                     last: 10
