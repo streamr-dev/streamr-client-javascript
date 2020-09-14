@@ -89,6 +89,9 @@ jobs:
       - name: test-integration
         run: npm run test-integration
 
+      - name: test-flakey
+        run: npm run test-flakey || echo "::warning::Flakey Tests Failed" && true
+
   streamr-client-testing-tool:
     needs: [test, lint]
     runs-on: ubuntu-latest
