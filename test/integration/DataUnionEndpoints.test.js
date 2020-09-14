@@ -15,18 +15,22 @@ const log = console.log
 
 describe('DataUnionEndPoints', () => {
     // fresh dataUnion for each test case
-    let duSidechain
+    let dataUnion
     let dataUnionName
     let adminClient
 
-    const providerSidechain = new providers.JsonRpcProvider(config.sidechain)
-    const providerMainnet = new providers.JsonRpcProvider(config.mainnet)
-    const walletSidechain = new Wallet(config.privateKey, providerSidechain)
-    const walletMainnet = new Wallet(config.privateKey, providerMainnet)
-    const adminTokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, walletMainnet)
-    // const adminTokenSidechain = new Contract(config.tokenAddressSidechain, Token.abi, walletSidechain)
+    const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+    const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
+    const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
+    const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
     beforeAll(async () => {
+        log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
+        const network = await providerMainnet.getNetwork()
+        log('Connected to "mainnet" network: ', JSON.stringify(network))
+        const network2 = await providerSidechain.getNetwork()
+        log('Connected to sidechain network: ', JSON.stringify(network2))
+
         // for faster manual testing, use a factory from previous runs
         // const factoryMainnet = new Contract("0xD5beE21175494389A10aFDA8FeBC8465A3A35DE0", factoryMainnetABI, walletMainnet)
         const factorySidechain = await deployDataUnionFactorySidechain(walletSidechain)
@@ -36,31 +40,23 @@ describe('DataUnionEndPoints', () => {
 
         adminClient = new StreamrClient({
             factoryMainnetAddress: factoryMainnet.address,
-            auth: {
-                privateKey: config.privateKey
-            },
             autoConnect: false,
             autoDisconnect: false,
             ...config.clientOptions,
         })
-
-        log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
-        const network = await providerMainnet.getNetwork()
-        log('Connected to "mainnet" network: ', JSON.stringify(network))
-        const network2 = await providerSidechain.getNetwork()
-        log('Connected to sidechain network: ', JSON.stringify(network2))
-    }, 300000)
+    }, 600000)
 
     beforeEach(async () => {
         await adminClient.ensureConnected()
         dataUnionName = 'test' + +new Date()
-        duSidechain = await adminClient.deployDataUnion({
+        dataUnion = await adminClient.deployDataUnion({
             dataUnionName,
-            provider: providerMainnet,
         })
-        await duSidechain.isReady()
-        log(`DataUnion ${duSidechain.address} is ready to roll`)
-        await adminClient.createSecret(duSidechain.address, 'secret', 'DataUnionEndpoints test secret')
+        log(`Waiting for ${dataUnion.address} to be registered in sidechain`)
+        await dataUnion.isReady()
+        await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
+        log(`DataUnion ${dataUnion.address} is ready to roll`)
+        // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0x832CF517A48efB0730b1D076356aD0754371Db2B"})
     }, 300000)
 
     afterAll(async () => {
@@ -78,37 +74,42 @@ describe('DataUnionEndPoints', () => {
             '0x000000000000000000000000000000000000bEEF',
         ]
 
-        it('can add and remove members', async () => {
-            log(`starting test, duSidechain=${JSON.stringify(duSidechain.address)}`)
-            // await adminClient.dataUnionIsReady(duSidechain.address, log)
+        it('can add members', async () => {
+            await adminClient.addMembers(memberAddressList, { dataUnion })
+            await adminClient.hasJoined(memberAddressList[0], { dataUnion })
+            const res = await adminClient.getDataUnionStats({ dataUnion })
+            expect(+res.memberCount).toEqual(3)
+        }, 100000)
 
-            await adminClient.addMembers(duSidechain.address, memberAddressList)
-            // await adminClient.hasJoined(duSidechain.address, memberAddressList[0])
-            const res = await adminClient.getDataUnionStats(duSidechain.address)
-            expect(res.memberCount).toEqual({
-                total: 3, active: 3, inactive: 0
-            })
-
-            await adminClient.kick(duSidechain.address, memberAddressList.slice(1))
-            const res2 = await adminClient.getDataUnionStats(duSidechain.address)
-            expect(res2.memberCount).toEqual({
-                total: 3, active: 1, inactive: 2
-            })
-        }, 300000)
+        it('can remove members', async () => {
+            await adminClient.addMembers(memberAddressList, { dataUnion })
+            await adminClient.kick(memberAddressList.slice(1), { dataUnion })
+            const res = await adminClient.getDataUnionStats({ dataUnion })
+            expect(+res.memberCount).toEqual(1)
+        }, 100000)
 
         // separate test for adding and removing secrets? Adding secret is tested in member joins dataUnion test though.
+
+        it('can withdraw admin fees', async () => {
+            log('TODO')
+        })
     })
 
     describe('Member', () => {
         let memberClient
+
         const memberWallet = new Wallet('0x1000000000000000000000000000000000000000000000000000000000000001', providerSidechain)
         const member2Wallet = new Wallet('0x1000000000000000000000000000000000000000000000000000000000000002', providerSidechain)
 
-        beforeAll(async () => {
+        const adminTokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, adminWalletMainnet)
+        // const adminTokenSidechain = new Contract(config.tokenAddressSidechain, Token.abi, adminWalletSidechain)
+
+        beforeEach(async () => {
             memberClient = new StreamrClient({
                 auth: {
                     privateKey: memberWallet.privateKey
                 },
+                dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
                 ...config.clientOptions,
@@ -116,56 +117,60 @@ describe('DataUnionEndPoints', () => {
             await memberClient.ensureConnected()
         })
 
-        afterAll(async () => {
+        afterEach(async () => {
             if (!memberClient) { return }
             await memberClient.ensureDisconnected()
         })
 
-        it('can join the data union', async () => {
-            const res = await memberClient.joinDataUnion(duSidechain.address, 'secret')
-            await memberClient.hasJoined(duSidechain.address)
+        // TODO: implement DU2 joining to EE
+        it.skip('can join the data union', async () => {
+            const res = await memberClient.joinDataUnion({ secret: 'secret' })
+            await memberClient.hasJoined()
             expect(res).toMatchObject({
                 state: 'ACCEPTED',
                 memberAddress: memberWallet.address,
-                contractAddress: duSidechain.address,
+                contractAddress: dataUnion.address,
             })
         })
 
         it('can get its sidechain balances and stats', async () => {
-            await memberClient.joinDataUnion(duSidechain.address, 'secret')
-            const res = await memberClient.getMemberStats(duSidechain.address)
+            // TODO: change after DU2 joining is implemented in EE
+            // await memberClient.joinDataUnion({ secret: 'secret' })
+            await adminClient.addMembers([memberWallet.address], { dataUnion })
+            const res = await memberClient.getMemberStats()
             expect(res).toEqual({
-                active: true,
-                address: memberWallet.address,
-                earnings: '0',
-                recordedEarnings: '0',
+                status: 'active', // this means join worked
+                earningsBeforeLastJoin: '0',
+                lmeAtJoin: '0',
+                totalEarnings: '0',
                 withdrawableEarnings: '0',
-                frozenEarnings: '0'
             })
         })
 
         it('can receive earnings from mainnet', async () => {
-            await memberClient.joinDataUnion(duSidechain.address, 'secret')
+            // TODO: change after DU2 joining is implemented in EE
+            // await memberClient.joinDataUnion({ secret: 'secret' })
+            await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
             const tokenWei = utils.parseEther('1')
-            const duSidechainBalanceBefore = await duSidechain.totalEarnings()
+            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
             const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
             const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
             await tx1.wait()
 
             log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, walletMainnet)
+            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
             const tx2 = await duMainnet.sendTokensToBridge()
             await tx2.wait()
 
-            log(`Sent to bridge, waiting for the tokens to appear at ${duSidechain.address} in sidechain`)
-            await until(async () => !duSidechainBalanceBefore.eq(await duSidechain.totalEarnings()), 360000)
-            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await duSidechain.totalEarnings()}`)
+            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
+            await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
+            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-            const res = await memberClient.getMemberStats(duSidechain.address)
+            const res = await memberClient.getMemberStats()
             expect(res).toMatchObject({
                 active: true,
                 address: memberWallet.address,
@@ -178,27 +183,29 @@ describe('DataUnionEndPoints', () => {
         }, 600000)
 
         it('can withdraw earnings to mainnet', async () => {
-            await memberClient.joinDataUnion(duSidechain.address, 'secret')
+            // TODO: change after DU2 joining is implemented in EE
+            // await memberClient.joinDataUnion({ secret: 'secret' })
+            await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
             const tokenWei = utils.parseEther('1')
-            const duSidechainBalanceBefore = await duSidechain.totalEarnings()
+            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
             const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
             const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
             await tx1.wait()
 
             log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, walletMainnet)
+            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
             const tx2 = await duMainnet.sendTokensToBridge()
             await tx2.wait()
 
-            log(`Sent to bridge, waiting for the tokens to appear at ${duSidechain.address} in sidechain`)
-            await until(async () => !duSidechainBalanceBefore.eq(await duSidechain.totalEarnings()), 360000)
-            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await duSidechain.totalEarnings()}`)
+            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
+            await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
+            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
             const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
-            const tr = await memberClient.withdraw(duSidechain.address)
+            const tr = await memberClient.withdraw()
             const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
             const diff = balanceAfter.sub(balanceBefore)
 
@@ -207,27 +214,29 @@ describe('DataUnionEndPoints', () => {
         }, 600000)
 
         it('can "donate" earnings to another mainnet address', async () => {
-            await memberClient.joinDataUnion(duSidechain.address, 'secret')
+            // TODO: change after DU2 joining is implemented in EE
+            // await memberClient.joinDataUnion({ secret: 'secret' })
+            await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
             const tokenWei = utils.parseEther('1')
-            const duSidechainBalanceBefore = await duSidechain.totalEarnings()
+            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
             const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
             const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
             await tx1.wait()
 
             log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, walletMainnet)
+            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
             const tx2 = await duMainnet.sendTokensToBridge()
             await tx2.wait()
 
-            log(`Sent to bridge, waiting for the tokens to appear at ${duSidechain.address} in sidechain`)
-            await until(async () => !duSidechainBalanceBefore.eq(await duSidechain.totalEarnings()), 360000)
-            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await duSidechain.totalEarnings()}`)
+            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
+            await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
+            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
             const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
-            const tr = await memberClient.withdrawTo(member2Wallet.address, duSidechain.address)
+            const tr = await memberClient.withdrawTo(member2Wallet.address)
             const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
             const diff = balanceAfter.sub(balanceBefore)
 
@@ -246,28 +255,29 @@ describe('DataUnionEndPoints', () => {
         ]
 
         let client
-        beforeAll(async () => {
+        beforeEach(async () => {
             client = new StreamrClient({
                 auth: {
                     apiKey: 'tester1-api-key'
                 },
+                dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
                 ...config.clientOptions,
             })
         })
-        afterAll(async () => {
+        afterEach(async () => {
             if (!client) { return }
             await client.ensureDisconnected()
         })
 
         it('can get dataUnion stats', async () => {
-            await adminClient.addMembers(duSidechain.address, memberAddressList)
-            await adminClient.hasJoined(duSidechain.address, memberAddressList[0])
+            await adminClient.addMembers(memberAddressList, { dataUnion })
+            await adminClient.hasJoined(memberAddressList[0], { dataUnion })
 
             // mint tokens to dataUnion to generate revenue
 
-            const stats = client.getDataUnionStats(duSidechain.address)
+            const stats = client.getDataUnionStats()
             expect(stats.memberCount).toEqual(3)
             expect(stats.joinPartAgentCount).toEqual(2)
             expect(stats.totalEarnings).toEqual(3)
@@ -276,7 +286,7 @@ describe('DataUnionEndPoints', () => {
         })
 
         it('can get member stats', async () => {
-            const duStats = await client.getDataUnionStats(duSidechain.address)
+            const duStats = await client.getDataUnionStats()
             const memberStats = await Promise.all(memberAddressList.map((m) => client.getMemberStats(m)))
 
             console.log(duStats, JSON.stringify(duStats))

@@ -46,8 +46,6 @@ export default class StreamrClient extends EventEmitter {
             // The server to connect to
             url: 'wss://streamr.network/api/v1/ws',
             restUrl: 'https://streamr.network/api/v1',
-            sidechainUrl: null, // TODO: add our default public service sidechain node
-            mainnetUrl: null,
             // Automatically connect on first subscribe
             autoConnect: true,
             // Automatically disconnect on last unsubscribe
@@ -64,9 +62,20 @@ export default class StreamrClient extends EventEmitter {
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
             keyExchange: {},
-            streamrNodeAddress: '0xf3E5A65851C3779f468c9EcB32E6f25D9D68601a',
-            streamrOperatorAddress: '0xc0aa4dC0763550161a6B59fa430361b5a26df28C',
+
+            // Ethereum and Data Union related options
+            // For ethers.js provider params, see https://docs.ethers.io/ethers.js/v5-beta/api-providers.html#provider
+            mainnet: null, // Default to ethers.js default provider settings
+            sidechain: {
+                url: null, // TODO: add our default public service sidechain node, also find good PoA params below
+                // timeout:
+                // pollingInterval:
+            },
+            dataUnion: null, // Give a "default target" of all data union endpoint operations (no need to pass argument every time)
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
+            sidechainTokenAddress: null, // TODO
+            factoryMainnetAddress: null, // TODO
+            factorySidechainAddress: null, // TODO
         }
         this.subscribedStreamPartitions = {}
 
