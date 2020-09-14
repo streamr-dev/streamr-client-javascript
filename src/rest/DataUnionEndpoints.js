@@ -268,11 +268,11 @@ const factoryMainnetABI = [{
 
 // TODO: calculate addresses in JS instead of asking over RPC, see data-union-solidity/contracts/CloneLib.sol
 // key the cache with name only, since PROBABLY one StreamrClient will ever use only one private key
-const mainnetAddressCache = {}
-async function getDataUnionMainnetAddress(dataUnionName, factoryMainnetAddress, deployerWallet) {
+const mainnetAddressCache = {} // mapping: "name" -> mainnet address
+/** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
+async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
     if (!mainnetAddressCache[dataUnionName]) {
-        const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, deployerWallet)
-        const promise = factoryMainnet.mainnetAddress(deployerWallet.address, dataUnionName)
+        const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.mainnetAddress(deployerAddress, dataUnionName))
         mainnetAddressCache[dataUnionName] = promise
         const value = await promise
         mainnetAddressCache[dataUnionName] = value // eslint-disable-line require-atomic-updates
@@ -280,15 +280,18 @@ async function getDataUnionMainnetAddress(dataUnionName, factoryMainnetAddress, 
     return mainnetAddressCache[dataUnionName]
 }
 
-const sidechainAddressCache = {}
-async function getDataUnionSidechainAddress(dataUnionName, factoryMainnetAddress, deployerWallet) {
-    if (!sidechainAddressCache[dataUnionName]) {
-        const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, deployerWallet)
-        const promise = getDataUnionMainnetAddress(dataUnionName, factoryMainnetAddress, deployerWallet)
-            .then((m) => factoryMainnet.sidechainAddress(m))
-        sidechainAddressCache[dataUnionName] = promise
+// TODO: calculate addresses in JS
+const sidechainAddressCache = {} // mapping: mainnet address -> sidechain address
+/** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
+async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
+    if (!sidechainAddressCache[duMainnetAddress]) {
+        const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.sidechainAddress(duMainnetAddress))
+        sidechainAddressCache[duMainnetAddress] = promise
         const value = await promise
-        sidechainAddressCache[dataUnionName] = value // eslint-disable-line require-atomic-updates
+        sidechainAddressCache[duMainnetAddress] = value // eslint-disable-line require-atomic-updates
+    }
+    return sidechainAddressCache[duMainnetAddress]
+}
     }
     return sidechainAddressCache[dataUnionName]
 }
