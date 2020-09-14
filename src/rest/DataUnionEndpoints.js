@@ -170,7 +170,7 @@ function parseSidechainWalletFromOptions(client, options = {}) {
 // Sidechain contract functions that we might want to call
 const dataUnionSidechainABI = [{
     name: 'addMembers',
-    inputs: [{ type: 'address[]' }],
+    inputs: [{ type: 'address[]', internalType: 'address payable[]', }],
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
@@ -197,6 +197,12 @@ const dataUnionSidechainABI = [{
     inputs: [],
     name: 'getStats',
     outputs: [{ internalType: 'uint256[5]', name: '', type: 'uint256[5]' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
+    name: 'getEarnings',
+    inputs: [{ type: 'address' }],
+    outputs: [{ type: 'uint256' }],
     stateMutability: 'view',
     type: 'function'
 }, {
@@ -231,7 +237,7 @@ const dataUnionSidechainABI = [{
     type: 'function'
 }]
 
-// Only the part of ABI that is needed by deployment
+// Only the part of ABI that is needed by deployment (and address resolution)
 const factoryMainnetABI = [{
     type: 'constructor',
     inputs: [{ type: 'address' }, { type: 'address' }, { type: 'address' }, { type: 'address' }, { type: 'uint256' }],
