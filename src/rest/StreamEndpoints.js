@@ -125,6 +125,7 @@ export async function isStreamPublisher(streamId, ethAddress) {
         await authFetch(url, this.session)
         return true
     } catch (e) {
+        this.debug(e)
         if (e.response && e.response.status === 404) {
             return false
         }
