@@ -468,7 +468,7 @@ export async function kick(memberAddressList, options) {
  */
 export async function addMembers(memberAddressList, options) {
     const duSidechain = await getSidechainContract(this, options)
-    const members = memberAddressList.map(getAddress)
+    const members = memberAddressList.map(getAddress) // throws if there are bad addresses
     const tx = await duSidechain.addMembers(members)
     // const tx = await duSidechain.addMember(members[0])
     // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
