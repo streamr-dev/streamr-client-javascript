@@ -39,10 +39,10 @@ describe('DataUnionEndPoints', () => {
         log(`Deployed factory contracts sidechain ${factorySidechain.address}, mainnet ${factoryMainnet.address}`)
 
         adminClient = new StreamrClient({
+            ...config.clientOptions,
             factoryMainnetAddress: factoryMainnet.address,
             autoConnect: false,
             autoDisconnect: false,
-            ...config.clientOptions,
         })
     }, 600000)
 
@@ -98,21 +98,22 @@ describe('DataUnionEndPoints', () => {
     describe('Member', () => {
         let memberClient
 
-        const memberWallet = new Wallet('0x1000000000000000000000000000000000000000000000000000000000000001', providerSidechain)
-        const member2Wallet = new Wallet('0x1000000000000000000000000000000000000000000000000000000000000002', providerSidechain)
 
         const adminTokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, adminWalletMainnet)
         // const adminTokenSidechain = new Contract(config.tokenAddressSidechain, Token.abi, adminWalletSidechain)
+        const nonce = +new Date()
+        const memberWallet = new Wallet(`0x100000000000000000000000000000000000000000000000001${+nonce}`, providerSidechain)
+        const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000000000000002${+nonce}`, providerSidechain)
 
         beforeEach(async () => {
             memberClient = new StreamrClient({
+                ...config.clientOptions,
                 auth: {
                     privateKey: memberWallet.privateKey
                 },
                 dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
-                ...config.clientOptions,
             })
             await memberClient.ensureConnected()
         })
@@ -145,7 +146,7 @@ describe('DataUnionEndPoints', () => {
                 totalEarnings: '0',
                 withdrawableEarnings: '0',
             })
-        })
+        }, 300000)
 
         it('can receive earnings from mainnet', async () => {
             // TODO: change after DU2 joining is implemented in EE
@@ -153,16 +154,15 @@ describe('DataUnionEndPoints', () => {
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
-            const tokenWei = utils.parseEther('1')
+            const amount = '1000'
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
             const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
-            const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
-            log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
-            const tx2 = await duMainnet.sendTokensToBridge()
+            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
+            const tx2 = await dataUnion.sendTokensToBridge({ gasLimit: 5000000 })
             await tx2.wait()
 
             log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
@@ -188,16 +188,14 @@ describe('DataUnionEndPoints', () => {
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
-            const tokenWei = utils.parseEther('1')
+            const amount = '1000'
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
-            const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
-            const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
-            log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
-            const tx2 = await duMainnet.sendTokensToBridge()
+            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
+            const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
             log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
@@ -210,7 +208,7 @@ describe('DataUnionEndPoints', () => {
             const diff = balanceAfter.sub(balanceBefore)
 
             expect(tr.logs[0].address).toBe(adminTokenMainnet.address)
-            expect(diff.toString()).toBe(tokenWei)
+            expect(diff.toString()).toBe(amount)
         }, 600000)
 
         it('can "donate" earnings to another mainnet address', async () => {
