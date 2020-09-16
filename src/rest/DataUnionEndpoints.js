@@ -416,7 +416,7 @@ export async function deployDataUnion(options) {
 
 export async function getDataUnionContract(options) {
     const ret = getMainnetContract(this, options)
-    ret.sidechain = getSidechainContract(this, options)
+    ret.sidechain = await getSidechainContract(this, options)
     return ret
 }
 
