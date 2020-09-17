@@ -92,13 +92,18 @@ async function getOrThrow(...args) {
     return res
 }
 
-// //////////////////////////////////////////////////////////////////
-//          ABIs
-// //////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////////
+//          ABIs: contract functions we want to call within the client
+// ///////////////////////////////////////////////////////////////////////
 
-const dataUnionMainnetABI = []
+const dataUnionMainnetABI = [{
+    name: 'sendTokensToBridge',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}]
 
-// Sidechain contract functions that we might want to call
 const dataUnionSidechainABI = [{
     name: 'addMembers',
     inputs: [{ type: 'address[]', internalType: 'address payable[]', }],
