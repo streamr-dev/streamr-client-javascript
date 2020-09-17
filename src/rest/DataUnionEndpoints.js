@@ -33,12 +33,14 @@ const {
     isAddress,
 } = ethersUtils
 
-const log = debug('StreamrClient::DataUnionEndpoints')
 // //////////////////////////////////////////////////////////////////
 //          Generic utils
 // //////////////////////////////////////////////////////////////////
 
-/** @typedef {String} EthereumAddress */
+// const log = debug('StreamrClient::DataUnionEndpoints')
+const { log } = console
+
+/** @typedef {string} EthereumAddress */
 
 function throwIfBadAddress(address, variableDescription) {
     try {
@@ -96,7 +98,25 @@ async function getOrThrow(...args) {
 //          ABIs
 // //////////////////////////////////////////////////////////////////
 
-const dataUnionMainnetABI = []
+const dataUnionMainnetABI = [{
+    name: 'sendTokensToBridge',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}, {
+    name: 'token',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
+    name: 'token_mediator',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+}]
 
 // Sidechain contract functions that we might want to call
 const dataUnionSidechainABI = [{
@@ -106,6 +126,12 @@ const dataUnionSidechainABI = [{
     stateMutability: 'nonpayable',
     type: 'function'
 }, {
+//     name: 'addMember',
+//     inputs: [{ type: 'address', internalType: 'address payable', }],
+//     outputs: [],
+//     stateMutability: 'nonpayable',
+//     type: 'function'
+// }, {
     name: 'partMembers',
     inputs: [{ type: 'address[]' }],
     outputs: [],
