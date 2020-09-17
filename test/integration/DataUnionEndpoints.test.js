@@ -32,10 +32,10 @@ describe('DataUnionEndPoints', () => {
         log('Connected to sidechain network: ', JSON.stringify(network2))
 
         // for faster manual testing, use a factory from previous runs
-        // const factoryMainnet = new Contract("0xD5beE21175494389A10aFDA8FeBC8465A3A35DE0", factoryMainnetABI, walletMainnet)
-        const factorySidechain = await deployDataUnionFactorySidechain(walletSidechain)
+        // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', factoryMainnetABI, adminWalletMainnet)
+        const factorySidechain = await deployDataUnionFactorySidechain(adminWalletSidechain)
         const templateSidechain = getTemplateSidechain()
-        const factoryMainnet = await deployDataUnionFactoryMainnet(walletMainnet, templateSidechain.address, factorySidechain.address)
+        const factoryMainnet = await deployDataUnionFactoryMainnet(adminWalletMainnet, templateSidechain.address, factorySidechain.address)
         log(`Deployed factory contracts sidechain ${factorySidechain.address}, mainnet ${factoryMainnet.address}`)
 
         adminClient = new StreamrClient({
@@ -56,7 +56,7 @@ describe('DataUnionEndPoints', () => {
         await dataUnion.isReady()
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
         log(`DataUnion ${dataUnion.address} is ready to roll`)
-        // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0x832CF517A48efB0730b1D076356aD0754371Db2B"})
+        // dataUnion = await adminClient.getDataUnionContract({ dataUnion: '0x6E89c7A2d86Cb692422b7C9721d691f81c883335' })
     }, 300000)
 
     afterAll(async () => {
