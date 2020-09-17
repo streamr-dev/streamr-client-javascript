@@ -200,8 +200,9 @@ function getMainnetProvider(client, options = {}) {
 }
 
 function getSidechainProvider(client, options = {}) {
-    if (!client.options.sidechain) { throw new Error('StreamrClient must be created with a "sidechain" property for ethers.js provider') }
-    return new providers.JsonRpcProvider(client.options.sidechain)
+    const sidechainOptions = options.sidechain || client.options.sidechain
+    if (!sidechainOptions) { throw new Error('StreamrClient must be created with a "sidechain" property for ethers.js provider') }
+    return new providers.JsonRpcProvider(sidechainOptions)
 }
 
 /**
