@@ -10,8 +10,8 @@ import * as DataUnionMainnet from '../../contracts/DataUnionMainnet.json'
 
 import config from './config'
 
-// const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
-const log = console.log
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
+// const log = console.log
 
 describe('DataUnionEndPoints', () => {
     // fresh dataUnion for each test case
@@ -32,10 +32,10 @@ describe('DataUnionEndPoints', () => {
         log('Connected to sidechain network: ', JSON.stringify(network2))
 
         // for faster manual testing, use a factory from previous runs
-        // const factoryMainnet = new Contract("0xD5beE21175494389A10aFDA8FeBC8465A3A35DE0", factoryMainnetABI, walletMainnet)
-        const factorySidechain = await deployDataUnionFactorySidechain(walletSidechain)
+        // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', factoryMainnetABI, adminWalletMainnet)
+        const factorySidechain = await deployDataUnionFactorySidechain(adminWalletSidechain)
         const templateSidechain = getTemplateSidechain()
-        const factoryMainnet = await deployDataUnionFactoryMainnet(walletMainnet, templateSidechain.address, factorySidechain.address)
+        const factoryMainnet = await deployDataUnionFactoryMainnet(adminWalletMainnet, templateSidechain.address, factorySidechain.address)
         log(`Deployed factory contracts sidechain ${factorySidechain.address}, mainnet ${factoryMainnet.address}`)
 
         adminClient = new StreamrClient({
@@ -170,17 +170,15 @@ describe('DataUnionEndPoints', () => {
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
             const res = await memberClient.getMemberStats()
             expect(res).toMatchObject({
-                active: true,
-                address: memberWallet.address,
-                earnings: '1000000000000000000',
-                recordedEarnings: '1000000000000000000',
-                withdrawableEarnings: '1000000000000000000',
-                frozenEarnings: '0',
-                withdrawableBlockNumber: res.withdrawableBlockNumber,
+                status: 'active',
+                earningsBeforeLastJoin: '0',
+                lmeAtJoin: '0',
+                totalEarnings: '0',
+                withdrawableEarnings: '0',
             })
         }, 600000)
 
-        it('can withdraw earnings to mainnet', async () => {
+        it.skip('can withdraw earnings to mainnet', async () => {
             // TODO: change after DU2 joining is implemented in EE
             // await memberClient.joinDataUnion({ secret: 'secret' })
             await adminClient.addMembers([memberWallet.address], { dataUnion })
@@ -212,7 +210,7 @@ describe('DataUnionEndPoints', () => {
             expect(diff.toString()).toBe(amount)
         }, 600000)
 
-        it('can "donate" earnings to another mainnet address', async () => {
+        it.skip('can "donate" earnings to another mainnet address', async () => {
             // TODO: change after DU2 joining is implemented in EE
             // await memberClient.joinDataUnion({ secret: 'secret' })
             await adminClient.addMembers([memberWallet.address], { dataUnion })
@@ -250,10 +248,11 @@ describe('DataUnionEndPoints', () => {
     })
 
     describe('Anyone', () => {
+        const nonce = +new Date()
         const memberAddressList = [
-            '0x0000000000000000000000000000000000000001',
-            '0x0000000000000000000000000000000000000002',
-            '0x000000000000000000000000000000000000bEEF',
+            `0x100000000000000000000000000${nonce}`,
+            `0x200000000000000000000000000${nonce}`,
+            `0x300000000000000000000000000${nonce}`,
         ]
 
         let client
@@ -267,49 +266,44 @@ describe('DataUnionEndPoints', () => {
                 autoDisconnect: false,
                 ...config.clientOptions,
             })
-        })
+            // TODO: add revenue
+            await adminClient.addMembers(memberAddressList, { dataUnion })
+        }, 300000)
         afterEach(async () => {
             if (!client) { return }
             await client.ensureDisconnected()
         })
 
         it('can get dataUnion stats', async () => {
-            await adminClient.addMembers(memberAddressList, { dataUnion })
-            await adminClient.hasJoined(memberAddressList[0], { dataUnion })
-
-            // mint tokens to dataUnion to generate revenue
-
-            const stats = client.getDataUnionStats()
-            expect(stats.memberCount).toEqual(3)
-            expect(stats.joinPartAgentCount).toEqual(2)
-            expect(stats.totalEarnings).toEqual(3)
-            expect(stats.totalWithdrawable).toEqual(3)
-            expect(stats.lifetimeMemberEarnings).toEqual(3)
-        })
+            const stats = await client.getDataUnionStats()
+            expect(+stats.memberCount).toEqual(3)
+            expect(+stats.joinPartAgentCount).toEqual(1)
+            expect(+stats.totalEarnings).toEqual(0)
+            expect(+stats.totalWithdrawable).toEqual(0)
+            expect(+stats.lifetimeMemberEarnings).toEqual(0)
+        }, 300000)
 
         it('can get member stats', async () => {
-            const duStats = await client.getDataUnionStats()
             const memberStats = await Promise.all(memberAddressList.map((m) => client.getMemberStats(m)))
-
-            console.log(duStats, JSON.stringify(duStats))
-            console.log(memberStats, JSON.stringify(memberStats))
-
-            expect(duStats.memberCount).toEqual({
-                total: 3, active: 3, inactive: 0
-            })
-            expect(duStats.totalEarnings).toBe('1000000000000000000')
-            expect(duStats.latestWithdrawableBlock.memberCount).toBe(4)
-            expect(duStats.latestWithdrawableBlock.totalEarnings).toBe('1000000000000000000')
-
-            expect(memberStats).toMatchObject({
-                active: true,
-                address: '0x0000000000000000000000000000000000000001',
-                earnings: '333333333333333333',
-                recordedEarnings: '333333333333333333',
-                withdrawableEarnings: '333333333333333333',
-                frozenEarnings: '0',
-                withdrawableBlockNumber: duStats.latestWithdrawableBlock.blockNumber,
-            })
+            expect(memberStats).toMatchObject([{
+                status: 'active',
+                earningsBeforeLastJoin: '0',
+                lmeAtJoin: '0',
+                totalEarnings: '0',
+                withdrawableEarnings: '0',
+            }, {
+                status: 'active',
+                earningsBeforeLastJoin: '0',
+                lmeAtJoin: '0',
+                totalEarnings: '0',
+                withdrawableEarnings: '0',
+            }, {
+                status: 'active',
+                earningsBeforeLastJoin: '0',
+                lmeAtJoin: '0',
+                totalEarnings: '0',
+                withdrawableEarnings: '0',
+            }])
         }, 300000)
     })
 })
