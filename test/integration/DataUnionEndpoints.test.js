@@ -16,7 +16,6 @@ const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 describe('DataUnionEndPoints', () => {
     // fresh dataUnion for each test case
     let dataUnion
-    let dataUnionName
     let adminClient
 
     const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -48,10 +47,7 @@ describe('DataUnionEndPoints', () => {
 
     beforeEach(async () => {
         await adminClient.ensureConnected()
-        dataUnionName = 'test' + +new Date()
-        dataUnion = await adminClient.deployDataUnion({
-            dataUnionName,
-        })
+        dataUnion = await adminClient.deployDataUnion()
         log(`Waiting for ${dataUnion.address} to be registered in sidechain`)
         await dataUnion.isReady()
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
@@ -216,19 +212,17 @@ describe('DataUnionEndPoints', () => {
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
             // transfer ERC20 to mainet contract
-            const tokenWei = utils.parseEther('1')
+            const amount = '1000'
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
             const tokenAddress = await dataUnion.token()
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 
-            const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
-            const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
-            log(`Transferred ${tokenWei} to ${duMainnetAddress}, next sending to bridge`)
-            const duMainnet = new Contract(duMainnetAddress, DataUnionMainnet.abi, adminWalletMainnet)
-            const tx2 = await duMainnet.sendTokensToBridge()
+            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
+            const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
             log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
@@ -241,7 +235,7 @@ describe('DataUnionEndPoints', () => {
             const diff = balanceAfter.sub(balanceBefore)
 
             expect(tr.logs[0].address).toBe(adminTokenMainnet.address)
-            expect(diff.toString()).toBe(tokenWei)
+            expect(diff.toString()).toBe(amount)
         }, 600000)
 
         // TODO: test getWithdrawTx, getWithdrawTxTo
