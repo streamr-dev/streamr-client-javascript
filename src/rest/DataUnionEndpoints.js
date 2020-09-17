@@ -368,7 +368,7 @@ async function getSidechainContract(client, options = {}) {
  * @param {DeployOptions} options such as adminFee (default: 0)
  * @return {Promise<Contract>} resolves when mainnet transaction is done, has method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
  */
-export async function deployDataUnion(options) {
+export async function deployDataUnion(options = {}) {
     const {
         dataUnionName,
         adminFee = 0,
@@ -419,7 +419,7 @@ export async function deployDataUnion(options) {
     return promise
 }
 
-export async function getDataUnionContract(options) {
+export async function getDataUnionContract(options = {}) {
     const ret = getMainnetContract(this, options)
     ret.sidechain = await getSidechainContract(this, options)
     return ret
@@ -458,7 +458,7 @@ export async function createSecret(dataUnionMainnetAddress, secret, name = 'Unti
  * @param {List<EthereumAddress>} memberAddressList to kick
  * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
  */
-export async function kick(memberAddressList, options) {
+export async function kick(memberAddressList, options = {}) {
     const duSidechain = await getSidechainContract(this, options)
     const members = memberAddressList.map(getAddress)
     const tx = await duSidechain.partMembers(members)
@@ -471,7 +471,7 @@ export async function kick(memberAddressList, options) {
  * @param {List<EthereumAddress>} memberAddressList to add
  * @returns {Promise<TransactionReceipt>} addMembers sidechain transaction
  */
-export async function addMembers(memberAddressList, options) {
+export async function addMembers(memberAddressList, options = {}) {
     const duSidechain = await getSidechainContract(this, options)
     const members = memberAddressList.map(getAddress) // throws if there are bad addresses
     const tx = await duSidechain.addMembers(members)
@@ -487,7 +487,7 @@ export async function addMembers(memberAddressList, options) {
  * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdrawMember(memberAddress, options) {
+export async function withdrawMember(memberAddress, options = {}) {
     const tx = await this.getWithdrawTxFor(memberAddress, options)
     return tx.wait(options.confirmations || 1)
 }
@@ -513,7 +513,7 @@ export async function getWithdrawMemberTx(memberAddress, options) {
  * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdrawToSigned(memberAddress, recipientAddress, signature, options) {
+export async function withdrawToSigned(memberAddress, recipientAddress, signature, options = {}) {
     const tx = await this.getWithdrawTxTo(memberAddress, recipientAddress, signature, options)
     return tx.wait(options.confirmations || 1)
 }
@@ -545,7 +545,7 @@ export async function getWithdrawToSignedTx(memberAddress, recipientAddress, sig
  * @property {String} member Ethereum mainnet address of the joining member. If not given, use StreamrClient authentication key
  * @property {String} secret if given, and correct, join the data union immediately
  */
-export async function joinDataUnion(options) {
+export async function joinDataUnion(options = {}) {
     const {
         member,
         secret,
@@ -578,7 +578,7 @@ export async function joinDataUnion(options) {
  * @param {Number} retryTimeoutMs (optional, default: 60000) give up
  * @return {Promise} resolves when member is in the data union (or fails with HTTP error)
  */
-export async function hasJoined(memberAddress, options) {
+export async function hasJoined(memberAddress, options = {}) {
     const {
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
@@ -705,7 +705,7 @@ export async function getDataUnionVersion(contractAddress) {
  * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdraw(options) {
+export async function withdraw(options = {}) {
     const tx = await this.getWithdrawTx(options)
     return tx.wait(options.confirmations || 1)
 }
@@ -729,7 +729,7 @@ export async function getWithdrawTx(options) {
  * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdrawTo(recipientAddress, options) {
+export async function withdrawTo(recipientAddress, options = {}) {
     const tx = await this.getWithdrawTxTo(recipientAddress, options)
     return tx.wait(options.confirmations || 1)
 }
