@@ -11,10 +11,8 @@
  *      member: WITHDRAW EARNINGS           Withdrawing functions, there's many: normal, agent, donate
  */
 
-import fetch from 'node-fetch'
 import {
     Contract,
-    ContractFactory,
     Wallet,
     getDefaultProvider,
     providers,
@@ -25,7 +23,7 @@ import debug from 'debug'
 
 import { until } from '../utils'
 
-import authFetch, { DEFAULT_HEADERS } from './authFetch'
+import authFetch from './authFetch'
 
 const {
     computeAddress,
@@ -54,42 +52,6 @@ async function throwIfNotContract(eth, address, variableDescription) {
         throw new Error(`${variableDescription || 'Error'}: No contract at ${address}`)
     }
     return addr
-}
-
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms)
-    })
-}
-
-async function get(client, dataUnionContractAddress, endpoint, opts = {}) {
-    const url = `${client.options.restUrl}/dataunions/${dataUnionContractAddress}${endpoint}`
-    const response = await fetch(url, {
-        ...opts,
-        headers: {
-            ...DEFAULT_HEADERS,
-            ...opts.headers,
-        },
-    })
-    const json = await response.json()
-    // server may return things like { code: "ConnectionPoolTimeoutException", message: "Timeout waiting for connection from pool" }
-    //   they must still be handled as errors
-    if (!response.ok && !json.error) {
-        json.error = `Server returned ${response.status} ${response.statusText}`
-    }
-
-    if (json.code && !json.error) {
-        json.error = json.code
-    }
-    return json
-}
-
-async function getOrThrow(...args) {
-    const res = await get(...args)
-    if (res.error) {
-        throw new Error(JSON.stringify(res))
-    }
-    return res
 }
 
 // ///////////////////////////////////////////////////////////////////////
