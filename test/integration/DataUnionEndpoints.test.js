@@ -98,9 +98,6 @@ describe('DataUnionEndPoints', () => {
     describe('Member', () => {
         let memberClient
 
-
-        const adminTokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, adminWalletMainnet)
-        // const adminTokenSidechain = new Contract(config.tokenAddressSidechain, Token.abi, adminWalletSidechain)
         const nonce = +new Date()
         const memberWallet = new Wallet(`0x100000000000000000000000000000000000000000000000001${+nonce}`, providerSidechain)
         const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000000000000002${+nonce}`, providerSidechain)
@@ -157,7 +154,8 @@ describe('DataUnionEndPoints', () => {
             const amount = '1000'
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
-            const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
+            const tokenAddress = await dataUnion.token()
+            const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
             const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
@@ -191,6 +189,9 @@ describe('DataUnionEndPoints', () => {
             const amount = '1000'
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
 
+            const tokenAddress = await dataUnion.token()
+            const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
+
             const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
@@ -219,6 +220,9 @@ describe('DataUnionEndPoints', () => {
             // transfer ERC20 to mainet contract
             const tokenWei = utils.parseEther('1')
             const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
+
+            const tokenAddress = await dataUnion.token()
+            const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 
             const duMainnetAddress = adminClient.getDataUnionMainnetAddress(dataUnionName)
             const tx1 = await adminTokenMainnet.transfer(duMainnetAddress, tokenWei)
