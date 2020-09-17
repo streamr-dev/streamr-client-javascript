@@ -158,7 +158,8 @@ describe('DataUnionEndPoints', () => {
             console.log("token", tokenAddress)
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 
-            console.log("admin balance", +await adminTokenMainnet.balanceOf(adminWalletMainnet.address))
+            console.log("admin eth balance", +await providerMainnet.getBalance(adminWalletMainnet.address))
+            console.log("admin token balance", +await adminTokenMainnet.balanceOf(adminWalletMainnet.address))
             const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
