@@ -8,17 +8,14 @@ const { StreamMessage, MessageIDStrict, MessageRef } = MessageLayer
 const createMsg = (
     timestamp = 1, sequenceNumber = 0, prevTimestamp = null,
     prevSequenceNumber = 0, content = {}, publisherId = 'publisherId', msgChainId = '1',
-    encryptionType = StreamMessage.ENCRYPTION_TYPES.NONE,
+    encryptionType,
 ) => {
     const prevMsgRef = prevTimestamp ? new MessageRef(prevTimestamp, prevSequenceNumber) : null
     return new StreamMessage({
         messageId: new MessageIDStrict('streamId', 0, timestamp, sequenceNumber, publisherId, msgChainId),
         prevMsgRef,
         content,
-        contentType: StreamMessage.CONTENT_TYPES.MESSAGE,
         encryptionType,
-        signatureType: StreamMessage.SIGNATURE_TYPES.NONE,
-        signature: '',
     })
 }
 
