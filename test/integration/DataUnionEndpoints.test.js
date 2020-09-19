@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
-import { Contract, ContractFactory, providers, utils, Wallet } from 'ethers'
+import { Contract, ContractFactory, providers, Wallet } from 'ethers'
 import debug from 'debug'
-import { wait } from 'streamr-test-utils'
 
 import until from '../../src/utils'
 import StreamrClient from '../../src'
