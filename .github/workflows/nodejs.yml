@@ -74,7 +74,8 @@ jobs:
         run: |
           sudo service mysql stop
           git clone https://github.com/streamr-dev/streamr-docker-dev.git
-          sudo ifconfig docker0 10.200.10.1/24
+          # sudo ifconfig docker0 10.200.10.1/24
+          sudo ifconfig lo:0 10.200.10.1/24
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait
           until [ "$(docker logs streamr-docker-dev_rabbit_1 |grep accept)" ]; do echo "Waiting for rabbitmq container to be ready..."; sleep 1s; done
           sleep 5s
@@ -107,7 +108,8 @@ jobs:
           if [ ! -d streamr-docker-dev ]; then # Skip clone on subsequent attemps.
            git clone https://github.com/streamr-dev/streamr-docker-dev.git
           fi
-          sudo ifconfig docker0 10.200.10.1/24
+          # sudo ifconfig docker0 10.200.10.1/24
+          sudo ifconfig lo:0 10.200.10.1/24
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start smart-contracts-init nginx engine-and-editor --wait
           echo "Testing Tool setup"
           git clone https://github.com/streamr-dev/streamr-client-testing.git
