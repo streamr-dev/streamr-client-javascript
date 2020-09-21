@@ -12,8 +12,8 @@ import * as DataUnionFactorySidechain from '../../contracts/DataUnionFactorySide
 
 import config from './config'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
-// const log = console.log
+// const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
+const log = console.log
 
 describe('DataUnionEndPoints', () => {
     // fresh dataUnion for each test case

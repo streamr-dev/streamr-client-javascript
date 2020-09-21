@@ -31,7 +31,9 @@ const {
     isAddress,
 } = ethersUtils
 
-const log = debug('StreamrClient::DataUnionEndpoints')
+// const log = debug('StreamrClient::DataUnionEndpoints')
+const log = console.log
+
 // //////////////////////////////////////////////////////////////////
 //          Generic utils
 // //////////////////////////////////////////////////////////////////
