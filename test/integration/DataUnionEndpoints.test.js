@@ -45,7 +45,7 @@ describe('DataUnionEndPoints', () => {
             autoConnect: false,
             autoDisconnect: false,
         })
-    }, 600000)
+    }, 300000)
 
     beforeEach(async () => {
         await adminClient.ensureConnected()
@@ -55,7 +55,7 @@ describe('DataUnionEndPoints', () => {
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
         log(`DataUnion ${dataUnion.address} is ready to roll`)
         // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0x832CF517A48efB0730b1D076356aD0754371Db2B"})
-    }, 300000)
+    }, 900000)
 
     afterAll(async () => {
         await providerMainnet.removeAllListeners()
