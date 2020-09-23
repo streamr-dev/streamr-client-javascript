@@ -50,7 +50,7 @@ describe('DataUnionEndPoints', () => {
     beforeEach(async () => {
         await adminClient.ensureConnected()
         dataUnion = await adminClient.deployDataUnion()
-        log(`Waiting for ${dataUnion.address} to be registered in sidechain`)
+        log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
         await dataUnion.isReady()
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
         log(`DataUnion ${dataUnion.address} is ready to roll`)
