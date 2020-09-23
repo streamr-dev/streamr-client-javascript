@@ -75,7 +75,6 @@ jobs:
           sudo service mysql stop
           git clone https://github.com/streamr-dev/streamr-docker-dev.git
           sudo ifconfig docker0 10.200.10.1/24
-          sudo ifconfig lo:0 10.200.10.1/24
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait
           until [ "$(docker logs streamr-docker-dev_rabbit_1 |grep accept)" ]; do echo "Waiting for rabbitmq container to be ready..."; sleep 1s; done
           sleep 5s
@@ -90,7 +89,7 @@ jobs:
         run: npm run test-browser
 
       - name: test-integration
-        run: npm run test-integration
+        run: env DEBUG=* ./node_modules/.bin/jest test/integration/DataUnionEndpoints.test.js
 
   streamr-client-testing-tool:
     needs: [test, lint]
