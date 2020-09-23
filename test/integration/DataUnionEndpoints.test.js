@@ -318,7 +318,7 @@ let templateSidechain
  */
 async function deployDataUnionFactorySidechain(wallet) {
     log(`Deploying template DU sidechain contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory([], DataUnionSidechain.bytecode, wallet)
+    const templateDeployer = new ContractFactory(DataUnionSidechain.abi, DataUnionSidechain.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
         gasLimit: 6000000
     })
@@ -347,7 +347,7 @@ function getTemplateSidechain() {
 
 async function deployDataUnionFactoryMainnet(wallet, sidechainTemplateAddress, sidechainFactoryAddress) {
     log(`Deploying template DU mainnet contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory([], DataUnionMainnet.bytecode, wallet)
+    const templateDeployer = new ContractFactory(DataUnionMainnet.abi, DataUnionMainnet.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
         gasLimit: 6000000
     })
