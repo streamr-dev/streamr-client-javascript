@@ -50,7 +50,7 @@ describe('DataUnionEndPoints', () => {
     beforeEach(async () => {
         await adminClient.ensureConnected()
         dataUnion = await adminClient.deployDataUnion()
-        log(`Waiting for ${dataUnion.address} to be registered in sidechain`)
+        log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
         await dataUnion.isReady()
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
         log(`DataUnion ${dataUnion.address} is ready to roll`)
@@ -318,7 +318,7 @@ let templateSidechain
  */
 async function deployDataUnionFactorySidechain(wallet) {
     log(`Deploying template DU sidechain contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory([], DataUnionSidechain.bytecode, wallet)
+    const templateDeployer = new ContractFactory(DataUnionSidechain.abi, DataUnionSidechain.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
         gasLimit: 6000000
     })
@@ -347,7 +347,7 @@ function getTemplateSidechain() {
 
 async function deployDataUnionFactoryMainnet(wallet, sidechainTemplateAddress, sidechainFactoryAddress) {
     log(`Deploying template DU mainnet contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory([], DataUnionMainnet.bytecode, wallet)
+    const templateDeployer = new ContractFactory(DataUnionMainnet.abi, DataUnionMainnet.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
         gasLimit: 6000000
     })
