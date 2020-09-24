@@ -66,6 +66,24 @@ const dataUnionMainnetABI = [{
     outputs: [{ type: 'uint256' }],
     stateMutability: 'nonpayable',
     type: 'function'
+}, {
+    name: 'token',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
+    name: 'adminFeesWithdrawable',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
+    name: 'withdrawAdminFees',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
 }]
 
 const dataUnionSidechainABI = [{
