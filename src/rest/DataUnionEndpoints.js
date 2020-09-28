@@ -569,18 +569,8 @@ export async function hasJoined(memberAddress, options = {}) {
     const address = parseAddress(this, memberAddress, options)
     const duSidechain = await getSidechainContract(this, options)
 
-    // memberData[0] is enum ActiveState, and zero means member doesn't exist
-    // await until(async () => (await duSidechain.memberData(address))[0] !== 0, retryTimeoutMs, pollingIntervalMs)
-    // TODO: replace with the line above
-    console.log('********************************')
-    console.log('Polling hasJoined')
-    console.log('********************************')
-    await until(async () => {
-        const data = await duSidechain.memberData(address)
-        console.log(data)
-        console.log(JSON.stringify(data))
-        return data[0] !== 0 // TODO: check if this is correct
-    }, retryTimeoutMs, pollingIntervalMs)
+    // memberData[0] is enum ActiveState, and zero means member has never joined
+    await until(async () => (await duSidechain.memberData(address))[0] !== 0, retryTimeoutMs, pollingIntervalMs)
 }
 
 /**
