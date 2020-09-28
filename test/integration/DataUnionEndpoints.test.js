@@ -1,8 +1,9 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
 import { Contract, ContractFactory, providers, Wallet, utils } from 'ethers'
+import { formatEther, parseEther } from 'ethers/lib/utils'
 import debug from 'debug'
 
-import until from '../../src/utils'
+import { until } from '../../src/utils'
 import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
 import * as DataUnionMainnet from '../../contracts/DataUnionMainnet.json'
@@ -25,12 +26,19 @@ describe('DataUnionEndPoints', () => {
     const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
     const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
+    const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
+    const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
+
     beforeAll(async () => {
         log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
         const network = await providerMainnet.getNetwork()
         log('Connected to "mainnet" network: ', JSON.stringify(network))
         const network2 = await providerSidechain.getNetwork()
         log('Connected to sidechain network: ', JSON.stringify(network2))
+
+        log(`Minting 100 tokens to ${adminWalletMainnet.address}`)
+        const tx1 = await tokenMainnet.mint(adminWalletMainnet.address, parseEther('100'))
+        await tx1.wait()
 
         // for faster manual testing, use a factory from previous runs
         // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', factoryMainnetABI, adminWalletMainnet)
@@ -148,28 +156,39 @@ describe('DataUnionEndPoints', () => {
             // await memberClient.joinDataUnion({ secret: 'secret' })
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
-            // transfer ERC20 to mainet contract
-            const amount = utils.parseEther('1')
-            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
-
-            log(`Minting ${amount} tokens`)
             const tokenAddress = await dataUnion.token()
+            log(`Token address: ${tokenAddress}`)
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
-            const tx1 = await adminTokenMainnet.mint(dataUnion.address, amount)
-            await tx1.wait()
-            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
 
-            const balance2 = await adminTokenMainnet.balanceOf(dataUnion.address)
-            log(`Token balance of ${dataUnion.address}: ${utils.formatEther(balance2)} (${balance2.toString()})`)
-            const tx2 = await dataUnion.sendTokensToBridge({ gasLimit: 5000000 })
+            const amount = parseEther('1')
+            const duSidechainEarningsBefore = await dataUnion.sidechain.totalEarnings()
+
+            const duBalance1 = await adminTokenMainnet.balanceOf(dataUnion.address)
+            log(`Token balance of ${dataUnion.address}: ${formatEther(duBalance1)} (${duBalance1.toString()})`)
+            const balance1 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance1)} (${balance1.toString()})`)
+
+            log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.address}`)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
+            await tx1.wait()
+
+            const duBalance2 = await adminTokenMainnet.balanceOf(dataUnion.address)
+            log(`Token balance of ${dataUnion.address}: ${formatEther(duBalance2)} (${duBalance2.toString()})`)
+            const balance2 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance2)} (${balance2.toString()})`)
+
+            log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
+            const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
             log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
-            await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
-            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
+            await until(async () => !duSidechainEarningsBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
+            log(`Confirmed DU sidechain balance ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
-            const balance3 = await adminTokenMainnet.balanceOf(dataUnion.address)
-            log(`Token balance of ${dataUnion.address}: ${utils.formatEther(balance3)} (${balance3.toString()})`)
+            const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.address)
+            log(`Token balance of ${dataUnion.address}: ${formatEther(duBalance3)} (${duBalance3.toString()})`)
+            const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
             // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
             const res = await memberClient.getMemberStats()
@@ -188,17 +207,18 @@ describe('DataUnionEndPoints', () => {
             log('Adding members')
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
-            // transfer ERC20 to mainet contract
-            const amount = utils.parseEther('1')
-            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
-
-            log(`Minting ${amount} tokens`)
             const tokenAddress = await dataUnion.token()
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
-            const tx1 = await adminTokenMainnet.mint(dataUnion.address, amount)
+
+            // transfer ERC20 to mainet contract
+            const amount = parseEther('1')
+            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
+
+            log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.address}`)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
-            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
+            log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
             const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
@@ -221,17 +241,18 @@ describe('DataUnionEndPoints', () => {
             log('Adding members')
             await adminClient.addMembers([memberWallet.address], { dataUnion })
 
-            // transfer ERC20 to mainet contract
-            const amount = utils.parseEther('1')
-            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
-
-            log(`Minting ${amount} tokens`)
             const tokenAddress = await dataUnion.token()
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
-            const tx1 = await adminTokenMainnet.mint(dataUnion.address, amount)
+
+            // transfer ERC20 to mainet contract
+            const amount = parseEther('1')
+            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
+
+            log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.address}`)
+            const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
             await tx1.wait()
 
-            log(`Transferred ${amount} to ${dataUnion.address}, next sending to bridge`)
+            log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
             const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
