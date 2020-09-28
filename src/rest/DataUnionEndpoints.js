@@ -569,7 +569,7 @@ export async function hasJoined(memberAddress, options = {}) {
     const address = parseAddress(this, memberAddress, options)
     const duSidechain = await getSidechainContract(this, options)
 
-    // memberData[0] is enum ActiveState, and zero means member has never joined
+    // memberData[0] is enum ActiveStatus {None, Active, Inactive}, and zero means member has never joined
     await until(async () => (await duSidechain.memberData(address))[0] !== 0, retryTimeoutMs, pollingIntervalMs)
 }
 
