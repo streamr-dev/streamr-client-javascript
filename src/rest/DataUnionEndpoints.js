@@ -99,6 +99,18 @@ const dataUnionSidechainABI = [{
     stateMutability: 'nonpayable',
     type: 'function'
 }, {
+    name: 'withdrawAll',
+    inputs: [{ type: 'address' }, { type: 'bool' }],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}, {
+    name: 'withdrawAllTo',
+    inputs: [{ type: 'address' }, { type: 'bool' }],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}, {
     // enum ActiveStatus {None, Active, Inactive, Blocked}
     // struct MemberInfo {
     //     ActiveStatus status;
