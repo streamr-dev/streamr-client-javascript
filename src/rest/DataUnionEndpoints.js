@@ -726,12 +726,7 @@ export async function getWithdrawTxTo(recipientAddress, options) {
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawTo(recipientAddress, options) {
-    const wallet = getSidechainWallet(this, options)
-    const duSidechain = await getSidechainContract(this, options)
-    const withdrawn = await duSidechain.getWithdrawn(wallet.address)
-    const message = recipientAddress + '0' + duSidechain.address.slice(2) + withdrawn.toString(16, 64)
-    const signature = await wallet.signMessage(message)
-    return signature
+    return this.signWithdrawAmountTo(recipientAddress, '0', options)
 }
 
 /**
@@ -744,7 +739,9 @@ export async function signWithdrawTo(recipientAddress, options) {
 export async function signWithdrawAmountTo(recipientAddress, amount, options) {
     const wallet = getSidechainWallet(this, options)
     const duSidechain = await getSidechainContract(this, options)
-    const withdrawn = await duSidechain.getWithdrawn(wallet.address)
+    const memberData = await duSidechain.memberData(wallet.address)
+    if (memberData[0] === '0') { throw new Error(`${wallet.address} is not a member in Data Union (sidechain address ${duSidechain.address})`) }
+    const withdrawn = memberData[3]
     const message = recipientAddress + amount.toString(16, 64) + duSidechain.address.slice(2) + withdrawn.toString(16, 64)
     const signature = await wallet.signMessage(message)
     return signature
