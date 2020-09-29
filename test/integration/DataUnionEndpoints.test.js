@@ -196,8 +196,8 @@ describe('DataUnionEndPoints', () => {
                 status: 'active',
                 earningsBeforeLastJoin: '0',
                 lmeAtJoin: '0',
-                totalEarnings: '0',
-                withdrawableEarnings: '0',
+                totalEarnings: '1000000000000000000',
+                withdrawableEarnings: '1000000000000000000',
             })
         }, 600000)
 
