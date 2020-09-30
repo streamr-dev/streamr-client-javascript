@@ -232,7 +232,7 @@ describe('DataUnionEndPoints', () => {
             const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
-            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
+            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.sidechain.address} in sidechain`)
             await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
             log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
@@ -266,7 +266,7 @@ describe('DataUnionEndPoints', () => {
             const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
-            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.address} in sidechain`)
+            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.sidechain.address} in sidechain`)
             await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 360000)
             log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
