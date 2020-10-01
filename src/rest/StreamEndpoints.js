@@ -4,8 +4,11 @@ import { Agent as HttpsAgent } from 'https'
 import qs from 'qs'
 import debugFactory from 'debug'
 
+import { validateOptions } from '../Stream'
+
 import Stream from './domain/Stream'
 import authFetch from './authFetch'
+
 
 const debug = debugFactory('StreamrClient')
 
@@ -166,6 +169,22 @@ export async function getStreamValidationInfo(streamId) {
         streamId,
     })
     const url = `${this.options.restUrl}/streams/${streamId}/validation`
+    const json = await authFetch(url, this.session)
+    return json
+}
+
+export async function getStreamLast(streamObjectOrId) {
+    const { streamId, streamPartition = 0, count = 1 } = validateOptions(streamObjectOrId)
+    this.debug('getStreamLast', {
+        streamId,
+        streamPartition,
+        count,
+    })
+    const query = {
+        count,
+    }
+
+    const url = `${this.options.restUrl}/streams/${streamId}/data/partitions/${streamPartition}/last?${qs.stringify(query)}`
     const json = await authFetch(url, this.session)
     return json
 }
