@@ -75,9 +75,10 @@ jobs:
           sudo service mysql stop
           git clone https://github.com/streamr-dev/streamr-docker-dev.git
           sudo ifconfig docker0 10.200.10.1/24
+          ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait --except platform --except data-union-server
           until [ "$(docker logs streamr-docker-dev_rabbit_1 |grep accept)" ]; do echo "Waiting for rabbitmq container to be ready..."; sleep 1s; done
-          sleep 5s
+          sleep 5m
 
       - name: npm ci
         run: npm ci
