@@ -126,7 +126,7 @@ const dataUnionSidechainABI = [{
 }, {
     inputs: [],
     name: 'getStats',
-    outputs: [{ internalType: 'uint256[5]', name: '', type: 'uint256[5]' }],
+    outputs: [{ type: 'uint256[5]' }],
     stateMutability: 'view',
     type: 'function'
 }, {
