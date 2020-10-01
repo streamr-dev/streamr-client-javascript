@@ -238,6 +238,7 @@ describe('DataUnionEndPoints', () => {
 
             const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
             const tr = await memberClient.withdraw()
+            await tr.isComplete()
             const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
             const diff = balanceAfter.sub(balanceBefore)
 
@@ -272,6 +273,7 @@ describe('DataUnionEndPoints', () => {
 
             const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
             const tr = await memberClient.withdrawTo(member2Wallet.address)
+            await tr.isComplete()
             const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
             const diff = balanceAfter.sub(balanceBefore)
 

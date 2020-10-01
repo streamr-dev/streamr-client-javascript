@@ -612,10 +612,27 @@ export async function getMemberStats(memberAddress, options) {
  * @param memberAddress whose balance is returned
  * @return {Promise<BigNumber>}
  */
-export async function getBalance(memberAddress, options) {
+export async function getMemberBalance(memberAddress, options) {
     const address = parseAddress(this, memberAddress, options)
     const duSidechain = await getSidechainContract(this, options)
     return duSidechain.getWithdrawableEarnings(address)
+}
+
+export async function getTokenBalance(address, options) {
+    const a = parseAddress(this, address, options)
+    const tokenAddressMainnet = this.options.tokenAddress || options.tokenAddress
+    if (!tokenAddressMainnet) { throw new Error('tokenAddress option not found') }
+    const provider = getMainnetProvider(this, options)
+    const token = new Contract(tokenAddressMainnet, [{
+        name: 'balanceOf',
+        inputs: [{ type: 'address' }],
+        outputs: [{ type: 'uint256' }],
+        constant: true,
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    }], provider)
+    return token.balanceOf(a)
 }
 
 // TODO: this needs more thought: probably something like getEvents from sidechain? Heavy on RPC?
@@ -691,8 +708,16 @@ export async function getDataUnionVersion(contractAddress) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdraw(options = {}) {
+    const {
+        pollingIntervalMs = 1000,
+        retryTimeoutMs = 60000,
+    } = options
+    const balanceBefore = await this.getTokenBalance(null, options)
     const tx = await this.getWithdrawTx(options)
-    return tx.wait(options.confirmations || 1)
+    const tr = await tx.wait()
+    const getBalance = this.getTokenBalance.bind(this)
+    tr.isComplete = async () => until(async () => !(await getBalance(null, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+    return tr
 }
 
 /**
@@ -704,6 +729,10 @@ export async function withdraw(options = {}) {
 export async function getWithdrawTx(options) {
     const wallet = getSidechainWallet(this, options)
     const duSidechain = await getSidechainContract(this, options)
+    const withdrawable = await duSidechain.getWithdrawableEarnings(wallet.address)
+    if (withdrawable.eq(0)) {
+        throw new Error(`${wallet.address} has nothing to withdraw in (sidechain) data union ${duSidechain.address}`)
+    }
     return duSidechain.withdrawAll(wallet.address, true) // sendToMainnet=true
 }
 
@@ -715,8 +744,16 @@ export async function getWithdrawTx(options) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawTo(recipientAddress, options = {}) {
+    const {
+        pollingIntervalMs = 1000,
+        retryTimeoutMs = 60000,
+    } = options
+    const balanceBefore = await this.getTokenBalance(null, options)
     const tx = await this.getWithdrawTxTo(recipientAddress, options)
-    return tx.wait(options.confirmations || 1)
+    const tr = await tx.wait()
+    const getBalance = this.getTokenBalance.bind(this)
+    tr.isComplete = async () => until(async () => !(await getBalance(null, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+    return tr
 }
 
 /**
@@ -727,7 +764,12 @@ export async function withdrawTo(recipientAddress, options = {}) {
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxTo(recipientAddress, options) {
+    const wallet = getSidechainWallet(this, options)
     const duSidechain = await getSidechainContract(this, options)
+    const withdrawable = await duSidechain.getWithdrawableEarnings(wallet.address)
+    if (withdrawable.eq(0)) {
+        throw new Error(`${wallet.address} has nothing to withdraw in (sidechain) data union ${duSidechain.address}`)
+    }
     return duSidechain.withdrawAllTo(recipientAddress, true) // sendToMainnet=true
 }
 
