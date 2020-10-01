@@ -209,7 +209,7 @@ describe('DataUnionEndPoints', () => {
                 totalEarnings: '1000000000000000000',
                 withdrawableEarnings: '1000000000000000000',
             })
-        }, 600000)
+        }, 1000000)
 
         it('can withdraw earnings to mainnet', async () => {
             // TODO: change after DU2 joining is implemented in EE
@@ -244,7 +244,7 @@ describe('DataUnionEndPoints', () => {
 
             expect(tr.logs[0].address).toBe(adminTokenMainnet.address)
             expect(diff.toString()).toBe(amount)
-        }, 600000)
+        }, 1000000)
 
         it('can "donate" earnings to another mainnet address', async () => {
             // TODO: change after DU2 joining is implemented in EE
@@ -279,7 +279,7 @@ describe('DataUnionEndPoints', () => {
 
             expect(tr.logs[0].address).toBe(adminTokenMainnet.address)
             expect(diff.toString()).toBe(amount)
-        }, 600000)
+        }, 1000000)
 
         // TODO: test getWithdrawTx, getWithdrawTxTo
     })
