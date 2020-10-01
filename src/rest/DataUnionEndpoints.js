@@ -288,7 +288,7 @@ async function getDataUnionFactoryMainnet(client, options = {}) {
 // key the cache with name only, since PROBABLY one StreamrClient will ever use only one private key
 const mainnetAddressCache = {} // mapping: "name" -> mainnet address
 /** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
-async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
+export async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
     if (!mainnetAddressCache[dataUnionName]) {
         const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.mainnetAddress(deployerAddress, dataUnionName))
         mainnetAddressCache[dataUnionName] = promise
@@ -301,7 +301,7 @@ async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress
 // TODO: calculate addresses in JS
 const sidechainAddressCache = {} // mapping: mainnet address -> sidechain address
 /** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
-async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
+export async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
     if (!sidechainAddressCache[duMainnetAddress]) {
         const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.sidechainAddress(duMainnetAddress))
         sidechainAddressCache[duMainnetAddress] = promise
