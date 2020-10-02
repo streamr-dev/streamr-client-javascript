@@ -108,6 +108,21 @@ describe('DataUnionEndPoints', () => {
         const memberWallet = new Wallet(`0x100000000000000000000000000000000000000000000000001${+nonce}`, providerSidechain)
         const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000000000000002${+nonce}`, providerSidechain)
 
+        beforeAll(async () => {
+            const from = adminWalletSidechain.address
+            log(`Sidechain ETH balance of ${from}: ${formatEther(await providerSidechain.balanceOf(from))} sETH`)
+            log(`Moving 1 sETH ${from} -> ${memberWallet.address}`)
+            adminWalletSidechain.sendTransaction({
+                to: memberWallet.address,
+                value: parseEther('1')
+            })
+            log(`Moving 1 sETH ${from} -> ${member2Wallet.address}`)
+            adminWalletSidechain.sendTransaction({
+                to: member2Wallet.address,
+                value: parseEther('1')
+            })
+        })
+
         beforeEach(async () => {
             memberClient = new StreamrClient({
                 ...config.clientOptions,
