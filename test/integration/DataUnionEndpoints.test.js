@@ -350,12 +350,29 @@ const tokenMediatorSidechainAddress = '0x6cCdd5d866ea766f6DF5965aA98DeCCD629ff22
 const tokenMediatorMainnetAddress = '0x3AE0ad89b0e094fD09428589849C161f0F7f4E6A'
 let templateSidechain
 
+function throwIfBadAddress(address, variableDescription) {
+    try {
+        return getAddress(address)
+    } catch (e) {
+        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}. Original error: ${e.stack}.`)
+    }
+}
+
+async function throwIfNotContract(eth, address, variableDescription) {
+    const addr = throwIfBadAddress(address, variableDescription)
+    if (await eth.getCode(address) === '0x') {
+        throw new Error(`${variableDescription || 'Error'}: No contract at ${address}`)
+    }
+    return addr
+}
+
 /**
  * Deploy template DataUnion contract as well as factory to sidechain
  * @param wallet {Wallet} sidechain wallet that is used in deployment
  * @returns {Promise<Contract>} DataUnionFactorySidechain contract
  */
 async function deployDataUnionFactorySidechain(wallet) {
+    await throwIfNotContract(wallet.provider, tokenMediatorSidechainAddress, 'tokenMediatorSidechainAddress')
     log(`Deploying template DU sidechain contract from ${wallet.address}`)
     const templateDeployer = new ContractFactory(DataUnionSidechain.abi, DataUnionSidechain.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
@@ -385,6 +402,7 @@ function getTemplateSidechain() {
 }
 
 async function deployDataUnionFactoryMainnet(wallet, sidechainTemplateAddress, sidechainFactoryAddress) {
+    await throwIfNotContract(wallet.provider, tokenMediatorMainnetAddress, 'tokenMediatorMainnetAddress')
     log(`Deploying template DU mainnet contract from ${wallet.address}`)
     const templateDeployer = new ContractFactory(DataUnionMainnet.abi, DataUnionMainnet.bytecode, wallet)
     const templateTx = await templateDeployer.deploy({
