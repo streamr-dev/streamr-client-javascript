@@ -81,7 +81,7 @@
     "qs": "^6.9.4",
     "quick-lru": "^5.1.1",
     "randomstring": "^1.1.5",
-    "streamr-client-protocol": "^5.1.0",
+    "streamr-client-protocol": "^5.3.1",
     "uuid": "^8.3.0",
     "webpack-node-externals": "^2.5.2",
     "ws": "^7.3.1"
