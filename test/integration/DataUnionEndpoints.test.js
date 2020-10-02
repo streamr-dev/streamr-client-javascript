@@ -110,7 +110,7 @@ describe('DataUnionEndPoints', () => {
 
         beforeAll(async () => {
             const from = adminWalletSidechain.address
-            log(`Sidechain ETH balance of ${from}: ${formatEther(await providerSidechain.balanceOf(from))} sETH`)
+            log(`Sidechain ETH balance of ${from}: ${formatEther(await providerSidechain.getBalance(from))} sETH`)
             log(`Moving 1 sETH ${from} -> ${memberWallet.address}`)
             adminWalletSidechain.sendTransaction({
                 to: memberWallet.address,
