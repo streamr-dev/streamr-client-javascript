@@ -183,16 +183,14 @@ describe('DataUnionEndPoints', () => {
             const tx2 = await dataUnion.sendTokensToBridge()
             await tx2.wait()
 
-            log(`DU member count: ${await dataUnion.sidechain.activeMemberCount()}`)
             log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.sidechain.address} in sidechain`)
             const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)
-            log(`Sidechain token balance of ${dataUnion.sidechain.address}: ${await tokenSidechain.balanceOf(dataUnion.sidechain.address)}`)
             await until(async () => {
                 log(`Sidechain token balance of ${dataUnion.sidechain.address}: ${await tokenSidechain.balanceOf(dataUnion.sidechain.address)}`)
                 log(`Sidechain DU totalWithdrawable ${await dataUnion.sidechain.totalWithdrawable()}`)
                 log(`Sidechain DU balance ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
                 return !duSidechainEarningsBefore.eq(await dataUnion.sidechain.totalEarnings())
-            }, 900000)
+            }, 900000, 5000)
             log(`Confirmed DU sidechain balance ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
             const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.address)
