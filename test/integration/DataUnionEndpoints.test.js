@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
 import { Contract, ContractFactory, providers, Wallet, utils } from 'ethers'
-import { formatEther, parseEther } from 'ethers/lib/utils'
+import { formatEther, parseEther, getAddress } from 'ethers/lib/utils'
 import debug from 'debug'
 
 import { until } from '../../src/utils'
