@@ -7,7 +7,7 @@ module.exports = {
         url: process.env.WEBSOCKET_URL || 'ws://localhost/api/v1/ws',
         restUrl: process.env.REST_URL || 'http://localhost:8081/streamr-core/api/v1',
         tokenAddress: process.env.TOKEN_ADDRESS || '0xbAA81A0179015bE47Ad439566374F2Bae098686F',
-        tokenAddressSidechain: process.env.TOKEN_ADDRESS_SIDECHAIN || '0x3b11D489411BF11e843Cb28f8824dedBfcB75Df3',
+        tokenAddressSidechain: process.env.TOKEN_ADDRESS_SIDECHAIN || '0x73Be21733CC5D08e1a14Ea9a399fb27DB3BEf8fF',
         sidechain: {
             url: process.env.SIDECHAIN_URL || 'http://10.200.10.1:8546',
             timeout: process.env.TEST_TIMEOUT,
