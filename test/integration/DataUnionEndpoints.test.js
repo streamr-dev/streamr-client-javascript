@@ -346,8 +346,8 @@ describe('DataUnionEndPoints', () => {
 // for the below helpers, check out https://github.com/streamr-dev/data-union-solidity/tree/master/util
 
 // TODO: these should also go into the .env file?
-const tokenMediatorSidechainAddress = '0x6cCdd5d866ea766f6DF5965aA98DeCCD629ff222'
-const tokenMediatorMainnetAddress = '0x3AE0ad89b0e094fD09428589849C161f0F7f4E6A'
+const tokenMediatorSidechainAddress = '0xedD2aa644a6843F2e5133Fe3d6BD3F4080d97D9F'
+const tokenMediatorMainnetAddress = '0xedD2aa644a6843F2e5133Fe3d6BD3F4080d97D9F'
 let templateSidechain
 
 function throwIfBadAddress(address, variableDescription) {
