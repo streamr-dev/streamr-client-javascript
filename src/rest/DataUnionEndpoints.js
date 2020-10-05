@@ -288,9 +288,12 @@ async function getDataUnionFactoryMainnet(client, options = {}) {
 // key the cache with name only, since PROBABLY one StreamrClient will ever use only one private key
 const mainnetAddressCache = {} // mapping: "name" -> mainnet address
 /** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
-export async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
+async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
     if (!mainnetAddressCache[dataUnionName]) {
-        const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.mainnetAddress(deployerAddress, dataUnionName))
+        const provider = getMainnetProvider(client, options)
+        const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+        const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
+        const promise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
         mainnetAddressCache[dataUnionName] = promise
         const value = await promise
         mainnetAddressCache[dataUnionName] = value // eslint-disable-line require-atomic-updates
@@ -301,9 +304,12 @@ export async function getDataUnionMainnetAddress(client, dataUnionName, deployer
 // TODO: calculate addresses in JS
 const sidechainAddressCache = {} // mapping: mainnet address -> sidechain address
 /** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
-export async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
+async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
     if (!sidechainAddressCache[duMainnetAddress]) {
-        const promise = getDataUnionFactoryMainnet(client, options).then((f) => f.sidechainAddress(duMainnetAddress))
+        const provider = getMainnetProvider(client, options)
+        const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+        const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
+        const promise = factoryMainnet.sidechainAddress(duMainnetAddress)
         sidechainAddressCache[duMainnetAddress] = promise
         const value = await promise
         sidechainAddressCache[duMainnetAddress] = value // eslint-disable-line require-atomic-updates
@@ -335,6 +341,14 @@ async function getSidechainContract(client, options = {}) {
 // //////////////////////////////////////////////////////////////////
 //          admin: DEPLOY AND SETUP DATA UNION
 // //////////////////////////////////////////////////////////////////
+
+export async function getMainnetAddress(dataUnionName, deployerAddress, options) {
+    return getDataUnionMainnetAddress(this, dataUnionName, deployerAddress, options)
+}
+
+export async function getSidechainAddress(duMainnetAddress, options) {
+    return getDataUnionMainnetAddress(this, duMainnetAddress, options)
+}
 
 /**
  * @typedef {object} EthereumOptions all optional, hence "options"
