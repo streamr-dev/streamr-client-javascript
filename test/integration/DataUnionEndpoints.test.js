@@ -96,6 +96,14 @@ describe('DataUnionEndPoints', () => {
 
         // separate test for adding and removing secrets? Adding secret is tested in member joins dataUnion test though.
 
+        it('can set admin fee', async () => {
+            const oldFee = await adminClient.getAdminFee({ dataUnion })
+            await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+            const newFee = await adminClient.getAdminFee({ dataUnion })
+            expect(oldFee.toString()).toEqual('0')
+            expect(newFee.toString()).toEqual(parseEther('0.1').toString())
+        })
+
         it('can withdraw admin fees', async () => {
             log('TODO')
         })

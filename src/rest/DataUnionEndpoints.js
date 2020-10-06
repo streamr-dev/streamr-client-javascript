@@ -73,6 +73,12 @@ const dataUnionMainnetABI = [{
     stateMutability: 'view',
     type: 'function'
 }, {
+    name: 'owner',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
     name: 'adminFeesWithdrawable',
     inputs: [],
     outputs: [{ type: 'uint256' }],
@@ -83,6 +89,18 @@ const dataUnionMainnetABI = [{
     inputs: [],
     outputs: [{ type: 'uint256' }],
     stateMutability: 'nonpayable',
+    type: 'function'
+}, {
+    name: 'setAdminFee',
+    inputs: [{ type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}, {
+    name: 'adminFeeFraction',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view',
     type: 'function'
 }]
 
@@ -539,6 +557,21 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
     return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
+}
+
+export async function setAdminFee(newFeeFraction, options) {
+    const duMainnet = await getMainnetContract(this, options)
+    return duMainnet.setAdminFee(newFeeFraction)
+}
+
+export async function getAdminFee(options) {
+    const duMainnet = await getMainnetContract(this, options)
+    return duMainnet.adminFeeFraction()
+}
+
+export async function getAdminAddress(options) {
+    const duMainnet = await getMainnetContract(this, options)
+    return duMainnet.owner()
 }
 
 // //////////////////////////////////////////////////////////////////
