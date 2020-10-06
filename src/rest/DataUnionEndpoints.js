@@ -683,32 +683,20 @@ export async function getDataUnionStats(options) {
  * @returns {number} 1 for old, 2 for current, zero for "not a data union"
  */
 export async function getDataUnionVersion(contractAddress) {
+    const provider = getMainnetProvider(this)
+    const du = new Contract(contractAddress, [{
+        name: 'version',
+        inputs: [],
+        outputs: [{ type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function'
+    }], provider)
     try {
-        const du = getMainnetContract(this)
-        const addr = await du.amb()
-        getAddress(addr) // throws if address is bad
-        return 2
+        const version = await du.version()
+        return version
     } catch (e) {
-        // continue
+        return 0
     }
-
-    try {
-        const provider = getMainnetProvider(this)
-        const du = new Contract(contractAddress, [{
-            name: 'operator',
-            inputs: [],
-            outputs: [{ type: 'address' }],
-            stateMutability: 'view',
-            type: 'function'
-        }], provider)
-        const addr = await du.operator()
-        getAddress(addr) // throws if address is bad
-        return 1
-    } catch (e) {
-        // continue
-    }
-
-    return 0
 }
 
 // //////////////////////////////////////////////////////////////////
