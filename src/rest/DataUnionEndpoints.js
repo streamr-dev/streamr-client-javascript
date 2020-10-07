@@ -360,11 +360,11 @@ async function getSidechainContract(client, options = {}) {
 //          admin: DEPLOY AND SETUP DATA UNION
 // //////////////////////////////////////////////////////////////////
 
-export async function getMainnetAddress(dataUnionName, deployerAddress, options) {
+export async function calculateDataUnionMainnetAddress(dataUnionName, deployerAddress, options) {
     return getDataUnionMainnetAddress(this, dataUnionName, deployerAddress, options)
 }
 
-export async function getSidechainAddress(duMainnetAddress, options) {
+export async function calculateDataUnionSidechainAddress(duMainnetAddress, options) {
     return getDataUnionMainnetAddress(this, duMainnetAddress, options)
 }
 
