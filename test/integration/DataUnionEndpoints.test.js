@@ -131,12 +131,12 @@ describe('DataUnionEndPoints', () => {
             const from = adminWalletSidechain.address
             log(`Sidechain ETH balance of ${from}: ${formatEther(await providerSidechain.getBalance(from))} sETH`)
             log(`Moving 1 sETH ${from} -> ${memberWallet.address}`)
-            adminWalletSidechain.sendTransaction({
+            await adminWalletSidechain.sendTransaction({
                 to: memberWallet.address,
                 value: parseEther('1')
             })
             log(`Moving 1 sETH ${from} -> ${member2Wallet.address}`)
-            adminWalletSidechain.sendTransaction({
+            await adminWalletSidechain.sendTransaction({
                 to: member2Wallet.address,
                 value: parseEther('1')
             })
