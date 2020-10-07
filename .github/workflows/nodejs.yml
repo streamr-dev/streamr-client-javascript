@@ -78,7 +78,6 @@ jobs:
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh log -f &
           ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait --except platform --except data-union-server
           until [ "$(docker logs streamr-docker-dev_rabbit_1 |grep accept)" ]; do echo "Waiting for rabbitmq container to be ready..."; sleep 1s; done
-          ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh restart broker-node-no-storage-1 broker-node-no-storage-2 broker-node-storage-1 tracker-1 tracker-2 tracker-3 --wait
 
       - name: npm ci
         run: npm ci
