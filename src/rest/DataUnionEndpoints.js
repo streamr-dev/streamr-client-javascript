@@ -561,7 +561,8 @@ export async function getWithdrawToSignedTx(memberAddress, recipientAddress, sig
 
 export async function setAdminFee(newFeeFraction, options) {
     const duMainnet = await getMainnetContract(this, options)
-    return duMainnet.setAdminFee(newFeeFraction)
+    const tx = await duMainnet.setAdminFee(newFeeFraction)
+    return tx.wait()
 }
 
 export async function getAdminFee(options) {
