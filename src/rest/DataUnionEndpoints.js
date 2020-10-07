@@ -424,9 +424,9 @@ export async function deployDataUnion(options = {}) {
 
     const factoryMainnet = await getDataUnionFactoryMainnet(this, options)
     const tx = await factoryMainnet.deployNewDataUnion(
-        mainnetWallet.address,
+        sidechainWallet.address,
         adminFeeBN,
-        [mainnetWallet.address],
+        [sidechainWallet.address],
         duName,
     )
     const promise = tx.wait().then((tr) => {
