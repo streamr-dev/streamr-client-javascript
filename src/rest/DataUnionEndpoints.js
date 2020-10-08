@@ -727,7 +727,7 @@ export async function getDataUnionVersion(contractAddress) {
     }], provider)
     try {
         const version = await du.version()
-        return version
+        return +version
     } catch (e) {
         return 0
     }
