@@ -46,7 +46,7 @@ describe('DataUnionEndPoints', () => {
     })
 
     const streamrClientCleanupList = []
-    afterAll(Promise.all(streamrClientCleanupList.map((c) => c.ensureDisconnected())))
+    afterAll(async () => Promise.all(streamrClientCleanupList.map((c) => c.ensureDisconnected())))
 
     beforeAll(async () => {
         log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
