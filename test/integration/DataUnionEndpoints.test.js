@@ -60,7 +60,7 @@ describe('DataUnionEndPoints', () => {
         await tx1.wait()
 
         // for faster manual testing, use a factory from previous runs
-        // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', factoryMainnetABI, adminWalletMainnet)
+        // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', DataUnionFactoryMainnet.abi, adminWalletMainnet)
         const factorySidechain = await deployDataUnionFactorySidechain(adminWalletSidechain)
         const templateSidechain = getTemplateSidechain()
         const factoryMainnet = await deployDataUnionFactoryMainnet(adminWalletMainnet, templateSidechain.address, factorySidechain.address)

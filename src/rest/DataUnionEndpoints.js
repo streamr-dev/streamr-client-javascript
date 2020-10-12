@@ -365,7 +365,7 @@ export async function calculateDataUnionMainnetAddress(dataUnionName, deployerAd
 }
 
 export async function calculateDataUnionSidechainAddress(duMainnetAddress, options) {
-    return getDataUnionMainnetAddress(this, duMainnetAddress, options)
+    return getDataUnionSidechainAddress(this, duMainnetAddress, options)
 }
 
 /**
