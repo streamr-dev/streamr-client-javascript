@@ -7,7 +7,7 @@ import * as DataUnionFactoryMainnet from '../../contracts/DataUnionFactoryMainne
 
 import config from './config'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
 // const { log } = console
 
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)

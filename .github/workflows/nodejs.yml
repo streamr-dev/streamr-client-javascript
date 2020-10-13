@@ -89,7 +89,9 @@ jobs:
       #   run: npm run test-browser
 
       - name: test-integration
-        run: env DEBUG=StreamrClient::* ./node_modules/.bin/jest --runInBand test/integration/DataUnionEndpoints*
+        run: |
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest test/integration/DataUnionEndpoints-calculate.test.js
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --runInBand test/integration/DataUnionEndpoints.test.js
 
   streamr-client-testing-tool:
     needs: [test, lint]
