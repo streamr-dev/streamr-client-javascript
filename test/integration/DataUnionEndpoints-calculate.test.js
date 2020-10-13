@@ -43,10 +43,7 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
 
     await providerMainnet.removeAllListeners()
     await providerSidechain.removeAllListeners()
-
-    if (adminClient) {
-        await adminClient.ensureDisconnected()
-    }
+    await adminClient.ensureDisconnected()
 
     expect(duMainnetAddress).toBe(dataUnion.address)
     expect(duSidechainAddress).toBe(dataUnion.sidechain.address)
