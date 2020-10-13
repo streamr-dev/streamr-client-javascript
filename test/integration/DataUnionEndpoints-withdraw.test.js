@@ -7,6 +7,7 @@ import { until } from '../../src/utils'
 import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
 import * as DataUnionFactoryMainnet from '../../contracts/DataUnionFactoryMainnet.json'
+import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
 
 import config from './config'
 
@@ -111,13 +112,14 @@ it('DataUnionEndPoints test withdraw', async () => {
 
     log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.sidechain.address} in sidechain`)
     const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)
-    await until(async () => {
-        log(`Sidechain token balance of ${dataUnion.sidechain.address}: ${await tokenSidechain.balanceOf(dataUnion.sidechain.address)}`)
-        log(`Sidechain DU totalWithdrawable ${await dataUnion.sidechain.totalWithdrawable()}`)
-        log(`Sidechain DU balance ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
-        return !duSidechainEarningsBefore.eq(await dataUnion.sidechain.totalEarnings())
-    }, 900000, 5000)
-    log(`Confirmed DU sidechain balance ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
+    await until(async () => !(await tokenSidechain.balanceOf(dataUnion.sidechain.address)).eq('0'), 300000, 3000)
+    log(`Confirmed tokens arrived, DU balance: ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
+
+    const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
+    const tx3 = await sidechainContract.addRevenue()
+    const tr3 = await tx3.wait()
+    log(`addRevenue returned ${JSON.stringify(tr3)}`)
+    log(`DU balance: ${await dataUnion.sidechain.totalEarnings()}`)
 
     const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.address)
     log(`Token balance of ${dataUnion.address}: ${formatEther(duBalance3)} (${duBalance3.toString()})`)
