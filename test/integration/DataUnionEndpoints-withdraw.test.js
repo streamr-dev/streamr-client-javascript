@@ -6,7 +6,6 @@ import debug from 'debug'
 import { until } from '../../src/utils'
 import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
-import * as DataUnionFactoryMainnet from '../../contracts/DataUnionFactoryMainnet.json'
 import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
 
 import config from './config'
@@ -23,10 +22,6 @@ class LoggingProvider extends providers.JsonRpcProvider {
         })
     }
 }
-
-// fresh dataUnion for each test case
-let dataUnion
-let adminClient
 
 // const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
 // const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
@@ -49,18 +44,10 @@ it('DataUnionEndPoints test withdraw', async () => {
     const tx1 = await tokenMainnet.mint(adminWalletMainnet.address, parseEther('100'))
     await tx1.wait()
 
-    // use a DU factory from Docker dev env, see https://github.com/streamr-dev/smart-contracts-init/
-    const factoryMainnet = new Contract('0x01f26Ca429FbE59617C5Fcdcb7f2214dcD09fB75', DataUnionFactoryMainnet.abi, adminWalletMainnet)
-
-    adminClient = new StreamrClient({
-        ...config.clientOptions,
-        factoryMainnetAddress: factoryMainnet.address,
-        autoConnect: false,
-        autoDisconnect: false,
-    })
+    const adminClient = new StreamrClient(config.clientOptions)
     await adminClient.ensureConnected()
 
-    dataUnion = await adminClient.deployDataUnion()
+    const dataUnion = await adminClient.deployDataUnion()
     log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
     await dataUnion.isReady()
     await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
@@ -74,8 +61,6 @@ it('DataUnionEndPoints test withdraw', async () => {
             privateKey: memberWallet.privateKey
         },
         dataUnion: dataUnion.address,
-        autoConnect: false,
-        autoDisconnect: false,
     })
     await memberClient.ensureConnected()
 

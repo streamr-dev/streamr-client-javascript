@@ -21,16 +21,7 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     const network2 = await providerSidechain.getNetwork()
     log('Connected to sidechain network: ', JSON.stringify(network2))
 
-    // use a DU factory from Docker dev env, see https://github.com/streamr-dev/smart-contracts-init/
-    const factoryMainnet = new Contract('0x01f26Ca429FbE59617C5Fcdcb7f2214dcD09fB75', DataUnionFactoryMainnet.abi, adminWalletMainnet)
-
-    const adminClient = new StreamrClient({
-        ...config.clientOptions,
-        factoryMainnetAddress: factoryMainnet.address,
-        autoConnect: false,
-        autoDisconnect: false,
-    })
-
+    const adminClient = new StreamrClient(config.clientOptions)
     await adminClient.ensureConnected()
 
     const dataUnionName = '6be8ceda7a3c4fe7991eab501975b85ec2bb90452d0e4c93bc2' + new Date()

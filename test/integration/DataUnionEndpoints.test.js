@@ -69,8 +69,6 @@ describe('DataUnionEndPoints', () => {
         adminClient = new StreamrClient({
             ...config.clientOptions,
             factoryMainnetAddress: factoryMainnet.address,
-            autoConnect: false,
-            autoDisconnect: false,
         })
         streamrClientCleanupList.push(adminClient)
     }, 300000)
@@ -162,8 +160,6 @@ describe('DataUnionEndPoints', () => {
                     privateKey: memberWallet.privateKey
                 },
                 dataUnion: dataUnion.address,
-                autoConnect: false,
-                autoDisconnect: false,
             })
             await memberClient.ensureConnected()
             streamrClientCleanupList.push(memberClient)
