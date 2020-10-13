@@ -748,10 +748,10 @@ export async function withdraw(options = {}) {
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
     } = options
-    const balanceBefore = await this.getTokenBalance(null, options)
     const tx = await this.getWithdrawTx(options)
     const tr = await tx.wait()
     const getBalance = this.getTokenBalance.bind(this)
+    const balanceBefore = await getBalance(null, options)
     tr.isComplete = async () => until(async () => !(await getBalance(null, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
     return tr
 }

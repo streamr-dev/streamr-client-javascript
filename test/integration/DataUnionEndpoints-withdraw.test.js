@@ -127,18 +127,27 @@ it('DataUnionEndPoints test withdraw', async () => {
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-    const res = await memberClient.getMemberStats()
+    const stats = await memberClient.getMemberStats()
+
+    const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
+    const withdrawTr = await memberClient.withdraw()
+    log(`Withdraw transaction sent: ${JSON.stringify(withdrawTr)}. Waiting for tokens to appear in mainnet`)
+    await withdrawTr.isComplete()
+    const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
+    const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     await providerMainnet.removeAllListeners()
     await providerSidechain.removeAllListeners()
     await memberClient.ensureDisconnected()
     await adminClient.ensureDisconnected()
 
-    expect(res).toMatchObject({
+    expect(stats).toMatchObject({
         status: 'active',
         earningsBeforeLastJoin: '0',
         lmeAtJoin: '0',
         totalEarnings: '1000000000000000000',
         withdrawableEarnings: '1000000000000000000',
     })
+    expect(withdrawTr.logs[0].address).toBe(adminTokenMainnet.address)
+    expect(balanceIncrease.toString()).toBe(amount)
 }, 900000)
