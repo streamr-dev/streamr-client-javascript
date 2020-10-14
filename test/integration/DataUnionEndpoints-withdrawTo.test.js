@@ -10,8 +10,8 @@ import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
 
 import config from './config'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
-// const { log } = console
+// const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
+const { log } = console
 
 class LoggingProvider extends providers.JsonRpcProvider {
     perform(method, parameters) {
@@ -33,7 +33,7 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-it('DataUnionEndPoints test withdraw', async () => {
+it('DataUnionEndPoints test withdrawTo', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -55,6 +55,7 @@ it('DataUnionEndPoints test withdraw', async () => {
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${+new Date()}`, providerSidechain)
+    const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${+new Date()}`, providerSidechain)
     const memberClient = new StreamrClient({
         ...config.clientOptions,
         auth: {
@@ -113,13 +114,12 @@ it('DataUnionEndPoints test withdraw', async () => {
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
     const stats = await memberClient.getMemberStats()
-    log(`Stats: ${JSON.stringify(stats)}`)
 
-    const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
-    const withdrawTr = await memberClient.withdraw()
+    const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    const withdrawTr = await memberClient.withdrawTo(member2Wallet.address)
     log(`Withdraw transaction sent: ${JSON.stringify(withdrawTr)}. Waiting for tokens to appear in mainnet`)
     await withdrawTr.isComplete()
-    const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
+    const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     await providerMainnet.removeAllListeners()
