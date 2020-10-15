@@ -63,6 +63,10 @@ it('DataUnionEndPoints test withdraw', async () => {
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${+new Date()}`, providerSidechain)
+    const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
+    await sendTx.wait()
+    log(`sent 0.1sETH to ${memberWallet}`)
+
     const memberClient = new StreamrClient({
         ...config.clientOptions,
         auth: {
