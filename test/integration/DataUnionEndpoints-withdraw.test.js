@@ -33,6 +33,14 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
+providerSidechain.on('debug', (msg) => {
+    if (msg.error) {
+        log(`ERROR: ${JSON.stringify(msg)}`)
+    } else {
+        log(`provider message: ${msg.action}`)
+    }
+})
+
 it('DataUnionEndPoints test withdraw', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
