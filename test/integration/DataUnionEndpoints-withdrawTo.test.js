@@ -56,6 +56,10 @@ it('DataUnionEndPoints test withdrawTo', async () => {
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${+new Date()}`, providerSidechain)
     const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${+new Date()}`, providerSidechain)
+    const sendTx = await adminWalletSidechain.sendTransaction({to: memberWallet.address, value: parseEther("0.1")})
+    await sendTx.wait()
+    console.log(`sent 0.1sETH to ${memberWallet}`)
+
     const memberClient = new StreamrClient({
         ...config.clientOptions,
         auth: {
@@ -113,9 +117,11 @@ it('DataUnionEndPoints test withdrawTo', async () => {
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
+    
     const stats = await memberClient.getMemberStats()
-
+    log(`stats ${JSON.stringify(stats)}`)
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    log(`balanceBefore ${balanceBefore}`)
     const withdrawTr = await memberClient.withdrawTo(member2Wallet.address)
     log(`Withdraw transaction sent: ${JSON.stringify(withdrawTr)}. Waiting for tokens to appear in mainnet`)
     await withdrawTr.isComplete()
@@ -134,6 +140,6 @@ it('DataUnionEndPoints test withdrawTo', async () => {
         totalEarnings: '1000000000000000000',
         withdrawableEarnings: '1000000000000000000',
     })
-    expect(withdrawTr.logs[0].address).toBe(adminTokenMainnet.address)
-    expect(balanceIncrease.toString()).toBe(amount)
+    expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
+    expect(balanceIncrease.toString()).toBe(amount.toString())
 }, 900000)
