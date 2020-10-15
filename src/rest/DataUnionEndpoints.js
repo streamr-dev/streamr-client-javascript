@@ -784,11 +784,11 @@ export async function withdrawTo(recipientAddress, options = {}) {
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
     } = options
-    const balanceBefore = await this.getTokenBalance(null, options)
+    const balanceBefore = await this.getTokenBalance(recipientAddress, options)
     const tx = await this.getWithdrawTxTo(recipientAddress, options)
     const tr = await tx.wait()
     const getBalance = this.getTokenBalance.bind(this)
-    tr.isComplete = async () => until(async () => !(await getBalance(null, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+    tr.isComplete = async () => until(async () => !(await getBalance(recipientAddress, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
     return tr
 }
 
