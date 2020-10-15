@@ -56,7 +56,7 @@ it('DataUnionEndPoints test withdrawTo', async () => {
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${+new Date()}`, providerSidechain)
     const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${+new Date()}`, providerSidechain)
-    const sendTx = await adminWalletSidechain.sendTransaction({to: memberWallet.address, value: parseEther("0.1")})
+    const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
     await sendTx.wait()
     console.log(`sent 0.1sETH to ${memberWallet}`)
 
@@ -117,7 +117,7 @@ it('DataUnionEndPoints test withdrawTo', async () => {
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-    
+
     const stats = await memberClient.getMemberStats()
     log(`stats ${JSON.stringify(stats)}`)
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
