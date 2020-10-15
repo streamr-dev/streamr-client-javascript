@@ -146,6 +146,6 @@ it('DataUnionEndPoints test withdraw', async () => {
         totalEarnings: '1000000000000000000',
         withdrawableEarnings: '1000000000000000000',
     })
-    expect(withdrawTr.logs[0].address).toBe(adminTokenMainnet.address)
-    expect(balanceIncrease.toString()).toBe(amount)
+    expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
+    expect(balanceIncrease.toString()).toBe(amount.toString())
 }, 900000)
