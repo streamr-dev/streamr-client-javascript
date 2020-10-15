@@ -196,45 +196,6 @@ describe('DataUnionEndPoints', () => {
             })
         }, 300000)
 
-        it('can "donate" earnings to another mainnet address', async () => {
-            const dataUnion = await deployDataUnionSync()
-            const memberClient = await getMemberClient(dataUnion)
-            // TODO: change after DU2 joining is implemented in EE
-            // await memberClient.joinDataUnion({ secret: 'secret' })
-            log('Adding members')
-            await adminClient.addMembers([memberWallet.address], { dataUnion })
-
-            const tokenAddress = await dataUnion.token()
-            const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
-
-            // transfer ERC20 to mainet contract
-            const amount = parseEther('1')
-            const duSidechainBalanceBefore = await dataUnion.sidechain.totalEarnings()
-
-            await adminMutex.runExclusive(async () => {
-                log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.address}`)
-                const tx1 = await adminTokenMainnet.transfer(dataUnion.address, amount)
-                await tx1.wait()
-            })
-
-            log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
-            const tx2 = await dataUnion.sendTokensToBridge()
-            await tx2.wait()
-
-            log(`Sent to bridge, waiting for the tokens to appear at ${dataUnion.sidechain.address} in sidechain`)
-            await until(async () => !duSidechainBalanceBefore.eq(await dataUnion.sidechain.totalEarnings()), 900000)
-            log(`Confirmed DU sidechain balance ${duSidechainBalanceBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
-
-            const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
-            const tr = await memberClient.withdrawTo(member2Wallet.address)
-            await tr.isComplete()
-            const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
-            const diff = balanceAfter.sub(balanceBefore)
-
-            expect(tr.logs[0].address).toBe(adminTokenMainnet.address)
-            expect(diff.toString()).toBe(amount)
-        }, 1000000)
-
         // TODO: test getWithdrawTx, getWithdrawTxTo
     })
 
