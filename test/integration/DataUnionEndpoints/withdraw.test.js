@@ -3,12 +3,11 @@ import { Contract, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import debug from 'debug'
 
-import { until } from '../../src/utils'
-import StreamrClient from '../../src'
-import * as Token from '../../contracts/TestToken.json'
-import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
-
-import config from './config'
+import { until } from '../../../src/utils'
+import StreamrClient from '../../../src'
+import * as Token from '../../../contracts/TestToken.json'
+import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
+import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console

@@ -1,10 +1,8 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
-import { Contract, providers, Wallet } from 'ethers'
+import { providers, Wallet } from 'ethers'
 import debug from 'debug'
 
 import StreamrClient from '../../../src'
-import * as DataUnionFactoryMainnet from '../../../contracts/DataUnionFactoryMainnet.json'
-
 import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')

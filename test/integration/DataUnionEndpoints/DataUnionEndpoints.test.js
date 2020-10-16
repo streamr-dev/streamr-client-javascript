@@ -4,10 +4,9 @@ import { parseEther, formatEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
 import debug from 'debug'
 
-import StreamrClient from '../../src'
-import * as Token from '../../contracts/TestToken.json'
-
-import config from './config'
+import StreamrClient from '../../../src'
+import * as Token from '../../../contracts/TestToken.json'
+import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 // const log = console.log
