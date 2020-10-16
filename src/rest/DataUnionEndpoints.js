@@ -577,7 +577,7 @@ export async function getAdminFeesWithdrawable(options) {
 
 export async function withdrawAdminFees(options) {
     const duMainnet = await getMainnetContract(this, options)
-    const tx = duMainnet.withdrawAdminFees()
+    const tx = await duMainnet.withdrawAdminFees()
     return tx.wait()
 }
 
