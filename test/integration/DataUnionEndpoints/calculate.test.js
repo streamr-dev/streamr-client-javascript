@@ -2,10 +2,10 @@
 import { Contract, providers, Wallet } from 'ethers'
 import debug from 'debug'
 
-import StreamrClient from '../../src'
-import * as DataUnionFactoryMainnet from '../../contracts/DataUnionFactoryMainnet.json'
+import StreamrClient from '../../../src'
+import * as DataUnionFactoryMainnet from '../../../contracts/DataUnionFactoryMainnet.json'
 
-import config from './config'
+import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
 // const { log } = console

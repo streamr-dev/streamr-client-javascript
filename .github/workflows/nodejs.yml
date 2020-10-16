@@ -90,10 +90,10 @@ jobs:
 
       - name: test-integration
         run: |
-          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints-withdrawTo.test.js
-          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints-withdraw.test.js
-          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints-calculate.test.js
-          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints.test.js
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints/withdrawTo.test.js
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints/withdraw.test.js
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints/calculate.test.js
+          env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit test/integration/DataUnionEndpoints/DataUnionEndpoints.test.js
 
   streamr-client-testing-tool:
     needs: [test, lint]
