@@ -13,33 +13,13 @@ import config from './config'
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console
 
-class LoggingProvider extends providers.JsonRpcProvider {
-    perform(method, parameters) {
-        log('>>>', method, parameters)
-        return super.perform(method, parameters).then((result) => {
-            log('<<<', method, parameters, result)
-            return result
-        })
-    }
-}
-
-// const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
-// const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-const providerSidechain = new LoggingProvider(config.clientOptions.sidechain)
-const providerMainnet = new LoggingProvider(config.clientOptions.mainnet)
+const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
-
-providerSidechain.on('debug', (msg) => {
-    if (msg.error) {
-        log(`ERROR: ${JSON.stringify(msg)}`)
-    } else {
-        log(`provider message: ${msg.action}`)
-    }
-})
 
 it('DataUnionEndPoints test withdraw', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)

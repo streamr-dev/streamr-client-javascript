@@ -10,8 +10,8 @@ import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
 
 import config from './config'
 
-// const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
-const { log } = console
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdrawTo')
+// const { log } = console
 
 class LoggingProvider extends providers.JsonRpcProvider {
     perform(method, parameters) {
