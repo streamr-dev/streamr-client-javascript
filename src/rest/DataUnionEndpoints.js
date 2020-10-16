@@ -405,7 +405,7 @@ export async function deployDataUnion(options = {}) {
 
     let duName = dataUnionName
     if (!duName) {
-        duName = `DataUnion-${+new Date()}`
+        duName = `DataUnion-${+new Date()}` // TODO: use uuid
         log(`dataUnionName generated: ${duName}`)
     }
 
