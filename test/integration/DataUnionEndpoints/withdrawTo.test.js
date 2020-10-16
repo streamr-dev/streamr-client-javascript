@@ -12,20 +12,8 @@ import config from '../config'
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdrawTo')
 // const { log } = console
 
-class LoggingProvider extends providers.JsonRpcProvider {
-    perform(method, parameters) {
-        log('>>>', method, parameters)
-        return super.perform(method, parameters).then((result) => {
-            log('<<<', method, parameters, result)
-            return result
-        })
-    }
-}
-
-// const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
-// const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-const providerSidechain = new LoggingProvider(config.clientOptions.sidechain)
-const providerMainnet = new LoggingProvider(config.clientOptions.mainnet)
+const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
