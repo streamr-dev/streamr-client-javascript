@@ -12,38 +12,9 @@ import config from './config'
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 // const log = console.log
 
-class LoggingProvider extends providers.JsonRpcProvider {
-    perform(method, parameters) {
-        log('>>>', method, parameters)
-        return super.perform(method, parameters).then((result) => {
-            log('<<<', method, parameters, result)
-            return result
-        })
-    }
-}
-
-// const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
-// const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-const providerSidechain = new LoggingProvider(config.clientOptions.sidechain)
-const providerMainnet = new LoggingProvider(config.clientOptions.mainnet)
+const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
-// const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
-
-providerSidechain.on('debug', (msg) => {
-    if (msg.error) {
-        log(`sidechain ERROR: ${JSON.stringify(msg)}`)
-    } else {
-        log(`sidechain PROVIDER: ${msg.action}`)
-    }
-})
-
-providerMainnet.on('debug', (msg) => {
-    if (msg.error) {
-        log(`mainnet ERROR: ${JSON.stringify(msg)}`)
-    } else {
-        log(`mainnet PROVIDER: ${msg.action}`)
-    }
-})
 
 describe('DataUnionEndPoints', () => {
     let adminClient
@@ -177,59 +148,6 @@ describe('DataUnionEndPoints', () => {
             expect(formatEther(balance3.sub(balance1))).toEqual('0.1')
         }, 900000)
     })
-
-    /*
-    describe('Member', () => {
-        const nonce = +new Date()
-        const memberWallet = new Wallet(`0x100000000000000000000000000000000000000000000000001${+nonce}`, providerSidechain)
-        const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000000000000002${+nonce}`, providerSidechain)
-
-        beforeAll(async () => {
-            await adminMutex.runExclusive(async () => {
-                const from = adminWalletSidechain.address
-                log(`Sidechain ETH balance of ${from}: ${formatEther(await providerSidechain.getBalance(from))} sETH`)
-                log(`Moving 1 sETH ${from} -> ${memberWallet.address}`)
-                await adminWalletSidechain.sendTransaction({
-                    to: memberWallet.address,
-                    value: parseEther('1')
-                })
-                log(`Moving 1 sETH ${from} -> ${member2Wallet.address}`)
-                await adminWalletSidechain.sendTransaction({
-                    to: member2Wallet.address,
-                    value: parseEther('1')
-                })
-            })
-        })
-
-        async function getMemberClient(dataUnion) {
-            const memberClient = new StreamrClient({
-                ...config.clientOptions,
-                auth: {
-                    privateKey: memberWallet.privateKey
-                },
-                dataUnion: dataUnion.address,
-            })
-            await memberClient.ensureConnected()
-            streamrClientCleanupList.push(memberClient)
-            return memberClient
-        }
-
-        // TODO: implement DU2 joining to EE
-        it.skip('can join the data union', async () => {
-            const dataUnion = await deployDataUnionSync()
-            const memberClient = await getMemberClient(dataUnion)
-            const res = await memberClient.joinDataUnion({ secret: 'secret' })
-            await memberClient.hasJoined()
-            expect(res).toMatchObject({
-                state: 'ACCEPTED',
-                memberAddress: memberWallet.address,
-                contractAddress: dataUnion.address,
-            })
-        })
-
-        // TODO: test getWithdrawTx, getWithdrawTxTo
-    })
-    */
 
     describe('Anyone', () => {
         const nonce = +new Date()
