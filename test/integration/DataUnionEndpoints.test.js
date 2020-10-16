@@ -173,9 +173,8 @@ describe('DataUnionEndPoints', () => {
             log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
             log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
 
-            expect(formatEther(balance1)).toEqual('0')
-            expect(formatEther(balance2)).toEqual('0')
-            expect(formatEther(balance3)).toEqual('0.1')
+            expect(formatEther(balance2.sub(balance1))).toEqual('0')
+            expect(formatEther(balance3.sub(balance1))).toEqual('0.1')
         }, 900000)
     })
 
