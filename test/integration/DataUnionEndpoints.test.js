@@ -1,41 +1,52 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
-import { Contract, ContractFactory, providers, Wallet, utils } from 'ethers'
-import { formatEther, parseEther, getAddress } from 'ethers/lib/utils'
+import { Contract, providers, Wallet } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
 import debug from 'debug'
 
-import { until } from '../../src/utils'
 import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
-import * as DataUnionMainnet from '../../contracts/DataUnionMainnet.json'
-import * as DataUnionSidechain from '../../contracts/DataUnionSidechain.json'
-import * as DataUnionFactoryMainnet from '../../contracts/DataUnionFactoryMainnet.json'
-import * as DataUnionFactorySidechain from '../../contracts/DataUnionFactorySidechain.json'
 
 import config from './config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 // const log = console.log
 
-// class LoggingProvider extends providers.JsonRpcProvider {
-//     perform(method, parameters) {
-//         log('>>>', method, parameters)
-//         return super.perform(method, parameters).then((result) => {
-//             log('<<<', method, parameters, result)
-//             return result
-//         })
-//     }
-// }
+class LoggingProvider extends providers.JsonRpcProvider {
+    perform(method, parameters) {
+        log('>>>', method, parameters)
+        return super.perform(method, parameters).then((result) => {
+            log('<<<', method, parameters, result)
+            return result
+        })
+    }
+}
+
+// const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+// const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
+const providerSidechain = new LoggingProvider(config.clientOptions.sidechain)
+const providerMainnet = new LoggingProvider(config.clientOptions.mainnet)
+const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
+// const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
+
+providerSidechain.on('debug', (msg) => {
+    if (msg.error) {
+        log(`sidechain ERROR: ${JSON.stringify(msg)}`)
+    } else {
+        log(`sidechain PROVIDER: ${msg.action}`)
+    }
+})
+
+providerMainnet.on('debug', (msg) => {
+    if (msg.error) {
+        log(`mainnet ERROR: ${JSON.stringify(msg)}`)
+    } else {
+        log(`mainnet PROVIDER: ${msg.action}`)
+    }
+})
 
 describe('DataUnionEndPoints', () => {
     let adminClient
-
-    const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
-    const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-    // const providerSidechain = new LoggingProvider(config.clientOptions.sidechain)
-    // const providerMainnet = new LoggingProvider(config.clientOptions.mainnet)
-    const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
-    const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
     const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
     const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
@@ -43,6 +54,7 @@ describe('DataUnionEndPoints', () => {
     afterAll(async () => {
         await providerMainnet.removeAllListeners()
         await providerSidechain.removeAllListeners()
+        await adminClient.ensureDisconnected()
     })
 
     const streamrClientCleanupList = []
@@ -59,32 +71,22 @@ describe('DataUnionEndPoints', () => {
         const tx1 = await tokenMainnet.mint(adminWalletMainnet.address, parseEther('100'))
         await tx1.wait()
 
-        // for faster manual testing, use a factory from previous runs
-        // const factoryMainnet = new Contract('0x1e144C6fdcc4FcD2d66bf2c1e1F913FF5C7d5393', DataUnionFactoryMainnet.abi, adminWalletMainnet)
-        const factorySidechain = await deployDataUnionFactorySidechain(adminWalletSidechain)
-        const templateSidechain = getTemplateSidechain()
-        const factoryMainnet = await deployDataUnionFactoryMainnet(adminWalletMainnet, templateSidechain.address, factorySidechain.address)
-        log(`Deployed factory contracts sidechain ${factorySidechain.address}, mainnet ${factoryMainnet.address}`)
-
-        adminClient = new StreamrClient({
-            ...config.clientOptions,
-            factoryMainnetAddress: factoryMainnet.address,
-        })
-        streamrClientCleanupList.push(adminClient)
-    }, 300000)
+        adminClient = new StreamrClient(config.clientOptions)
+        await adminClient.ensureConnected()
+    }, 10000)
 
     // fresh dataUnion for each test case, created NOT in parallel to avoid nonce troubles
     const adminMutex = new Mutex()
-    async function deployDataUnionSync() {
+    async function deployDataUnionSync(testName) {
         let dataUnion
         await adminMutex.runExclusive(async () => {
-            await adminClient.ensureConnected()
-            dataUnion = await adminClient.deployDataUnion()
+            const dataUnionName = testName + new Date()
+            log(`Starting deployment of dataUnionName=${dataUnionName}`)
+            dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
             await dataUnion.isReady()
             await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
             log(`DataUnion ${dataUnion.address} is ready to roll`)
-            // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0x832CF517A48efB0730b1D076356aD0754371Db2B"})
         })
         return dataUnion
     }
@@ -97,25 +99,23 @@ describe('DataUnionEndPoints', () => {
         ]
 
         it('can add members', async () => {
-            const dataUnion = await deployDataUnionSync()
+            const dataUnion = await deployDataUnionSync('add-members-test')
             await adminClient.addMembers(memberAddressList, { dataUnion })
             await adminClient.hasJoined(memberAddressList[0], { dataUnion })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(3)
-        }, 100000)
+        }, 900000)
 
         it('can remove members', async () => {
-            const dataUnion = await deployDataUnionSync()
+            const dataUnion = await deployDataUnionSync('remove-members-test')
             await adminClient.addMembers(memberAddressList, { dataUnion })
             await adminClient.kick(memberAddressList.slice(1), { dataUnion })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(1)
-        }, 100000)
-
-        // separate test for adding and removing secrets? Adding secret is tested in member joins dataUnion test though.
+        }, 900000)
 
         it('can set admin fee', async () => {
-            const dataUnion = await deployDataUnionSync()
+            const dataUnion = await deployDataUnionSync('set-admin-fee-test')
             const oldFee = await adminClient.getAdminFee({ dataUnion })
             log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
             log(`Sending tx from ${adminClient.address}`)
@@ -124,13 +124,14 @@ describe('DataUnionEndPoints', () => {
             const newFee = await adminClient.getAdminFee({ dataUnion })
             expect(oldFee.toString()).toEqual('0')
             expect(newFee.toString()).toEqual(parseEther('0.1').toString())
-        })
+        }, 900000)
 
         it('can withdraw admin fees', async () => {
             throw new Error('TODO')
-        })
+        }, 900000)
     })
 
+    /*
     describe('Member', () => {
         const nonce = +new Date()
         const memberWallet = new Wallet(`0x100000000000000000000000000000000000000000000000001${+nonce}`, providerSidechain)
@@ -179,25 +180,9 @@ describe('DataUnionEndPoints', () => {
             })
         })
 
-        it('can get its sidechain balances and stats', async () => {
-            const dataUnion = await deployDataUnionSync()
-            const memberClient = await getMemberClient(dataUnion)
-            // TODO: change after DU2 joining is implemented in EE
-            // await memberClient.joinDataUnion({ secret: 'secret' })
-            if (!dataUnion) { throw new Error('init failed, dataUnion not found') }
-            await adminClient.addMembers([memberWallet.address], { dataUnion })
-            const res = await memberClient.getMemberStats()
-            expect(res).toEqual({
-                status: 'active', // this means join worked
-                earningsBeforeLastJoin: '0',
-                lmeAtJoin: '0',
-                totalEarnings: '0',
-                withdrawableEarnings: '0',
-            })
-        }, 300000)
-
         // TODO: test getWithdrawTx, getWithdrawTxTo
     })
+    */
 
     describe('Anyone', () => {
         const nonce = +new Date()
@@ -226,7 +211,7 @@ describe('DataUnionEndPoints', () => {
         }
 
         it('can get dataUnion stats', async () => {
-            const dataUnion = await deployDataUnionSync()
+            const dataUnion = await deployDataUnionSync('get-du-stats-test')
             const client = await getOutsiderClient(dataUnion)
             const stats = await client.getDataUnionStats()
             expect(+stats.memberCount).toEqual(3)
@@ -234,10 +219,10 @@ describe('DataUnionEndPoints', () => {
             expect(+stats.totalEarnings).toEqual(0)
             expect(+stats.totalWithdrawable).toEqual(0)
             expect(+stats.lifetimeMemberEarnings).toEqual(0)
-        }, 300000)
+        }, 900000)
 
         it('can get member stats', async () => {
-            const dataUnion = await deployDataUnionSync()
+            const dataUnion = await deployDataUnionSync('get-member-stats-test')
             const client = await getOutsiderClient(dataUnion)
             const memberStats = await Promise.all(memberAddressList.map((m) => client.getMemberStats(m)))
             expect(memberStats).toMatchObject([{
@@ -259,87 +244,6 @@ describe('DataUnionEndPoints', () => {
                 totalEarnings: '0',
                 withdrawableEarnings: '0',
             }])
-        }, 300000)
+        }, 900000)
     })
 })
-
-// for the below helpers, check out https://github.com/streamr-dev/data-union-solidity/tree/master/util
-
-// TODO: these should also go into the .env file?
-const tokenMediatorSidechainAddress = '0xedD2aa644a6843F2e5133Fe3d6BD3F4080d97D9F'
-const tokenMediatorMainnetAddress = '0xedD2aa644a6843F2e5133Fe3d6BD3F4080d97D9F'
-let templateSidechain
-
-function throwIfBadAddress(address, variableDescription) {
-    try {
-        return getAddress(address)
-    } catch (e) {
-        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}. Original error: ${e.stack}.`)
-    }
-}
-
-async function throwIfNotContract(eth, address, variableDescription) {
-    const addr = throwIfBadAddress(address, variableDescription)
-    if (await eth.getCode(address) === '0x') {
-        throw new Error(`${variableDescription || 'Error'}: No contract at ${address}`)
-    }
-    return addr
-}
-
-/**
- * Deploy template DataUnion contract as well as factory to sidechain
- * @param wallet {Wallet} sidechain wallet that is used in deployment
- * @returns {Promise<Contract>} DataUnionFactorySidechain contract
- */
-async function deployDataUnionFactorySidechain(wallet) {
-    await throwIfNotContract(wallet.provider, tokenMediatorSidechainAddress, 'tokenMediatorSidechainAddress')
-    log(`Deploying template DU sidechain contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory(DataUnionSidechain.abi, DataUnionSidechain.bytecode, wallet)
-    const templateTx = await templateDeployer.deploy({
-        gasLimit: 6000000
-    })
-    templateSidechain = await templateTx.deployed()
-    log(`Side-chain template DU: ${templateSidechain.address}`)
-
-    // constructor(address _token_mediator, address _data_union_sidechain_template)
-    log(`Deploying sidechain DU factory contract from ${wallet.address}`)
-    const factoryDeployer = new ContractFactory(DataUnionFactorySidechain.abi, DataUnionFactorySidechain.bytecode, wallet)
-    const factoryTx = await factoryDeployer.deploy(
-        tokenMediatorSidechainAddress,
-        templateSidechain.address,
-        {
-            gasLimit: 6000000
-        }
-    )
-    return factoryTx.deployed()
-}
-
-function getTemplateSidechain() {
-    if (!templateSidechain) {
-        throw new Error('deployDataUnionFactorySidechain must be called (and awaited) first')
-    }
-    return templateSidechain
-}
-
-async function deployDataUnionFactoryMainnet(wallet, sidechainTemplateAddress, sidechainFactoryAddress) {
-    await throwIfNotContract(wallet.provider, tokenMediatorMainnetAddress, 'tokenMediatorMainnetAddress')
-    log(`Deploying template DU mainnet contract from ${wallet.address}`)
-    const templateDeployer = new ContractFactory(DataUnionMainnet.abi, DataUnionMainnet.bytecode, wallet)
-    const templateTx = await templateDeployer.deploy({
-        gasLimit: 6000000
-    })
-    const templateDU = await templateTx.deployed()
-    log(`Mainnet template DU: ${templateDU.address}. Deploying DU mainnet factory contract from ${wallet.address}`)
-    const factoryDeployer = new ContractFactory(DataUnionFactoryMainnet.abi, DataUnionFactoryMainnet.bytecode, wallet)
-    const factoryTx = await factoryDeployer.deploy(
-        tokenMediatorMainnetAddress,
-        templateDU.address,
-        sidechainTemplateAddress,
-        sidechainFactoryAddress,
-        2000000,
-        {
-            gasLimit: 6000000
-        }
-    )
-    return factoryTx.deployed()
-}
