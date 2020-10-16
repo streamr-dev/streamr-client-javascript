@@ -570,6 +570,17 @@ export async function getAdminFee(options) {
     return duMainnet.adminFeeFraction()
 }
 
+export async function getAdminFeesWithdrawable(options) {
+    const duMainnet = await getMainnetContract(this, options)
+    return duMainnet.adminFeesWithdrawable()
+}
+
+export async function withdrawAdminFees(options) {
+    const duMainnet = await getMainnetContract(this, options)
+    const tx = duMainnet.withdrawAdminFees()
+    return tx.wait()
+}
+
 export async function getAdminAddress(options) {
     const duMainnet = await getMainnetContract(this, options)
     return duMainnet.owner()

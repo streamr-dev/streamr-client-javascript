@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop, no-use-before-define */
 import { Contract, providers, Wallet } from 'ethers'
-import { parseEther } from 'ethers/lib/utils'
+import { parseEther, formatEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
 import debug from 'debug'
 
@@ -80,7 +80,7 @@ describe('DataUnionEndPoints', () => {
     async function deployDataUnionSync(testName) {
         let dataUnion
         await adminMutex.runExclusive(async () => {
-            const dataUnionName = testName + new Date()
+            const dataUnionName = testName + (+new Date())
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
@@ -100,16 +100,20 @@ describe('DataUnionEndPoints', () => {
 
         it('can add members', async () => {
             const dataUnion = await deployDataUnionSync('add-members-test')
-            await adminClient.addMembers(memberAddressList, { dataUnion })
-            await adminClient.hasJoined(memberAddressList[0], { dataUnion })
+            await adminMutex.runExclusive(async () => {
+                await adminClient.addMembers(memberAddressList, { dataUnion })
+                await adminClient.hasJoined(memberAddressList[0], { dataUnion })
+            })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(3)
         }, 900000)
 
         it('can remove members', async () => {
             const dataUnion = await deployDataUnionSync('remove-members-test')
-            await adminClient.addMembers(memberAddressList, { dataUnion })
-            await adminClient.kick(memberAddressList.slice(1), { dataUnion })
+            await adminMutex.runExclusive(async () => {
+                await adminClient.addMembers(memberAddressList, { dataUnion })
+                await adminClient.kick(memberAddressList.slice(1), { dataUnion })
+            })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(1)
         }, 900000)
@@ -117,17 +121,61 @@ describe('DataUnionEndPoints', () => {
         it('can set admin fee', async () => {
             const dataUnion = await deployDataUnionSync('set-admin-fee-test')
             const oldFee = await adminClient.getAdminFee({ dataUnion })
-            log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
-            log(`Sending tx from ${adminClient.address}`)
-            const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
-            log(`Transaction receipt: ${JSON.stringify(tr)}`)
+            await adminMutex.runExclusive(async () => {
+                log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
+                log(`Sending tx from ${adminClient.address}`)
+                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                log(`Transaction receipt: ${JSON.stringify(tr)}`)
+            })
             const newFee = await adminClient.getAdminFee({ dataUnion })
             expect(oldFee.toString()).toEqual('0')
             expect(newFee.toString()).toEqual(parseEther('0.1').toString())
         }, 900000)
 
         it('can withdraw admin fees', async () => {
-            throw new Error('TODO')
+            const dataUnion = await deployDataUnionSync('withdraw-admin-fees-test')
+
+            await adminMutex.runExclusive(async () => {
+                await adminClient.addMembers(memberAddressList, { dataUnion })
+                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                log(`Transaction receipt: ${JSON.stringify(tr)}`)
+            })
+
+            const amount = parseEther('1')
+            const tokenAddress = await dataUnion.token()
+            const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
+
+            await adminMutex.runExclusive(async () => {
+                log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.address}`)
+                const txTokenToDU = await adminTokenMainnet.transfer(dataUnion.address, amount)
+                await txTokenToDU.wait()
+            })
+
+            const balance1 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance1)} (${balance1.toString()})`)
+            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
+
+            log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
+            const tx2 = await dataUnion.sendTokensToBridge()
+            await tx2.wait()
+
+            const balance2 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance2)} (${balance2.toString()})`)
+            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
+
+            log('Withdrawing admin fees')
+            await adminMutex.runExclusive(async () => {
+                const tr2 = await adminClient.withdrawAdminFees({ dataUnion })
+                log(`Transaction receipt: ${JSON.stringify(tr2)}`)
+            })
+
+            const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
+            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
+            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
+
+            expect(formatEther(balance1)).toEqual('0')
+            expect(formatEther(balance2)).toEqual('0')
+            expect(formatEther(balance3)).toEqual('0.1')
         }, 900000)
     })
 
@@ -202,16 +250,15 @@ describe('DataUnionEndPoints', () => {
                 autoDisconnect: false,
                 ...config.clientOptions,
             })
-            // TODO: add revenue
-            await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
-            })
             streamrClientCleanupList.push(client)
             return client
         }
 
         it('can get dataUnion stats', async () => {
             const dataUnion = await deployDataUnionSync('get-du-stats-test')
+            await adminMutex.runExclusive(async () => {
+                await adminClient.addMembers(memberAddressList, { dataUnion })
+            })
             const client = await getOutsiderClient(dataUnion)
             const stats = await client.getDataUnionStats()
             expect(+stats.memberCount).toEqual(3)
@@ -223,6 +270,9 @@ describe('DataUnionEndPoints', () => {
 
         it('can get member stats', async () => {
             const dataUnion = await deployDataUnionSync('get-member-stats-test')
+            await adminMutex.runExclusive(async () => {
+                await adminClient.addMembers(memberAddressList, { dataUnion })
+            })
             const client = await getOutsiderClient(dataUnion)
             const memberStats = await Promise.all(memberAddressList.map((m) => client.getMemberStats(m)))
             expect(memberStats).toMatchObject([{
