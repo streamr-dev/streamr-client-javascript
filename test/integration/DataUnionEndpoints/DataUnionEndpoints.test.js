@@ -103,7 +103,7 @@ describe('DataUnionEndPoints', () => {
             expect(newFee.toString()).toEqual(parseEther('0.1').toString())
         }, 900000)
 
-        it('can withdraw admin fees', async () => {
+        it('receives admin fees', async () => {
             const dataUnion = await deployDataUnionSync('withdraw-admin-fees-test')
 
             await adminMutex.runExclusive(async () => {
@@ -112,7 +112,7 @@ describe('DataUnionEndPoints', () => {
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
 
-            const amount = parseEther('1')
+            const amount = parseEther('2')
             const tokenAddress = await dataUnion.token()
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 
@@ -124,7 +124,6 @@ describe('DataUnionEndPoints', () => {
 
             const balance1 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
             log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance1)} (${balance1.toString()})`)
-            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
 
             log(`Transferred ${formatEther(amount)} tokens, next sending to bridge`)
             const tx2 = await dataUnion.sendTokensToBridge()
@@ -132,20 +131,8 @@ describe('DataUnionEndPoints', () => {
 
             const balance2 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
             log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance2)} (${balance2.toString()})`)
-            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
 
-            log('Withdrawing admin fees')
-            await adminMutex.runExclusive(async () => {
-                const tr2 = await adminClient.withdrawAdminFees({ dataUnion })
-                log(`Transaction receipt: ${JSON.stringify(tr2)}`)
-            })
-
-            const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
-            log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
-            log(`Admin fees withdrawable: ${await adminClient.getAdminFeesWithdrawable({ dataUnion })}`)
-
-            expect(balance2.toString()).toEqual(balance1.toString())
-            expect(formatEther(balance3.sub(balance1))).toEqual('0.1')
+            expect(formatEther(balance2.sub(balance1))).toEqual('0.2')
         }, 900000)
     })
 

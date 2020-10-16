@@ -79,18 +79,6 @@ const dataUnionMainnetABI = [{
     stateMutability: 'view',
     type: 'function'
 }, {
-    name: 'adminFeesWithdrawable',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function'
-}, {
-    name: 'withdrawAdminFees',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'nonpayable',
-    type: 'function'
-}, {
     name: 'setAdminFee',
     inputs: [{ type: 'uint256' }],
     outputs: [],
@@ -568,17 +556,6 @@ export async function setAdminFee(newFeeFraction, options) {
 export async function getAdminFee(options) {
     const duMainnet = await getMainnetContract(this, options)
     return duMainnet.adminFeeFraction()
-}
-
-export async function getAdminFeesWithdrawable(options) {
-    const duMainnet = await getMainnetContract(this, options)
-    return duMainnet.adminFeesWithdrawable()
-}
-
-export async function withdrawAdminFees(options) {
-    const duMainnet = await getMainnetContract(this, options)
-    const tx = await duMainnet.withdrawAdminFees()
-    return tx.wait()
 }
 
 export async function getAdminAddress(options) {
