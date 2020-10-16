@@ -4,11 +4,10 @@ import { Agent as HttpsAgent } from 'https'
 import qs from 'qs'
 import debugFactory from 'debug'
 
-import { validateOptions } from '../Stream'
+import { validateOptions } from '../subscribe'
 
 import Stream from './domain/Stream'
 import authFetch from './authFetch'
-
 
 const debug = debugFactory('StreamrClient')
 
