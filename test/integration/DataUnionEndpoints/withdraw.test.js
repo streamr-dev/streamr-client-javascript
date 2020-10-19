@@ -127,4 +127,4 @@ it('DataUnionEndPoints test withdraw', async () => {
     })
     expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
     expect(balanceIncrease.toString()).toBe(amount.toString())
-}, 900000)
+}, 300000)

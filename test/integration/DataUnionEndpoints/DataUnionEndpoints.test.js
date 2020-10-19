@@ -76,7 +76,7 @@ describe('DataUnionEndPoints', () => {
             })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(3)
-        }, 900000)
+        }, 150000)
 
         it('can remove members', async () => {
             const dataUnion = await deployDataUnionSync('remove-members-test')
@@ -86,7 +86,7 @@ describe('DataUnionEndPoints', () => {
             })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.memberCount).toEqual(1)
-        }, 900000)
+        }, 150000)
 
         it('can set admin fee', async () => {
             const dataUnion = await deployDataUnionSync('set-admin-fee-test')
@@ -100,7 +100,7 @@ describe('DataUnionEndPoints', () => {
             const newFee = await adminClient.getAdminFee({ dataUnion })
             expect(oldFee.toString()).toEqual('0')
             expect(newFee.toString()).toEqual(parseEther('0.1').toString())
-        }, 900000)
+        }, 150000)
 
         it('receives admin fees', async () => {
             const dataUnion = await deployDataUnionSync('withdraw-admin-fees-test')
@@ -132,7 +132,7 @@ describe('DataUnionEndPoints', () => {
             log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance2)} (${balance2.toString()})`)
 
             expect(formatEther(balance2.sub(balance1))).toEqual('0.2')
-        }, 900000)
+        }, 150000)
     })
 
     describe('Anyone', () => {
@@ -169,7 +169,7 @@ describe('DataUnionEndPoints', () => {
             expect(+stats.totalEarnings).toEqual(0)
             expect(+stats.totalWithdrawable).toEqual(0)
             expect(+stats.lifetimeMemberEarnings).toEqual(0)
-        }, 900000)
+        }, 150000)
 
         it('can get member stats', async () => {
             const dataUnion = await deployDataUnionSync('get-member-stats-test')
@@ -197,6 +197,6 @@ describe('DataUnionEndPoints', () => {
                 totalEarnings: '0',
                 withdrawableEarnings: '0',
             }])
-        }, 900000)
+        }, 150000)
     })
 })
