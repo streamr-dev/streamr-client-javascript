@@ -89,7 +89,7 @@ jobs:
       - name: test-integration
         run: |
           for i in test/integration/DataUnionEndpoints/*; do env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit $i; done
-          ./node_modules/.bin/jest test/integration --testPathIgnorePatterns="test/integration/DataUnionEndpoints/"
+          ./node_modules/.bin/jest test/integration --forceExit --testPathIgnorePatterns="test/integration/DataUnionEndpoints/"
 
   streamr-client-testing-tool:
     needs: [test, lint]
