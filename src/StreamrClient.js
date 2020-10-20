@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
 import once from 'once'
-import { Wallet } from 'ethers'
+import { Wallet, utils as ethersUtils } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
 
@@ -23,6 +23,8 @@ import KeyExchangeUtil from './KeyExchangeUtil'
 import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
+
+const { computeAddress } = ethersUtils
 
 const {
     SubscribeRequest,
@@ -109,8 +111,11 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
-        if (this.options.auth.privateKey && !this.options.auth.privateKey.startsWith('0x')) {
-            this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+        if (this.options.auth.privateKey) {
+            if (!this.options.auth.privateKey.startsWith('0x')) {
+                this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+            }
+            this.address = computeAddress(this.options.auth.privateKey)
         }
 
         if (this.options.keyExchange) {
