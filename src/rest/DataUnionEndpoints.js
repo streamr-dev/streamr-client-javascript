@@ -11,25 +11,18 @@
  *      member: WITHDRAW EARNINGS           Withdrawing functions, there's many: normal, agent, donate
  */
 
-import {
-    Contract,
-    Wallet,
-    getDefaultProvider,
-    providers,
-    BigNumber,
-    utils as ethersUtils,
-} from 'ethers'
+import { Wallet } from '@ethersproject/wallet'
+import { Contract } from '@ethersproject/contracts'
+import { getDefaultProvider, Provider } from '@ethersproject/providers'
+import { JsonRpcProvider } from '@ethersproject/providers/lib/json-rpc-provider'
+import { BigNumber } from '@ethersproject/bignumber'
+import { computeAddress } from '@ethersproject/transactions'
+import { getAddress, isAddress } from '@ethersproject/address'
 import debug from 'debug'
 
 import { until } from '../utils'
 
 import authFetch from './authFetch'
-
-const {
-    computeAddress,
-    getAddress,
-    isAddress,
-} = ethersUtils
 
 const log = debug('StreamrClient::DataUnionEndpoints')
 // const log = console.log
@@ -225,13 +218,13 @@ function parseAddress(client, inputAddress, options = {}) {
 }
 
 function getMainnetProvider(client, options = {}) {
-    if (options.provider instanceof providers.Provider) {
+    if (options.provider instanceof Provider) {
         return options.provider
     }
 
     const mainnet = options.mainnet || client.options.mainnet
     if (mainnet) {
-        return new providers.JsonRpcProvider(mainnet)
+        return new JsonRpcProvider(mainnet)
     }
 
     return getDefaultProvider()
@@ -240,7 +233,7 @@ function getMainnetProvider(client, options = {}) {
 function getSidechainProvider(client, options = {}) {
     const sidechainOptions = options.sidechain || client.options.sidechain
     if (!sidechainOptions) { throw new Error('StreamrClient must be created with a "sidechain" property for ethers.js provider') }
-    return new providers.JsonRpcProvider(sidechainOptions)
+    return new JsonRpcProvider(sidechainOptions)
 }
 
 /**

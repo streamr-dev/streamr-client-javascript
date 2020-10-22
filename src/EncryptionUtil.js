@@ -3,7 +3,7 @@ import util from 'util'
 
 // this is shimmed out for actual browser build allows us to run tests in node against browser API
 import { Crypto } from 'node-webcrypto-ossl'
-import { ethers } from 'ethers'
+import { arrayify, hexlify } from '@ethersproject/bytes'
 import { MessageLayer } from 'streamr-client-protocol'
 
 import UnableToDecryptError from './errors/UnableToDecryptError'
@@ -65,7 +65,7 @@ export default class EncryptionUtil {
         if (!this.isReady()) { throw new Error('EncryptionUtil not ready.') }
         let ciphertextBuffer = ciphertext
         if (isHexString) {
-            ciphertextBuffer = ethers.utils.arrayify(`0x${ciphertext}`)
+            ciphertextBuffer = arrayify(`0x${ciphertext}`)
         }
         return crypto.privateDecrypt(this.privateKey, ciphertextBuffer)
     }
@@ -77,11 +77,11 @@ export default class EncryptionUtil {
     }
 
     // Returns a Buffer or a hex String
-    static encryptWithPublicKey(plaintextBuffer, publicKey, hexlify = false) {
+    static encryptWithPublicKey(plaintextBuffer, publicKey, outputInHex = false) {
         EncryptionUtil.validatePublicKey(publicKey)
         const ciphertextBuffer = crypto.publicEncrypt(publicKey, plaintextBuffer)
-        if (hexlify) {
-            return ethers.utils.hexlify(ciphertextBuffer).slice(2)
+        if (outputInHex) {
+            return hexlify(ciphertextBuffer).slice(2)
         }
         return ciphertextBuffer
     }
@@ -92,14 +92,14 @@ export default class EncryptionUtil {
     static encrypt(data, groupKey) {
         const iv = crypto.randomBytes(16) // always need a fresh IV when using CTR mode
         const cipher = crypto.createCipheriv('aes-256-ctr', groupKey, iv)
-        return ethers.utils.hexlify(iv).slice(2) + cipher.update(data, null, 'hex') + cipher.final('hex')
+        return hexlify(iv).slice(2) + cipher.update(data, null, 'hex') + cipher.final('hex')
     }
 
     /*
     'ciphertext' must be a hex string (without '0x' prefix), 'groupKey' must be a Buffer. Returns a Buffer.
      */
     static decrypt(ciphertext, groupKey) {
-        const iv = ethers.utils.arrayify(`0x${ciphertext.slice(0, 32)}`)
+        const iv = arrayify(`0x${ciphertext.slice(0, 32)}`)
         const decipher = crypto.createDecipheriv('aes-256-ctr', groupKey, iv)
         return Buffer.concat([decipher.update(ciphertext.slice(32), 'hex', null), decipher.final(null)])
     }

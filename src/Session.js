@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3'
-import { ethers } from 'ethers'
+import { Wallet } from '@ethersproject/wallet'
+import { Web3Provider } from '@ethersproject/providers/lib/web3-provider'
 
 export default class Session extends EventEmitter {
     constructor(client, options) {
@@ -9,10 +10,10 @@ export default class Session extends EventEmitter {
         this.state = Session.State.LOGGED_OUT
 
         if (typeof this.options.privateKey !== 'undefined') {
-            const wallet = new ethers.Wallet(this.options.privateKey)
+            const wallet = new Wallet(this.options.privateKey)
             this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => wallet.signMessage(d), wallet.address)
-        } else if (typeof this.options.provider !== 'undefined') {
-            const provider = new ethers.providers.Web3Provider(this.options.provider)
+        } else if (typeof this.options.ethereum !== 'undefined') {
+            const provider = new Web3Provider(this.options.ethereum)
             const signer = provider.getSigner()
             this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => signer.signMessage(d), await signer.getAddress())
         } else if (typeof this.options.apiKey !== 'undefined') {

@@ -2,7 +2,8 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
 import once from 'once'
-import { Wallet, utils as ethersUtils } from 'ethers'
+import { Wallet } from '@ethersproject/wallet'
+import { computeAddress } from '@ethersproject/transactions'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
 
@@ -23,8 +24,6 @@ import KeyExchangeUtil from './KeyExchangeUtil'
 import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
-
-const { computeAddress } = ethersUtils
 
 const {
     SubscribeRequest,
@@ -53,7 +52,7 @@ export default class StreamrClient extends EventEmitter {
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
             orderMessages: true,
-            auth: {},
+            auth: {}, // can contain member privateKey or (window.)ethereum
             publishWithSignature: 'auto',
             verifySignatures: 'auto',
             retryResendAfter: 5000,
@@ -115,7 +114,18 @@ export default class StreamrClient extends EventEmitter {
             if (!this.options.auth.privateKey.startsWith('0x')) {
                 this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
             }
-            this.address = computeAddress(this.options.auth.privateKey)
+            const address = computeAddress(this.options.auth.privateKey)
+            this.getAddress = () => address
+        }
+
+        if (this.options.auth.ethereum) {
+            this.getAddress = () => this.options.auth.ethereum.selectedAddress
+            // TODO: handle events
+            // ethereum.on('accountsChanged', (accounts) => { })
+            // https://docs.metamask.io/guide/ethereum-provider.html#events says:
+            //   "We recommend reloading the page unless you have a very good reason not to"
+            //   Of course we can't and won't do that, but if we need something chain-dependent...
+            // ethereum.on('chainChanged', (chainId) => { window.location.reload() });
         }
 
         if (this.options.keyExchange) {
@@ -328,7 +338,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async _subscribeToKeyExchangeStream() {
-        if (!this.options.auth.privateKey && !this.options.auth.provider) {
+        if (!this.options.auth.privateKey && !this.options.auth.ethereum) {
             return
         }
         await this.session.getSessionToken() // trigger auth errors if any

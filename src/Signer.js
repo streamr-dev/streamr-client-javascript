@@ -1,5 +1,6 @@
 import { MessageLayer, Utils } from 'streamr-client-protocol'
-import { ethers } from 'ethers'
+import { computeAddress } from '@ethersproject/transactions'
+import { Web3Provider } from '@ethersproject/providers/lib/web3-provider'
 
 const { StreamMessage } = MessageLayer
 const { SigningUtil } = Utils
@@ -11,9 +12,12 @@ export default class Signer {
         this.options = {
             ...options,
         }
+
+        // TODO: options should get a async getAddress from creator, toss these details from here (e.g. to StreamrClient)
+
         const { privateKey, provider } = this.options
         if (privateKey) {
-            this.address = ethers.utils.computeAddress(privateKey)
+            this.getAddress = () => computeAddress(privateKey)
             const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
                 ? privateKey.slice(2) // strip leading 0x
                 : privateKey
@@ -21,9 +25,9 @@ export default class Signer {
                 return SigningUtil.sign(d, key)
             }
         } else if (provider) {
-            const web3Provider = new ethers.providers.Web3Provider(provider)
+            const web3Provider = new Web3Provider(provider)
             const signer = web3Provider.getSigner()
-            this.address = signer.address
+            this.getAddress = async () => signer.getAddress()
             this.sign = async (d) => signer.signMessage(d)
         } else {
             throw new Error('Need either "privateKey" or "provider".')
@@ -41,12 +45,11 @@ export default class Signer {
         if (!streamMessage.getTimestamp()) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        /* eslint-disable no-param-reassign */
+        /* eslint-disable no-param-reassign,require-atomic-updates */ // TODO: comment why atomic-updates is not an issue
         // set signature & publisher so getting of payload works correctly
         streamMessage.signatureType = signatureType
-        streamMessage.messageId.publisherId = this.address // changing the id seems bad
+        streamMessage.messageId.publisherId = await this.getAddress()
         const payload = streamMessage.getPayloadToSign()
-        // eslint-disable-next-line require-atomic-updates
         streamMessage.signature = await this.signData(payload, signatureType)
         /* eslint-enable no-param-reassign */
     }
