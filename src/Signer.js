@@ -8,14 +8,12 @@ const { SIGNATURE_TYPES } = StreamMessage
 
 export default class Signer {
     constructor(options = {}) {
-        // copy options to prevent possible later mutation
-        this.options = {
-            ...options,
-        }
-
         // TODO: options should get a async getAddress from creator, toss these details from here (e.g. to StreamrClient)
+        const {
+            privateKey,
+            ethereum
+        } = options
 
-        const { privateKey, provider } = this.options
         if (privateKey) {
             this.getAddress = () => computeAddress(privateKey)
             const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
@@ -24,13 +22,13 @@ export default class Signer {
             this.sign = async (d) => {
                 return SigningUtil.sign(d, key)
             }
-        } else if (provider) {
-            const web3Provider = new Web3Provider(provider)
+        } else if (ethereum) {
+            const web3Provider = new Web3Provider(ethereum)
             const signer = web3Provider.getSigner()
             this.getAddress = async () => signer.getAddress()
             this.sign = async (d) => signer.signMessage(d)
         } else {
-            throw new Error('Need either "privateKey" or "provider".')
+            throw new Error('Need either "privateKey" or "ethereum".')
         }
     }
 
@@ -59,7 +57,7 @@ export default class Signer {
             return undefined
         }
 
-        if (publishWithSignature === 'auto' && !options.privateKey && !options.provider) {
+        if (publishWithSignature === 'auto' && !options.privateKey && !options.ethereum) {
             return undefined
         }
 

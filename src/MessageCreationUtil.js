@@ -69,7 +69,7 @@ export default class MessageCreationUtil {
         if (!this.publisherId) {
             if (this.auth.privateKey !== undefined) {
                 this.publisherId = computeAddress(this.auth.privateKey).toLowerCase()
-            } else if (this.auth.provider !== undefined) {
+            } else if (this.auth.ethereum !== undefined) {
                 const provider = new Web3Provider(this.auth.ethereum)
                 const address = await provider.getSigner().getAddress()
                 this.publisherId = address.toLowerCase()
@@ -83,7 +83,7 @@ export default class MessageCreationUtil {
                 const hexString = hexlify(Buffer.from(await this.getUsername(), 'utf8'))
                 this.publisherId = sha256(hexString)
             } else {
-                throw new Error('Need either "privateKey", "provider", "apiKey", "username"+"password" or "sessionToken" to derive the publisher Id.')
+                throw new Error('Need either "privateKey", "ethereum", "apiKey", "username"+"password" or "sessionToken" to derive the publisher Id.')
             }
         }
         return this.publisherId
@@ -159,7 +159,7 @@ export default class MessageCreationUtil {
         end,
     }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const requestId = uuid('GroupKeyRequest')
@@ -187,7 +187,7 @@ export default class MessageCreationUtil {
 
     async createGroupKeyResponse({ subscriberAddress, streamId, requestId, encryptedGroupKeys }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const data = {
@@ -209,7 +209,7 @@ export default class MessageCreationUtil {
 
     async createErrorMessage({ keyExchangeStreamId, streamId, error, requestId }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const data = {
