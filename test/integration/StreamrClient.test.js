@@ -782,7 +782,8 @@ describe('StreamrClient', () => {
                     const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const map = {}
-                    map[client.signer.address.toLowerCase()] = true
+                    const address = await client.signer.getAddress()
+                    map[address.toLowerCase()] = true
                     assert.deepStrictEqual(publishers, map)
                     assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
                     assert(streamMessage.getPublisherId())
@@ -824,7 +825,8 @@ describe('StreamrClient', () => {
                     const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const map = {}
-                    map[client.signer.address.toLowerCase()] = true
+                    const address = await client.signer.getAddress()
+                    map[address.toLowerCase()] = true
                     assert.deepStrictEqual(publishers, map)
                     assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
                     assert(streamMessage.getPublisherId())
