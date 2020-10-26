@@ -3,7 +3,10 @@ import crypto from 'crypto'
 import Receptacle from 'receptacle'
 import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
-import { ethers } from 'ethers'
+import { hexlify } from '@ethersproject/bytes'
+import { computeAddress } from '@ethersproject/transactions'
+import { Web3Provider } from '@ethersproject/providers'
+import { sha256 } from '@ethersproject/sha2'
 
 import Stream from './rest/domain/Stream'
 import EncryptionUtil from './EncryptionUtil'
@@ -65,21 +68,22 @@ export default class MessageCreationUtil {
     async getPublisherId() {
         if (!this.publisherId) {
             if (this.auth.privateKey !== undefined) {
-                this.publisherId = ethers.utils.computeAddress(this.auth.privateKey).toLowerCase()
-            } else if (this.auth.provider !== undefined) {
-                const provider = new ethers.providers.Web3Provider(this.auth.provider)
-                this.publisherId = provider.getSigner().address.toLowerCase()
+                this.publisherId = computeAddress(this.auth.privateKey).toLowerCase()
+            } else if (this.auth.ethereum !== undefined) {
+                const provider = new Web3Provider(this.auth.ethereum)
+                const address = await provider.getSigner().getAddress()
+                this.publisherId = address.toLowerCase()
             } else if (this.auth.apiKey !== undefined) {
-                const hexString = ethers.utils.hexlify(Buffer.from(await this.getUsername(), 'utf8'))
-                this.publisherId = ethers.utils.sha256(hexString)
+                const hexString = hexlify(Buffer.from(await this.getUsername(), 'utf8'))
+                this.publisherId = sha256(hexString)
             } else if (this.auth.username !== undefined) {
-                const hexString = ethers.utils.hexlify(Buffer.from(this.auth.username, 'utf8'))
-                this.publisherId = ethers.utils.sha256(hexString)
+                const hexString = hexlify(Buffer.from(this.auth.username, 'utf8'))
+                this.publisherId = sha256(hexString)
             } else if (this.auth.sessionToken !== undefined) {
-                const hexString = ethers.utils.hexlify(Buffer.from(await this.getUsername(), 'utf8'))
-                this.publisherId = ethers.utils.sha256(hexString)
+                const hexString = hexlify(Buffer.from(await this.getUsername(), 'utf8'))
+                this.publisherId = sha256(hexString)
             } else {
-                throw new Error('Need either "privateKey", "provider", "apiKey", "username"+"password" or "sessionToken" to derive the publisher Id.')
+                throw new Error('Need either "privateKey", "ethereum", "apiKey", "username"+"password" or "sessionToken" to derive the publisher Id.')
             }
         }
         return this.publisherId
@@ -155,7 +159,7 @@ export default class MessageCreationUtil {
         end,
     }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned group key request. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const requestId = uuid('GroupKeyRequest')
@@ -183,7 +187,7 @@ export default class MessageCreationUtil {
 
     async createGroupKeyResponse({ subscriberAddress, streamId, requestId, encryptedGroupKeys }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned group key response. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const data = {
@@ -205,7 +209,7 @@ export default class MessageCreationUtil {
 
     async createErrorMessage({ keyExchangeStreamId, streamId, error, requestId }) {
         if (!this._signer) {
-            throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
+            throw new Error('Cannot create unsigned error message. Must authenticate with "privateKey" or "ethereum"')
         }
         const publisherId = await this.getPublisherId()
         const data = {

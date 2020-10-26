@@ -1,5 +1,6 @@
 import { MessageLayer, Utils } from 'streamr-client-protocol'
-import { ethers } from 'ethers'
+import { computeAddress } from '@ethersproject/transactions'
+import { Web3Provider } from '@ethersproject/providers'
 
 const { StreamMessage } = MessageLayer
 const { SigningUtil } = Utils
@@ -7,26 +8,31 @@ const { SIGNATURE_TYPES } = StreamMessage
 
 export default class Signer {
     constructor(options = {}) {
-        // copy options to prevent possible later mutation
-        this.options = {
-            ...options,
-        }
-        const { privateKey, provider } = this.options
+        // TODO: options should get a async getAddress from creator, toss these details from here (e.g. to StreamrClient)
+        const {
+            privateKey,
+            ethereum
+        } = options
+
+        // TODO: check if SigningUtil does the same as https://docs.ethers.io/v5/api/signer/#Signer-signMessage
+        // if yes, just use ethers signing and trash SigningUtil,
+        //   so all this could be moved to StreamrClient or some kind of StreamrEthereum subclass
+        // Consider also if this class is needed at all or not
         if (privateKey) {
-            this.address = ethers.utils.computeAddress(privateKey)
+            this.getAddress = () => computeAddress(privateKey)
             const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
                 ? privateKey.slice(2) // strip leading 0x
                 : privateKey
             this.sign = async (d) => {
                 return SigningUtil.sign(d, key)
             }
-        } else if (provider) {
-            const web3Provider = new ethers.providers.Web3Provider(provider)
+        } else if (ethereum) {
+            const web3Provider = new Web3Provider(ethereum)
             const signer = web3Provider.getSigner()
-            this.address = signer.address
+            this.getAddress = async () => signer.getAddress()
             this.sign = async (d) => signer.signMessage(d)
         } else {
-            throw new Error('Need either "privateKey" or "provider".')
+            throw new Error('Need either "privateKey" or "ethereum".')
         }
     }
 
@@ -41,12 +47,11 @@ export default class Signer {
         if (!streamMessage.getTimestamp()) {
             throw new Error('Timestamp is required as part of the data to sign.')
         }
-        /* eslint-disable no-param-reassign */
+        /* eslint-disable no-param-reassign,require-atomic-updates */ // TODO: comment why atomic-updates is not an issue
         // set signature & publisher so getting of payload works correctly
         streamMessage.signatureType = signatureType
-        streamMessage.messageId.publisherId = this.address // changing the id seems bad
+        streamMessage.messageId.publisherId = await this.getAddress()
         const payload = streamMessage.getPayloadToSign()
-        // eslint-disable-next-line require-atomic-updates
         streamMessage.signature = await this.signData(payload, signatureType)
         /* eslint-enable no-param-reassign */
     }
@@ -56,7 +61,7 @@ export default class Signer {
             return undefined
         }
 
-        if (publishWithSignature === 'auto' && !options.privateKey && !options.provider) {
+        if (publishWithSignature === 'auto' && !options.privateKey && !options.ethereum) {
             return undefined
         }
 

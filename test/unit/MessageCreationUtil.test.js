@@ -348,7 +348,7 @@ describe('MessageCreationUtil', () => {
                 start: 1354155,
                 end: 2344155,
             }).catch((err) => {
-                expect(err.message).toBe('Cannot create unsigned group key request. Must authenticate with "privateKey" or "provider"')
+                expect(err.message).toBe('Cannot create unsigned group key request. Must authenticate with "privateKey" or "ethereum"')
                 done()
             })
         })
@@ -412,7 +412,7 @@ describe('MessageCreationUtil', () => {
                     start: 34524,
                 }]
             }).catch((err) => {
-                expect(err.message).toBe('Cannot create unsigned group key response. Must authenticate with "privateKey" or "provider"')
+                expect(err.message).toBe('Cannot create unsigned group key response. Must authenticate with "privateKey" or "ethereum"')
                 done()
             })
         })
@@ -478,7 +478,7 @@ describe('MessageCreationUtil', () => {
                 streamId: stream.id,
                 requestId: uniqueId('requestId'),
             }).catch((err) => {
-                expect(err.message).toBe('Cannot create unsigned error message. Must authenticate with "privateKey" or "provider"')
+                expect(err.message).toBe('Cannot create unsigned error message. Must authenticate with "privateKey" or "ethereum"')
                 done()
             })
         })

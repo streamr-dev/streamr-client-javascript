@@ -50,7 +50,7 @@ describe('DataUnionEndPoints', () => {
     async function deployDataUnionSync(testName) {
         let dataUnion
         await adminMutex.runExclusive(async () => {
-            const dataUnionName = testName + (+new Date())
+            const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
@@ -136,7 +136,7 @@ describe('DataUnionEndPoints', () => {
     })
 
     describe('Anyone', () => {
-        const nonce = +new Date()
+        const nonce = Date.now()
         const memberAddressList = [
             `0x100000000000000000000000000${nonce}`,
             `0x200000000000000000000000000${nonce}`,

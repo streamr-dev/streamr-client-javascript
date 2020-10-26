@@ -2,7 +2,9 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
 import once from 'once'
-import { Wallet } from 'ethers'
+import { Wallet } from '@ethersproject/wallet'
+import { computeAddress } from '@ethersproject/transactions'
+import { getDefaultProvider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
 
@@ -36,7 +38,7 @@ const {
 const { StreamMessage, MessageRef } = MessageLayer
 
 export default class StreamrClient extends EventEmitter {
-    constructor(options, connection) {
+    constructor(options = {}, connection) {
         super()
         this.id = uniqueId('StreamrClient')
         this.debug = debugFactory(this.id)
@@ -51,7 +53,7 @@ export default class StreamrClient extends EventEmitter {
             // Automatically disconnect on last unsubscribe
             autoDisconnect: true,
             orderMessages: true,
-            auth: {},
+            auth: {}, // can contain member privateKey or (window.)ethereum
             publishWithSignature: 'auto',
             verifySignatures: 'auto',
             retryResendAfter: 5000,
@@ -76,10 +78,9 @@ export default class StreamrClient extends EventEmitter {
             sidechainTokenAddress: null, // TODO
             factoryMainnetAddress: null, // TODO
             factorySidechainAddress: null, // TODO
+            ...options
         }
         this.subscribedStreamPartitions = {}
-
-        Object.assign(this.options, options || {})
 
         const parts = this.options.url.split('?')
         if (parts.length === 1) { // there is no query string
@@ -109,8 +110,54 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
-        if (this.options.auth.privateKey && !this.options.auth.privateKey.startsWith('0x')) {
-            this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+        // TODO: below could also be written "OOP style" into two classes implementing an "interface StreamrEthereum" if porting to TypeScript later
+        // typically: in node.js, privateKey is used; in browser, (window.)ethereum is used
+        if (this.options.auth.privateKey) {
+            if (!this.options.auth.privateKey.startsWith('0x')) {
+                this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+            }
+            const self = this
+            const key = this.options.auth.privateKey
+            const address = computeAddress(key)
+            this.getAddress = () => address
+            this.getProvider = this.options.mainnet
+                ? () => new JsonRpcProvider(self.options.mainnet)
+                : getDefaultProvider
+            this.getSidechainProvider = this.options.sidechain
+                ? async () => new JsonRpcProvider(self.options.sidechain)
+                : null
+            this.getSigner = () => new Wallet(key, self.getProvider())
+            this.getSidechainSigner = async () => new Wallet(key, await self.getSidechainProvider())
+        } else if (this.options.auth.ethereum) {
+            const self = this
+            this.getAddress = () => self.options.auth.ethereum.selectedAddress
+            this.getProvider = () => new Web3Provider(self.options.auth.ethereum)
+            this.getSidechainProvider = async () => {
+                if (!self.options.sidechain) {
+                    return null
+                }
+
+                // use MetaMask, but chainId is required for checking!
+                if (self.options.sidechain.chainId) {
+                    const p = self.getProvider()
+                    const chainId = await p.getNetwork().chainId
+                    if (chainId !== self.options.sidechain.chainId) {
+                        throw new Error(`Please connect to Ethereum blockchain with chainId ${self.options.sidechain.chainId}`)
+                    }
+                    return p
+                }
+
+                // fallback: use given connection params
+                return new JsonRpcProvider(self.options.sidechain)
+            }
+            this.getSigner = () => self.getProvider().getSigner()
+            this.getSidechainSigner = async () => (await self.getSidechainProvider()).getSigner()
+            // TODO: handle events
+            // ethereum.on('accountsChanged', (accounts) => { })
+            // https://docs.metamask.io/guide/ethereum-provider.html#events says:
+            //   "We recommend reloading the page unless you have a very good reason not to"
+            //   Of course we can't and won't do that, but if we need something chain-dependent...
+            // ethereum.on('chainChanged', (chainId) => { window.location.reload() });
         }
 
         if (this.options.keyExchange) {
@@ -323,7 +370,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     async _subscribeToKeyExchangeStream() {
-        if (!this.options.auth.privateKey && !this.options.auth.provider) {
+        if (!this.options.auth.privateKey && !this.options.auth.ethereum) {
             return
         }
         await this.session.getSessionToken() // trigger auth errors if any
