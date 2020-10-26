@@ -22,7 +22,7 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     const adminClient = new StreamrClient(config.clientOptions)
     await adminClient.ensureConnected()
 
-    const dataUnionName = '6be8ceda7a3c4fe7991eab501975b85ec2bb90452d0e4c93bc2' + new Date()
+    const dataUnionName = '6be8ceda7a3c4fe7991eab501975b85ec2bb90452d0e4c93bc2' + Date.now()
     const duMainnetAddress = await adminClient.calculateDataUnionMainnetAddress(dataUnionName, adminWalletMainnet.address)
     const duSidechainAddress = await adminClient.calculateDataUnionSidechainAddress(duMainnetAddress)
 
