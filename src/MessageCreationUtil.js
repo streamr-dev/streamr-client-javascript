@@ -70,6 +70,7 @@ export default class MessageCreationUtil {
             if (this.auth.privateKey !== undefined) {
                 this.publisherId = computeAddress(this.auth.privateKey).toLowerCase()
             } else if (this.auth.ethereum !== undefined) {
+                // TODO: use StreamrClient.getAddress
                 const provider = new Web3Provider(this.auth.ethereum)
                 const address = await provider.getSigner().getAddress()
                 this.publisherId = address.toLowerCase()
