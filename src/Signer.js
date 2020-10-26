@@ -14,6 +14,10 @@ export default class Signer {
             ethereum
         } = options
 
+        // TODO: check if SigningUtil does the same as https://docs.ethers.io/v5/api/signer/#Signer-signMessage
+        // if yes, just use ethers signing and trash SigningUtil,
+        //   so all this could be moved to StreamrClient or some kind of StreamrEthereum subclass
+        // Consider also if this class is needed at all or not
         if (privateKey) {
             this.getAddress = () => computeAddress(privateKey)
             const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
