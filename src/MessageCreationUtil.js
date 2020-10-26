@@ -5,7 +5,7 @@ import randomstring from 'randomstring'
 import { MessageLayer } from 'streamr-client-protocol'
 import { hexlify } from '@ethersproject/bytes'
 import { computeAddress } from '@ethersproject/transactions'
-import { Web3Provider } from '@ethersproject/providers/lib/web3-provider'
+import { Web3Provider } from '@ethersproject/providers'
 import { sha256 } from '@ethersproject/sha2'
 
 import Stream from './rest/domain/Stream'

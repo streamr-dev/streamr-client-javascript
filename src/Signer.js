@@ -1,6 +1,6 @@
 import { MessageLayer, Utils } from 'streamr-client-protocol'
 import { computeAddress } from '@ethersproject/transactions'
-import { Web3Provider } from '@ethersproject/providers/lib/web3-provider'
+import { Web3Provider } from '@ethersproject/providers'
 
 const { StreamMessage } = MessageLayer
 const { SigningUtil } = Utils

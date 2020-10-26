@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3'
 import { Wallet } from '@ethersproject/wallet'
-import { Web3Provider } from '@ethersproject/providers/lib/web3-provider'
+import { Web3Provider } from '@ethersproject/providers'
 
 export default class Session extends EventEmitter {
     constructor(client, options) {
