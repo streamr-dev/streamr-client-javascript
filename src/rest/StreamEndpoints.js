@@ -37,7 +37,7 @@ function getKeepAliveAgentForUrl(url) {
 // These function are mixed in to StreamrClient.prototype.
 // In the below functions, 'this' is intended to be the StreamrClient
 export async function getStream(streamId) {
-    this.debug('getStream', {
+    this.debug('getStream %o', {
         streamId,
     })
     const url = getEndpointUrl(this.options.restUrl, 'streams', streamId)
@@ -46,7 +46,7 @@ export async function getStream(streamId) {
 }
 
 export async function listStreams(query = {}) {
-    this.debug('listStreams', {
+    this.debug('listStreams %o', {
         query,
     })
     const url = getEndpointUrl(this.options.restUrl, 'streams') + '?' + qs.stringify(query)
@@ -55,7 +55,7 @@ export async function listStreams(query = {}) {
 }
 
 export async function getStreamByName(name) {
-    this.debug('getStreamByName', {
+    this.debug('getStreamByName %o', {
         name,
     })
     const json = await this.listStreams({
@@ -66,7 +66,7 @@ export async function getStreamByName(name) {
 }
 
 export async function createStream(props) {
-    this.debug('createStream', {
+    this.debug('createStream %o', {
         props,
     })
     if (!props || !props.name) {
@@ -85,7 +85,7 @@ export async function createStream(props) {
 }
 
 export async function getOrCreateStream(props) {
-    this.debug('getOrCreateStream', {
+    this.debug('getOrCreateStream %o', {
         props,
     })
     let json
@@ -112,7 +112,7 @@ export async function getOrCreateStream(props) {
 }
 
 export async function getStreamPublishers(streamId) {
-    this.debug('getStreamPublishers', {
+    this.debug('getStreamPublishers %o', {
         streamId,
     })
     const url = getEndpointUrl(this.options.restUrl, 'streams', streamId, 'publishers')
@@ -121,7 +121,7 @@ export async function getStreamPublishers(streamId) {
 }
 
 export async function isStreamPublisher(streamId, ethAddress) {
-    this.debug('isStreamPublisher', {
+    this.debug('isStreamPublisher %o', {
         streamId,
         ethAddress,
     })
@@ -139,7 +139,7 @@ export async function isStreamPublisher(streamId, ethAddress) {
 }
 
 export async function getStreamSubscribers(streamId) {
-    this.debug('getStreamSubscribers', {
+    this.debug('getStreamSubscribers %o', {
         streamId,
     })
     const url = getEndpointUrl(this.options.restUrl, 'streams', streamId, 'subscribers')
@@ -148,7 +148,7 @@ export async function getStreamSubscribers(streamId) {
 }
 
 export async function isStreamSubscriber(streamId, ethAddress) {
-    this.debug('isStreamSubscriber', {
+    this.debug('isStreamSubscriber %o', {
         streamId,
         ethAddress,
     })
@@ -165,7 +165,7 @@ export async function isStreamSubscriber(streamId, ethAddress) {
 }
 
 export async function getStreamValidationInfo(streamId) {
-    this.debug('getStreamValidationInfo', {
+    this.debug('getStreamValidationInfo %o', {
         streamId,
     })
     const url = getEndpointUrl(this.options.restUrl, 'streams', streamId, 'validation')
@@ -175,7 +175,7 @@ export async function getStreamValidationInfo(streamId) {
 
 export async function getStreamLast(streamObjectOrId) {
     const { streamId, streamPartition = 0, count = 1 } = validateOptions(streamObjectOrId)
-    this.debug('getStreamLast', {
+    this.debug('getStreamLast %o', {
         streamId,
         streamPartition,
         count,
@@ -196,7 +196,7 @@ export async function publishHttp(streamObjectOrId, data, requestOptions = {}, k
     } else {
         streamId = streamObjectOrId
     }
-    this.debug('publishHttp', {
+    this.debug('publishHttp %o', {
         streamId, data,
     })
 
