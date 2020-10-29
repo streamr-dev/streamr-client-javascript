@@ -5,7 +5,7 @@ module.exports = {
             privateKey: process.env.ETHEREUM_PRIVATE_KEY || '0xe5af7834455b7239881b85be89d905d6881dcb4751063897f12be1b0dd546bdb',
         },
         url: process.env.WEBSOCKET_URL || 'ws://localhost/api/v1/ws',
-        restUrl: process.env.REST_URL || 'http://localhost:8081/streamr-core/api/v1',
+        restUrl: process.env.REST_URL || 'http://localhost/api/v1',
         tokenAddress: process.env.TOKEN_ADDRESS || '0xbAA81A0179015bE47Ad439566374F2Bae098686F',
         tokenAddressSidechain: process.env.TOKEN_ADDRESS_SIDECHAIN || '0x73Be21733CC5D08e1a14Ea9a399fb27DB3BEf8fF',
         factoryMainnetAddress: process.env.DU_FACTORY_MAINNET || '0x5E959e5d5F3813bE5c6CeA996a286F734cc9593b',

@@ -15,7 +15,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress, isAddress } from '@ethersproject/address'
 import debug from 'debug'
 
-import { until } from '../utils'
+import { until, getEndpointUrl } from '../utils'
 
 import authFetch from './authFetch'
 
@@ -378,7 +378,7 @@ export async function getDataUnionContract(options = {}) {
  * @param {String} name describes the secret
  */
 export async function createSecret(dataUnionMainnetAddress, secret, name = 'Untitled Data Union Secret') {
-    const url = `${this.options.restUrl}/dataunions/${dataUnionMainnetAddress}/secrets`
+    const url = getEndpointUrl(this.options.restUrl, 'dataunions', dataUnionMainnetAddress, 'secrets')
     return authFetch(
         url,
         this.session,
@@ -526,7 +526,7 @@ export async function joinDataUnion(options = {}) {
     }
     if (secret) { body.secret = secret }
 
-    const url = `${this.options.restUrl}/dataunions/${dataUnion.address}/joinRequests`
+    const url = getEndpointUrl(this.options.restUrl, 'dataunions', dataUnion.address, 'joinRequests')
     return authFetch(
         url,
         this.session,

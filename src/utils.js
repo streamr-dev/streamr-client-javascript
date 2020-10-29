@@ -66,3 +66,7 @@ export async function until(condition, timeOutMs = 10000, pollingIntervalMs = 10
     }
     return condition()
 }
+
+export const getEndpointUrl = (baseUrl, ...pathParts) => {
+    return baseUrl + '/' + pathParts.map((part) => encodeURIComponent(part)).join('/')
+}

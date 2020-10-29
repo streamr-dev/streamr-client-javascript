@@ -1,12 +1,49 @@
-[![Build Status](https://travis-ci.com/streamr-dev/streamr-client-javascript.svg?branch=master)](https://travis-ci.com/streamr-dev/streamr-client-javascript)
-
-## Streamr JavaScript Client
+<p align="center">
+  <a href="https://streamr.network">
+    <img alt="Streamr" src="https://streamr.network/resources/logos/Streamr_mark_positive.svg" width="60" />
+  </a>
+</p>
+<h1 align="center">
+  Streamr JavaScript Client
+</h1>
 
 By using this client, you can easily interact with the [Streamr](https://streamr.network) API from JavaScript-based environments, such as browsers and [node.js](https://nodejs.org). You can, for example, subscribe to real-time data in Streams, produce new data to Streams, and create new Streams.
 
-This library is work-in-progress and doesn't provide wrapper functions for all the endpoints in the Streamr API. Currently it covers producing and subscribing to data as well as manipulating Stream objects.
-
 The client uses websockets for producing and consuming messages to/from streams. It should work in all modern browsers.
+
+[![Build Status](https://travis-ci.com/streamr-dev/streamr-client-javascript.svg?branch=master)](https://travis-ci.com/streamr-dev/streamr-client-javascript)
+
+- [Streamr JavaScript Client](#streamr-javascript-client)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Creating a StreamrClient instance](#creating-a-streamrclient-instance)
+    - [Subscribing to real-time events in a stream](#subscribing-to-real-time-events-in-a-stream)
+    - [Resending historical data](#resending-historical-data)
+    - [Programmatically creating a Stream](#programmatically-creating-a-stream)
+    - [Publishing data points to a Stream](#publishing-data-points-to-a-stream)
+  - [Client options](#client-options)
+  - [Authentication options](#authentication-options)
+  - [Message handler callback](#message-handler-callback)
+  - [StreamrClient object](#streamrclient-object)
+    - [Connecting](#connecting)
+    - [Managing subscriptions](#managing-subscriptions)
+    - [Stream API](#stream-api)
+    - [Listening to state changes of the client](#listening-to-state-changes-of-the-client)
+  - [Stream object](#stream-object)
+  - [Subscription options](#subscription-options)
+  - [Data Unions](#data-unions)
+    - [Admin functions](#admin-functions)
+    - [Member functions](#member-functions)
+    - [Query functions](#query-functions)
+  - [Utility functions](#utility-functions)
+  - [Binding to events](#binding-to-events)
+  - [Events on the StreamrClient instance](#events-on-the-streamrclient-instance)
+  - [Events on the Subscription object](#events-on-the-subscription-object)
+  - [Partitioning](#partitioning)
+  - [Logging](#logging)
+  - [NPM Publishing](#npm-publishing)
+    - [Publishing `latest`:](#publishing-latest)
+    - [Publishing `beta`:](#publishing-beta)
 
 ### Installation
 
@@ -22,9 +59,8 @@ Here are some quick examples. More detailed examples for the browser and node.js
 
 ```javascript
 const client = new StreamrClient({
-    // See below for more options
     auth: {
-        apiKey: 'your-api-key'
+        privateKey: 'your-private-key'
     }
 })
 ```
@@ -51,7 +87,7 @@ const sub = client.subscribe(
 )
 ```
 
-#### Resending historical data 
+#### Resending historical data
 
 ```javascript
 const sub = await client.resend(
@@ -135,14 +171,8 @@ keyExchange | {} | Defines RSA key pair to use for group key exchange. Can defin
 
 ### Authentication options
 
-Authenticating with an API key (you can manage your API keys in the [Streamr web app](https://streamr.network)):
-```javascript
-new StreamrClient({
-    auth: {
-        apiKey: 'your-api-key'
-    }
-})
-```
+**Authenticating with an API key has been deprecated. Support for email/password authentication will be dropped in the future with authentication by cryptographic keys/wallets will be the only supported method of authentication.**
+
 Authenticating with an Ethereum private key by cryptographically signing a challenge. Note the utility function `StreamrClient.generateEthereumAccount()`, which can be used to easily get the address and private key for a newly generated account. Authenticating with Ethereum also automatically creates an associated Streamr user, if it doesn't exist:
 ```javascript
 new StreamrClient({
@@ -214,9 +244,9 @@ All the below functions return a Promise which gets resolved with the result. Th
 Name | Description
 ---- | -----------
 getStream(streamId) | Fetches a Stream object from the API.
-listStreams(query) | Fetches an array of Stream objects from the API. For the query params, consult the API docs.
+listStreams(query) | Fetches an array of Stream objects from the API. For the query params, consult the [API docs](https://api-explorer.streamr.com).
 getStreamByName(name) | Fetches a Stream which exactly matches the given name.
-createStream(properties) | Creates a Stream with the given properties. For more information on the Stream properties, consult the API docs.
+createStream(properties) | Creates a Stream with the given properties. For more information on the Stream properties, consult the [API docs](https://api-explorer.streamr.com).
 getOrCreateStream(properties) | Gets a Stream with the id or name given in `properties`, or creates it if one is not found.
 publish(streamId, message, timestamp, partitionKey) | Publishes a new message to the given Stream.
 
@@ -292,7 +322,7 @@ sub.on('initial_resend_done', () => {
 })
 ```
 
-### Data Unions API
+### Data Unions
 
 This library provides functions for working with Data Unions. All of the below methods return a Promise.
 
@@ -387,7 +417,7 @@ error | Error object | Reports errors, for example problems with message content
 
 ### Partitioning
 
-Partitioning (sharding) enables streams to scale horizontally. This section describes how to use partitioned streams via this library. To learn the basics of partitioning, see [the docs](https://streamr.network/docs/streams#partitioning). 
+Partitioning (sharding) enables streams to scale horizontally. This section describes how to use partitioned streams via this library. To learn the basics of partitioning, see [the docs](https://streamr.network/docs/streams#partitioning).
 
 **Creating partitioned streams**
 
@@ -404,9 +434,9 @@ client.createStream({
 
 **Publishing to partitioned streams**
 
-In most use cases, a user wants related events (e.g. events from a particular device) to be assigned to the same partition, so that the events retain a deterministic order and reach the same subscriber(s) to allow them to compute stateful aggregates correctly. 
+In most use cases, a user wants related events (e.g. events from a particular device) to be assigned to the same partition, so that the events retain a deterministic order and reach the same subscriber(s) to allow them to compute stateful aggregates correctly.
 
-The library allows the user to choose a *partition key*, which simplifies publishing to partitioned streams by not requiring the user to assign a partition number explicitly. The same partition key always maps to the same partition. In an IoT use case, the device id can be used as partition key; in user interaction data it could be the user id, and so on. 
+The library allows the user to choose a *partition key*, which simplifies publishing to partitioned streams by not requiring the user to assign a partition number explicitly. The same partition key always maps to the same partition. In an IoT use case, the device id can be used as partition key; in user interaction data it could be the user id, and so on.
 
 The partition key can be given as an argument to the `publish` methods, and the library assigns a deterministic partition number automatically:
 
@@ -466,14 +496,14 @@ Publishing to NPM is automated via Github Actions. Follow the steps below to pub
 
 ### Publishing `latest`:
 1. Update version with either `npm version [patch|minor|major]`. Use semantic versioning
-https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created. 
+https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.
 2. `git push --follow-tags`
 3. Wait for Github Actions to run tests
 4. If tests passed, Github Actions will publish the new version to NPM
 
 ### Publishing `beta`:
 1. Update version with either `npm version [prepatch|preminor|premajor] --preid=beta`. Use semantic versioning
-https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created. 
+https://semver.org/. Files package.json and package-lock.json will be automatically updated, and an appropriate git commit and tag created.
 2. `git push --follow-tags`
 3. Wait for Github Actions to run tests
 4. If tests passed, Github Actions will publish the new version to NPM
