@@ -2,9 +2,8 @@
  * Streamr Data Union related functions
  *
  * Table of Contents:
- *      generic helpers
  *      ABIs
- *      contract helpers
+ *      helper utils
  *      admin: DEPLOY AND SETUP DATA UNION  Functions for deploying the contract and adding secrets for smooth joining
  *      admin: MANAGE DATA UNION            Kick and add members
  *      member: JOIN & QUERY DATA UNION     Publicly available info about dataunions and their members (with earnings and proofs)
@@ -22,20 +21,6 @@ import authFetch from './authFetch'
 
 const log = debug('StreamrClient::DataUnionEndpoints')
 // const log = console.log
-
-// //////////////////////////////////////////////////////////////////
-//          Generic utils
-// //////////////////////////////////////////////////////////////////
-
-/** @typedef {String} EthereumAddress */
-
-function throwIfBadAddress(address, variableDescription) {
-    try {
-        return getAddress(address)
-    } catch (e) {
-        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}. Original error: ${e.stack}.`)
-    }
-}
 
 // ///////////////////////////////////////////////////////////////////////
 //          ABIs: contract functions we want to call within the client
@@ -183,6 +168,16 @@ const factoryMainnetABI = [{
 //          Contract utils
 // //////////////////////////////////////////////////////////////////
 
+/** @typedef {String} EthereumAddress */
+
+function throwIfBadAddress(address, variableDescription) {
+    try {
+        return getAddress(address)
+    } catch (e) {
+        throw new Error(`${variableDescription || 'Error'}: Bad Ethereum address ${address}. Original error: ${e.stack}.`)
+    }
+}
+
 /**
  * Parse address, or use this client's auth address if input not given
  * @param {StreamrClient} this
@@ -194,6 +189,19 @@ function parseAddress(client, inputAddress) {
         return getAddress(inputAddress)
     }
     return client.getAddress()
+}
+
+// template for withdraw functions
+async function untilWithdrawIsComplete(getWithdrawTxFunc, getBalanceFunc, options = {}) {
+    const {
+        pollingIntervalMs = 1000,
+        retryTimeoutMs = 60000,
+    } = options
+    const balanceBefore = await getBalanceFunc(options)
+    const tx = await getWithdrawTxFunc(options)
+    const tr = await tx.wait()
+    await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+    return tr
 }
 
 // TODO: calculate addresses in JS instead of asking over RPC, see data-union-solidity/contracts/CloneLib.sol
@@ -295,7 +303,7 @@ export async function calculateDataUnionSidechainAddress(duMainnetAddress, optio
  * Create a new DataUnionMainnet contract to mainnet with DataUnionFactoryMainnet
  * This triggers DataUnionSidechain contract creation in sidechain, over the bridge (AMB)
  * @param {DeployOptions} options such as adminFee (default: 0)
- * @return {Promise<Contract>} that resolves when mainnet deploy transaction is done, plus extra method `await dataUnion.isReady()` to wait until it's deployed over the bridge to side-chain
+ * @return {Promise<Contract>} that resolves when the new DU is deployed over the bridge to side-chain
  */
 export async function deployDataUnion(options = {}) {
     const {
@@ -342,21 +350,19 @@ export async function deployDataUnion(options = {}) {
         [address],
         duName,
     )
-    const promise = tx.wait().then((tr) => {
-        const dataUnion = new Contract(duMainnetAddress, dataUnionMainnetABI, mainnetWallet)
-        // add method so that caller can `await dataUnion.isReady()` i.e. deployed over the bridge to side-chain
-        dataUnion.isReady = async () => until(
-            async () => await sidechainWallet.provider.getCode(duSidechainAddress) !== '0x',
-            sidechainRetryTimeoutMs,
-            sidechainPollingIntervalMs
-        )
-        dataUnion.deployTxReceipt = tr
-        dataUnion.sidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, sidechainWallet)
-        return dataUnion
-    })
+    const tr = await tx.wait()
 
-    log(`Data Union "${duName}" contract (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployment started`)
-    return promise
+    log(`Data Union "${duName}" (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployed to mainnet, waiting for side-chain...`)
+    await until(
+        async () => await sidechainWallet.provider.getCode(duSidechainAddress) !== '0x',
+        sidechainRetryTimeoutMs,
+        sidechainPollingIntervalMs
+    )
+
+    const dataUnion = new Contract(duMainnetAddress, dataUnionMainnetABI, mainnetWallet)
+    dataUnion.deployTxReceipt = tr
+    dataUnion.sidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, sidechainWallet)
+    return dataUnion
 }
 
 export async function getDataUnionContract(options = {}) {
@@ -422,14 +428,17 @@ export async function addMembers(memberAddressList, options = {}) {
 
 /**
  * Admin: withdraw earnings (pay gas) on behalf of a member
+ * TODO: add test
  * @param {EthereumAddress} memberAddress the other member who gets their tokens out of the Data Union
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdrawMember(memberAddress, options = {}) {
-    const tx = await this.getWithdrawTxFor(memberAddress, options)
-    return tx.wait(options.confirmations || 1)
+export async function withdrawMember(memberAddress, options) {
+    return untilWithdrawIsComplete(
+        this.getWithdrawTxFor.bind(this, memberAddress),
+        this.getTokenBalance.bind(this, memberAddress),
+        options
+    )
 }
 
 /**
@@ -446,6 +455,7 @@ export async function getWithdrawMemberTx(memberAddress, options) {
 
 /**
  * Admin: Withdraw a member's earnings to another address, signed by the member
+ * TODO: add test
  * @param {EthereumAddress} dataUnion to withdraw my earnings from
  * @param {EthereumAddress} memberAddress the member whose earnings are sent out
  * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
@@ -453,9 +463,12 @@ export async function getWithdrawMemberTx(memberAddress, options) {
  * @param {EthereumOptions} options
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
-export async function withdrawToSigned(memberAddress, recipientAddress, signature, options = {}) {
-    const tx = await this.getWithdrawTxTo(memberAddress, recipientAddress, signature, options)
-    return tx.wait(options.confirmations || 1)
+export async function withdrawToSigned(memberAddress, recipientAddress, signature, options) {
+    return untilWithdrawIsComplete(
+        this.getWithdrawToSignedTx.bind(this, memberAddress, recipientAddress, signature),
+        this.getTokenBalance.bind(this, recipientAddress),
+        options
+    )
 }
 
 /**
@@ -652,27 +665,20 @@ export async function getDataUnionVersion(contractAddress) {
 
 /**
  * Withdraw all your earnings
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
- * @param {EthereumOptions} options
- * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
+ * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
  */
 export async function withdraw(options = {}) {
-    const {
-        pollingIntervalMs = 1000,
-        retryTimeoutMs = 60000,
-    } = options
-    const tx = await this.getWithdrawTx(options)
-    const tr = await tx.wait()
-    const getBalance = this.getTokenBalance.bind(this)
-    const balanceBefore = await getBalance(null, options)
-    tr.isComplete = async () => until(async () => !(await getBalance(null, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
-    return tr
+    return untilWithdrawIsComplete(
+        this.getWithdrawTx.bind(this),
+        this.getTokenBalance.bind(this, null), // null means this StreamrClient's auth credentials
+        options
+    )
 }
 
 /**
  * Get the tx promise for withdrawing all your earnings
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTx(options) {
@@ -688,29 +694,22 @@ export async function getWithdrawTx(options) {
 
 /**
  * Withdraw earnings and "donate" them to the given address
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
  * @param {EthereumAddress} recipientAddress the address to receive the tokens
- * @param {EthereumOptions} options
- * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
+ * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
  */
 export async function withdrawTo(recipientAddress, options = {}) {
-    const {
-        pollingIntervalMs = 1000,
-        retryTimeoutMs = 60000,
-    } = options
-    const balanceBefore = await this.getTokenBalance(recipientAddress, options)
-    const tx = await this.getWithdrawTxTo(recipientAddress, options)
-    const tr = await tx.wait()
-    const getBalance = this.getTokenBalance.bind(this)
-    tr.isComplete = async () => until(async () => !(await getBalance(recipientAddress, options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
-    return tr
+    return untilWithdrawIsComplete(
+        this.getWithdrawTxTo.bind(this, recipientAddress),
+        this.getTokenBalance.bind(this, recipientAddress),
+        options
+    )
 }
 
 /**
  * Withdraw earnings and "donate" them to the given address
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
  * @param {EthereumAddress} recipientAddress the address to receive the tokens
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawTxTo(recipientAddress, options) {
@@ -727,7 +726,12 @@ export async function getWithdrawTxTo(recipientAddress, options) {
 /**
  * Member can sign off to "donate" all earnings to another address such that someone else
  *   can submit the transaction (and pay for the gas)
+ * This signature is only valid until next withdrawal takes place (using this signature or otherwise).
+ * Note that while it's a "blank cheque" for withdrawing all earnings at the moment it's used, it's
+ *   invalidated by the first withdraw after signing it. In other words, any signature can be invalidated
+ *   by making a "normal" withdraw e.g. `await streamrClient.withdraw()`
  * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawTo(recipientAddress, options) {
@@ -737,8 +741,10 @@ export async function signWithdrawTo(recipientAddress, options) {
 /**
  * Member can sign off to "donate" specific amount of earnings to another address such that someone else
  *   can submit the transaction (and pay for the gas)
- * @param {BigNumber|number|string} amount that the signature is for (can't be used for less or for more)
+ * This signature is only valid until next withdrawal takes place (using this signature or otherwise).
  * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
+ * @param {BigNumber|number|string} amount that the signature is for (can't be used for less or for more)
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawAmountTo(recipientAddress, amount, options) {

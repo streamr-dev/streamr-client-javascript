@@ -35,8 +35,6 @@ it('DataUnionEndPoints test withdraw', async () => {
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
-    log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
-    await dataUnion.isReady()
     await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
     log(`DataUnion ${dataUnion.address} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
@@ -104,12 +102,11 @@ it('DataUnionEndPoints test withdraw', async () => {
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
     const stats = await memberClient.getMemberStats()
-    log(`Stats: ${JSON.stringify(stats)}`)
+    log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
     const withdrawTr = await memberClient.withdraw()
-    log(`Withdraw transaction sent: ${JSON.stringify(withdrawTr)}. Waiting for tokens to appear in mainnet`)
-    await withdrawTr.isComplete()
+    log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 

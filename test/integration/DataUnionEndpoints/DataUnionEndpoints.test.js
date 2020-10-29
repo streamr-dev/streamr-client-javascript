@@ -53,8 +53,6 @@ describe('DataUnionEndPoints', () => {
             const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
-            log(`Waiting for ${dataUnion.sidechain.address} to be registered in sidechain`)
-            await dataUnion.isReady()
             await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
             log(`DataUnion ${dataUnion.address} is ready to roll`)
         })
