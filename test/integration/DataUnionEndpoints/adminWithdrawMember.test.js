@@ -40,7 +40,6 @@ it('DataUnionEndPoints test withdrawTo', async () => {
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
-    const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${Date.now()}`, providerSidechain)
     const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
     await sendTx.wait()
     log(`sent 0.1sETH to ${memberWallet}`)
@@ -105,11 +104,11 @@ it('DataUnionEndPoints test withdrawTo', async () => {
     const stats = await memberClient.getMemberStats()
     log(`stats ${JSON.stringify(stats)}`)
 
-    const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
-    const withdrawTr = await memberClient.withdrawTo(member2Wallet.address)
+    const withdrawTr = await adminClient.withdrawMember(memberWallet.address, { dataUnion })
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
-    const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     await providerMainnet.removeAllListeners()

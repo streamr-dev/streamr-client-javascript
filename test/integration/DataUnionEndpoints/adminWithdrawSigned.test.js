@@ -9,7 +9,7 @@ import * as Token from '../../../contracts/TestToken.json'
 import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdrawTo')
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console
 
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -20,7 +20,7 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-it('DataUnionEndPoints test withdrawTo', async () => {
+it('DataUnionEndPoints test signed withdraw', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -103,11 +103,14 @@ it('DataUnionEndPoints test withdrawTo', async () => {
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
     const stats = await memberClient.getMemberStats()
-    log(`stats ${JSON.stringify(stats)}`)
+    log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
+
+    const signature = await memberClient.signWithdrawTo(member2Wallet.address)
+    log(`Signature: ${signature}`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
-    const withdrawTr = await memberClient.withdrawTo(member2Wallet.address)
+    const withdrawTr = await adminClient.withdrawToSigned(memberWallet.address, member2Wallet.address, signature, { dataUnion })
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)

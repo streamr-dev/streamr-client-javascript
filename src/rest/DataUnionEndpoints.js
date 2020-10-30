@@ -83,6 +83,12 @@ const dataUnionSidechainABI = [{
     stateMutability: 'nonpayable',
     type: 'function'
 }, {
+    name: 'withdrawAllToSigned',
+    inputs: [{ type: 'address' }, { type: 'address' }, { type: 'bool' }, { type: 'bytes' }],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}, {
     // enum ActiveStatus {None, Active, Inactive, Blocked}
     // struct MemberInfo {
     //     ActiveStatus status;
@@ -435,7 +441,7 @@ export async function addMembers(memberAddressList, options = {}) {
  */
 export async function withdrawMember(memberAddress, options) {
     return untilWithdrawIsComplete(
-        this.getWithdrawTxFor.bind(this, memberAddress),
+        this.getWithdrawMemberTx.bind(this, memberAddress),
         this.getTokenBalance.bind(this, memberAddress),
         options
     )
@@ -455,7 +461,6 @@ export async function getWithdrawMemberTx(memberAddress, options) {
 
 /**
  * Admin: Withdraw a member's earnings to another address, signed by the member
- * TODO: add test
  * @param {EthereumAddress} dataUnion to withdraw my earnings from
  * @param {EthereumAddress} memberAddress the member whose earnings are sent out
  * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
@@ -482,7 +487,9 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
  */
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
-    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
+    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature, { // sendToMainnet=true
+        gasLimit: 200000,
+    })
 }
 
 export async function setAdminFee(newFeeFraction, options) {
@@ -730,6 +737,9 @@ export async function getWithdrawTxTo(recipientAddress, options) {
  * Note that while it's a "blank cheque" for withdrawing all earnings at the moment it's used, it's
  *   invalidated by the first withdraw after signing it. In other words, any signature can be invalidated
  *   by making a "normal" withdraw e.g. `await streamrClient.withdraw()`
+ * Admin can execute the withdraw using this signature: ```
+ *   await adminStreamrClient.withdrawToSigned(memberAddress, recipientAddress, signature)
+ * ```
  * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
  * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
@@ -754,7 +764,7 @@ export async function signWithdrawAmountTo(recipientAddress, amount, options) {
     const memberData = await duSidechain.memberData(address)
     if (memberData[0] === '0') { throw new Error(`${address} is not a member in Data Union (sidechain address ${duSidechain.address})`) }
     const withdrawn = memberData[3]
-    const message = recipientAddress + amount.toString(16, 64) + duSidechain.address.slice(2) + withdrawn.toString(16, 64)
+    const message = recipientAddress + amount.toString() + duSidechain.address.slice(2) + withdrawn.toString()
     const signature = await signer.signMessage(message)
     return signature
 }
