@@ -158,6 +158,17 @@ export default class StreamrClient extends EventEmitter {
             //   "We recommend reloading the page unless you have a very good reason not to"
             //   Of course we can't and won't do that, but if we need something chain-dependent...
             // ethereum.on('chainChanged', (chainId) => { window.location.reload() });
+        } else {
+            const self = this
+            this.getAddress = () => null
+            this.getProvider = this.options.mainnet
+                ? () => new JsonRpcProvider(self.options.mainnet)
+                : getDefaultProvider
+            this.getSidechainProvider = this.options.sidechain
+                ? async () => new JsonRpcProvider(self.options.sidechain)
+                : null
+            this.getSigner = () => { throw new Error('StreamrClient not authenticated!') }
+            this.getSidechainSigner = () => { throw new Error('StreamrClient not authenticated!') }
         }
 
         if (this.options.keyExchange) {
