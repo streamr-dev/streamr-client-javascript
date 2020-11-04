@@ -4,7 +4,9 @@ import qs from 'qs'
 import once from 'once'
 import { Wallet } from '@ethersproject/wallet'
 import { computeAddress } from '@ethersproject/transactions'
-import { getDefaultProvider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+// TODO: figure out why this "direct import" doesn't work when importing 'ethers' does work. Report to ricmoo.
+// import { getDefaultProvider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { getDefaultProvider, providers } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
 
@@ -25,6 +27,11 @@ import KeyExchangeUtil from './KeyExchangeUtil'
 import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
+
+const {
+    JsonRpcProvider,
+    Web3Provider
+} = providers
 
 const {
     SubscribeRequest,
