@@ -296,9 +296,11 @@ export async function calculateDataUnionSidechainAddress(duMainnetAddress, optio
  */
 /**
  * @typedef {object} AdditionalDeployOptions for deployDataUnion
+ * @property {EthereumAddress} owner new data union owner, defaults to StreamrClient authenticated user
+ * @property {Array<EthereumAddress>} joinPartAgents defaults to just the owner
  * @property {number} adminFee fraction (number between 0...1 where 1 means 100%)
  * @property {EthereumAddress} factoryMainnetAddress defaults to StreamrClient options
- * @property {string} name unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
+ * @property {string} dataUnionName unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
  */
 /**
  * @typedef {EthereumOptions & AdditionalDeployOptions} DeployOptions
@@ -313,6 +315,8 @@ export async function calculateDataUnionSidechainAddress(duMainnetAddress, optio
  */
 export async function deployDataUnion(options = {}) {
     const {
+        owner,
+        joinPartAgents,
         dataUnionName,
         adminFee = 0,
         sidechainPollingIntervalMs = 1000,
@@ -331,9 +335,14 @@ export async function deployDataUnion(options = {}) {
     const mainnetProvider = this.getProvider()
     const mainnetWallet = this.getSigner()
     const sidechainWallet = await this.getSidechainSigner()
-    const address = await this.getAddress()
 
-    const duMainnetAddress = await getDataUnionMainnetAddress(this, duName, address, options)
+    // parseAddress defaults to authenticated user (also if "owner" is not an address)
+    const ownerAddress = await parseAddress(this, owner)
+
+    // getAddress throws if there's an invalid address in the array
+    const agentAddressList = Array.isArray(joinPartAgents) ? joinPartAgents.map(getAddress) : [ownerAddress]
+
+    const duMainnetAddress = await getDataUnionMainnetAddress(this, duName, ownerAddress, options)
     const duSidechainAddress = await getDataUnionSidechainAddress(this, duMainnetAddress, options)
 
     if (await mainnetProvider.getCode(duMainnetAddress) !== '0x') {
@@ -351,9 +360,9 @@ export async function deployDataUnion(options = {}) {
 
     // function deployNewDataUnion(address owner, uint256 adminFeeFraction, address[] agents, string duName)
     const tx = await factoryMainnet.deployNewDataUnion(
-        address,
+        ownerAddress,
         adminFeeBN,
-        [address],
+        agentAddressList,
         duName,
     )
     const tr = await tx.wait()
