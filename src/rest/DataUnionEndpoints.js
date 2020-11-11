@@ -13,6 +13,8 @@
 import { Contract } from '@ethersproject/contracts'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress, isAddress } from '@ethersproject/address'
+import { verifyMessage } from '@ethersproject/wallet'
+import { arrayify } from '@ethersproject/bytes'
 import debug from 'debug'
 
 import { until, getEndpointUrl } from '../utils'
@@ -168,7 +170,23 @@ const factoryMainnetABI = [{
     outputs: [{ type: 'address' }],
     stateMutability: 'nonpayable',
     type: 'function'
+}, {
+    name: 'amb',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
 }]
+
+const mainnetAmbABI = [{
+    name: 'executeSignatures',
+    inputs: [{ type: 'bytes' }, { type: 'bytes' }], // (_data, _signatures)
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+}]
+
+const sidechainAmbABI = []
 
 // //////////////////////////////////////////////////////////////////
 //          Contract utils
@@ -197,8 +215,147 @@ function parseAddress(client, inputAddress) {
     return client.getAddress()
 }
 
+let cachedSidechainAmb
+async function getSidechainAmb(client, options) {
+    if (!cachedSidechainAmb) {
+        const ambPromise = async () => {
+            const provider = client.getMainnetProvider()
+            const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+            const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
+            const factorySidechainAddress = factoryMainnet.data_union_sidechain_factory()
+            const factorySidechain = new Contract(factorySidechainAddress, [{
+                name: 'amb',
+                inputs: [],
+                outputs: [{ type: 'address' }],
+                stateMutability: 'view',
+                type: 'function'
+            }], provider)
+            const sidechainAmbAddress = await factorySidechain.amb()
+            return new Contract(sidechainAmbAddress, sidechainAmbABI, provider)
+        }
+        cachedSidechainAmb = ambPromise
+        cachedSidechainAmb = await ambPromise // eslint-disable-line require-atomic-updates
+    }
+    return cachedSidechainAmb
+}
+
+async function requiredSignaturesHaveBeenCollected(client, messageHash, options = {}) {
+    const sidechainAmb = await getSidechainAmb(client, options)
+    const requiredSignatureCount = await sidechainAmb.requiredSignatures()
+
+    // Bit 255 is set to mark completion, double check though
+    const sigCountStruct = await sidechainAmb.numMessagesSigned(messageHash)
+    const collectedSignatureCount = sigCountStruct.mask(255)
+    const markedComplete = sigCountStruct.shr(255).gt(0)
+
+    log(`${collectedSignatureCount.toString()} out of ${requiredSignatureCount.toString()} collected`)
+    if (markedComplete) { log('All signatures collected') }
+    return markedComplete
+}
+
+/*
+function packSignatures(array) {
+    const msgLength = BigNumber.from(array.length).toHexString()
+    const [v, r, s] = array.reduce(([_v, _r, _s], e) => [_v.concat(e.v), _r.concat(e.r), _s.concat(e.s)], ['', '', ''])
+    return `${msgLength}${v}${r}${s}`
+}
+*/
+
+// move signatures from sidechain to mainnet
+export async function transportSignatures(messageHash, options) {
+    const {
+        pollingIntervalMs = 1000,
+        retryTimeoutMs = 60000,
+    } = options
+
+    // await until(async () => (), pollingIntervalMs, retryTimeoutMs)
+    log('Waiting until sidechain AMB has collected required signatures...')
+    await until(async () => requiredSignaturesHaveBeenCollected(this, messageHash, options), pollingIntervalMs, retryTimeoutMs)
+    const sidechainAmb = await getSidechainAmb(this, options)
+    const message = await sidechainAmb.message(messageHash)
+    const messageId = '0x' + message.substr(2, 64)
+    const sigCountStruct = await sidechainAmb.numMessagesSigned(messageHash)
+    const collectedSignatureCount = sigCountStruct.mask(255).toNumber()
+
+    log(`${collectedSignatureCount} signatures reported, getting them from the sidechain AMB...`)
+    const signatures = await Promise.all(Array(collectedSignatureCount).fill(0).map(async (_, i) => sidechainAmb.signature(messageHash, i)))
+
+    const [vArray, rArray, sArray] = [[], [], []]
+    signatures.forEach((signature, i) => {
+        log(`  Signature ${i}: ${signature} (len=${signature.length}=${signature.length / 2 - 1} bytes)`)
+        rArray.push(signature.substr(2, 64))
+        sArray.push(signature.substr(66, 64))
+        vArray.push(signature.substr(130, 2))
+    })
+    const packedSignatures = BigNumber.from(signatures.length).toHexString() + vArray.join('') + rArray.join('') + sArray.join('')
+    log(`All signatures packed into one: ${packedSignatures}`)
+
+    const mainnetProvider = this.getMainnetProvider()
+    const factoryMainnetAddress = options.factoryMainnetAddress || this.options.factoryMainnetAddress
+    const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, mainnetProvider)
+    const mainnetAmbAddress = await factoryMainnet.amb()
+    const mainnetAmb = new Contract(mainnetAmbAddress, mainnetAmbABI, mainnetProvider)
+
+    // Gas estimation also checks that the transaction would succeed, and provides a helpful error message in case it would fail
+    log(`Estimating gas using mainnet AMB @ ${mainnetAmbAddress}`)
+    let gasLimit
+    try {
+        // magic number suggested by https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/utils/constants.js
+        gasLimit = await mainnetAmb.estimateGas.executeSignatures(message, signatures) + 200000
+    } catch (e) {
+        // Failure modes from https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/events/processAMBCollectedSignatures/estimateGas.js
+        log('Gas estimation failed: Check if the message was already processed')
+        const alreadyProcessed = await mainnetAmb.relayedMessages(messageId)
+        if (alreadyProcessed) {
+            throw new Error(`Signatures have already been transported (Message ${messageId} has already been processed)`)
+        }
+
+        log('Gas estimation failed: Check if number of signatures is enough')
+        const validatorContractAddress = await mainnetAmb.validatorContract()
+        const validatorContract = new Contract(validatorContractAddress, [{
+            name: 'isValidator',
+            inputs: [{ type: 'address' }],
+            outputs: [{ type: 'bool' }],
+            constant: true,
+            payable: false,
+            stateMutability: 'view',
+            type: 'function'
+        }, {
+            name: 'requiredSignatures',
+            inputs: [],
+            outputs: [{ type: 'uint256' }],
+            constant: true,
+            payable: false,
+            stateMutability: 'view',
+            type: 'function'
+        }], mainnetProvider)
+        const requiredSignatures = await validatorContract.requiredSignatures()
+        if (requiredSignatures.gt(signatures.length)) {
+            throw new Error('The number of required signatures does not match between sidechain('
+                + signatures.length + ' and mainnet( ' + requiredSignatures.toString())
+        }
+
+        log('Gas estimation failed: Check if all the signatures were made by validators')
+        log('  Recover signer addresses from signatures')
+        const signers = signatures.map((signature) => verifyMessage(arrayify(message), signature))
+        log('  Check that signers are validators')
+        const isValidatorArray = await Promise.all(signers.map((address) => [address, validatorContract.isValidator(address)]))
+        const nonValidatorSigners = isValidatorArray.filter(([, isValidator]) => !isValidator)
+        if (nonValidatorSigners.length > 0) {
+            throw new Error(`Following signers are not listed as validators in mainnet validator contract at ${validatorContractAddress}:\n - ` +
+                nonValidatorSigners.map(([address]) => address).join('\n - '))
+        }
+
+        throw new Error(`Gas estimation failed: Unknown error while processing message ${message}`)
+    }
+
+    const txAMB = mainnetAmb.executeSignatures(message, signatures, { gasLimit })
+    const trAMB = txAMB.wait()
+    return trAMB
+}
+
 // template for withdraw functions
-async function untilWithdrawIsComplete(getWithdrawTxFunc, getBalanceFunc, options = {}) {
+async function untilWithdrawIsComplete(client, getWithdrawTxFunc, getBalanceFunc, options = {}) {
     const {
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
@@ -206,6 +363,7 @@ async function untilWithdrawIsComplete(getWithdrawTxFunc, getBalanceFunc, option
     const balanceBefore = await getBalanceFunc(options)
     const tx = await getWithdrawTxFunc(options)
     const tr = await tx.wait()
+    await client.transportSignatures()
     await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
     return tr
 }
@@ -219,10 +377,9 @@ async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress
         const provider = client.getMainnetProvider()
         const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
         const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
-        const promise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
-        mainnetAddressCache[dataUnionName] = promise
-        const value = await promise
-        mainnetAddressCache[dataUnionName] = value // eslint-disable-line require-atomic-updates
+        const addressPromise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
+        mainnetAddressCache[dataUnionName] = addressPromise
+        mainnetAddressCache[dataUnionName] = await addressPromise // eslint-disable-line require-atomic-updates
     }
     return mainnetAddressCache[dataUnionName]
 }
@@ -237,8 +394,7 @@ async function getDataUnionSidechainAddress(client, duMainnetAddress, options = 
         const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
         const promise = factoryMainnet.sidechainAddress(duMainnetAddress)
         sidechainAddressCache[duMainnetAddress] = promise
-        const value = await promise
-        sidechainAddressCache[duMainnetAddress] = value // eslint-disable-line require-atomic-updates
+        sidechainAddressCache[duMainnetAddress] = await promise // eslint-disable-line require-atomic-updates
     }
     return sidechainAddressCache[duMainnetAddress]
 }
@@ -456,6 +612,7 @@ export async function addMembers(memberAddressList, options = {}) {
  */
 export async function withdrawMember(memberAddress, options) {
     const tr = await untilWithdrawIsComplete(
+        this,
         this.getWithdrawMemberTx.bind(this, memberAddress),
         this.getTokenBalance.bind(this, memberAddress),
         options
