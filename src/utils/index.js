@@ -106,6 +106,7 @@ export function CacheFn(fn, {
  * Deferred promise allowing external control of resolve/reject.
  * Returns a Promise with resolve/reject functions attached.
  * Also has a wrap(fn) method that wraps a function to settle this promise
+ * Also has a wrapErrors(fn) method that wraps a function to settle this promise if error
  * Defer optionally takes executor function ala `new Promise(executor)`
  */
 
@@ -123,10 +124,15 @@ export function Defer(executor = () => {}) {
         return async (...args) => Promise.resolve(fn(...args)).then(resolve, reject)
     }
 
+    function wrapError(fn) {
+        return async (...args) => Promise.resolve(fn(...args)).catch(reject)
+    }
+
     return Object.assign(p, {
         resolve,
         reject,
         wrap,
+        wrapError
     })
 }
 
