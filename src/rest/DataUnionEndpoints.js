@@ -455,11 +455,12 @@ export async function addMembers(memberAddressList, options = {}) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawMember(memberAddress, options) {
-    return untilWithdrawIsComplete(
+    const tr = await untilWithdrawIsComplete(
         this.getWithdrawMemberTx.bind(this, memberAddress),
         this.getTokenBalance.bind(this, memberAddress),
         options
     )
+    return tr
 }
 
 /**
@@ -484,11 +485,12 @@ export async function getWithdrawMemberTx(memberAddress, options) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawToSigned(memberAddress, recipientAddress, signature, options) {
-    return untilWithdrawIsComplete(
+    const tr = await untilWithdrawIsComplete(
         this.getWithdrawToSignedTx.bind(this, memberAddress, recipientAddress, signature),
         this.getTokenBalance.bind(this, recipientAddress),
         options
     )
+    return tr
 }
 
 /**
@@ -691,11 +693,12 @@ export async function getDataUnionVersion(contractAddress) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
  */
 export async function withdraw(options = {}) {
-    return untilWithdrawIsComplete(
+    const tr = await untilWithdrawIsComplete(
         this.getWithdrawTx.bind(this),
         this.getTokenBalance.bind(this, null), // null means this StreamrClient's auth credentials
         options
     )
+    return tr
 }
 
 /**
@@ -727,11 +730,12 @@ export async function getWithdrawTx(options) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
  */
 export async function withdrawTo(recipientAddress, options = {}) {
-    return untilWithdrawIsComplete(
+    const tr = await untilWithdrawIsComplete(
         this.getWithdrawTxTo.bind(this, recipientAddress),
         this.getTokenBalance.bind(this, recipientAddress),
         options
     )
+    return tr
 }
 
 /**
