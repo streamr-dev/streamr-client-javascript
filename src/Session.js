@@ -9,6 +9,7 @@ export default class Session extends EventEmitter {
         this.options = options || {}
         this.state = Session.State.LOGGED_OUT
 
+        // TODO: move loginFunction to StreamrClient constructor where "auth type" is checked
         if (typeof this.options.privateKey !== 'undefined') {
             const wallet = new Wallet(this.options.privateKey)
             this.loginFunction = async () => this._client.loginWithChallengeResponse((d) => wallet.signMessage(d), wallet.address)
