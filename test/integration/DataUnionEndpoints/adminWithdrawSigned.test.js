@@ -90,6 +90,7 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     await until(async () => !(await tokenSidechain.balanceOf(dataUnion.sidechain.address)).eq('0'), 300000, 3000)
     log(`Confirmed tokens arrived, DU balance: ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
+    // make a "full" sidechain contract object that has all functions, not just those required by StreamrClient
     const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tx3 = await sidechainContract.addRevenue()
     const tr3 = await tx3.wait()
@@ -106,7 +107,8 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     const signature = await memberClient.signWithdrawTo(member2Wallet.address)
-    log(`Signature: ${signature}`)
+    const isValid = sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
+    log(`Signature: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
@@ -129,4 +131,5 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     })
     expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
     expect(balanceIncrease.toString()).toBe(amount.toString())
+    expect(isValid).toBe(true)
 }, 300000)
