@@ -28,6 +28,7 @@ import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 
+// TODO: remove when the above "direct import" works
 const {
     JsonRpcProvider,
     Web3Provider
@@ -127,38 +128,30 @@ export default class StreamrClient extends EventEmitter {
             const key = this.options.auth.privateKey
             const address = computeAddress(key)
             this.getAddress = () => address
-            this.getProvider = this.options.mainnet
-                ? () => new JsonRpcProvider(self.options.mainnet)
-                : getDefaultProvider
-            this.getSidechainProvider = this.options.sidechain
-                ? async () => new JsonRpcProvider(self.options.sidechain)
-                : null
-            this.getSigner = () => new Wallet(key, self.getProvider())
-            this.getSidechainSigner = async () => new Wallet(key, await self.getSidechainProvider())
+            this.getSigner = () => new Wallet(key, self.getMainnetProvider())
+            this.getSidechainSigner = async () => new Wallet(key, self.getSidechainProvider())
         } else if (this.options.auth.ethereum) {
             const self = this
-            this.getAddress = () => self.options.auth.ethereum.selectedAddress
-            this.getProvider = () => new Web3Provider(self.options.auth.ethereum)
-            this.getSidechainProvider = async () => {
-                if (!self.options.sidechain) {
-                    return null
-                }
-
-                // use MetaMask, but chainId is required for checking!
-                if (self.options.sidechain.chainId) {
-                    const p = self.getProvider()
-                    const chainId = await p.getNetwork().chainId
-                    if (chainId !== self.options.sidechain.chainId) {
-                        throw new Error(`Please connect to Ethereum blockchain with chainId ${self.options.sidechain.chainId}`)
-                    }
-                    return p
-                }
-
-                // fallback: use given connection params
-                return new JsonRpcProvider(self.options.sidechain)
+            this.getAddress = () => self.options.auth.ethereum.selectedAddress // null if no addresses connected+selected in Metamask
+            this.getSigner = async () => {
+                const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
+                const metamaskSigner = metamaskProvider.getSigner()
+                return metamaskSigner
             }
-            this.getSigner = () => self.getProvider().getSigner()
-            this.getSidechainSigner = async () => (await self.getSidechainProvider()).getSigner()
+            this.getSidechainSigner = async () => {
+                // chainId is required for checking when using Metamask
+                if (!self.options.sidechain || !self.options.sidechain.chainId) {
+                    throw new Error('Streamr sidechain not configured (with chainId) in the StreamrClient options!')
+                }
+
+                const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
+                const chainId = await metamaskProvider.getNetwork().chainId
+                if (chainId !== self.options.sidechain.chainId) {
+                    throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${self.options.sidechain.chainId}`)
+                }
+                const metamaskSigner = metamaskProvider.getSigner()
+                return metamaskSigner
+            }
             // TODO: handle events
             // ethereum.on('accountsChanged', (accounts) => { })
             // https://docs.metamask.io/guide/ethereum-provider.html#events says:
@@ -166,16 +159,9 @@ export default class StreamrClient extends EventEmitter {
             //   Of course we can't and won't do that, but if we need something chain-dependent...
             // ethereum.on('chainChanged', (chainId) => { window.location.reload() });
         } else {
-            const self = this
             this.getAddress = () => null
-            this.getProvider = this.options.mainnet
-                ? () => new JsonRpcProvider(self.options.mainnet)
-                : getDefaultProvider
-            this.getSidechainProvider = this.options.sidechain
-                ? async () => new JsonRpcProvider(self.options.sidechain)
-                : null
-            this.getSigner = () => { throw new Error('StreamrClient not authenticated!') }
-            this.getSidechainSigner = () => { throw new Error('StreamrClient not authenticated!') }
+            this.getSigner = () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
+            this.getSidechainSigner = () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
         }
 
         if (this.options.keyExchange) {
@@ -379,10 +365,25 @@ export default class StreamrClient extends EventEmitter {
         })
     }
 
+    /** @returns Ethers.js Provider, a connection to the Ethereum network (mainnet) */
+    getMainnetProvider() {
+        if (this.options.mainnet) {
+            return new JsonRpcProvider(this.options.mainnet)
+        }
+        return getDefaultProvider()
+    }
+
+    /** @returns Ethers.js Provider, a connection to the Streamr EVM sidechain */
+    getSidechainProvider() {
+        if (this.options.sidechain) {
+            return new JsonRpcProvider(this.options.sidechain)
+        }
+        return null
+    }
+
     /**
      * Override to control output
      */
-
     onError(error) { // eslint-disable-line class-methods-use-this
         console.error(error)
     }

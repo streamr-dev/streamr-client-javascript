@@ -20,7 +20,7 @@ import { until, getEndpointUrl } from '../utils'
 import authFetch from './authFetch'
 
 const log = debug('StreamrClient::DataUnionEndpoints')
-// const log = console.log
+// const log = console.log // useful for debugging sometimes
 
 // ///////////////////////////////////////////////////////////////////////
 //          ABIs: contract functions we want to call within the client
@@ -216,7 +216,7 @@ const mainnetAddressCache = {} // mapping: "name" -> mainnet address
 /** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
 async function getDataUnionMainnetAddress(client, dataUnionName, deployerAddress, options = {}) {
     if (!mainnetAddressCache[dataUnionName]) {
-        const provider = client.getProvider()
+        const provider = client.getMainnetProvider()
         const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
         const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
         const promise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
@@ -232,7 +232,7 @@ const sidechainAddressCache = {} // mapping: mainnet address -> sidechain addres
 /** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
 async function getDataUnionSidechainAddress(client, duMainnetAddress, options = {}) {
     if (!sidechainAddressCache[duMainnetAddress]) {
-        const provider = client.getProvider()
+        const provider = client.getMainnetProvider()
         const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
         const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
         const promise = factoryMainnet.sidechainAddress(duMainnetAddress)
@@ -243,11 +243,11 @@ async function getDataUnionSidechainAddress(client, duMainnetAddress, options = 
     return sidechainAddressCache[duMainnetAddress]
 }
 
-function getMainnetContract(client, options = {}) {
+function getMainnetContractReadOnly(client, options = {}) {
     let dataUnion = options.dataUnion || options.dataUnionAddress || client.options.dataUnion
     if (isAddress(dataUnion)) {
-        const signer = client.getSigner()
-        dataUnion = new Contract(dataUnion, dataUnionMainnetABI, signer)
+        const provider = client.getMainnetProvider()
+        dataUnion = new Contract(dataUnion, dataUnionMainnetABI, provider)
     }
 
     if (!(dataUnion instanceof Contract)) {
@@ -256,9 +256,15 @@ function getMainnetContract(client, options = {}) {
     return dataUnion
 }
 
+function getMainnetContract(client, options = {}) {
+    const du = getMainnetContractReadOnly(client, options)
+    const signer = client.getSigner()
+    return du.connect(signer)
+}
+
 async function getSidechainContract(client, options = {}) {
     const signer = await client.getSidechainSigner()
-    const duMainnet = getMainnetContract(client, options)
+    const duMainnet = getMainnetContractReadOnly(client, options)
     const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address, options)
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, signer)
     return duSidechain
@@ -266,7 +272,7 @@ async function getSidechainContract(client, options = {}) {
 
 async function getSidechainContractReadOnly(client, options = {}) {
     const provider = await client.getSidechainProvider()
-    const duMainnet = getMainnetContract(client, options)
+    const duMainnet = getMainnetContractReadOnly(client, options)
     const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address, options)
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, provider)
     return duSidechain
@@ -332,7 +338,7 @@ export async function deployDataUnion(options = {}) {
     if (adminFee < 0 || adminFee > 1) { throw new Error('options.adminFeeFraction must be a number between 0...1, got: ' + adminFee) }
     const adminFeeBN = BigNumber.from((adminFee * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
 
-    const mainnetProvider = this.getProvider()
+    const mainnetProvider = this.getMainnetProvider()
     const mainnetWallet = this.getSigner()
     const sidechainWallet = await this.getSidechainSigner()
 
@@ -508,12 +514,12 @@ export async function setAdminFee(newFeeFraction, options) {
 }
 
 export async function getAdminFee(options) {
-    const duMainnet = await getMainnetContract(this, options)
+    const duMainnet = await getMainnetContractReadOnly(this, options)
     return duMainnet.adminFeeFraction()
 }
 
 export async function getAdminAddress(options) {
-    const duMainnet = await getMainnetContract(this, options)
+    const duMainnet = await getMainnetContractReadOnly(this, options)
     return duMainnet.owner()
 }
 
@@ -535,7 +541,7 @@ export async function joinDataUnion(options = {}) {
         member,
         secret,
     } = options
-    const dataUnion = getMainnetContract(this, options)
+    const dataUnion = getMainnetContractReadOnly(this, options)
 
     const body = {
         memberAddress: parseAddress(this, member, options)
@@ -639,7 +645,7 @@ export async function getTokenBalance(address, options) {
     const a = parseAddress(this, address, options)
     const tokenAddressMainnet = this.options.tokenAddress || options.tokenAddress
     if (!tokenAddressMainnet) { throw new Error('tokenAddress option not found') }
-    const provider = this.getProvider()
+    const provider = this.getMainnetProvider()
     const token = new Contract(tokenAddressMainnet, [{
         name: 'balanceOf',
         inputs: [{ type: 'address' }],
@@ -659,7 +665,7 @@ export async function getTokenBalance(address, options) {
  * @returns {number} 1 for old, 2 for current, zero for "not a data union"
  */
 export async function getDataUnionVersion(contractAddress) {
-    const provider = this.getProvider()
+    const provider = this.getMainnetProvider()
     const du = new Contract(contractAddress, [{
         name: 'version',
         inputs: [],
@@ -767,7 +773,7 @@ export async function signWithdrawTo(recipientAddress, options) {
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawAmountTo(recipientAddress, amount, options) {
-    const signer = await this.getSidechainSigner()
+    const signer = await this.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
     const address = await signer.getAddress()
     const duSidechain = await getSidechainContractReadOnly(this, options)
     const memberData = await duSidechain.memberData(address)
