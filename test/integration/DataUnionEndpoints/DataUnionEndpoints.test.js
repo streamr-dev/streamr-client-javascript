@@ -91,7 +91,7 @@ describe('DataUnionEndPoints', () => {
             const oldFee = await adminClient.getAdminFee({ dataUnion })
             await adminMutex.runExclusive(async () => {
                 log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
-                log(`Sending tx from ${adminClient.address}`)
+                log(`Sending tx from ${adminClient.getAddress()}`)
                 const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
