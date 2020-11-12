@@ -83,6 +83,7 @@ export default class StreamrClient extends EventEmitter {
             },
             dataUnion: null, // Give a "default target" of all data union endpoint operations (no need to pass argument every time)
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
+            minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
             sidechainTokenAddress: null, // TODO
             factoryMainnetAddress: null, // TODO
             factorySidechainAddress: null, // TODO

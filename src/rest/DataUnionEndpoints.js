@@ -707,9 +707,15 @@ export async function getWithdrawTx(options) {
     const signer = await this.getSidechainSigner()
     const address = await signer.getAddress()
     const duSidechain = await getSidechainContract(this, options)
+
     const withdrawable = await duSidechain.getWithdrawableEarnings(address)
     if (withdrawable.eq(0)) {
         throw new Error(`${address} has nothing to withdraw in (sidechain) data union ${duSidechain.address}`)
+    }
+
+    if (this.options.minimumWithdrawTokenWei && withdrawable.lt(this.options.minimumWithdrawTokenWei)) {
+        throw new Error(`${address} has only ${withdrawable} to withdraw in `
+            + `(sidechain) data union ${duSidechain.address} (min: ${this.options.minimumWithdrawTokenWei})`)
     }
     return duSidechain.withdrawAll(address, true) // sendToMainnet=true
 }
