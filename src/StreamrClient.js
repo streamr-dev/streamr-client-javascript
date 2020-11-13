@@ -134,7 +134,7 @@ export default class StreamrClient extends EventEmitter {
         } else if (this.options.auth.ethereum) {
             const self = this
             this.getAddress = () => self.options.auth.ethereum.selectedAddress // null if no addresses connected+selected in Metamask
-            this.getSigner = async () => {
+            this.getSigner = () => {
                 const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
                 const metamaskSigner = metamaskProvider.getSigner()
                 return metamaskSigner
@@ -146,7 +146,7 @@ export default class StreamrClient extends EventEmitter {
                 }
 
                 const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
-                const chainId = await metamaskProvider.getNetwork().chainId
+                const { chainId } = await metamaskProvider.getNetwork()
                 if (chainId !== self.options.sidechain.chainId) {
                     throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${self.options.sidechain.chainId}`)
                 }
@@ -162,7 +162,7 @@ export default class StreamrClient extends EventEmitter {
         } else {
             this.getAddress = () => null
             this.getSigner = () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
-            this.getSidechainSigner = () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
+            this.getSidechainSigner = async () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
         }
 
         if (this.options.keyExchange) {
