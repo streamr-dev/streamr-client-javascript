@@ -95,6 +95,7 @@ describe('utils', () => {
         let up
         let down
         let emitter
+        let onIdle
 
         beforeEach(() => {
             if (emitter) {
@@ -121,9 +122,19 @@ describe('utils', () => {
                 await wait(10)
                 currentEmitter.emit('next', 'down end', ...args)
             }
+
+            onIdle = (n) => {
+                if (emitter !== currentEmitter) { return }
+                // eslint-disable-next-line promise/catch-or-return
+                n.onIdle().then((isUp) => {
+                    // eslint-disable-next-line promise/always-return
+                    currentEmitter.emit('next', 'done', isUp ? 'up' : 'down')
+                    onIdle(n)
+                })
+            }
         })
 
-        it('calls up/down only once', async () => {
+        it('calls up/down once', async () => {
             let shouldUp = true
             const next = pUpDownSteps([
                 async () => {
@@ -131,6 +142,7 @@ describe('utils', () => {
                     return () => down()
                 }
             ], () => shouldUp)
+            onIdle(next)
 
             await Promise.all([
                 next(),
@@ -147,8 +159,10 @@ describe('utils', () => {
             expect(order).toEqual([
                 'up start',
                 'up end',
+                'done up',
                 'down start',
                 'down end',
+                'done down'
             ])
         })
 
@@ -161,14 +175,182 @@ describe('utils', () => {
                     return () => down()
                 }
             ], () => shouldUp)
+            onIdle(next)
 
+            console.log('next >>')
             await next()
-
+            console.log('next <<')
             expect(order).toEqual([
                 'up start',
                 'up end',
                 'down start',
                 'down end',
+                'done down'
+            ])
+        })
+
+        it('downs on error in up', async () => {
+            const err = new Error('expected')
+            const next = pUpDownSteps([
+                async () => {
+                    await up('a')
+                    return () => down('a')
+                },
+                async () => {
+                    await up('b')
+                    throw err
+                },
+            ], () => true)
+            onIdle(next)
+
+            await expect(async () => {
+                await next()
+            }).rejects.toThrow(err)
+
+            expect(order).toEqual([
+                'up start a',
+                'up end a',
+                'up start b',
+                'up end b',
+                'down start a',
+                'down end a',
+                'done down'
+            ])
+        })
+
+        it('downs on error in check', async () => {
+            const err = new Error('expected')
+            let shouldThrow = false
+            const next = pUpDownSteps([
+                async () => {
+                    await up('a')
+                    return () => down('a')
+                },
+                async () => {
+                    await up('b')
+                    shouldThrow = true
+                    return () => down('b')
+                },
+            ], () => {
+                if (shouldThrow) {
+                    throw err
+                }
+                return true
+            })
+            onIdle(next)
+
+            await expect(async () => {
+                await next()
+            }).rejects.toThrow(err)
+
+            expect(order).toEqual([
+                'up start a',
+                'up end a',
+                'up start b',
+                'up end b',
+                'down start b', // down should run
+                'down end b',
+                'down start a',
+                'down end a',
+                'done down'
+            ])
+        })
+
+        it('continues to down if on error in down', async () => {
+            let shouldUp = true
+
+            const err = new Error('expected')
+            const currentEmitter = emitter
+            currentEmitter.on('next', (event, name) => {
+                if (event === 'down start' && name === 'c') {
+                    throw err // throw on down b
+                }
+            })
+
+            const next = pUpDownSteps([
+                async () => {
+                    await up('a')
+                    return () => down('a')
+                },
+                async () => {
+                    await up('b')
+                    return async () => {
+                        await down('b')
+                    }
+                },
+                async () => {
+                    await up('c')
+                    return async () => {
+                        await down('c') // this should throw due to on('next' above
+                    }
+                },
+            ], () => shouldUp)
+            onIdle(next)
+
+            await next()
+            shouldUp = false
+            await expect(async () => {
+                await next()
+            }).rejects.toThrow(err)
+
+            expect(order).toEqual([
+                'up start a',
+                'up end a',
+                'up start b',
+                'up end b',
+                'up start c',
+                'up end c',
+                'done up',
+                'down start c', // down should run (will error)
+                'down start b',
+                'down end b',
+                'down start a', // down for other steps should continue
+                'down end a',
+                'done down',
+            ])
+        })
+
+        it('continues to down if on error in last down', async () => {
+            let shouldUp = true
+
+            const err = new Error('expected')
+            const currentEmitter = emitter
+            currentEmitter.on('next', (event, name) => {
+                if (event === 'down start' && name === 'a') {
+                    throw err // throw on down b
+                }
+            })
+
+            const next = pUpDownSteps([
+                async () => {
+                    await up('a')
+                    return () => down('a') // this should throw due to on('next' above
+                },
+                async () => {
+                    await up('b')
+                    return async () => {
+                        await down('b')
+                    }
+                },
+            ], () => shouldUp)
+            onIdle(next)
+
+            await next()
+            shouldUp = false
+            await expect(async () => {
+                await next()
+            }).rejects.toThrow(err)
+
+            expect(order).toEqual([
+                'up start a',
+                'up end a',
+                'up start b',
+                'up end b',
+                'done up',
+                'down start b', // down should run (will error)
+                'down end b',
+                'down start a', // down for other steps should continue
+                'done down',
             ])
         })
 
@@ -186,29 +368,16 @@ describe('utils', () => {
             expect(order).toEqual([])
         })
 
-        it('only calls one at a time when down called during up', async () => {
+        it('cancels up if check fails', async () => {
             let shouldUp = true
-
             const next = pUpDownSteps([
                 async () => {
                     await up()
+                    shouldUp = false
                     return () => down()
                 }
             ], () => shouldUp)
-            const done = Defer()
-            emitter.on('next', async (name) => {
-                if (name === 'up start') {
-                    shouldUp = false
-                    await next()
-                    expect(order).toEqual([
-                        'up start',
-                        'up end',
-                        'down start',
-                        'down end',
-                    ])
-                    done.resolve()
-                }
-            })
+            onIdle(next)
 
             await next()
 
@@ -217,9 +386,40 @@ describe('utils', () => {
                 'up end',
                 'down start',
                 'down end',
+                'done down',
+            ])
+        })
+
+        it('calls one at a time when down called during up', async () => {
+            let shouldUp = true
+
+            const next = pUpDownSteps([
+                async () => {
+                    await up()
+                    return () => down()
+                }
+            ], () => shouldUp)
+            onIdle(next)
+            const done = Defer()
+            emitter.on('next', async (name) => {
+                if (name === 'up start') {
+                    shouldUp = false
+                    done.resolve(next())
+                }
+            })
+
+            await Promise.all([
+                next(),
+                done,
             ])
 
-            await done
+            expect(order).toEqual([
+                'up start',
+                'up end',
+                'down start',
+                'down end',
+                'done down',
+            ])
         })
 
         describe('plays undo stack at point of state change', () => {
@@ -242,34 +442,34 @@ describe('utils', () => {
                         return () => down('c')
                     },
                 ], () => shouldUp)
+                onIdle(next)
             })
 
             it('plays all up steps in order, then down steps in order', async () => {
                 shouldUp = true
                 await next()
-                expect(order).toEqual([
+                const afterUp = [
                     'up start a',
                     'up end a',
                     'up start b',
                     'up end b',
                     'up start c',
                     'up end c',
-                ])
+                    'done up',
+                ]
+                expect(order).toEqual(afterUp)
                 shouldUp = false
+
                 await next()
                 expect(order).toEqual([
-                    'up start a',
-                    'up end a',
-                    'up start b',
-                    'up end b',
-                    'up start c',
-                    'up end c',
+                    ...afterUp,
                     'down start c',
                     'down end c',
                     'down start b',
                     'down end b',
                     'down start a',
                     'down end a',
+                    'done down',
                 ])
             })
 
@@ -283,14 +483,18 @@ describe('utils', () => {
                     }
                 })
 
-                await next()
+                await Promise.all([
+                    next(),
+                    done,
+                ])
+
                 expect(order).toEqual([
                     'up start a',
                     'up end a',
                     'down start a',
                     'down end a',
+                    'done down',
                 ])
-                await done
             })
 
             it('can stop before second step', async () => {
@@ -303,7 +507,11 @@ describe('utils', () => {
                     }
                 })
 
-                await next()
+                await Promise.all([
+                    next(),
+                    done,
+                ])
+
                 expect(order).toEqual([
                     'up start a',
                     'up end a',
@@ -313,8 +521,8 @@ describe('utils', () => {
                     'down end b',
                     'down start a',
                     'down end a',
+                    'done down',
                 ])
-                await done
             })
         })
     })
