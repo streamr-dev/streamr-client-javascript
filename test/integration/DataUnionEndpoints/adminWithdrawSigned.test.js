@@ -56,6 +56,7 @@ it('DataUnionEndPoints test signed withdraw', async () => {
 
     // TODO: change after DU2 joining is implemented in EE
     // await memberClient.joinDataUnion({ secret: 'secret' })
+    log(`Adding member: ${memberWallet.address}`)
     await adminClient.addMembers([memberWallet.address], { dataUnion })
 
     const tokenAddress = await dataUnion.token()
@@ -106,9 +107,12 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     const stats = await memberClient.getMemberStats()
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
+    const withdrawn = await sidechainContract.getWithdrawn(memberWallet.address)
+    const withdrawable = await sidechainContract.getWithdrawableEarnings(memberWallet.address)
+    log(`${memberWallet.address} Withdrawable: ${withdrawable}, Withdrawn: ${withdrawn}`)
     const signature = await memberClient.signWithdrawTo(member2Wallet.address)
     const isValid = sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
-    log(`Signature: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
+    log(`Signature from ${memberWallet.address} to ${member2Wallet.address}: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)

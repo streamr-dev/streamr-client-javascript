@@ -203,9 +203,13 @@ async function untilWithdrawIsComplete(getWithdrawTxFunc, getBalanceFunc, option
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
     } = options
+    log('Withdrawing...')
     const balanceBefore = await getBalanceFunc(options)
+    log(`Recipient balance before: ${balanceBefore}`)
     const tx = await getWithdrawTxFunc(options)
+    log(`Tx sent: ${JSON.stringify(tx)}`)
     const tr = await tx.wait()
+    log(`Receipt: ${JSON.stringify(tr)}. Waiting for balance change...`)
     await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
     return tr
 }
@@ -467,7 +471,7 @@ export async function withdrawMember(memberAddress, options) {
  * Admin: get the tx promise for withdrawing all earnings on behalf of a member
  * @param {EthereumAddress} memberAddress the other member who gets their tokens out of the Data Union
  * @param {EthereumAddress} dataUnion to withdraw my earnings from
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawMemberTx(memberAddress, options) {
@@ -481,7 +485,7 @@ export async function getWithdrawMemberTx(memberAddress, options) {
  * @param {EthereumAddress} memberAddress the member whose earnings are sent out
  * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
  * @param {string} signature from member, produced using signWithdrawTo
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawToSigned(memberAddress, recipientAddress, signature, options) {
@@ -495,17 +499,23 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
 
 /**
  * Admin: Withdraw a member's earnings to another address, signed by the member
- * @param {EthereumAddress} dataUnion to withdraw my earnings from
  * @param {EthereumAddress} memberAddress the member whose earnings are sent out
  * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
  * @param {string} signature from member, produced using signWithdrawTo
- * @param {EthereumOptions} options
+ * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
  */
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
+    log(`duSidechain(${duSidechain.address})`)
+    log(`withdrawAllToSigned(${memberAddress}, ${recipientAddress}, true, ${signature})`)
+    const sidechainContract = await this.getSidechainContractReadOnly()
+    const withdrawn = await sidechainContract.getWithdrawn(memberAddress)
+    const withdrawable = await sidechainContract.getWithdrawableEarnings(memberAddress)
+    log(`${memberAddress} Withdrawable: ${withdrawable}, Withdrawn: ${withdrawn}`)
     return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature, { // sendToMainnet=true
-        gasLimit: 200000,
+        gasLimit: '2000000',
+        gasPrice: '4000000000'
     })
 }
 
