@@ -104,7 +104,7 @@ const dataUnionSidechainABI = [{
 }, {
     inputs: [],
     name: 'getStats',
-    outputs: [{ type: 'uint256[5]' }],
+    outputs: [{ type: 'uint256[6]' }],
     stateMutability: 'view',
     type: 'function'
 }, {
@@ -596,13 +596,15 @@ export async function getDataUnionStats(options) {
     const [
         totalEarnings,
         totalEarningsWithdrawn,
-        memberCount,
+        activeMemberCount,
+        inactiveMemberCount,
         lifetimeMemberEarnings,
-        joinPartAgentCount
+        joinPartAgentCount,
     ] = await duSidechain.getStats()
     const totalWithdrawable = totalEarnings.sub(totalEarningsWithdrawn)
     return {
-        memberCount,
+        activeMemberCount,
+        inactiveMemberCount,
         joinPartAgentCount,
         totalEarnings,
         totalWithdrawable,
