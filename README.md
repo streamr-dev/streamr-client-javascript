@@ -369,7 +369,7 @@ These are available for everyone and anyone, to query publicly available info fr
 Name | Returns | Description
 ---- | ------- | -----------
 getMemberStats(dataUnionContractAddress[, memberAddress]) | {earnings, proof, ...} | Get member's stats
-getDataUnionStats(dataUnionContractAddress) | {memberCount, totalEarnings, ...} | Get Data Union's statistics
+getDataUnionStats(dataUnionContractAddress) | {activeMemberCount, totalEarnings, ...} | Get Data Union's statistics
 getMembers(dataUnionContractAddress) | [{address, earnings}, ...] | Get Data Union's members
 
 
