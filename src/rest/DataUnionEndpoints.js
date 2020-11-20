@@ -568,7 +568,7 @@ export async function deployDataUnion(options = {}) {
 
     const mainnetProvider = this.getMainnetProvider()
     const mainnetWallet = this.getSigner()
-    const sidechainWallet = await this.getSidechainSigner()
+    const sidechainProvider = this.getSidechainProvider()
 
     // parseAddress defaults to authenticated user (also if "owner" is not an address)
     const ownerAddress = await parseAddress(this, owner)
@@ -590,9 +590,9 @@ export async function deployDataUnion(options = {}) {
     if (await mainnetProvider.getCode(factoryMainnetAddress) === '0x') {
         throw new Error(`Data union factory contract not found at ${factoryMainnetAddress}, check StreamrClient.options.factoryMainnetAddress!`)
     }
-    const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, mainnetWallet)
 
     // function deployNewDataUnion(address owner, uint256 adminFeeFraction, address[] agents, string duName)
+    const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, mainnetWallet)
     const tx = await factoryMainnet.deployNewDataUnion(
         ownerAddress,
         adminFeeBN,
@@ -603,14 +603,14 @@ export async function deployDataUnion(options = {}) {
 
     log(`Data Union "${duName}" (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployed to mainnet, waiting for side-chain...`)
     await until(
-        async () => await sidechainWallet.provider.getCode(duSidechainAddress) !== '0x',
+        async () => await sidechainProvider.getCode(duSidechainAddress) !== '0x',
         sidechainRetryTimeoutMs,
         sidechainPollingIntervalMs
     )
 
     const dataUnion = new Contract(duMainnetAddress, dataUnionMainnetABI, mainnetWallet)
     dataUnion.deployTxReceipt = tr
-    dataUnion.sidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, sidechainWallet)
+    dataUnion.sidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, sidechainProvider)
     return dataUnion
 }
 
@@ -740,18 +740,18 @@ export async function getWithdrawToSignedTx(memberAddress, recipientAddress, sig
 }
 
 export async function setAdminFee(newFeeFraction, options) {
-    const duMainnet = await getMainnetContract(this, options)
+    const duMainnet = getMainnetContract(this, options)
     const tx = await duMainnet.setAdminFee(newFeeFraction)
     return tx.wait()
 }
 
 export async function getAdminFee(options) {
-    const duMainnet = await getMainnetContractReadOnly(this, options)
+    const duMainnet = getMainnetContractReadOnly(this, options)
     return duMainnet.adminFeeFraction()
 }
 
 export async function getAdminAddress(options) {
-    const duMainnet = await getMainnetContractReadOnly(this, options)
+    const duMainnet = getMainnetContractReadOnly(this, options)
     return duMainnet.owner()
 }
 
@@ -1015,7 +1015,7 @@ export async function signWithdrawTo(recipientAddress, options) {
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawAmountTo(recipientAddress, amount, options) {
-    const signer = await this.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
+    const signer = this.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
     const address = await signer.getAddress()
     const duSidechain = await getSidechainContractReadOnly(this, options)
     const memberData = await duSidechain.memberData(address)
