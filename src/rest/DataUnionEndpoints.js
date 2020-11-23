@@ -364,6 +364,7 @@ async function transportSignatures(client, messageHash, options) {
     try {
         // magic number suggested by https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/utils/constants.js
         gasLimit = await mainnetAmb.estimateGas.executeSignatures(message, packedSignatures) + 200000
+        log(`Calculated gas limit: ${gasLimit.toString()}`)
     } catch (e) {
         // Failure modes from https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/events/processAMBCollectedSignatures/estimateGas.js
         log('Gas estimation failed: Check if the message was already processed')
