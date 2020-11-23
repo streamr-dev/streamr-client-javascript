@@ -213,6 +213,18 @@ const mainnetAmbABI = [{
     outputs: [{ type: 'address' }],
     stateMutability: 'view',
     type: 'function'
+}, {
+    name: 'relayedMessages',
+    inputs: [{ type: 'bytes32' }], // messageId, was called "_txhash" though?!
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function'
+}, {
+    name: 'validatorContract',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
 }]
 
 const sidechainAmbABI = [{
@@ -273,9 +285,10 @@ let cachedSidechainAmb
 async function getSidechainAmb(client, options) {
     if (!cachedSidechainAmb) {
         const getAmbPromise = async () => {
-            const provider = client.getMainnetProvider()
+            const mainnetProvider = client.getMainnetProvider()
             const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
-            const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, provider)
+            const factoryMainnet = new Contract(factoryMainnetAddress, factoryMainnetABI, mainnetProvider)
+            const sidechainProvider = client.getSidechainProvider()
             const factorySidechainAddress = await factoryMainnet.data_union_sidechain_factory()
             const factorySidechain = new Contract(factorySidechainAddress, [{
                 name: 'amb',
@@ -283,9 +296,9 @@ async function getSidechainAmb(client, options) {
                 outputs: [{ type: 'address' }],
                 stateMutability: 'view',
                 type: 'function'
-            }], provider)
+            }], sidechainProvider)
             const sidechainAmbAddress = await factorySidechain.amb()
-            return new Contract(sidechainAmbAddress, sidechainAmbABI, provider)
+            return new Contract(sidechainAmbAddress, sidechainAmbABI, sidechainProvider)
         }
         cachedSidechainAmb = getAmbPromise()
         cachedSidechainAmb = await cachedSidechainAmb // eslint-disable-line require-atomic-updates
@@ -382,9 +395,9 @@ async function transportSignatures(client, messageHash, options) {
         }
 
         log('Gas estimation failed: Check if all the signatures were made by validators')
-        log('  Recover signer addresses from signatures')
+        log(`  Recover signer addresses from signatures [${signatures.join(', ')}]`)
         const signers = signatures.map((signature) => verifyMessage(arrayify(message), signature))
-        log('  Check that signers are validators')
+        log(`  Check that signers are validators [[${signers.join(', ')}]]`)
         const isValidatorArray = await Promise.all(signers.map((address) => [address, validatorContract.isValidator(address)]))
         const nonValidatorSigners = isValidatorArray.filter(([, isValidator]) => !isValidator)
         if (nonValidatorSigners.length > 0) {
