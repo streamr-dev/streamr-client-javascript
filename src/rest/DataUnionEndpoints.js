@@ -359,11 +359,11 @@ async function transportSignatures(client, messageHash, options) {
 
     // Gas estimation also checks that the transaction would succeed, and provides a helpful error message in case it would fail
     const mainnetAmb = await getMainnetAmb(client, options)
-    log(`Estimating gas using mainnet AMB @ ${mainnetAmb.address}`)
+    log(`Estimating gas using mainnet AMB @ ${mainnetAmb.address}, message=${message}`)
     let gasLimit
     try {
         // magic number suggested by https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/utils/constants.js
-        gasLimit = await mainnetAmb.estimateGas.executeSignatures(message, signatures) + 200000
+        gasLimit = await mainnetAmb.estimateGas.executeSignatures(message, packedSignatures) + 200000
     } catch (e) {
         // Failure modes from https://github.com/poanetwork/tokenbridge/blob/master/oracle/src/events/processAMBCollectedSignatures/estimateGas.js
         log('Gas estimation failed: Check if the message was already processed')
@@ -405,11 +405,12 @@ async function transportSignatures(client, messageHash, options) {
                 + nonValidatorSigners.map(([address]) => address).join('\n - '))
         }
 
-        throw new Error(`Gas estimation failed: Unknown error while processing message ${message}`)
+        throw new Error(`Gas estimation failed: Unknown error while processing message ${message} with ${e.stack}`)
     }
 
     const signer = client.getSigner()
-    const txAMB = await mainnetAmb.connect(signer).executeSignatures(message, signatures, { gasLimit })
+    log(`Sending message from signer=${await signer.getAddress()}`)
+    const txAMB = await mainnetAmb.connect(signer).executeSignatures(message, packedSignatures)
     const trAMB = await txAMB.wait()
     return trAMB
 }
