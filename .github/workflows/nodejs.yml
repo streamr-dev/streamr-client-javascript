@@ -81,13 +81,13 @@ jobs:
         run: npm run build
 
       - name: test-browser
-        run: npm run test-browser
+        run: WEBSOCKET_URL=ws://localhost:8890/api/v1/ws npm run test-browser
 
       - name: benchmarks
         run: npm run benchmarks
 
       - name: test-integration
-        run: npm run test-integration
+        run: WEBSOCKET_URL=ws://localhost:8890/api/v1/ws npm run test-integration
 
       - name: test-flakey
         run: npm run test-flakey || echo "::warning::Flakey Tests Failed" && true
