@@ -6,7 +6,6 @@ import { wait, waitForEvent } from 'streamr-test-utils'
 import FailedToPublishError from '../../src/errors/FailedToPublishError'
 import Subscription from '../../src/Subscription'
 import Connection from '../../src/Connection'
-// import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -1233,7 +1232,7 @@ describe('StreamrClient', () => {
     describe('publish', () => {
         function getPublishRequest(content, streamId, timestamp, seqNum, prevMsgRef, requestId) {
             const { hashedUsername } = StubbedStreamrClient
-            const { msgChainId } = client.publisher.msgCreationUtil
+            const { msgChainId } = client.publisher.msgCreationUtil.msgChainer
             const messageId = new MessageID(streamId, 0, timestamp, seqNum, hashedUsername, msgChainId)
             const streamMessage = new StreamMessage({
                 messageId,

@@ -1,14 +1,14 @@
-import { ethers } from 'ethers'
 import { wait } from 'streamr-test-utils'
 
-import { uid } from '../utils'
+import { uid, fakePrivateKey } from '../utils'
 import StreamrClient from '../../src'
+import Connection from '../../src/Connection'
 
 import config from './config'
 
 const createClient = (opts = {}) => new StreamrClient({
     auth: {
-        privateKey: ethers.Wallet.createRandom().privateKey,
+        privateKey: fakePrivateKey()
     },
     autoConnect: false,
     autoDisconnect: false,
@@ -24,8 +24,8 @@ describe('PubSub with multiple clients', () => {
     let otherClient
     let privateKey
 
-    async function setup() {
-        privateKey = ethers.Wallet.createRandom().privateKey
+    beforeEach(async () => {
+        privateKey = fakePrivateKey()
 
         mainClient = createClient({
             auth: {
@@ -36,29 +36,25 @@ describe('PubSub with multiple clients', () => {
         stream = await mainClient.createStream({
             name: uid('stream')
         })
-    }
-
-    async function teardown() {
-        if (stream) {
-            await stream.delete()
-            stream = undefined // eslint-disable-line require-atomic-updates
-        }
-
-        if (mainClient) {
-            await mainClient.ensureDisconnected()
-        }
-
-        if (otherClient) {
-            await otherClient.ensureDisconnected()
-        }
-    }
-
-    beforeEach(async () => {
-        await setup()
     })
 
     afterEach(async () => {
-        await teardown()
+        if (stream) {
+            await stream.delete()
+        }
+
+        if (mainClient) {
+            await mainClient.disconnect()
+        }
+
+        if (otherClient) {
+            await otherClient.disconnect()
+        }
+
+        const openSockets = Connection.getOpen()
+        if (openSockets !== 0) {
+            throw new Error(`sockets not closed: ${openSockets}`)
+        }
     })
 
     test('can get messages published from other client', async (done) => {
@@ -69,8 +65,8 @@ describe('PubSub with multiple clients', () => {
         })
         otherClient.once('error', done)
         mainClient.once('error', done)
-        await otherClient.ensureConnected()
-        await mainClient.ensureConnected()
+        await otherClient.connect()
+        await mainClient.connect()
 
         const receivedMessagesOther = []
         const receivedMessagesMain = []

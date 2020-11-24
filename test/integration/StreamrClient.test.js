@@ -4,9 +4,8 @@ import path from 'path'
 import fetch from 'node-fetch'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import { wait, waitForEvent } from 'streamr-test-utils'
-import { ethers } from 'ethers'
 
-import { uid } from '../utils'
+import { uid, fakePrivateKey } from '../utils'
 import StreamrClient from '../../src'
 import Connection from '../../src/Connection'
 
@@ -25,7 +24,7 @@ describe('StreamrClient', () => {
     const createClient = (opts = {}) => {
         const c = new StreamrClient({
             auth: {
-                privateKey: ethers.Wallet.createRandom().privateKey,
+                privateKey: fakePrivateKey(),
             },
             autoConnect: false,
             autoDisconnect: false,
@@ -759,9 +758,6 @@ describe('StreamrClient', () => {
             client = createClient()
             await client.connect()
             stream = await createStream()
-            const publisherId = await client.getPublisherId()
-            const res = await client.isStreamPublisher(stream.id, publisherId.toLowerCase())
-            expect(res).toBe(true)
             expect(onError).toHaveBeenCalledTimes(0)
         })
 
@@ -783,6 +779,12 @@ describe('StreamrClient', () => {
             if (openSockets !== 0) {
                 throw new Error(`sockets not closed: ${openSockets}`)
             }
+        })
+
+        it('is stream publisher', async () => {
+            const publisherId = await client.getPublisherId()
+            const res = await client.isStreamPublisher(stream.id, publisherId)
+            expect(res).toBe(true)
         })
 
         describe('Pub/Sub', () => {

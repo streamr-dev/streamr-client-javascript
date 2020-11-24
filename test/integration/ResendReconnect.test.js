@@ -1,15 +1,13 @@
-import { ethers } from 'ethers'
+import { wait } from 'streamr-test-utils'
 
-import { uid } from '../utils'
+import { uid, fakePrivateKey } from '../utils'
 import StreamrClient from '../../src'
 
 import config from './config'
 
-const { wait } = require('streamr-test-utils')
-
 const createClient = (opts = {}) => new StreamrClient({
     auth: {
-        privateKey: ethers.Wallet.createRandom().privateKey,
+        privateKey: fakePrivateKey(),
     },
     autoConnect: false,
     autoDisconnect: false,
@@ -29,7 +27,7 @@ describe('resend/reconnect', () => {
 
     beforeEach(async () => {
         client = createClient()
-        await client.ensureConnected()
+        await client.connect()
 
         publishedMessages = []
 
@@ -51,7 +49,7 @@ describe('resend/reconnect', () => {
     }, 10 * 1000)
 
     afterEach(async () => {
-        await client.ensureDisconnected()
+        await client.disconnect()
     })
 
     describe('reconnect after resend', () => {
