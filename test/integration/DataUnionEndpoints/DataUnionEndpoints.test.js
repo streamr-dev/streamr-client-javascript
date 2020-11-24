@@ -73,7 +73,8 @@ describe('DataUnionEndPoints', () => {
                 await adminClient.hasJoined(memberAddressList[0], { dataUnion })
             })
             const res = await adminClient.getDataUnionStats({ dataUnion })
-            expect(+res.memberCount).toEqual(3)
+            expect(+res.activeMemberCount).toEqual(3)
+            expect(+res.inactiveMemberCount).toEqual(0)
         }, 150000)
 
         it('can remove members', async () => {
@@ -83,7 +84,8 @@ describe('DataUnionEndPoints', () => {
                 await adminClient.kick(memberAddressList.slice(1), { dataUnion })
             })
             const res = await adminClient.getDataUnionStats({ dataUnion })
-            expect(+res.memberCount).toEqual(1)
+            expect(+res.activeMemberCount).toEqual(1)
+            expect(+res.inactiveMemberCount).toEqual(2)
         }, 150000)
 
         it('can set admin fee', async () => {
@@ -162,7 +164,8 @@ describe('DataUnionEndPoints', () => {
             })
             const client = await getOutsiderClient(dataUnion)
             const stats = await client.getDataUnionStats()
-            expect(+stats.memberCount).toEqual(3)
+            expect(+stats.activeMemberCount).toEqual(3)
+            expect(+stats.inactiveMemberCount).toEqual(0)
             expect(+stats.joinPartAgentCount).toEqual(1)
             expect(+stats.totalEarnings).toEqual(0)
             expect(+stats.totalWithdrawable).toEqual(0)
