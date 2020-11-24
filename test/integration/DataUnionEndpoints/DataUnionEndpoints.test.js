@@ -85,7 +85,7 @@ describe('DataUnionEndPoints', () => {
             })
             const res = await adminClient.getDataUnionStats({ dataUnion })
             expect(+res.activeMemberCount).toEqual(1)
-            expect(+res.activeMemberCount).toEqual(2)
+            expect(+res.inactiveMemberCount).toEqual(2)
         }, 150000)
 
         it('can set admin fee', async () => {
