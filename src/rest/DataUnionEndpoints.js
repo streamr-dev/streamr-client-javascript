@@ -10,13 +10,13 @@
  *      member: WITHDRAW EARNINGS           Withdrawing functions, there's many: normal, agent, donate
  */
 
-import { Contract } from '@ethersproject/contracts'
-import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress, isAddress } from '@ethersproject/address'
-import { verifyMessage } from '@ethersproject/wallet'
+import { BigNumber } from '@ethersproject/bignumber'
 import { arrayify, hexZeroPad } from '@ethersproject/bytes'
+import { Contract } from '@ethersproject/contracts'
+import { keccak256 } from '@ethersproject/keccak256'
+import { verifyMessage } from '@ethersproject/wallet'
 import debug from 'debug'
-import { keccak256, hexlify,  } from 'ethers/lib/utils'
 
 import { until, getEndpointUrl } from '../utils'
 
@@ -749,7 +749,7 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
  */
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
-    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature)
+    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
 }
 
 export async function setAdminFee(newFeeFraction, options) {
@@ -1025,19 +1025,18 @@ export async function signWithdrawTo(recipientAddress, options) {
  *   can submit the transaction (and pay for the gas)
  * This signature is only valid until next withdrawal takes place (using this signature or otherwise).
  * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
- * @param {BigNumber|number|string} amount that the signature is for (can't be used for less or for more)
+ * @param {BigNumber|number|string} amountTokenWei that the signature is for (can't be used for less or for more)
  * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
-export async function signWithdrawAmountTo(recipientAddress, amount, options) {
+export async function signWithdrawAmountTo(recipientAddress, amountTokenWei, options) {
     const signer = this.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
     const address = await signer.getAddress()
     const duSidechain = await getSidechainContractReadOnly(this, options)
     const memberData = await duSidechain.memberData(address)
     if (memberData[0] === '0') { throw new Error(`${address} is not a member in Data Union (sidechain address ${duSidechain.address})`) }
     const withdrawn = memberData[3]
-    //check that this works with type number:
-    const message = recipientAddress + hexZeroPad(hexlify(amount), 32).slice(2) + duSidechain.address.slice(2) + hexZeroPad(hexlify(withdrawn), 32).slice(2)
+    const message = recipientAddress + hexZeroPad(amountTokenWei, 32).slice(2) + duSidechain.address.slice(2) + hexZeroPad(withdrawn, 32).slice(2)
     const signature = await signer.signMessage(arrayify(message))
     return signature
 }

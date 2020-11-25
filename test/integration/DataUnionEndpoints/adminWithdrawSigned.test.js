@@ -106,11 +106,18 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     const stats = await memberClient.getMemberStats()
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
+    // try different ways of signing, for coverage; TODO: separate into own test
     const signature = await memberClient.signWithdrawTo(member2Wallet.address)
+    const signature2 = await memberClient.signWithdrawAmountTo(member2Wallet.address, parseEther('1'))
+    const signature3 = await memberClient.signWithdrawAmountTo(member2Wallet.address, 3000000000000000) // 0.003 tokens
+
     const isValid = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
-    log(`signatureIsValid ${memberWallet.address} ${member2Wallet.address} ${signature} ${sidechainContract.address}`)
-    log(`Signature: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
-    log(`sidechainDU token bal ${await tokenSidechain.balanceOf(sidechainContract.address)}`)
+    const isValid2 = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, parseEther('1'), signature2)
+    const isValid3 = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '3000000000000000', signature3)
+    log(`Signature for all tokens ${memberWallet.address} -> ${member2Wallet.address}: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
+    log(`Signature for 1 token ${memberWallet.address} -> ${member2Wallet.address}: ${signature2}, checked ${isValid2 ? 'OK' : '!!!BROKEN!!!'}`)
+    log(`Signature for 0.003 tokens ${memberWallet.address} -> ${member2Wallet.address}: ${signature3}, checked ${isValid3 ? 'OK' : '!!!BROKEN!!!'}`)
+    log(`sidechainDU(${sidechainContract.address}) token bal ${await tokenSidechain.balanceOf(sidechainContract.address)}`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
@@ -134,4 +141,6 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
     expect(balanceIncrease.toString()).toBe(amount.toString())
     expect(isValid).toBe(true)
+    expect(isValid2).toBe(true)
+    expect(isValid3).toBe(true)
 }, 300000)

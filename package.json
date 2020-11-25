@@ -70,6 +70,7 @@
     "@ethersproject/bignumber": "5.0.6",
     "@ethersproject/bytes": "5.0.3",
     "@ethersproject/contracts": "5.0.3",
+    "@ethersproject/keccak256": "5.0.6",
     "@ethersproject/providers": "5.0.14",
     "@ethersproject/sha2": "5.0.3",
     "@ethersproject/transactions": "5.0.4",
