@@ -107,8 +107,10 @@ it('DataUnionEndPoints test signed withdraw', async () => {
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     const signature = await memberClient.signWithdrawTo(member2Wallet.address)
-    const isValid = sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
+    const isValid = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
+    log(`signatureIsValid ${memberWallet.address} ${member2Wallet.address} ${signature} ${sidechainContract.address}`)
     log(`Signature: ${signature}, checked ${isValid ? 'OK' : '!!!BROKEN!!!'}`)
+    log(`sidechainDU token bal ${await tokenSidechain.balanceOf(sidechainContract.address)}`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)

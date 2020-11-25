@@ -14,9 +14,9 @@ import { Contract } from '@ethersproject/contracts'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress, isAddress } from '@ethersproject/address'
 import { verifyMessage } from '@ethersproject/wallet'
-import { arrayify } from '@ethersproject/bytes'
+import { arrayify, hexZeroPad } from '@ethersproject/bytes'
 import debug from 'debug'
-import { keccak256 } from 'ethers/lib/utils'
+import { keccak256, hexlify,  } from 'ethers/lib/utils'
 
 import { until, getEndpointUrl } from '../utils'
 
@@ -749,8 +749,8 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
  */
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
-    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature, { // sendToMainnet=true
-        gasLimit: 200000,
+    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, false, signature, { // sendToMainnet=true
+        gasLimit: 2000000,
     })
 }
 
@@ -1019,7 +1019,7 @@ export async function getWithdrawTxTo(recipientAddress, options) {
  * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
  */
 export async function signWithdrawTo(recipientAddress, options) {
-    return this.signWithdrawAmountTo(recipientAddress, '0', options)
+    return this.signWithdrawAmountTo(recipientAddress, BigNumber.from(0), options)
 }
 
 /**
@@ -1038,7 +1038,8 @@ export async function signWithdrawAmountTo(recipientAddress, amount, options) {
     const memberData = await duSidechain.memberData(address)
     if (memberData[0] === '0') { throw new Error(`${address} is not a member in Data Union (sidechain address ${duSidechain.address})`) }
     const withdrawn = memberData[3]
-    const message = recipientAddress + amount.toString() + duSidechain.address.slice(2) + withdrawn.toString()
-    const signature = await signer.signMessage(message)
+    //check that this works with type number:
+    const message = recipientAddress + hexZeroPad(hexlify(amount), 32).slice(2) + duSidechain.address.slice(2) + hexZeroPad(hexlify(withdrawn), 32).slice(2)
+    const signature = await signer.signMessage(arrayify(message))
     return signature
 }
