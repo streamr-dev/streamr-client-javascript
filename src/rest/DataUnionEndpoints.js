@@ -749,9 +749,7 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
  */
 export async function getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options) {
     const duSidechain = await getSidechainContract(this, options)
-    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, false, signature, { // sendToMainnet=true
-        gasLimit: 2000000,
-    })
+    return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature)
 }
 
 export async function setAdminFee(newFeeFraction, options) {
