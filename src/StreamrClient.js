@@ -53,21 +53,25 @@ export default class StreamrClient extends EventEmitter {
         // Default options
         this.options = {
             debug: this.debug,
-            // The server to connect to
-            url: 'wss://streamr.network/api/v1/ws',
-            restUrl: 'https://streamr.network/api/v1',
-            // Automatically connect on first subscribe
-            autoConnect: true,
-            // Automatically disconnect on last unsubscribe
-            autoDisconnect: true,
-            orderMessages: true,
+
+            // Authentication: identity used by this StreamrClient instance
             auth: {}, // can contain member privateKey or (window.)ethereum
-            publishWithSignature: 'auto',
-            verifySignatures: 'auto',
+
+            // Streamr Core options
+            url: 'wss://streamr.network/api/v1/ws', // The server to connect to
+            restUrl: 'https://streamr.network/api/v1', // Core API calls go here
+
+            // P2P Streamr Network options
+            autoConnect: true, // Automatically connect on first subscribe
+            autoDisconnect: true, // Automatically disconnect on last unsubscribe
+            orderMessages: true,
             retryResendAfter: 5000,
             gapFillTimeout: 5000,
             maxPublishQueueSize: 10000,
-            // encryption options
+
+            // Encryption options
+            publishWithSignature: 'auto',
+            verifySignatures: 'auto',
             publisherStoreKeyHistory: true,
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
@@ -84,9 +88,10 @@ export default class StreamrClient extends EventEmitter {
             dataUnion: null, // Give a "default target" of all data union endpoint operations (no need to pass argument every time)
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
             minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
-            sidechainTokenAddress: null, // TODO
-            factoryMainnetAddress: null, // TODO
-            factorySidechainAddress: null, // TODO
+            sidechainTokenAddress: null, // TODO // sidechain token
+            factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
+            sidechainAmbAddress: null, // Arbitrary Message-passing Bridge (AMB), see https://github.com/poanetwork/tokenbridge
+
             ...options
         }
         this.subscribedStreamPartitions = {}

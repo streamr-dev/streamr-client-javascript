@@ -20,7 +20,7 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-it('DataUnionEndPoints test withdraw', async () => {
+it('DataUnionEndPoints test withdraw by member itself', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -42,7 +42,11 @@ it('DataUnionEndPoints test withdraw', async () => {
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
     const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
     await sendTx.wait()
-    log(`sent 0.1sETH to ${memberWallet.address}`)
+    log(`Sent 0.1 sidechain-ETH to ${memberWallet.address}`)
+
+    const send2Tx = await adminWalletMainnet.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
+    await send2Tx.wait()
+    log(`Sent 0.1 mainnet-ETH to ${memberWallet.address}`)
 
     const memberClient = new StreamrClient({
         ...config.clientOptions,
