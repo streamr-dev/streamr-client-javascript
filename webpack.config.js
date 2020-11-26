@@ -60,6 +60,7 @@ module.exports = (env, argv) => {
     }
 
     const serverConfig = merge({}, commonConfig, {
+        name: 'node-lib',
         target: 'node',
         externals: [nodeExternals()],
         output: {
@@ -102,6 +103,7 @@ module.exports = (env, argv) => {
     ]
 
     const clientConfig = merge({}, commonConfig, {
+        name: 'browser-lib',
         target: 'web',
         output: {
             libraryTarget: 'umd2',
@@ -126,6 +128,7 @@ module.exports = (env, argv) => {
 
     if (isProduction) {
         clientMinifiedConfig = merge({}, clientConfig, {
+            name: 'browser-lib-min',
             optimization: {
                 minimize: true,
                 minimizer: [
