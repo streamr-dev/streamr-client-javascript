@@ -19,7 +19,8 @@ export default class Signer {
         //   so all this could be moved to StreamrClient or some kind of StreamrEthereum subclass
         // Consider also if this class is needed at all or not
         if (privateKey) {
-            this.getAddress = () => computeAddress(privateKey)
+            const address = computeAddress(privateKey)
+            this.getAddress = async () => address
             const key = (typeof privateKey === 'string' && privateKey.startsWith('0x'))
                 ? privateKey.slice(2) // strip leading 0x
                 : privateKey
