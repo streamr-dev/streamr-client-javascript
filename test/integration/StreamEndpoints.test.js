@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import { ethers } from 'ethers'
 import { wait } from 'streamr-test-utils'
 
@@ -49,10 +47,10 @@ function TestStreamEndpoints(getName) {
                 requireSignedData: true,
                 requireEncryptedData: true,
             })
-            assert(stream.id)
-            assert.strictEqual(stream.name, name)
-            assert.strictEqual(stream.requireSignedData, true)
-            assert.strictEqual(stream.requireEncryptedData, true)
+            expect(stream.id).toBeTruthy()
+            expect(stream.name).toBe(name)
+            expect(stream.requireSignedData).toBe(true)
+            expect(stream.requireEncryptedData).toBe(true)
         })
     })
 
@@ -61,8 +59,8 @@ function TestStreamEndpoints(getName) {
             const existingStream = await client.getOrCreateStream({
                 name: createdStream.name,
             })
-            assert.strictEqual(existingStream.id, createdStream.id)
-            assert.strictEqual(existingStream.name, createdStream.name)
+            expect(existingStream.id).toBe(createdStream.id)
+            expect(existingStream.name).toBe(createdStream.name)
         })
 
         it('getOrCreate a new Stream', async () => {
@@ -71,7 +69,7 @@ function TestStreamEndpoints(getName) {
                 name,
             })
 
-            assert.strictEqual(newStream.name, name)
+            expect(newStream.name).toBe(name)
         })
     })
 
@@ -80,15 +78,15 @@ function TestStreamEndpoints(getName) {
             const result = await client.listStreams({
                 name: createdStream.name,
             })
-            assert.strictEqual(result.length, 1)
-            assert.strictEqual(result[0].id, createdStream.id)
+            expect(result.length).toBe(1)
+            expect(result[0].id).toBe(createdStream.id)
         })
 
         it('filters by given criteria (no  match)', async () => {
             const result = await client.listStreams({
                 name: `non-existent-${Date.now()}`,
             })
-            assert.strictEqual(result.length, 0)
+            expect(result.length).toBe(0)
         })
     })
 
@@ -102,45 +100,45 @@ function TestStreamEndpoints(getName) {
     describe('getStreamPublishers', () => {
         it('retrieves a list of publishers', async () => {
             const publishers = await client.getStreamPublishers(createdStream.id)
-            assert.deepStrictEqual(publishers, [client.publisher.signer.address.toLowerCase()])
+            expect(publishers).toEqual([client.publisher.signer.address.toLowerCase()])
         })
     })
 
     describe('isStreamPublisher', () => {
         it('returns true for valid publishers', async () => {
             const valid = await client.isStreamPublisher(createdStream.id, client.publisher.signer.address.toLowerCase())
-            assert(valid)
+            expect(valid).toBeTruthy()
         })
         it('returns false for invalid publishers', async () => {
             const valid = await client.isStreamPublisher(createdStream.id, 'some-wrong-address')
-            assert(!valid)
+            expect(!valid).toBeTruthy()
         })
     })
 
     describe('getStreamSubscribers', () => {
         it('retrieves a list of publishers', async () => {
             const subscribers = await client.getStreamSubscribers(createdStream.id)
-            assert.deepStrictEqual(subscribers, [client.publisher.signer.address.toLowerCase()])
+            expect(subscribers).toEqual([client.publisher.signer.address.toLowerCase()])
         })
     })
 
     describe('isStreamSubscriber', () => {
         it('returns true for valid subscribers', async () => {
             const valid = await client.isStreamSubscriber(createdStream.id, client.publisher.signer.address.toLowerCase())
-            assert(valid)
+            expect(valid).toBeTruthy()
         })
         it('returns false for invalid subscribers', async () => {
             const valid = await client.isStreamSubscriber(createdStream.id, 'some-wrong-address')
-            assert(!valid)
+            expect(!valid).toBeTruthy()
         })
     })
 
     describe('getStreamValidationInfo', () => {
         it('returns an object with expected fields', async () => {
             const result = await client.getStreamValidationInfo(createdStream.id)
-            assert(result.partitions > 0)
-            assert(result.requireSignedData === true)
-            assert(result.requireEncryptedData === false)
+            expect(result.partitions > 0).toBeTruthy()
+            expect(result.requireSignedData === true).toBeTruthy()
+            expect(result.requireEncryptedData === false).toBeTruthy()
         })
     })
 
@@ -161,19 +159,16 @@ function TestStreamEndpoints(getName) {
             // Need time to propagate to storage
             await wait(10000)
             const stream = await createdStream.detectFields()
-            assert.deepStrictEqual(
-                stream.config.fields,
-                [
-                    {
-                        name: 'foo',
-                        type: 'string',
-                    },
-                    {
-                        name: 'count',
-                        type: 'number',
-                    },
-                ],
-            )
+            expect(stream.config.fields).toEqual([
+                {
+                    name: 'foo',
+                    type: 'string',
+                },
+                {
+                    name: 'count',
+                    type: 'number',
+                },
+            ])
             await client.disconnect()
         }, 15000)
     })
@@ -182,31 +177,31 @@ function TestStreamEndpoints(getName) {
         it('Stream.getPermissions', async () => {
             const permissions = await createdStream.getPermissions()
             // get, edit, delete, subscribe, publish, share
-            assert.strictEqual(permissions.length, 6, `Unexpected number of permissions: ${JSON.stringify(permissions)}`)
+            expect(permissions.length).toBe(6)
         })
 
         it('Stream.hasPermission', async () => {
-            assert(await createdStream.hasPermission('stream_share', wallet.address))
+            expect(await createdStream.hasPermission('stream_share', wallet.address)).toBeTruthy()
         })
 
         it('Stream.grantPermission', async () => {
             await createdStream.grantPermission('stream_subscribe', null) // public read
-            assert(await createdStream.hasPermission('stream_subscribe', null))
+            expect(await createdStream.hasPermission('stream_subscribe', null)).toBeTruthy()
         })
 
         it('Stream.revokePermission', async () => {
             const publicRead = await createdStream.hasPermission('stream_subscribe', null)
             await createdStream.revokePermission(publicRead.id)
-            assert(!(await createdStream.hasPermission('stream_subscribe', null)))
+            expect(!(await createdStream.hasPermission('stream_subscribe', null))).toBeTruthy()
         })
     })
 
     describe('Stream deletion', () => {
         it('Stream.delete', async () => {
             await createdStream.delete()
-            await assert.rejects(async () => {
+            await expect(async () => {
                 await client.getStream(createdStream.id)
-            })
+            }).rejects.toThrow()
         })
     })
 }
