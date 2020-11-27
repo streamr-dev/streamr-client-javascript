@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop, no-use-before-define */
 import { providers, Wallet } from 'ethers'
 import debug from 'debug'
 

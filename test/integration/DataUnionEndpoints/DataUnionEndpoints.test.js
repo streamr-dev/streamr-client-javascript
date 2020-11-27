@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop, no-use-before-define */
 import { Contract, providers, Wallet } from 'ethers'
 import { parseEther, formatEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
