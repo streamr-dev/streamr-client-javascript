@@ -29,6 +29,37 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 describe('StreamrClient Connection', () => {
+    describe('bad config.restUrl', () => {
+        it('emits no error with no connection', async (done) => {
+            const client = createClient({
+                restUrl: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+            client.onError = jest.fn()
+            client.once('error', done)
+            setTimeout(() => {
+                expect(client.onError).not.toHaveBeenCalled()
+                done()
+            }, 100)
+        })
+
+        it('emits error with connection', async (done) => {
+            const client = createClient({
+                restUrl: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+            client.onError = jest.fn()
+            client.once('error', (error) => {
+                expect(error).toBeTruthy()
+                expect(client.onError).toHaveBeenCalledTimes(1)
+                done()
+            })
+            client.connect()
+        })
+    })
+
     describe('bad config.url', () => {
         it('emits error without autoconnect', async () => {
             const client = createClient({
@@ -86,37 +117,6 @@ describe('StreamrClient Connection', () => {
             expect(onError).toHaveBeenCalledTimes(1)
             expect(client.onError).toHaveBeenCalledTimes(1)
         }, 10000)
-    })
-
-    describe('bad config.restUrl', () => {
-        it('emits no error with no connection', async (done) => {
-            const client = createClient({
-                restUrl: 'asdasd',
-                autoConnect: false,
-                autoDisconnect: false,
-            })
-            client.onError = jest.fn()
-            client.once('error', done)
-            setTimeout(() => {
-                expect(client.onError).not.toHaveBeenCalled()
-                done()
-            }, 100)
-        })
-
-        it('emits error with connection', async (done) => {
-            const client = createClient({
-                restUrl: 'asdasd',
-                autoConnect: false,
-                autoDisconnect: false,
-            })
-            client.onError = jest.fn()
-            client.once('error', (error) => {
-                expect(error).toBeTruthy()
-                expect(client.onError).toHaveBeenCalledTimes(1)
-                done()
-            })
-            client.connect()
-        })
     })
 
     it('can disconnect before connected', async () => {
