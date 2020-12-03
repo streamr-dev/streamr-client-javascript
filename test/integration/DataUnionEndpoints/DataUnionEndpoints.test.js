@@ -93,12 +93,12 @@ describe('DataUnionEndPoints', () => {
             await adminMutex.runExclusive(async () => {
                 log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
                 log(`Sending tx from ${adminClient.getAddress()}`)
-                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
             const newFee = await adminClient.getAdminFee({ dataUnion })
-            expect(oldFee.toString()).toEqual('0')
-            expect(newFee.toString()).toEqual(parseEther('0.1').toString())
+            expect(oldFee.toString()).toEqual(0)
+            expect(newFee.toString()).toEqual(0.1)
         }, 150000)
 
         it('receives admin fees', async () => {
@@ -106,7 +106,7 @@ describe('DataUnionEndPoints', () => {
 
             await adminMutex.runExclusive(async () => {
                 await adminClient.addMembers(memberAddressList, { dataUnion })
-                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
 

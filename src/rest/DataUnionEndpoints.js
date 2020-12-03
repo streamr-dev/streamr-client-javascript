@@ -752,15 +752,29 @@ export async function getWithdrawToSignedTx(memberAddress, recipientAddress, sig
     return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
 }
 
+/**
+ * Admin: set admin fee for the data union
+ * @param {number} newFeeFraction between 0.0 and 1.0
+ * @param {EthereumOptions} options
+ */
 export async function setAdminFee(newFeeFraction, options) {
+    if (newFeeFraction < 0 || newFeeFraction > 1) {
+        throw new Error('newFeeFraction argument must be a number between 0...1, got: ' + newFeeFraction)
+    }
+    const adminFeeBN = BigNumber.from((newFeeFraction * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
     const duMainnet = getMainnetContract(this, options)
-    const tx = await duMainnet.setAdminFee(newFeeFraction)
+    const tx = await duMainnet.setAdminFee(adminFeeBN)
     return tx.wait()
 }
 
+/**
+ * Get data union admin fee fraction that admin gets from each revenue event
+ * @returns {number} between 0.0 ... 0.1
+ */
 export async function getAdminFee(options) {
     const duMainnet = getMainnetContractReadOnly(this, options)
-    return duMainnet.adminFeeFraction()
+    const adminFeeBN = await duMainnet.adminFeeFraction()
+    return +adminFeeBN.toString() / 1e18
 }
 
 export async function getAdminAddress(options) {
