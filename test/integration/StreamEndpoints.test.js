@@ -47,7 +47,7 @@ describe('StreamEndpoints', () => {
         })
     })
 
-    describe('get', () => {
+    describe('getStream', () => {
         it('get an existing Stream', async () => {
             const stream = await client.createStream()
             const existingStream = await client.getStream(stream.id)

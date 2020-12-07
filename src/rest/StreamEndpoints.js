@@ -46,9 +46,8 @@ export async function getStream(streamId) {
     } catch (e) {
         if (e.response && e.response.status === 404) {
             return undefined
-        } else { // eslint-disable-line no-else-return
-            throw e
         }
+        throw e
     }
 }
 
