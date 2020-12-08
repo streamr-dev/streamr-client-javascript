@@ -7,6 +7,8 @@ import StreamrClient from '../../src'
 import * as Token from '../../contracts/TestToken.json'
 
 import config from './config'
+import { getEndpointUrl } from '../../src/utils'
+import authFetch from '../../src/rest/authFetch'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 
@@ -16,6 +18,24 @@ describe('DataUnionEndPoints', () => {
     let testProvider
     let adminClient
     let adminWallet
+
+    const createProduct = async () => {
+        const DATA_UNION_VERSION = 2;
+        const properties = {
+            beneficiaryAddress: dataUnion.address,
+            type: 'DATAUNION',
+            dataUnionVersion: DATA_UNION_VERSION
+        }
+        const url = getEndpointUrl(config.clientOptions.restUrl, 'products')
+        return await authFetch(
+            url,
+            adminClient.session,
+            {
+                method: 'POST',
+                body: JSON.stringify(properties)
+            }
+        )
+    }
 
     beforeAll(async () => {
         testProvider = new providers.JsonRpcProvider(config.ethereumServerUrl)
@@ -47,6 +67,7 @@ describe('DataUnionEndPoints', () => {
         await dataUnion.isReady(2000, 200000)
         log(`DataUnion ${dataUnion.address} is ready to roll`)
         await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
+        await createProduct();
     }, 300000)
 
     afterAll(async () => {
