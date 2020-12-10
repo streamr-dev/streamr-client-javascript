@@ -20,7 +20,7 @@ describe('DataUnionEndPoints', () => {
     let adminWallet
 
     const createProduct = async () => {
-        const DATA_UNION_VERSION = 2
+        const DATA_UNION_VERSION = 1
         const properties = {
             beneficiaryAddress: dataUnion.address,
             type: 'DATAUNION',
