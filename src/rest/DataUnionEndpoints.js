@@ -706,7 +706,7 @@ export async function withdrawMember(memberAddress, options) {
         this,
         this.getWithdrawMemberTx.bind(this, memberAddress),
         this.getTokenBalance.bind(this, memberAddress),
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
@@ -946,7 +946,7 @@ export async function withdraw(options = {}) {
         this,
         this.getWithdrawTx.bind(this),
         this.getTokenBalance.bind(this, null), // null means this StreamrClient's auth credentials
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
@@ -984,7 +984,7 @@ export async function withdrawTo(recipientAddress, options = {}) {
         this,
         this.getWithdrawTxTo.bind(this, recipientAddress),
         this.getTokenBalance.bind(this, recipientAddress),
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
