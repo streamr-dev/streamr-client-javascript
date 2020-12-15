@@ -370,7 +370,9 @@ async function transportSignatures(client, messageHash, options) {
         log('Gas estimation failed: Check if the message was already processed')
         const alreadyProcessed = await mainnetAmb.relayedMessages(messageId)
         if (alreadyProcessed) {
-            throw new Error(`Signatures have already been transported (Message ${messageId} has already been processed)`)
+            log(`WARNING: Tried to transport signatures but they have already been transported (Message ${messageId} has already been processed)`)
+            log('This could happen if payForSignatureTransport=true, but bridge operator also pays for signatures, and got there before your client')
+            return null
         }
 
         log('Gas estimation failed: Check if number of signatures is enough')
@@ -448,7 +450,9 @@ async function untilWithdrawIsComplete(client, getWithdrawTxFunc, getBalanceFunc
         log(`Waiting until sidechain AMB has collected required signatures for hash=${messageHash}...`)
         await until(async () => requiredSignaturesHaveBeenCollected(client, messageHash, options), pollingIntervalMs, retryTimeoutMs)
         log(`Transporting signatures for hash=${messageHash}`)
-        await transportSignatures(client, messageHash, options)
+        if (options.payForSignatureTransport) {
+            await transportSignatures(client, messageHash, options)
+        }
         await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
     }
     /* eslint-enable no-await-in-loop */
