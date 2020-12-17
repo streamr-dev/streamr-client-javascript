@@ -20,6 +20,7 @@ module.exports = {
         ],
         'prefer-destructuring': 'warn',
         'object-curly-newline': 'off',
+        'no-continue': 'off',
 
         // TODO check all errors/warnings and create separate PR
         'promise/always-return': 'warn',
