@@ -16,26 +16,6 @@ const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sid
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
-const createProduct = async (beneficiaryAddress, adminClient) => {
-    const DATA_UNION_VERSION = 2
-    const properties = {
-        beneficiaryAddress,
-        type: 'DATAUNION',
-        dataUnionVersion: DATA_UNION_VERSION
-    }
-    const url = getEndpointUrl(config.clientOptions.restUrl, 'products')
-    const product = await authFetch(
-        url,
-        adminClient.session,
-        {
-            method: 'POST',
-            body: JSON.stringify(properties)
-        }
-    )
-    log('Created product: ' + product.id)
-    return product
-}
-
 describe('DataUnionEndPoints', () => {
     let adminClient
 
@@ -76,6 +56,7 @@ describe('DataUnionEndPoints', () => {
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`DataUnion ${dataUnion.address} is ready to roll`)
 
+            // product is needed for join requests to analyze the DU version
             const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
             await authFetch(
                 createProductUrl,
@@ -90,8 +71,6 @@ describe('DataUnionEndPoints', () => {
                 }
             )
         })
-        // product is needed for join requests to analyze the DU version (when we remove DU1 support, remove this  call createProduct())
-        await createProduct(dataUnion.address, adminClient)
         return dataUnion
     }
 
