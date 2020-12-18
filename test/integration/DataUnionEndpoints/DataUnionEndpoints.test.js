@@ -17,14 +17,14 @@ const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainn
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
 const createProduct = async (beneficiaryAddress, adminClient) => {
-    const DATA_UNION_VERSION = 1
+    const DATA_UNION_VERSION = 2
     const properties = {
         beneficiaryAddress,
         type: 'DATAUNION',
         dataUnionVersion: DATA_UNION_VERSION
     }
     const url = getEndpointUrl(config.clientOptions.restUrl, 'products')
-    return authFetch(
+    const product = await authFetch(
         url,
         adminClient.session,
         {
@@ -32,6 +32,8 @@ const createProduct = async (beneficiaryAddress, adminClient) => {
             body: JSON.stringify(properties)
         }
     )
+    log('Created product: ' + product.id)
+    return product
 }
 
 describe('DataUnionEndPoints', () => {
