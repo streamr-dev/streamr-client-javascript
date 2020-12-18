@@ -2,7 +2,11 @@ import EventEmitter from 'eventemitter3'
 import debugFactory from 'debug'
 import qs from 'qs'
 import once from 'once'
-import { Wallet } from 'ethers'
+import { Wallet } from '@ethersproject/wallet'
+import { computeAddress } from '@ethersproject/transactions'
+// TODO: figure out why this "direct import" doesn't work when importing 'ethers' does work. Report to ricmoo.
+// import { getDefaultProvider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
+import { getDefaultProvider, providers } from 'ethers'
 import { ControlLayer, MessageLayer, Errors } from 'streamr-client-protocol'
 import uniqueId from 'lodash.uniqueid'
 
@@ -24,6 +28,12 @@ import KeyStorageUtil from './KeyStorageUtil'
 import ResendUtil from './ResendUtil'
 import InvalidContentTypeError from './errors/InvalidContentTypeError'
 
+// TODO: remove when the above "direct import" works
+const {
+    JsonRpcProvider,
+    Web3Provider
+} = providers
+
 const {
     SubscribeRequest,
     UnsubscribeRequest,
@@ -36,39 +46,56 @@ const {
 const { StreamMessage, MessageRef } = MessageLayer
 
 export default class StreamrClient extends EventEmitter {
-    constructor(options, connection) {
+    constructor(options = {}, connection) {
         super()
         this.id = uniqueId('StreamrClient')
         this.debug = debugFactory(this.id)
         // Default options
         this.options = {
             debug: this.debug,
-            // The server to connect to
-            url: 'wss://streamr.network/api/v1/ws',
-            restUrl: 'https://streamr.network/api/v1',
-            // Automatically connect on first subscribe
-            autoConnect: true,
-            // Automatically disconnect on last unsubscribe
-            autoDisconnect: true,
+
+            // Authentication: identity used by this StreamrClient instance
+            auth: {}, // can contain member privateKey or (window.)ethereum
+
+            // Streamr Core options
+            url: 'wss://streamr.network/api/v1/ws', // The server to connect to
+            restUrl: 'https://streamr.network/api/v1', // Core API calls go here
+
+            // P2P Streamr Network options
+            autoConnect: true, // Automatically connect on first subscribe
+            autoDisconnect: true, // Automatically disconnect on last unsubscribe
             orderMessages: true,
-            auth: {},
-            publishWithSignature: 'auto',
-            verifySignatures: 'auto',
             retryResendAfter: 5000,
             gapFillTimeout: 5000,
             maxPublishQueueSize: 10000,
-            // encryption options
+
+            // Encryption options
+            publishWithSignature: 'auto',
+            verifySignatures: 'auto',
             publisherStoreKeyHistory: true,
             publisherGroupKeys: {}, // {streamId: groupKey}
             subscriberGroupKeys: {}, // {streamId: {publisherId: groupKey}}
             keyExchange: {},
-            streamrNodeAddress: '0xf3E5A65851C3779f468c9EcB32E6f25D9D68601a',
-            streamrOperatorAddress: '0xc0aa4dC0763550161a6B59fa430361b5a26df28C',
+
+            // Ethereum and Data Union related options
+            // For ethers.js provider params, see https://docs.ethers.io/ethers.js/v5-beta/api-providers.html#provider
+            mainnet: null, // Default to ethers.js default provider settings
+            sidechain: {
+                url: null, // TODO: add our default public service sidechain node, also find good PoA params below
+                // timeout:
+                // pollingInterval:
+            },
+            dataUnion: null, // Give a "default target" of all data union endpoint operations (no need to pass argument every time)
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
+            minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
+            sidechainTokenAddress: null, // TODO // sidechain token
+            factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
+            sidechainAmbAddress: null, // Arbitrary Message-passing Bridge (AMB), see https://github.com/poanetwork/tokenbridge
+            payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
+
+            ...options
         }
         this.subscribedStreamPartitions = {}
-
-        Object.assign(this.options, options || {})
 
         const parts = this.options.url.split('?')
         if (parts.length === 1) { // there is no query string
@@ -98,8 +125,50 @@ export default class StreamrClient extends EventEmitter {
             this.options.auth.apiKey = this.options.apiKey
         }
 
-        if (this.options.auth.privateKey && !this.options.auth.privateKey.startsWith('0x')) {
-            this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+        // TODO: below could also be written "OOP style" into two classes implementing an "interface StreamrEthereum" if porting to TypeScript later
+        // typically: in node.js, privateKey is used; in browser, (window.)ethereum is used
+        if (this.options.auth.privateKey) {
+            if (!this.options.auth.privateKey.startsWith('0x')) {
+                this.options.auth.privateKey = `0x${this.options.auth.privateKey}`
+            }
+            const self = this
+            const key = this.options.auth.privateKey
+            const address = computeAddress(key)
+            this.getAddress = () => address
+            this.getSigner = () => new Wallet(key, self.getMainnetProvider())
+            this.getSidechainSigner = async () => new Wallet(key, self.getSidechainProvider())
+        } else if (this.options.auth.ethereum) {
+            const self = this
+            this.getAddress = () => self.options.auth.ethereum.selectedAddress // null if no addresses connected+selected in Metamask
+            this.getSigner = () => {
+                const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
+                const metamaskSigner = metamaskProvider.getSigner()
+                return metamaskSigner
+            }
+            this.getSidechainSigner = async () => {
+                // chainId is required for checking when using Metamask
+                if (!self.options.sidechain || !self.options.sidechain.chainId) {
+                    throw new Error('Streamr sidechain not configured (with chainId) in the StreamrClient options!')
+                }
+
+                const metamaskProvider = new Web3Provider(self.options.auth.ethereum)
+                const { chainId } = await metamaskProvider.getNetwork()
+                if (chainId !== self.options.sidechain.chainId) {
+                    throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${self.options.sidechain.chainId}`)
+                }
+                const metamaskSigner = metamaskProvider.getSigner()
+                return metamaskSigner
+            }
+            // TODO: handle events
+            // ethereum.on('accountsChanged', (accounts) => { })
+            // https://docs.metamask.io/guide/ethereum-provider.html#events says:
+            //   "We recommend reloading the page unless you have a very good reason not to"
+            //   Of course we can't and won't do that, but if we need something chain-dependent...
+            // ethereum.on('chainChanged', (chainId) => { window.location.reload() });
+        } else {
+            this.getAddress = () => null
+            this.getSigner = () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
+            this.getSidechainSigner = async () => { throw new Error("StreamrClient not authenticated! Can't send transactions or sign messages.") }
         }
 
         if (this.options.keyExchange) {
@@ -303,16 +372,31 @@ export default class StreamrClient extends EventEmitter {
         })
     }
 
+    /** @returns Ethers.js Provider, a connection to the Ethereum network (mainnet) */
+    getMainnetProvider() {
+        if (this.options.mainnet) {
+            return new JsonRpcProvider(this.options.mainnet)
+        }
+        return getDefaultProvider()
+    }
+
+    /** @returns Ethers.js Provider, a connection to the Streamr EVM sidechain */
+    getSidechainProvider() {
+        if (this.options.sidechain) {
+            return new JsonRpcProvider(this.options.sidechain)
+        }
+        return null
+    }
+
     /**
      * Override to control output
      */
-
     onError(error) { // eslint-disable-line class-methods-use-this
         console.error(error)
     }
 
     async _subscribeToKeyExchangeStream() {
-        if (!this.options.auth.privateKey && !this.options.auth.provider) {
+        if (!this.options.auth.privateKey && !this.options.auth.ethereum) {
             return
         }
         await this.session.getSessionToken() // trigger auth errors if any

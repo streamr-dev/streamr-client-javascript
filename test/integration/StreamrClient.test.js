@@ -29,6 +29,37 @@ const createClient = (opts = {}) => new StreamrClient({
 })
 
 describe('StreamrClient Connection', () => {
+    describe('bad config.restUrl', () => {
+        it('emits no error with no connection', async (done) => {
+            const client = createClient({
+                restUrl: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+            client.onError = jest.fn()
+            client.once('error', done)
+            setTimeout(() => {
+                expect(client.onError).not.toHaveBeenCalled()
+                done()
+            }, 100)
+        })
+
+        it('emits error with connection', async (done) => {
+            const client = createClient({
+                restUrl: 'asdasd',
+                autoConnect: false,
+                autoDisconnect: false,
+            })
+            client.onError = jest.fn()
+            client.once('error', (error) => {
+                expect(error).toBeTruthy()
+                expect(client.onError).toHaveBeenCalledTimes(1)
+                done()
+            })
+            client.connect()
+        })
+    })
+
     describe('bad config.url', () => {
         it('emits error without autoconnect', async () => {
             const client = createClient({
@@ -86,37 +117,6 @@ describe('StreamrClient Connection', () => {
             expect(onError).toHaveBeenCalledTimes(1)
             expect(client.onError).toHaveBeenCalledTimes(1)
         }, 10000)
-    })
-
-    describe('bad config.restUrl', () => {
-        it('emits no error with no connection', async (done) => {
-            const client = createClient({
-                restUrl: 'asdasd',
-                autoConnect: false,
-                autoDisconnect: false,
-            })
-            client.onError = jest.fn()
-            client.once('error', done)
-            setTimeout(() => {
-                expect(client.onError).not.toHaveBeenCalled()
-                done()
-            }, 100)
-        })
-
-        it('emits error with connection', async (done) => {
-            const client = createClient({
-                restUrl: 'asdasd',
-                autoConnect: false,
-                autoDisconnect: false,
-            })
-            client.onError = jest.fn()
-            client.once('error', (error) => {
-                expect(error).toBeTruthy()
-                expect(client.onError).toHaveBeenCalledTimes(1)
-                done()
-            })
-            client.connect()
-        })
     })
 
     it('can disconnect before connected', async () => {
@@ -782,7 +782,8 @@ describe('StreamrClient', () => {
                     const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const map = {}
-                    map[client.signer.address.toLowerCase()] = true
+                    const address = await client.signer.getAddress()
+                    map[address.toLowerCase()] = true
                     assert.deepStrictEqual(publishers, map)
                     assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
                     assert(streamMessage.getPublisherId())
@@ -824,7 +825,8 @@ describe('StreamrClient', () => {
                     const subStream = client._getSubscribedStreamPartition(stream.id, 0) // eslint-disable-line no-underscore-dangle
                     const publishers = await subStream.getPublishers()
                     const map = {}
-                    map[client.signer.address.toLowerCase()] = true
+                    const address = await client.signer.getAddress()
+                    map[address.toLowerCase()] = true
                     assert.deepStrictEqual(publishers, map)
                     assert.strictEqual(streamMessage.signatureType, StreamMessage.SIGNATURE_TYPES.ETH)
                     assert(streamMessage.getPublisherId())

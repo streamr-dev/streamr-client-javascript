@@ -75,7 +75,7 @@ jobs:
           sudo service mysql stop
           git clone https://github.com/streamr-dev/streamr-docker-dev.git
           sudo ifconfig docker0 10.200.10.1/24
-          ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait
+          ${GITHUB_WORKSPACE}/streamr-docker-dev/streamr-docker-dev/bin.sh start --wait --except data-union-server --except bridge_collected
 
       - name: npm ci
         run: npm ci
@@ -87,7 +87,9 @@ jobs:
         run: npm run test-browser
 
       - name: test-integration
-        run: npm run test-integration
+        run: |
+          for i in test/integration/DataUnionEndpoints/*; do env DEBUG=StreamrClient::* ./node_modules/.bin/jest --forceExit --detectOpenHandles $i; done
+          ./node_modules/.bin/jest test/integration --forceExit --detectOpenHandles --testPathIgnorePatterns="test/integration/DataUnionEndpoints/"
 
   streamr-client-testing-tool:
     needs: [test, lint]
