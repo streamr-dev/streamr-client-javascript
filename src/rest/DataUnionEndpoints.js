@@ -788,7 +788,7 @@ export async function setAdminFee(newFeeFraction, options) {
 
 /**
  * Get data union admin fee fraction that admin gets from each revenue event
- * @returns {number} between 0.0 ... 0.1
+ * @returns {number} between 0.0 and 1.0
  */
 export async function getAdminFee(options) {
     const duMainnet = getMainnetContractReadOnly(this, options)
