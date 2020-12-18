@@ -328,14 +328,6 @@ async function requiredSignaturesHaveBeenCollected(client, messageHash, options 
     return markedComplete
 }
 
-/*
-function packSignatures(array) {
-    const msgLength = BigNumber.from(array.length).toHexString()
-    const [v, r, s] = array.reduce(([_v, _r, _s], e) => [_v.concat(e.v), _r.concat(e.r), _s.concat(e.s)], ['', '', ''])
-    return `${msgLength}${v}${r}${s}`
-}
-*/
-
 // move signatures from sidechain to mainnet
 async function transportSignatures(client, messageHash, options) {
     const sidechainAmb = await getSidechainAmb(client, options)
@@ -458,12 +450,12 @@ async function untilWithdrawIsComplete(client, getWithdrawTxFunc, getBalanceFunc
             log(`Transporting signatures for hash=${messageHash}`)
             await transportSignatures(client, messageHash, options)
         }
+        /* eslint-enable no-await-in-loop */
     }
 
     log(`Waiting for balance ${balanceBefore.toString()} to change`)
     await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
 
-    /* eslint-enable no-await-in-loop */
     return tr
 }
 
