@@ -5,6 +5,8 @@ import debug from 'debug'
 
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
+import { getEndpointUrl } from '../../../src/utils'
+import authFetch from '../../../src/rest/authFetch'
 import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
@@ -13,6 +15,24 @@ const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
+
+const createProduct = async (beneficiaryAddress, adminClient) => {
+    const DATA_UNION_VERSION = 1
+    const properties = {
+        beneficiaryAddress,
+        type: 'DATAUNION',
+        dataUnionVersion: DATA_UNION_VERSION
+    }
+    const url = getEndpointUrl(config.clientOptions.restUrl, 'products')
+    return authFetch(
+        url,
+        adminClient.session,
+        {
+            method: 'POST',
+            body: JSON.stringify(properties)
+        }
+    )
+}
 
 describe('DataUnionEndPoints', () => {
     let adminClient
@@ -54,6 +74,8 @@ describe('DataUnionEndPoints', () => {
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`DataUnion ${dataUnion.address} is ready to roll`)
         })
+        // product is needed for join requests to analyze the DU version (when we remove DU1 support, remove this  call createProduct())
+        await createProduct(dataUnion.address, adminClient)  
         return dataUnion
     }
 
