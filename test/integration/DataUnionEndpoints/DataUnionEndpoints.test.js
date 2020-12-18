@@ -144,13 +144,13 @@ describe('DataUnionEndPoints', () => {
 
         async function getOutsiderClient(dataUnion) {
             const client = new StreamrClient({
+                ...config.clientOptions,
                 auth: {
                     apiKey: 'tester1-api-key'
                 },
                 dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
-                ...config.clientOptions,
             })
             streamrClientCleanupList.push(client)
             return client
