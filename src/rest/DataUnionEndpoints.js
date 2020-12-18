@@ -651,7 +651,7 @@ export async function getDataUnionContract(options = {}) {
 export async function createSecret(dataUnionMainnetAddress, name = 'Untitled Data Union Secret') {
     const duAddress = getAddress(dataUnionMainnetAddress) // throws if bad address
     const url = getEndpointUrl(this.options.restUrl, 'dataunions', duAddress, 'secrets')
-    return authFetch(
+    const res = authFetch(
         url,
         this.session,
         {
