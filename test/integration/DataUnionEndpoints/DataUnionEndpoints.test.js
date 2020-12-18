@@ -3,6 +3,8 @@ import { parseEther, formatEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
 import debug from 'debug'
 
+import { getEndpointUrl } from '../../../src/utils'
+import authFetch from '../../../src/rest/authFetch'
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
 import config from '../config'
@@ -54,6 +56,20 @@ describe('DataUnionEndPoints', () => {
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
             log(`DataUnion ${dataUnion.address} is ready to roll`)
+
+            const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
+            await authFetch(
+                createProductUrl,
+                adminClient.session,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        beneficiaryAddress: dataUnion.address,
+                        type: 'DATAUNION',
+                        dataUnionVersion: 2
+                    })
+                }
+            )
         })
         return dataUnion
     }
