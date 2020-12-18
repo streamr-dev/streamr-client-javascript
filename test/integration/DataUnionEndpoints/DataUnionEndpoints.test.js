@@ -97,8 +97,8 @@ describe('DataUnionEndPoints', () => {
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
             const newFee = await adminClient.getAdminFee({ dataUnion })
-            expect(oldFee.toString()).toEqual(0)
-            expect(newFee.toString()).toEqual(0.1)
+            expect(oldFee).toEqual(0)
+            expect(newFee).toEqual(0.1)
         }, 150000)
 
         it('receives admin fees', async () => {
