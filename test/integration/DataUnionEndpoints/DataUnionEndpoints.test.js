@@ -7,8 +7,6 @@ import { getEndpointUrl } from '../../../src/utils'
 import authFetch from '../../../src/rest/authFetch'
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
-import { getEndpointUrl } from '../../../src/utils'
-import authFetch from '../../../src/rest/authFetch'
 import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
@@ -93,7 +91,7 @@ describe('DataUnionEndPoints', () => {
             )
         })
         // product is needed for join requests to analyze the DU version (when we remove DU1 support, remove this  call createProduct())
-        await createProduct(dataUnion.address, adminClient)  
+        await createProduct(dataUnion.address, adminClient)
         return dataUnion
     }
 
