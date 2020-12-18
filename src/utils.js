@@ -47,7 +47,7 @@ export async function sleep(ms) {
  */
 /**
  * Wait until a condition is true
- * @param {UntilCondition|Promise<boolean>} condition wait until this callback function returns true
+ * @param {function(): Promise<boolean>|function(): boolean} condition wait until this callback function returns true
  * @param {number} [timeOutMs=10000] stop waiting after that many milliseconds, -1 for disable
  * @param {number} [pollingIntervalMs=100] check condition between so many milliseconds
  */

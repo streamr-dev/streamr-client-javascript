@@ -89,9 +89,9 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
     log(`Confirmed tokens arrived, DU balance: ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
     const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
-    const tx3 = await sidechainContract.addRevenue()
+    const tx3 = await sidechainContract.refreshRevenue()
     const tr3 = await tx3.wait()
-    log(`addRevenue returned ${JSON.stringify(tr3)}`)
+    log(`refreshRevenue returned ${JSON.stringify(tr3)}`)
     log(`DU balance: ${await dataUnion.sidechain.totalEarnings()}`)
 
     const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.address)
