@@ -91,6 +91,7 @@ export default class StreamrClient extends EventEmitter {
             sidechainTokenAddress: null, // TODO // sidechain token
             factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
             sidechainAmbAddress: null, // Arbitrary Message-passing Bridge (AMB), see https://github.com/poanetwork/tokenbridge
+            payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
 
             ...options
         }

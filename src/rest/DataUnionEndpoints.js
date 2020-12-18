@@ -370,7 +370,9 @@ async function transportSignatures(client, messageHash, options) {
         log('Gas estimation failed: Check if the message was already processed')
         const alreadyProcessed = await mainnetAmb.relayedMessages(messageId)
         if (alreadyProcessed) {
-            throw new Error(`Signatures have already been transported (Message ${messageId} has already been processed)`)
+            log(`WARNING: Tried to transport signatures but they have already been transported (Message ${messageId} has already been processed)`)
+            log('This could happen if payForSignatureTransport=true, but bridge operator also pays for signatures, and got there before your client')
+            return null
         }
 
         log('Gas estimation failed: Check if number of signatures is enough')
@@ -427,30 +429,40 @@ async function untilWithdrawIsComplete(client, getWithdrawTxFunc, getBalanceFunc
     const tx = await getWithdrawTxFunc(options)
     const tr = await tx.wait()
 
-    log(`Got receipt, filtering UserRequestForSignature from ${tr.events.length} events...`)
-    // event UserRequestForSignature(bytes32 indexed messageId, bytes encodedData);
-    const sigEventArgsArray = tr.events.filter((e) => e.event === 'UserRequestForSignature').map((e) => e.args)
-    if (sigEventArgsArray.length < 1) {
-        throw new Error("No UserRequestForSignature events emitted from withdraw transaction, can't transport withdraw to mainnet")
-    }
-    /* eslint-disable no-await-in-loop */
-    // eslint-disable-next-line no-restricted-syntax
-    for (const eventArgs of sigEventArgsArray) {
-        const messageId = eventArgs[0]
-        const messageHash = keccak256(eventArgs[1])
-        log(`Checking mainnet AMB hasn't already processed messageId=${messageId}`)
-        const mainnetAmb = await getMainnetAmb(client, options)
-        const alreadySent = await mainnetAmb.messageCallStatus(messageId)
-        const failAddress = await mainnetAmb.failedMessageSender(messageId)
-        if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
-            throw new Error(`Mainnet bridge has already processed withdraw messageId=${messageId}`)
+    if (options.payForSignatureTransport) {
+        log(`Got receipt, filtering UserRequestForSignature from ${tr.events.length} events...`)
+        // event UserRequestForSignature(bytes32 indexed messageId, bytes encodedData);
+        const sigEventArgsArray = tr.events.filter((e) => e.event === 'UserRequestForSignature').map((e) => e.args)
+        if (sigEventArgsArray.length < 1) {
+            throw new Error("No UserRequestForSignature events emitted from withdraw transaction, can't transport withdraw to mainnet")
         }
-        log(`Waiting until sidechain AMB has collected required signatures for hash=${messageHash}...`)
-        await until(async () => requiredSignaturesHaveBeenCollected(client, messageHash, options), pollingIntervalMs, retryTimeoutMs)
-        log(`Transporting signatures for hash=${messageHash}`)
-        await transportSignatures(client, messageHash, options)
-        await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+        /* eslint-disable no-await-in-loop */
+        // eslint-disable-next-line no-restricted-syntax
+        for (const eventArgs of sigEventArgsArray) {
+            const messageId = eventArgs[0]
+            const messageHash = keccak256(eventArgs[1])
+
+            log(`Waiting until sidechain AMB has collected required signatures for hash=${messageHash}...`)
+            await until(async () => requiredSignaturesHaveBeenCollected(client, messageHash, options), pollingIntervalMs, retryTimeoutMs)
+
+            log(`Checking mainnet AMB hasn't already processed messageId=${messageId}`)
+            const mainnetAmb = await getMainnetAmb(client, options)
+            const alreadySent = await mainnetAmb.messageCallStatus(messageId)
+            const failAddress = await mainnetAmb.failedMessageSender(messageId)
+            if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
+                log(`WARNING: Mainnet bridge has already processed withdraw messageId=${messageId}`)
+                log('This could happen if payForSignatureTransport=true, but bridge operator also pays for signatures, and got there before your client')
+                continue
+            }
+
+            log(`Transporting signatures for hash=${messageHash}`)
+            await transportSignatures(client, messageHash, options)
+        }
     }
+
+    log(`Waiting for balance ${balanceBefore.toString()} to change`)
+    await until(async () => !(await getBalanceFunc(options)).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+
     /* eslint-enable no-await-in-loop */
     return tr
 }
@@ -701,12 +713,12 @@ export async function addMembers(memberAddressList, options = {}) {
  * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
  */
 export async function withdrawMember(memberAddress, options) {
-    const a = getAddress(memberAddress) // throws if bad address
+    const address = getAddress(memberAddress) // throws if bad address
     const tr = await untilWithdrawIsComplete(
         this,
-        this.getWithdrawMemberTx.bind(this, a),
-        this.getTokenBalance.bind(this, a),
-        options
+        this.getWithdrawMemberTx.bind(this, address),
+        this.getTokenBalance.bind(this, address),
+        { ...this.options, ...options }
     )
     return tr
 }
@@ -740,7 +752,7 @@ export async function withdrawToSigned(memberAddress, recipientAddress, signatur
         this,
         this.getWithdrawToSignedTx.bind(this, from, to, signature),
         this.getTokenBalance.bind(this, to),
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
@@ -966,7 +978,7 @@ export async function withdraw(options = {}) {
         this,
         this.getWithdrawTx.bind(this),
         this.getTokenBalance.bind(this, null), // null means this StreamrClient's auth credentials
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
@@ -1005,7 +1017,7 @@ export async function withdrawTo(recipientAddress, options = {}) {
         this,
         this.getWithdrawTxTo.bind(this, to),
         this.getTokenBalance.bind(this, to),
-        options
+        { ...this.options, ...options }
     )
     return tr
 }
