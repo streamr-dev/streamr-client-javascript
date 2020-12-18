@@ -538,13 +538,13 @@ async function getSidechainContractReadOnly(client, options = {}) {
 // //////////////////////////////////////////////////////////////////
 
 export async function calculateDataUnionMainnetAddress(dataUnionName, deployerAddress, options) {
-    const a = getAddress(deployerAddress) // throws if bad address
-    return getDataUnionMainnetAddress(this, dataUnionName, a, options)
+    const address = getAddress(deployerAddress) // throws if bad address
+    return getDataUnionMainnetAddress(this, dataUnionName, address, options)
 }
 
 export async function calculateDataUnionSidechainAddress(duMainnetAddress, options) {
-    const a = getAddress(duMainnetAddress) // throws if bad address
-    return getDataUnionSidechainAddress(this, a, options)
+    const address = getAddress(duMainnetAddress) // throws if bad address
+    return getDataUnionSidechainAddress(this, address, options)
 }
 
 /**
