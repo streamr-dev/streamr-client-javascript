@@ -3,6 +3,8 @@ import { parseEther, formatEther } from 'ethers/lib/utils'
 import { Mutex } from 'async-mutex'
 import debug from 'debug'
 
+import { getEndpointUrl } from '../../../src/utils'
+import authFetch from '../../../src/rest/authFetch'
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
 import { getEndpointUrl } from '../../../src/utils'
@@ -75,6 +77,20 @@ describe('DataUnionEndPoints', () => {
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`DataUnion ${dataUnion.address} is ready to roll`)
+
+            const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
+            await authFetch(
+                createProductUrl,
+                adminClient.session,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        beneficiaryAddress: dataUnion.address,
+                        type: 'DATAUNION',
+                        dataUnionVersion: 2
+                    })
+                }
+            )
         })
         // product is needed for join requests to analyze the DU version (when we remove DU1 support, remove this  call createProduct())
         await createProduct(dataUnion.address, adminClient)  
@@ -116,12 +132,12 @@ describe('DataUnionEndPoints', () => {
             await adminMutex.runExclusive(async () => {
                 log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
                 log(`Sending tx from ${adminClient.getAddress()}`)
-                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
             const newFee = await adminClient.getAdminFee({ dataUnion })
-            expect(oldFee.toString()).toEqual('0')
-            expect(newFee.toString()).toEqual(parseEther('0.1').toString())
+            expect(oldFee).toEqual(0)
+            expect(newFee).toEqual(0.1)
         }, 150000)
 
         it('receives admin fees', async () => {
@@ -129,7 +145,7 @@ describe('DataUnionEndPoints', () => {
 
             await adminMutex.runExclusive(async () => {
                 await adminClient.addMembers(memberAddressList, { dataUnion })
-                const tr = await adminClient.setAdminFee(parseEther('0.1'), { dataUnion })
+                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
 
@@ -167,13 +183,13 @@ describe('DataUnionEndPoints', () => {
 
         async function getOutsiderClient(dataUnion) {
             const client = new StreamrClient({
+                ...config.clientOptions,
                 auth: {
                     apiKey: 'tester1-api-key'
                 },
                 dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
-                ...config.clientOptions,
             })
             streamrClientCleanupList.push(client)
             return client
