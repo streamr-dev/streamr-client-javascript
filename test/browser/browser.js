@@ -29,5 +29,14 @@ describe('StreamrClient', () => {
             .assert.containsText('#result', 'disconnected')
     })
 
-    after((browser) => browser.end())
+    after(async (browser) => {
+        browser.getLog('browser', (logs) => {
+            logs.forEach((log) => {
+                // eslint-disable-next-line no-console
+                const logger = console[String(log.level).toLowerCase()] || console.log
+                logger('[%s]: ', log.timestamp, log.message)
+            })
+        })
+        return browser.end()
+    })
 })
