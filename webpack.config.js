@@ -122,6 +122,7 @@ module.exports = (env, argv) => {
                 new BundleAnalyzerPlugin({
                     analyzerMode: 'static',
                     openAnalyzer: false,
+                    generateStatsFile: true,
                 }),
             ] : [])
         ]
