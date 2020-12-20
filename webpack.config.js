@@ -115,10 +115,12 @@ module.exports = (env, argv) => {
         },
         node: {
             stream: true,
+            buffer: true,
         },
         resolve: {
             alias: {
                 stream: 'readable-stream',
+                buffer: path.resolve(__dirname, 'node_modules', 'buffer'),
                 http: path.resolve(__dirname, './src/shim/http-https.js'),
                 https: path.resolve(__dirname, './src/shim/http-https.js'),
                 ws: path.resolve(__dirname, './src/shim/ws.js'),
