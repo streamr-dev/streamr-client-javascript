@@ -596,10 +596,11 @@ export async function deployDataUnion(options = {}) {
     const ownerAddress = await parseAddress(this, owner)
 
     let agentAddressList
-    if (!Array.isArray(joinPartAgents)) {
+    if (Array.isArray(joinPartAgents)) {
         // getAddress throws if there's an invalid address in the array
         agentAddressList = joinPartAgents.map(getAddress)
     } else {
+        // streamrNode needs to be joinPartAgent so that EE join with secret works (and join approvals from Marketplace UI)
         agentAddressList = [ownerAddress]
         if (this.options.streamrNodeAddress) {
             agentAddressList.push(getAddress(this.options.streamrNodeAddress))
