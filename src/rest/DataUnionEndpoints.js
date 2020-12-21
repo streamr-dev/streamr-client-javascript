@@ -595,8 +595,16 @@ export async function deployDataUnion(options = {}) {
     // parseAddress defaults to authenticated user (also if "owner" is not an address)
     const ownerAddress = await parseAddress(this, owner)
 
-    // getAddress throws if there's an invalid address in the array
-    const agentAddressList = Array.isArray(joinPartAgents) ? joinPartAgents.map(getAddress) : [ownerAddress]
+    let agentAddressList
+    if (!Array.isArray(joinPartAgents)) {
+        // getAddress throws if there's an invalid address in the array
+        agentAddressList = joinPartAgents.map(getAddress)
+    } else {
+        agentAddressList = [ownerAddress]
+        if (this.options.streamrNodeAddress) {
+            agentAddressList.push(getAddress(this.options.streamrNodeAddress))
+        }
+    }
 
     const duMainnetAddress = await getDataUnionMainnetAddress(this, duName, ownerAddress, options)
     const duSidechainAddress = await getDataUnionSidechainAddress(this, duMainnetAddress, options)

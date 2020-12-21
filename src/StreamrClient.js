@@ -60,6 +60,7 @@ export default class StreamrClient extends EventEmitter {
             // Streamr Core options
             url: 'wss://streamr.network/api/v1/ws', // The server to connect to
             restUrl: 'https://streamr.network/api/v1', // Core API calls go here
+            streamrNodeAddress: '0xf3E5A65851C3779f468c9EcB32E6f25D9D68601a', // joinPartAgent when using EE for join part handling
 
             // P2P Streamr Network options
             autoConnect: true, // Automatically connect on first subscribe
