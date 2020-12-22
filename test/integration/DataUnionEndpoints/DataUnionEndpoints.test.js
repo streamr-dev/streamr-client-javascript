@@ -181,7 +181,7 @@ describe('DataUnionEndPoints', () => {
             const stats = await client.getDataUnionStats()
             expect(+stats.activeMemberCount).toEqual(3)
             expect(+stats.inactiveMemberCount).toEqual(0)
-            expect(+stats.joinPartAgentCount).toEqual(1)
+            expect(+stats.joinPartAgentCount).toEqual(2)
             expect(+stats.totalEarnings).toEqual(0)
             expect(+stats.totalWithdrawable).toEqual(0)
             expect(+stats.lifetimeMemberEarnings).toEqual(0)
