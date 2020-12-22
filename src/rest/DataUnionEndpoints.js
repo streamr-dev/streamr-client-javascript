@@ -595,8 +595,17 @@ export async function deployDataUnion(options = {}) {
     // parseAddress defaults to authenticated user (also if "owner" is not an address)
     const ownerAddress = await parseAddress(this, owner)
 
-    // getAddress throws if there's an invalid address in the array
-    const agentAddressList = Array.isArray(joinPartAgents) ? joinPartAgents.map(getAddress) : [ownerAddress]
+    let agentAddressList
+    if (Array.isArray(joinPartAgents)) {
+        // getAddress throws if there's an invalid address in the array
+        agentAddressList = joinPartAgents.map(getAddress)
+    } else {
+        // streamrNode needs to be joinPartAgent so that EE join with secret works (and join approvals from Marketplace UI)
+        agentAddressList = [ownerAddress]
+        if (this.options.streamrNodeAddress) {
+            agentAddressList.push(getAddress(this.options.streamrNodeAddress))
+        }
+    }
 
     const duMainnetAddress = await getDataUnionMainnetAddress(this, duName, ownerAddress, options)
     const duSidechainAddress = await getDataUnionSidechainAddress(this, duMainnetAddress, options)
@@ -645,26 +654,26 @@ export async function getDataUnionContract(options = {}) {
 /**
  * Add a new data union secret
  * @param {EthereumAddress} dataUnionMainnetAddress
- * @param {String} secret password that can be used to join the data union without manual verification
  * @param {String} name describes the secret
+ * @returns {String} the server-generated secret
  */
-export async function createSecret(dataUnionMainnetAddress, secret, name = 'Untitled Data Union Secret') {
-    const a = getAddress(dataUnionMainnetAddress) // throws if bad address
-    const url = getEndpointUrl(this.options.restUrl, 'dataunions', a, 'secrets')
-    return authFetch(
+export async function createSecret(dataUnionMainnetAddress, name = 'Untitled Data Union Secret') {
+    const duAddress = getAddress(dataUnionMainnetAddress) // throws if bad address
+    const url = getEndpointUrl(this.options.restUrl, 'dataunions', duAddress, 'secrets')
+    const res = await authFetch(
         url,
         this.session,
         {
             method: 'POST',
             body: JSON.stringify({
-                name,
-                secret,
+                name
             }),
             headers: {
                 'Content-Type': 'application/json',
             },
         },
     )
+    return res.secret
 }
 
 // //////////////////////////////////////////////////////////////////

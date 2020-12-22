@@ -2,11 +2,12 @@ import { Contract, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import debug from 'debug'
 
-import { until } from '../../../src/utils'
+import { getEndpointUrl, until } from '../../../src/utils'
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
 import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
+import authFetch from '../../../src/rest/authFetch'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console
@@ -34,7 +35,7 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
-    await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
+    const secret = await adminClient.createSecret(dataUnion.address, 'DataUnionEndpoints test secret')
     log(`DataUnion ${dataUnion.address} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
@@ -56,9 +57,18 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     })
     await memberClient.ensureConnected()
 
-    // TODO: change after DU2 joining is implemented in EE
-    // await memberClient.joinDataUnion({ secret: 'secret' })
-    await adminClient.addMembers([memberWallet.address], { dataUnion })
+    // product is needed for join requests to analyze the DU version
+    const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
+    await authFetch(createProductUrl, adminClient.session, {
+        method: 'POST',
+        body: JSON.stringify({
+            beneficiaryAddress: dataUnion.address,
+            type: 'DATAUNION',
+            dataUnionVersion: 2
+        })
+    })
+    await memberClient.joinDataUnion({ secret })
+    // await adminClient.addMembers([memberWallet.address], { dataUnion })
 
     const tokenAddress = await dataUnion.token()
     log(`Token address: ${tokenAddress}`)

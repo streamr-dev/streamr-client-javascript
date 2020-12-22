@@ -2,11 +2,12 @@ import { Contract, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import debug from 'debug'
 
-import { until } from '../../../src/utils'
+import { getEndpointUrl, until } from '../../../src/utils'
 import StreamrClient from '../../../src'
 import * as Token from '../../../contracts/TestToken.json'
 import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
+import authFetch from '../../../src/rest/authFetch'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdrawTo')
 // const { log } = console
@@ -34,12 +35,12 @@ it('DataUnionEndPoints test withdrawTo from member to any address', async () => 
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
-    await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
+    const secret = await adminClient.createSecret(dataUnion.address, 'DataUnionEndpoints test secret')
     log(`DataUnion ${dataUnion.address} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
-    const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${Date.now()}`, providerSidechain)
+    const outsiderWallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${Date.now()}`, providerSidechain)
     const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
     await sendTx.wait()
     log(`Sent 0.1 sidechain-ETH to ${memberWallet.address}`)
@@ -57,9 +58,18 @@ it('DataUnionEndPoints test withdrawTo from member to any address', async () => 
     })
     await memberClient.ensureConnected()
 
-    // TODO: change after DU2 joining is implemented in EE
-    // await memberClient.joinDataUnion({ secret: 'secret' })
-    await adminClient.addMembers([memberWallet.address], { dataUnion })
+    // product is needed for join requests to analyze the DU version
+    const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
+    await authFetch(createProductUrl, adminClient.session, {
+        method: 'POST',
+        body: JSON.stringify({
+            beneficiaryAddress: dataUnion.address,
+            type: 'DATAUNION',
+            dataUnionVersion: 2
+        })
+    })
+    await memberClient.joinDataUnion({ secret })
+    // await adminClient.addMembers([memberWallet.address], { dataUnion })
 
     const tokenAddress = await dataUnion.token()
     log(`Token address: ${tokenAddress}`)
@@ -108,11 +118,11 @@ it('DataUnionEndPoints test withdrawTo from member to any address', async () => 
     const stats = await memberClient.getMemberStats()
     log(`stats ${JSON.stringify(stats)}`)
 
-    const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    const balanceBefore = await adminTokenMainnet.balanceOf(outsiderWallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
-    const withdrawTr = await memberClient.withdrawTo(member2Wallet.address)
+    const withdrawTr = await memberClient.withdrawTo(outsiderWallet.address)
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
-    const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
+    const balanceAfter = await adminTokenMainnet.balanceOf(outsiderWallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     await providerMainnet.removeAllListeners()

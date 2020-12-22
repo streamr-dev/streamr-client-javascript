@@ -14,6 +14,12 @@ The client uses websockets for producing and consuming messages to/from streams.
 
 [![Build Status](https://travis-ci.com/streamr-dev/streamr-client-javascript.svg?branch=master)](https://travis-ci.com/streamr-dev/streamr-client-javascript)
 
+## Breaking changes notice
+- Dec 31st 2020: Email/password login will be removed. **Connect your email account to an Ethereum address before the deadline!**
+- Dec 31st 2020: Stream storage becomes opt-in and freely choosable.
+- Dec 31st 2020: Support for API keys will end.
+- Date TBD: Support for unsigned data will be dropped.
+
 [Installation](#installation) · [Usage](#usage) · [Client options](#client-options) · [Authentication options](#authentication-options) · [Message handler callback](#message-handler-callback) · [StreamrClient object](#streamrclient-object) · [Stream object](#stream-object) · [Subscription options](#subscription-options) · [Data Unions](#data-unions) · [Utility functions](#utility-functions) · [Events](#binding-to-events) · [Partitioning](#partitioning) · [Logging](#logging) · [NPM Publishing](#publishing-latest)
 
 ## Installation
@@ -25,6 +31,8 @@ The client is available on [npm](https://www.npmjs.com/package/streamr-client) a
 ## Usage
 
 Here are some quick examples. More detailed examples for the browser and node.js can be found [here](https://github.com/streamr-dev/streamr-client/tree/master/examples).
+
+If you don't have an Ethereum account you can use the utility function `StreamrClient.generateEthereumAccount()`, which returns the address and private key of a fresh Ethereum account.
 
 #### Creating a StreamrClient instance
 
@@ -48,7 +56,6 @@ const StreamrClient = require('streamr-client')
 const sub = client.subscribe(
     {
         stream: 'streamId',
-        apiKey: 'secret',       // Optional. If not given, uses the apiKey given at client creation time.
         partition: 0,           // Optional, defaults to zero. Use for partitioned streams to select partition.
         // optional resend options here
     },
@@ -146,7 +153,9 @@ stream.publish(msg)
 
 **Support for email/password authentication will be dropped in the future and cryptographic keys/wallets will be the only supported method.**
 
-Authenticating with an Ethereum private key by cryptographically signing a challenge. Note the utility function `StreamrClient.generateEthereumAccount()`, which can be used to easily get the address and private key for a newly generated account. Authenticating with Ethereum also automatically creates an associated Streamr user, if it doesn't exist:
+If you don't have an Ethereum account you can use the utility function `StreamrClient.generateEthereumAccount()`, which returns the address and private key of a fresh Ethereum account.
+
+Authenticating with Ethereum also automatically creates an associated Streamr user, even if it doesn't already exist. Under the hood, the client will cryptographically sign a challenge to authenticate you as a Streamr user:
 
 ```javascript
 new StreamrClient({
@@ -161,18 +170,7 @@ Authenticating with an Ethereum private key contained in an Ethereum (web3) prov
 ```javascript
 new StreamrClient({
     auth: {
-        provider: web3.currentProvider,
-    }
-})
-```
-
-(Authenticating with an username and password, for internal use by the Streamr app):
-
-```javascript
-new StreamrClient({
-    auth: {
-        username: 'my@email.com',
-        password: 'password'
+        provider: window.ethereum,
     }
 })
 ```
@@ -219,7 +217,7 @@ The second argument to `client.subscribe(options, callback)` is the callback fun
 
 #### Stream API
 
-All the below functions return a Promise which gets resolved with the result. They can also take an `apiKey` as an extra argument. Otherwise the `apiKey` defined in the `StreamrClient` options is used, if any.
+All the below functions return a Promise which gets resolved with the result.
 
 | Name                                                | Description                                                  |
 | :--------------------------------------------------- | :------------------------------------------------------------ |
@@ -238,7 +236,7 @@ removeListener(eventName, function) | Unbinds the `function` from events called 
 
 ## Stream object
 
-All the below functions return a Promise which gets resolved with the result. They can also take an `apiKey` as an extra argument. Otherwise the `apiKey` defined in the `StreamrClient` options is used, if any.
+All the below functions return a Promise which gets resolved with the result.
 
 | Name                                      | Description                                                  |
 | :----------------------------------------- | :------------------------------------------------------------ |

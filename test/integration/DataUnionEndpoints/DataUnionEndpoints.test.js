@@ -54,9 +54,9 @@ describe('DataUnionEndPoints', () => {
             const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
-            await adminClient.createSecret(dataUnion.address, 'secret', 'DataUnionEndpoints test secret')
             log(`DataUnion ${dataUnion.address} is ready to roll`)
 
+            // product is needed for join requests to analyze the DU version
             const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
             await authFetch(
                 createProductUrl,
@@ -181,7 +181,7 @@ describe('DataUnionEndPoints', () => {
             const stats = await client.getDataUnionStats()
             expect(+stats.activeMemberCount).toEqual(3)
             expect(+stats.inactiveMemberCount).toEqual(0)
-            expect(+stats.joinPartAgentCount).toEqual(1)
+            expect(+stats.joinPartAgentCount).toEqual(2)
             expect(+stats.totalEarnings).toEqual(0)
             expect(+stats.totalWithdrawable).toEqual(0)
             expect(+stats.lifetimeMemberEarnings).toEqual(0)
