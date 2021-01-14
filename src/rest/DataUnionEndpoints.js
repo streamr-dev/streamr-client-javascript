@@ -823,7 +823,7 @@ export async function joinDataUnion(options = {}) {
     const dataUnion = getMainnetContractReadOnly(this, options)
 
     const body = {
-        memberAddress: parseAddress(this, member, options)
+        memberAddress: parseAddress(this, member)
     }
     if (secret) { body.secret = secret }
 
@@ -853,7 +853,7 @@ export async function hasJoined(memberAddress, options = {}) {
         pollingIntervalMs = 1000,
         retryTimeoutMs = 60000,
     } = options
-    const address = parseAddress(this, memberAddress, options)
+    const address = parseAddress(this, memberAddress)
     const duSidechain = await getSidechainContractReadOnly(this, options)
 
     // memberData[0] is enum ActiveStatus {None, Active, Inactive}, and zero means member has never joined
@@ -895,7 +895,7 @@ export async function getDataUnionStats(options) {
  * @param {EthereumAddress} memberAddress (optional) if not supplied, get the stats of currently logged in StreamrClient (if auth: privateKey)
  */
 export async function getMemberStats(memberAddress, options) {
-    const address = parseAddress(this, memberAddress, options)
+    const address = parseAddress(this, memberAddress)
     // TODO: use duSidechain.getMemberStats(address) once it's implemented, to ensure atomic read
     //        (so that memberData is from same block as getEarnings, otherwise withdrawable will be foobar)
     const duSidechain = await getSidechainContractReadOnly(this, options)
@@ -919,14 +919,20 @@ export async function getMemberStats(memberAddress, options) {
  * @return {Promise<BigNumber>}
  */
 export async function getMemberBalance(memberAddress, options) {
-    const address = parseAddress(this, memberAddress, options)
+    const address = parseAddress(this, memberAddress)
     const duSidechain = await getSidechainContractReadOnly(this, options)
     return duSidechain.getWithdrawableEarnings(address)
 }
 
+/**
+ * Get token balance for given address
+ * @param {EthereumAddress} address
+ * @param options such as tokenAddress. If not given, then first check if dataUnion was given in StreamrClient constructor, then check if tokenAddress was given in StreamrClient constructor.
+ * @returns {Promise<BigNumber>} token balance in "wei" (10^-18 parts)
+ */
 export async function getTokenBalance(address, options) {
-    const a = parseAddress(this, address, options)
-    const tokenAddressMainnet = this.options.tokenAddress || options.tokenAddress
+    const a = parseAddress(this, address)
+    const tokenAddressMainnet = options.tokenAddress || await getMainnetContractReadOnly(this, options).then((c) => c.token()).catch(() => null) || this.options.tokenAddress
     if (!tokenAddressMainnet) { throw new Error('tokenAddress option not found') }
     const provider = this.getMainnetProvider()
     const token = new Contract(tokenAddressMainnet, [{
