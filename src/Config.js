@@ -39,6 +39,10 @@ export default function ClientConfig(opts = {}) {
         }
     }
 
+    if (options.auth && (options.auth.username || options.auth.password)) {
+        throw new Error('username/password auth is no longer supported. Please create an ethereum identity.')
+    }
+
     const parts = options.url.split('?')
     if (parts.length === 1) { // there is no query string
         const controlLayer = `controlLayerVersion=${ControlMessage.LATEST_VERSION}`

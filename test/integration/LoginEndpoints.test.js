@@ -81,17 +81,10 @@ describe('LoginEndpoints', () => {
     })
 
     describe('Username/password login', () => {
-        it('should fail to get a session token', async () => {
+        it('should fail', async () => {
             await expect(async () => {
                 await client.loginWithUsernamePassword('username', 'password')
-            }).rejects.toThrow()
-        })
-
-        it('should get a session token', async () => {
-            const sessionToken = await client.loginWithUsernamePassword('tester2@streamr.com', 'tester2')
-            assert(sessionToken)
-            assert(sessionToken.token)
-            assert(sessionToken.expires)
+            }).rejects.toThrow('no longer supported')
         })
     })
 
