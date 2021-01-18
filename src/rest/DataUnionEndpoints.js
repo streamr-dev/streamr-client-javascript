@@ -54,7 +54,7 @@ function sleep(ms) {
 }
 
 async function get(client, dataUnionContractAddress, endpoint, opts = {}) {
-    const url = getEndpointUrl(client.options.restUrl, 'communities', dataUnionContractAddress) + endpoint
+    const url = getEndpointUrl(client.options.restUrl, 'dataunions', dataUnionContractAddress) + endpoint
     const response = await fetch(url, {
         ...opts,
         headers: {
@@ -233,7 +233,7 @@ export async function joinDataUnion(dataUnionContractAddress, secret) {
     }
     if (secret) { body.secret = secret }
 
-    const url = getEndpointUrl(this.options.restUrl, 'communities', dataUnionContractAddress, 'joinRequests')
+    const url = getEndpointUrl(this.options.restUrl, 'dataunions', dataUnionContractAddress, 'joinRequests')
     return authFetch(
         url,
         this.session,
