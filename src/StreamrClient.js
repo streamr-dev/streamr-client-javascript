@@ -7,7 +7,7 @@ import uniqueId from 'lodash.uniqueid'
 
 import Connection from './Connection'
 import Session from './Session'
-import { waitFor, getVersionString } from './utils'
+import { getVersionString } from './utils'
 import Publisher from './Publisher'
 import Resender from './Resender'
 import Subscriber from './Subscriber'
@@ -81,14 +81,31 @@ export default class StreamrClient extends EventEmitter {
         this.getUserInfo = this.getUserInfo.bind(this)
         this.onConnectionConnected = this.onConnectionConnected.bind(this)
         this.onConnectionDisconnected = this.onConnectionDisconnected.bind(this)
+
         this._onError = this._onError.bind(this)
         this.onErrorResponse = this.onErrorResponse.bind(this)
         this.onConnectionError = this.onConnectionError.bind(this)
+        this.getErrorEmitter = this.getErrorEmitter.bind(this)
 
         this.on('error', this._onError) // attach before creating sub-components incase they fire error events
 
         this.session = new Session(this, this.options.auth)
         this.connection = connection || new Connection(this.options)
+        this.connection.on('message', (messageEvent) => {
+            if (!this.connection.isConnected()) { return } // ignore messages if not connected
+            let controlMessage
+            try {
+                controlMessage = ControlLayer.ControlMessage.deserialize(messageEvent.data)
+            } catch (err) {
+                this.connection.debug('<< %o', messageEvent && messageEvent.data)
+                this.debug('deserialize error', err)
+                this.emit('error', err)
+                return
+            }
+            this.connection.debug('<< %o', controlMessage)
+            this.connection.emit(controlMessage.type, controlMessage)
+        })
+
         this.publisher = new Publisher(this)
         this.subscriber = new Subscriber(this)
         this.resender = new Resender(this)
@@ -96,12 +113,11 @@ export default class StreamrClient extends EventEmitter {
         this.connection.on('connected', this.onConnectionConnected)
         this.connection.on('disconnected', this.onConnectionDisconnected)
         this.connection.on('error', this.onConnectionError)
+
         this.connection.on(ControlMessage.TYPES.ErrorResponse, this.onErrorResponse)
     }
 
     async onConnectionConnected() {
-        await new Promise((resolve) => setTimeout(resolve, 0)) // wait a tick to let event handlers finish
-        if (!this.isConnected()) { return }
         this.debug('Connected!')
         this.emit('connected')
     }
@@ -113,12 +129,22 @@ export default class StreamrClient extends EventEmitter {
 
     onConnectionError(err) {
         // If there is an error parsing a json message in a stream, fire error events on the relevant subs
-        if ((err instanceof Errors.InvalidJsonError)) {
+        if ((err instanceof Errors.InvalidJsonError || err.reason instanceof Errors.InvalidJsonError)) {
             this.subscriber.onErrorMessage(err)
         } else {
             // if it looks like an error emit as-is, otherwise wrap in new Error
-            const errorObject = (err && err.stack && err.message) ? err : new Error(err)
-            this.emit('error', errorObject)
+            this.emit('error', new Connection.ConnectionError(err))
+        }
+    }
+
+    getErrorEmitter(source) {
+        return (err) => {
+            if (!(err instanceof Connection.ConnectionError || err.reason instanceof Connection.ConnectionError)) {
+                // emit non-connection errors
+                this.emit('error', err)
+            } else {
+                source.debug(err)
+            }
         }
     }
 
@@ -127,9 +153,16 @@ export default class StreamrClient extends EventEmitter {
         this.emit('error', errorObject)
     }
 
-    _onError(...args) {
-        this.onError(...args)
-        this.ensureDisconnected()
+    _onError(err, ...args) {
+        this.onError(err, ...args)
+        if (!(err instanceof Connection.ConnectionError)) {
+            this.debug('disconnecting due to error', err)
+            this.disconnect()
+        }
+    }
+
+    async send(request) {
+        return this.connection.send(request)
     }
 
     /**
@@ -140,51 +173,32 @@ export default class StreamrClient extends EventEmitter {
         console.error(error)
     }
 
-    handleError(msg) {
-        this.debug(msg)
-        this.emit('error', msg)
-    }
-
     async resend(...args) {
         return this.resender.resend(...args)
     }
 
     isConnected() {
-        return this.connection.state === Connection.State.CONNECTED
+        return this.connection.isConnected()
     }
 
     isConnecting() {
-        return this.connection.state === Connection.State.CONNECTING
+        return this.connection.isConnecting()
     }
 
     isDisconnecting() {
-        return this.connection.state === Connection.State.DISCONNECTING
+        return this.connection.isDisconnecting()
     }
 
     isDisconnected() {
-        return this.connection.state === Connection.State.DISCONNECTED
-    }
-
-    reconnect() {
-        return this.connect()
+        return this.connection.isDisconnected()
     }
 
     async connect() {
-        try {
-            if (this.isConnected()) {
-                throw new Error('Already connected!')
-            }
+        return this.connection.connect()
+    }
 
-            if (this.connection.state === Connection.State.CONNECTING) {
-                throw new Error('Already connecting!')
-            }
-
-            this.debug('Connecting to %s', this.options.url)
-            await this.connection.connect()
-        } catch (err) {
-            this.emit('error', err)
-            throw err
-        }
+    async nextConnection() {
+        return this.connection.nextConnection()
     }
 
     pause() {
@@ -225,38 +239,12 @@ export default class StreamrClient extends EventEmitter {
         return this.subscriber.getSubscriptions(...args)
     }
 
-    /**
-     * Starts new connection if disconnected.
-     * Waits for connection if connecting.
-     * No-op if already connected.
-     */
-
     async ensureConnected() {
-        if (this.isConnected()) { return Promise.resolve() }
-
-        if (!this.isConnecting()) {
-            await this.connect()
-        }
-        return waitFor(this, 'connected')
+        return this.connect()
     }
 
-    /**
-     * Starts disconnection if connected.
-     * Waits for disconnection if disconnecting.
-     * No-op if already disconnected.
-     */
-
     async ensureDisconnected() {
-        this.connection.clearReconnectTimeout()
-        this.publisher.stop()
-        if (this.isDisconnected()) { return }
-
-        if (this.isDisconnecting()) {
-            await waitFor(this, 'disconnected')
-            return
-        }
-
-        await this.disconnect()
+        return this.disconnect()
     }
 
     static generateEthereumAccount() {

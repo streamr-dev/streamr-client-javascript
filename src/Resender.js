@@ -13,11 +13,13 @@ export default class Resender {
     constructor(client) {
         this.client = client
         this.debug = client.debug.extend('Resends')
+        this.onErrorEmit = this.client.getErrorEmitter(this)
 
-        this.resendUtil = new ResendUtil()
+        this.resendUtil = new ResendUtil({
+            debug: this.debug,
+        })
 
-        this.onResendUtilError = this.onResendUtilError.bind(this)
-        this.resendUtil.on('error', this.onResendUtilError)
+        this.resendUtil.on('error', this.onErrorEmit)
 
         // Unicast messages to a specific subscription only
         this.onUnicastMessage = this.onUnicastMessage.bind(this)
@@ -32,10 +34,6 @@ export default class Resender {
 
         this.onResendResponseResent = this.onResendResponseResent.bind(this)
         this.client.connection.on(ControlMessage.TYPES.ResendResponseResent, this.onResendResponseResent)
-    }
-
-    onResendUtilError(err) {
-        this.client.emit('error', err)
     }
 
     onResendResponseResent(response) {
@@ -114,7 +112,6 @@ export default class Resender {
             throw new Error('resend: Invalid arguments: options.resend is not given')
         }
 
-        await this.client.ensureConnected()
         const sub = new HistoricalSubscription({
             streamId: options.stream,
             streamPartition: options.partition || 0,
@@ -126,23 +123,23 @@ export default class Resender {
             debug: this.debug,
         })
 
+        // eslint-disable-next-line no-underscore-dangle
+        this.client.subscriber._addSubscription(sub)
         // TODO remove _addSubscription after uncoupling Subscription and Resend
         sub.setState(Subscription.State.subscribed)
         // eslint-disable-next-line no-underscore-dangle
-        this.client.subscriber._addSubscription(sub)
-        // eslint-disable-next-line no-underscore-dangle
         sub.once('initial_resend_done', () => this.client.subscriber._removeSubscription(sub))
-        await this._requestResend(sub)
+        await this._requestResend(sub).catch((err) => {
+            this.onErrorEmit(err)
+            throw err
+        })
         return sub
     }
 
-    async _requestResend(sub, resendOptions) {
+    async _requestResend(sub, options = sub.getResendOptions()) {
         sub.setResending(true)
         const requestId = this.resendUtil.registerResendRequestForSub(sub)
-        const options = resendOptions || sub.getResendOptions()
         const sessionToken = await this.client.session.getSessionToken()
-        // don't bother requesting resend if not connected
-        if (!this.client.isConnected()) { return }
         let request
         if (options.last > 0) {
             request = new ResendLastRequest({
@@ -176,13 +173,10 @@ export default class Resender {
         }
 
         if (!request) {
-            this.client.handleError("Can't _requestResend without resendOptions")
-            return
+            throw new Error("Can't _requestResend without resend options")
         }
 
         this.debug('_requestResend: %o', request)
-        await this.client.connection.send(request).catch((err) => {
-            this.client.handleError(`Failed to send resend request: ${err}`)
-        })
+        await this.client.send(request)
     }
 }
