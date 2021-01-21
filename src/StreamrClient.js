@@ -89,9 +89,8 @@ export default class StreamrClient extends EventEmitter {
             dataUnion: null, // Give a "default target" of all data union endpoint operations (no need to pass argument every time)
             tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
             minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
-            sidechainTokenAddress: null, // TODO // sidechain token
+            tokenAddressSidechain: null, // TODO // sidechain token
             factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
-            sidechainAmbAddress: null, // Arbitrary Message-passing Bridge (AMB), see https://github.com/poanetwork/tokenbridge
             payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
 
             ...options
