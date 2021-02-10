@@ -1,7 +1,7 @@
 export default class StreamPart {
     constructor(streamId, streamPartition) {
         this._streamId = streamId
-        this.streamPartition = streamPartition
+        this._streamPartition = streamPartition
     }
 
     static fromStream({ id, partitions }) {
@@ -17,6 +17,6 @@ export default class StreamPart {
     }
 
     getStreamPartition() {
-        return this.streamPartition
+        return this._streamPartition
     }
 }
