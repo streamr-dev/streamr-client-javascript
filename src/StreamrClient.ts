@@ -469,19 +469,19 @@ export default class StreamrClient extends EventEmitter {
         return this.loginEndpoints.getUserInfo()
     }
 
-    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string, options: DataUnionOptions) {
+    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress, options)
     }
 
-    async calculateDataUnionSidechainAddress(duMainnetAddress: string, options: DataUnionOptions) {
+    async calculateDataUnionSidechainAddress(duMainnetAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress, options)
     }
 
-    async deployDataUnion(options: DataUnionOptions = {}) {
+    async deployDataUnion(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.deployDataUnion(options)
     }
 
-    async getDataUnionContract(options: DataUnionOptions = {}) {
+    async getDataUnionContract(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getDataUnionContract(options)
     }
 
@@ -489,67 +489,67 @@ export default class StreamrClient extends EventEmitter {
         return this.dataUnionEndpoints.createSecret(dataUnionMainnetAddress, name)
     }
 
-    async kick(memberAddressList: string[], options: DataUnionOptions = {}) {
+    async kick(memberAddressList: string[], options?: DataUnionOptions) {
         return this.dataUnionEndpoints.kick(memberAddressList, options)
     }
 
-    async addMembers(memberAddressList: string[], options: DataUnionOptions = {}) {
+    async addMembers(memberAddressList: string[], options?: DataUnionOptions ) {
         return this.dataUnionEndpoints.addMembers(memberAddressList, options)
     }
 
-    async withdrawMember(memberAddress: string, options: DataUnionOptions) {
+    async withdrawMember(memberAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.withdrawMember(memberAddress, options)
     }
 
-    async getWithdrawMemberTx(memberAddress: string, options: DataUnionOptions) {
+    async getWithdrawMemberTx(memberAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getWithdrawMemberTx(memberAddress, options)
     }
 
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options: DataUnionOptions) {
+    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options)
     }
 
-    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, options: DataUnionOptions) {
+    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getWithdrawToSignedTx(memberAddress, recipientAddress, signature, options)
     }
 
-    async setAdminFee(newFeeFraction: number, options: DataUnionOptions) {
+    async setAdminFee(newFeeFraction: number, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.setAdminFee(newFeeFraction, options)
     }
 
-    async getAdminFee(options: DataUnionOptions) {
+    async getAdminFee(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getAdminFee(options)
     }
 
-    async getAdminAddress(options: DataUnionOptions) {
+    async getAdminAddress(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getAdminAddress(options)
     }
 
-    async joinDataUnion(options: DataUnionOptions = {}) {
+    async joinDataUnion(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.joinDataUnion(options)
     }
 
-    async hasJoined(memberAddress: string, options: DataUnionOptions = {}) {
+    async hasJoined(memberAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.hasJoined(memberAddress, options)
     }
 
-    async getMembers(options: DataUnionOptions) {
+    async getMembers(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getMembers(options)
     }
 
-    async getDataUnionStats(options: DataUnionOptions) {
+    async getDataUnionStats(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getDataUnionStats(options)
     }
 
-    async getMemberStats(memberAddress: string, options: DataUnionOptions) {
+    async getMemberStats(memberAddress?: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getMemberStats(memberAddress, options)
     }
 
-    async getMemberBalance(memberAddress: string, options: DataUnionOptions) {
+    async getMemberBalance(memberAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getMemberBalance(memberAddress, options)
     }
 
-    async getTokenBalance(address: string|null|undefined, options: DataUnionOptions) {
+    async getTokenBalance(address: string|null|undefined, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getTokenBalance(address, options)
     }
 
@@ -557,27 +557,27 @@ export default class StreamrClient extends EventEmitter {
         return this.dataUnionEndpoints.getDataUnionVersion(contractAddress)
     }
 
-    async withdraw(options: DataUnionOptions = {}) {
+    async withdraw(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.withdraw(options)
     }
 
-    async getWithdrawTx(options: DataUnionOptions) {
+    async getWithdrawTx(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getWithdrawTx(options)
     }
 
-    async withdrawTo(recipientAddress: string, options: DataUnionOptions = {}) {
+    async withdrawTo(recipientAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.withdrawTo(recipientAddress, options)
     }
 
-    async getWithdrawTxTo(recipientAddress: string, options: DataUnionOptions) {
+    async getWithdrawTxTo(recipientAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.getWithdrawTxTo(recipientAddress, options)
     }
 
-    async signWithdrawTo(recipientAddress: string, options: DataUnionOptions) {
+    async signWithdrawTo(recipientAddress: string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.signWithdrawTo(recipientAddress, options)
     }
 
-    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string, options: DataUnionOptions) {
+    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string, options?: DataUnionOptions) {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, options)
     }
 }

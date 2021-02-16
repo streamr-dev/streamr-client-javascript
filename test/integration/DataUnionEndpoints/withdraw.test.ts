@@ -9,10 +9,12 @@ import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
 import authFetch from '../../../src/rest/authFetch'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdrawTo')
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console
 
+// @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+// @ts-expect-error
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
@@ -20,7 +22,7 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-it('DataUnionEndPoints test withdraw from admin', async () => {
+it('DataUnionEndPoints test withdraw by member itself', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -31,7 +33,7 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
     const tx1 = await tokenMainnet.mint(adminWalletMainnet.address, parseEther('100'))
     await tx1.wait()
 
-    const adminClient = new StreamrClient(config.clientOptions)
+    const adminClient = new StreamrClient(config.clientOptions as any)
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
@@ -42,7 +44,11 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
     const sendTx = await adminWalletSidechain.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
     await sendTx.wait()
-    log(`sent 0.1sETH to ${memberWallet.address}`)
+    log(`Sent 0.1 sidechain-ETH to ${memberWallet.address}`)
+
+    const send2Tx = await adminWalletMainnet.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
+    await send2Tx.wait()
+    log(`Sent 0.1 mainnet-ETH to ${memberWallet.address}`)
 
     const memberClient = new StreamrClient({
         ...config.clientOptions,
@@ -50,7 +56,7 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
             privateKey: memberWallet.privateKey
         },
         dataUnion: dataUnion.address,
-    })
+    } as any)
     await memberClient.ensureConnected()
 
     // product is needed for join requests to analyze the DU version
@@ -63,9 +69,8 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
             dataUnionVersion: 2
         })
     })
-    const res = await memberClient.joinDataUnion({ secret })
+    await memberClient.joinDataUnion({ secret } as any)
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
-    log(`Member joined data union: ${JSON.stringify(res)}`)
 
     const tokenAddress = await dataUnion.token()
     log(`Token address: ${tokenAddress}`)
@@ -112,11 +117,10 @@ it('DataUnionEndPoints test withdraw from admin', async () => {
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
     const stats = await memberClient.getMemberStats()
-    log(`stats ${JSON.stringify(stats)}`)
+    log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
-    log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
-    const withdrawTr = await adminClient.withdrawMember(memberWallet.address, { dataUnion })
+    const withdrawTr = await memberClient.withdraw()
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)

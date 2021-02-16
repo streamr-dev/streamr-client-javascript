@@ -7,7 +7,9 @@ import config from '../config'
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
 // const { log } = console
 
+// @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
+// @ts-expect-error
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
@@ -18,13 +20,14 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     const network2 = await providerSidechain.getNetwork()
     log('Connected to sidechain network: ', JSON.stringify(network2))
 
-    const adminClient = new StreamrClient(config.clientOptions)
+    const adminClient = new StreamrClient(config.clientOptions as any)
     await adminClient.ensureConnected()
 
     const dataUnionName = '6be8ceda7a3c4fe7991eab501975b85ec2bb90452d0e4c93bc2' + Date.now()
     const duMainnetAddress = await adminClient.calculateDataUnionMainnetAddress(dataUnionName, adminWalletMainnet.address)
     const duSidechainAddress = await adminClient.calculateDataUnionSidechainAddress(duMainnetAddress)
 
+    // @ts-expect-error
     const dataUnion = await adminClient.deployDataUnion({ dataUnionName })
 
     const version = await adminClient.getDataUnionVersion(dataUnion.address)
