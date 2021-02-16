@@ -15,6 +15,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { arrayify, hexZeroPad } from '@ethersproject/bytes'
 import { Contract } from '@ethersproject/contracts'
 import { keccak256 } from '@ethersproject/keccak256'
+import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 import { verifyMessage } from '@ethersproject/wallet'
 import debug from 'debug'
 import { DataUnionOptions } from '../dataunion/DataUnion'
@@ -27,6 +28,23 @@ import authFetch from './authFetch'
 
 export interface DataUnionEndpointOptions extends DataUnionOptions {
     dataUnion?: string
+}
+
+export interface DataUnionStats {
+    activeMemberCount: Todo,
+    inactiveMemberCount: Todo,
+    joinPartAgentCount: Todo,
+    totalEarnings: Todo,
+    totalWithdrawable: Todo,
+    lifetimeMemberEarnings: Todo
+}
+
+export interface MemberStats {
+    status: Todo
+    earningsBeforeLastJoin: Todo
+    lmeAtJoin: Todo
+    totalEarnings: Todo
+    withdrawableEarnings: Todo
 }
 
 const log = debug('StreamrClient::DataUnionEndpoints')
@@ -719,7 +737,7 @@ export class DataUnionEndpoints {
      * @param {List<EthereumAddress>} memberAddressList to kick
      * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
      */
-    async kick(memberAddressList: string[], options?: DataUnionEndpointOptions) {
+    async kick(memberAddressList: string[], options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(this.client, options)
         const tx = await duSidechain.partMembers(members)
@@ -732,7 +750,7 @@ export class DataUnionEndpoints {
      * @param {List<EthereumAddress>} memberAddressList to add
      * @returns {Promise<TransactionReceipt>} addMembers sidechain transaction
      */
-    async addMembers(memberAddressList: string[], options?: DataUnionEndpointOptions) {
+    async addMembers(memberAddressList: string[], options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(this.client, options)
         const tx = await duSidechain.addMembers(members)
@@ -747,7 +765,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
-    async withdrawMember(memberAddress: string, options?: DataUnionEndpointOptions) {
+    async withdrawMember(memberAddress: string, options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
         const address = getAddress(memberAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
             this.client,
@@ -765,7 +783,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawMemberTx(memberAddress: string, options?: DataUnionEndpointOptions) {
+    async getWithdrawMemberTx(memberAddress: string, options?: DataUnionEndpointOptions): Promise<TransactionResponse> {
         const a = getAddress(memberAddress) // throws if bad address
         const duSidechain = await getSidechainContract(this.client, options)
         return duSidechain.withdrawAll(a, true) // sendToMainnet=true
@@ -780,7 +798,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionEndpointOptions) {
+    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
         const from = getAddress(memberAddress) // throws if bad address
         const to = getAddress(recipientAddress)
         const tr = await untilWithdrawIsComplete(
@@ -801,7 +819,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionEndpointOptions) {
+    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionEndpointOptions): Promise<TransactionResponse> {
         const duSidechain = await getSidechainContract(this.client, options)
         return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
     }
@@ -811,7 +829,7 @@ export class DataUnionEndpoints {
      * @param {number} newFeeFraction between 0.0 and 1.0
      * @param {EthereumOptions} options
      */
-    async setAdminFee(newFeeFraction: number, options?: DataUnionEndpointOptions) {
+    async setAdminFee(newFeeFraction: number, options?: DataUnionEndpointOptions): Promise<Todo> {
         if (newFeeFraction < 0 || newFeeFraction > 1) {
             throw new Error('newFeeFraction argument must be a number between 0...1, got: ' + newFeeFraction)
         }
@@ -823,15 +841,15 @@ export class DataUnionEndpoints {
 
     /**
      * Get data union admin fee fraction that admin gets from each revenue event
-     * @returns {number} between 0.0 and 1.0
+     * @returns {Promise<number>} between 0.0 and 1.0
      */
-    async getAdminFee(options?: DataUnionEndpointOptions) {
+    async getAdminFee(options?: DataUnionEndpointOptions): Promise<number> {
         const duMainnet = getMainnetContractReadOnly(this.client, options)
         const adminFeeBN = await duMainnet.adminFeeFraction()
         return +adminFeeBN.toString() / 1e18
     }
 
-    async getAdminAddress(options?: DataUnionEndpointOptions) {
+    async getAdminAddress(options?: DataUnionEndpointOptions): Promise<Todo> {
         const duMainnet = getMainnetContractReadOnly(this.client, options)
         return duMainnet.owner()
     }
@@ -849,7 +867,7 @@ export class DataUnionEndpoints {
      * @property {String} member Ethereum mainnet address of the joining member. If not given, use StreamrClient authentication key
      * @property {String} secret if given, and correct, join the data union immediately
      */
-    async joinDataUnion(options: DataUnionEndpointOptions = {}) {
+    async joinDataUnion(options: DataUnionEndpointOptions = {}): Promise<Todo> {
         const {
             member,
             secret,
@@ -883,7 +901,7 @@ export class DataUnionEndpoints {
      * @param {Number} retryTimeoutMs (optional, default: 60000) give up
      * @return {Promise} resolves when member is in the data union (or fails with HTTP error)
      */
-    async hasJoined(memberAddress: string, options?: DataUnionEndpointOptions) {
+    async hasJoined(memberAddress: string, options?: DataUnionEndpointOptions): Promise<void> {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
@@ -903,7 +921,7 @@ export class DataUnionEndpoints {
         // event MemberParted(address indexed);
     }
 
-    async getDataUnionStats(options?: DataUnionEndpointOptions) {
+    async getDataUnionStats(options?: DataUnionEndpointOptions): Promise<DataUnionStats> {
         const duSidechain = await getSidechainContractReadOnly(this.client, options)
         const [
             totalEarnings,
@@ -929,7 +947,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} dataUnion to query
      * @param {EthereumAddress} memberAddress (optional) if not supplied, get the stats of currently logged in StreamrClient (if auth: privateKey)
      */
-    async getMemberStats(memberAddress?: string, options?: DataUnionEndpointOptions) {
+    async getMemberStats(memberAddress?: string, options?: DataUnionEndpointOptions): Promise<MemberStats> {
         const address = parseAddress(this.client, memberAddress)
         // TODO: use duSidechain.getMemberStats(address) once it's implemented, to ensure atomic read
         //        (so that memberData is from same block as getEarnings, otherwise withdrawable will be foobar)
@@ -953,7 +971,7 @@ export class DataUnionEndpoints {
      * @param memberAddress whose balance is returned
      * @return {Promise<BigNumber>}
      */
-    async getMemberBalance(memberAddress: string, options?: DataUnionEndpointOptions) {
+    async getMemberBalance(memberAddress: string, options?: DataUnionEndpointOptions): Promise<BigNumber> {
         const address = parseAddress(this.client, memberAddress)
         const duSidechain = await getSidechainContractReadOnly(this.client, options)
         return duSidechain.getWithdrawableEarnings(address)
@@ -967,7 +985,7 @@ export class DataUnionEndpoints {
      * was given in StreamrClient constructor.
      * @returns {Promise<BigNumber>} token balance in "wei" (10^-18 parts)
      */
-    async getTokenBalance(address: string|null|undefined, options?: DataUnionEndpointOptions) {
+    async getTokenBalance(address: string|null|undefined, options?: DataUnionEndpointOptions): Promise<BigNumber> {
         const a = parseAddress(this.client, address)
         // @ts-expect-error
         const tokenAddressMainnet = options.tokenAddress || (
@@ -993,7 +1011,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} contractAddress
      * @returns {number} 1 for old, 2 for current, zero for "not a data union"
      */
-    async getDataUnionVersion(contractAddress: string) {
+    async getDataUnionVersion(contractAddress: string): Promise<number> {
         const a = getAddress(contractAddress) // throws if bad address
         const provider = this.client.ethereum.getMainnetProvider()
         const du = new Contract(a, [{
@@ -1020,7 +1038,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
-    async withdraw(options: DataUnionEndpointOptions = {}) {
+    async withdraw(options: DataUnionEndpointOptions = {}): Promise<TransactionReceipt> {
         const tr = await untilWithdrawIsComplete(
             this.client,
             (opts) => this.getWithdrawTx(opts),
@@ -1035,7 +1053,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawTx(options?: DataUnionEndpointOptions) {
+    async getWithdrawTx(options?: DataUnionEndpointOptions): Promise<TransactionResponse> {
         const signer = await this.client.ethereum.getSidechainSigner()
         // @ts-expect-error
         const address = await signer.getAddress()
@@ -1059,7 +1077,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
-    async withdrawTo(recipientAddress: string, options?: DataUnionEndpointOptions) {
+    async withdrawTo(recipientAddress: string, options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
         const to = getAddress(recipientAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
             this.client,
@@ -1076,7 +1094,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawTxTo(recipientAddress: string, options?: DataUnionEndpointOptions) {
+    async getWithdrawTxTo(recipientAddress: string, options?: DataUnionEndpointOptions): Promise<TransactionResponse> {
         const signer = await this.client.ethereum.getSidechainSigner()
         // @ts-expect-error
         const address = await signer.getAddress()
@@ -1102,7 +1120,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
      */
-    async signWithdrawTo(recipientAddress: string, options?: DataUnionEndpointOptions) {
+    async signWithdrawTo(recipientAddress: string, options?: DataUnionEndpointOptions): Promise<string> {
         return this.signWithdrawAmountTo(recipientAddress, BigNumber.from(0), options)
     }
 
@@ -1115,7 +1133,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
      */
-    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string, options?: DataUnionEndpointOptions) {
+    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string, options?: DataUnionEndpointOptions): Promise<string> {
         const to = getAddress(recipientAddress) // throws if bad address
         const signer = this.client.ethereum.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
         // @ts-expect-error
