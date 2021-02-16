@@ -69,7 +69,8 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
             dataUnionVersion: 2
         })
     })
-    await memberClient.joinDataUnion({ secret } as any)
+    // @ts-expect-error
+    await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
 
     const tokenAddress = await dataUnion.token()
@@ -116,11 +117,11 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-    const stats = await memberClient.getMemberStats()
+    const stats = await memberClient.getDataUnion(dataUnion.address).getMemberStats()
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
-    const withdrawTr = await memberClient.withdraw()
+    const withdrawTr = await memberClient.getDataUnion(dataUnion.address).withdraw()
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)

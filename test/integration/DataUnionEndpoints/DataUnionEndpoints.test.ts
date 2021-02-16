@@ -19,7 +19,7 @@ const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainn
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
 describe('DataUnionEndPoints', () => {
-    let adminClient
+    let adminClient: StreamrClient
 
     const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
     const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
@@ -55,6 +55,7 @@ describe('DataUnionEndPoints', () => {
         await adminMutex.runExclusive(async () => {
             const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
+            // @ts-expect-error
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`DataUnion ${dataUnion.address} is ready to roll`)
 
@@ -86,10 +87,10 @@ describe('DataUnionEndPoints', () => {
         it('can add members', async () => {
             const dataUnion = await deployDataUnionSync('add-members-test')
             await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
-                await adminClient.hasJoined(memberAddressList[0], { dataUnion })
+                await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
+                await adminClient.getDataUnion(dataUnion.address).hasJoined(memberAddressList[0])
             })
-            const res = await adminClient.getDataUnionStats({ dataUnion })
+            const res = await adminClient.getDataUnion(dataUnion.address).getDataUnionStats()
             expect(+res.activeMemberCount).toEqual(3)
             expect(+res.inactiveMemberCount).toEqual(0)
         }, 150000)
@@ -97,24 +98,24 @@ describe('DataUnionEndPoints', () => {
         it('can remove members', async () => {
             const dataUnion = await deployDataUnionSync('remove-members-test')
             await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
-                await adminClient.kick(memberAddressList.slice(1), { dataUnion })
+                await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
+                await adminClient.getDataUnion(dataUnion.address).kick(memberAddressList.slice(1))
             })
-            const res = await adminClient.getDataUnionStats({ dataUnion })
+            const res = await adminClient.getDataUnion(dataUnion.address).getDataUnionStats()
             expect(+res.activeMemberCount).toEqual(1)
             expect(+res.inactiveMemberCount).toEqual(2)
         }, 150000)
 
         it('can set admin fee', async () => {
             const dataUnion = await deployDataUnionSync('set-admin-fee-test')
-            const oldFee = await adminClient.getAdminFee({ dataUnion })
+            const oldFee = await adminClient.getDataUnion(dataUnion.address).getAdminFee()
             await adminMutex.runExclusive(async () => {
-                log(`DU owner: ${await adminClient.getAdminAddress({ dataUnion })}`)
+                log(`DU owner: ${await adminClient.getDataUnion(dataUnion.address).getAdminAddress()}`)
                 log(`Sending tx from ${adminClient.getAddress()}`)
-                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
+                const tr = await adminClient.getDataUnion(dataUnion.address).setAdminFee(0.1)
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
-            const newFee = await adminClient.getAdminFee({ dataUnion })
+            const newFee = await adminClient.getDataUnion(dataUnion.address).getAdminFee()
             expect(oldFee).toEqual(0)
             expect(newFee).toEqual(0.1)
         }, 150000)
@@ -123,8 +124,8 @@ describe('DataUnionEndPoints', () => {
             const dataUnion = await deployDataUnionSync('withdraw-admin-fees-test')
 
             await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
-                const tr = await adminClient.setAdminFee(0.1, { dataUnion })
+                await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
+                const tr = await adminClient.getDataUnion(dataUnion.address).setAdminFee(0.1)
                 log(`Transaction receipt: ${JSON.stringify(tr)}`)
             })
 
@@ -177,10 +178,10 @@ describe('DataUnionEndPoints', () => {
         it('can get dataUnion stats', async () => {
             const dataUnion = await deployDataUnionSync('get-du-stats-test')
             await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
+                await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
             })
             const client = await getOutsiderClient(dataUnion)
-            const stats = await client.getDataUnionStats()
+            const stats = await client.getDataUnion(dataUnion.address).getDataUnionStats()
             expect(+stats.activeMemberCount).toEqual(3)
             expect(+stats.inactiveMemberCount).toEqual(0)
             expect(+stats.joinPartAgentCount).toEqual(2)
@@ -192,10 +193,10 @@ describe('DataUnionEndPoints', () => {
         it('can get member stats', async () => {
             const dataUnion = await deployDataUnionSync('get-member-stats-test')
             await adminMutex.runExclusive(async () => {
-                await adminClient.addMembers(memberAddressList, { dataUnion })
+                await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
             })
             const client = await getOutsiderClient(dataUnion)
-            const memberStats = await Promise.all(memberAddressList.map((m) => client.getMemberStats(m)))
+            const memberStats = await Promise.all(memberAddressList.map((m) => client.getDataUnion(dataUnion.address).getMemberStats(m)))
             expect(memberStats).toMatchObject([{
                 status: 'active',
                 earningsBeforeLastJoin: '0',

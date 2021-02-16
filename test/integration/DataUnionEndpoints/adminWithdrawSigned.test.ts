@@ -67,7 +67,7 @@ it('DataUnionEndPoints test signed withdraw from admin', async () => {
         })
     })
     // @ts-expect-error
-    await memberClient.joinDataUnion({ secret })
+    await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
 
     const tokenAddress = await dataUnion.token()
@@ -115,13 +115,13 @@ it('DataUnionEndPoints test signed withdraw from admin', async () => {
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
     // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
-    const stats = await memberClient.getMemberStats()
+    const stats = await memberClient.getDataUnion(dataUnion.address).getMemberStats()
     log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
 
     // try different ways of signing, for coverage; TODO: separate into own test
-    const signature = await memberClient.signWithdrawTo(member2Wallet.address)
-    const signature2 = await memberClient.signWithdrawAmountTo(member2Wallet.address, parseEther('1'))
-    const signature3 = await memberClient.signWithdrawAmountTo(member2Wallet.address, 3000000000000000) // 0.003 tokens
+    const signature = await memberClient.getDataUnion(dataUnion.address).signWithdrawTo(member2Wallet.address)
+    const signature2 = await memberClient.getDataUnion(dataUnion.address).signWithdrawAmountTo(member2Wallet.address, parseEther('1'))
+    const signature3 = await memberClient.getDataUnion(dataUnion.address).signWithdrawAmountTo(member2Wallet.address, 3000000000000000) // 0.003 tokens
 
     const isValid = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, '0', signature) // '0' = all earnings
     const isValid2 = await sidechainContract.signatureIsValid(memberWallet.address, member2Wallet.address, parseEther('1'), signature2)
@@ -133,7 +133,7 @@ it('DataUnionEndPoints test signed withdraw from admin', async () => {
 
     const balanceBefore = await adminTokenMainnet.balanceOf(member2Wallet.address)
     log(`balanceBefore ${balanceBefore}. Withdrawing tokens...`)
-    const withdrawTr = await adminClient.withdrawToSigned(memberWallet.address, member2Wallet.address, signature, { dataUnion })
+    const withdrawTr = await adminClient.getDataUnion(dataUnion.address).withdrawToSigned(memberWallet.address, member2Wallet.address, signature)
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await adminTokenMainnet.balanceOf(member2Wallet.address)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
