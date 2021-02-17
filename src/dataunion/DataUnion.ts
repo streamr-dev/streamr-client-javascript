@@ -103,7 +103,7 @@ export class DataUnion {
         return this.dataUnionEndpoints.getWithdrawTx(this.contractAddress)
     }
 
-    async withdrawTo(recipientAddress: string, options?: DataUnionWithdrawOptions) {
+    async withdrawAllTo(recipientAddress: string, options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawAllTo(recipientAddress, options, this.contractAddress)
     }
 
@@ -111,8 +111,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.getWithdrawTxTo(recipientAddress, this.contractAddress)
     }
 
-    async signWithdrawTo(recipientAddress: string) {
-        return this.dataUnionEndpoints.signWithdrawTo(recipientAddress, this.contractAddress)
+    async signWithdrawAllTo(recipientAddress: string) {
+        return this.dataUnionEndpoints.signWithdrawAllTo(recipientAddress, this.contractAddress)
     }
 
     async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string) {

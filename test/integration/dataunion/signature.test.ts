@@ -50,7 +50,7 @@ it('DataUnion signature', async () => {
     const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)
 
-    const signature = await memberClient.getDataUnion(dataUnion.address).signWithdrawTo(member2Wallet.address)
+    const signature = await memberClient.getDataUnion(dataUnion.address).signWithdrawAllTo(member2Wallet.address)
     const signature2 = await memberClient.getDataUnion(dataUnion.address).signWithdrawAmountTo(member2Wallet.address, parseEther('1'))
     const signature3 = await memberClient.getDataUnion(dataUnion.address).signWithdrawAmountTo(member2Wallet.address, 3000000000000000) // 0.003 tokens
 

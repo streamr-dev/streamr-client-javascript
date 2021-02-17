@@ -784,7 +784,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} dataUnion to withdraw my earnings from
      * @param {EthereumAddress} memberAddress the member whose earnings are sent out
      * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
-     * @param {string} signature from member, produced using signWithdrawTo
+     * @param {string} signature from member, produced using signWithdrawAllTo
      * @param options
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
@@ -805,7 +805,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} dataUnion to withdraw my earnings from
      * @param {EthereumAddress} memberAddress the member whose earnings are sent out
      * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
-     * @param {string} signature from member, produced using signWithdrawTo
+     * @param {string} signature from member, produced using signWithdrawAllTo
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
@@ -1092,7 +1092,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
      * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
      */
-    async signWithdrawTo(recipientAddress: string, contractAddress: string): Promise<string> {
+    async signWithdrawAllTo(recipientAddress: string, contractAddress: string): Promise<string> {
         return this.signWithdrawAmountTo(recipientAddress, BigNumber.from(0), contractAddress)
     }
 

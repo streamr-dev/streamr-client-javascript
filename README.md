@@ -376,9 +376,9 @@ await client.setAdminFee(0.3, { dataUnion })
 | join(memberAddress, \[secret])                                  | JoinRequest         | Join a Data Union                                                           |
 | hasJoined(memberAddress, \[options])                            | -                   | Wait until member has been accepted                                         |
 | withdrawAll(\[options])                                         | Transaction receipt | Withdraw funds from Data Union                                              |
-| withdrawTo(recipientAddress, dataUnionContractAddress, options) | Transaction receipt | Donate/move your earnings to recipientAddress instead of your memberAddress |
-| signWithdrawTo(recipientAddress, options)                       | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |
-| signWithdrawAmountTo(recipientAddress, amountTokenWei, options) | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |
+| withdrawAllTo(recipientAddress, \[options])                     | Transaction receipt | Donate/move your earnings to recipientAddress instead of your memberAddress |
+| signWithdrawAllTo(recipientAddress)                             | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |
+| signWithdrawAmountTo(recipientAddress, amountTokenWei)          | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |
 
 Here's an example how to sign off on a withdraw to (any) recipientAddress:
 
@@ -388,7 +388,7 @@ const client = new StreamrClient({
     dataUnion,
 })
 
-const signature = await client.signWithdrawTo(recipientAddress)
+const signature = await client.signWithdrawAllTo(recipientAddress)
 ```
 
 ### Query functions
