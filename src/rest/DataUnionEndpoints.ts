@@ -1065,16 +1065,15 @@ export class DataUnionEndpoints {
     /**
      * Withdraw earnings and "donate" them to the given address
      * @param {EthereumAddress} recipientAddress the address to receive the tokens
-     * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
-    async withdrawTo(recipientAddress: string, options?: DataUnionEndpointOptions): Promise<TransactionReceipt> {
+    async withdrawAllTo(recipientAddress: string, contractAddress: string, options?: DataUnionOptions): Promise<TransactionReceipt> {
         const to = getAddress(recipientAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
             this.client,
             (opts) => this.getWithdrawTxTo(to, opts),
             (opts) => this.getTokenBalance(to, opts),
-            { ...this.client.options, ...options }
+            { dataUnion: contractAddress, ...this.client.options, ...options }
         )
         return tr
     }

@@ -98,7 +98,7 @@ export class DataUnion {
     }
 
     async withdrawTo(recipientAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.withdrawTo(recipientAddress, this.getEndpointOptions(options))
+        return this.dataUnionEndpoints.withdrawAllTo(recipientAddress, this.contractAddress, options)
     }
 
     async getWithdrawTxTo(recipientAddress: string, options?: DataUnionOptions) {
