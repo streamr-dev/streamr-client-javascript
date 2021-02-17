@@ -1,5 +1,6 @@
-import { Contract, providers, Wallet } from 'ethers'
+import { BigNumber, Contract, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
+import { TransactionReceipt } from '@ethersproject/providers'
 import debug from 'debug'
 
 import { getEndpointUrl, until } from '../../../src/utils'
@@ -22,7 +23,12 @@ const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, pr
 const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
 const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-it('DataUnionEndPoints test withdraw by member itself', async () => {
+const testWithdraw = async (
+    getBalanceBefore: (memberWallet: Wallet, adminTokenMainnet: Contract) => Promise<BigNumber>, 
+    withdraw: (dataUnionAddress: string, memberClient: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => Promise<TransactionReceipt>, 
+    getBalanceAfter: (memberWallet: Wallet, adminTokenMainnet: Contract) => Promise<BigNumber>,
+    requiresMainnetETH: boolean
+) => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -46,9 +52,11 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     await sendTx.wait()
     log(`Sent 0.1 sidechain-ETH to ${memberWallet.address}`)
 
-    const send2Tx = await adminWalletMainnet.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
-    await send2Tx.wait()
-    log(`Sent 0.1 mainnet-ETH to ${memberWallet.address}`)
+    if (requiresMainnetETH) {
+        const send2Tx = await adminWalletMainnet.sendTransaction({ to: memberWallet.address, value: parseEther('0.1') })
+        await send2Tx.wait()
+        log(`Sent 0.1 mainnet-ETH to ${memberWallet.address}`)    
+    }
 
     const memberClient = new StreamrClient({
         ...config.clientOptions,
@@ -70,8 +78,9 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
         })
     })
     // @ts-expect-error
-    await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
+    const res = await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
+    log(`Member joined data union: ${JSON.stringify(res)}`)
 
     const tokenAddress = await dataUnion.token()
     log(`Token address: ${tokenAddress}`)
@@ -105,6 +114,7 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     await until(async () => !(await tokenSidechain.balanceOf(dataUnion.sidechain.address)).eq('0'), 300000, 3000)
     log(`Confirmed tokens arrived, DU balance: ${duSidechainEarningsBefore} -> ${await dataUnion.sidechain.totalEarnings()}`)
 
+    // make a "full" sidechain contract object that has all functions, not just those required by StreamrClient
     const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tx3 = await sidechainContract.refreshRevenue()
     const tr3 = await tx3.wait()
@@ -116,14 +126,15 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
-    // note: getMemberStats without explicit address => get stats of the authenticated StreamrClient
     const stats = await memberClient.getDataUnion(dataUnion.address).getMemberStats()
-    log(`Stats: ${JSON.stringify(stats)}. Withdrawing tokens...`)
+    log(`Stats: ${JSON.stringify(stats)}`)
 
-    const balanceBefore = await adminTokenMainnet.balanceOf(memberWallet.address)
-    const withdrawTr = await memberClient.getDataUnion(dataUnion.address).withdraw()
+    const balanceBefore = await getBalanceBefore(memberWallet, adminTokenMainnet)
+    log(`Balance before: ${balanceBefore}. Withdrawing tokens...`)
+
+    const withdrawTr = await withdraw(dataUnion.address, memberClient, memberWallet, adminClient)
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
-    const balanceAfter = await adminTokenMainnet.balanceOf(memberWallet.address)
+    const balanceAfter = await getBalanceAfter(memberWallet, adminTokenMainnet)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     await providerMainnet.removeAllListeners()
@@ -140,4 +151,49 @@ it('DataUnionEndPoints test withdraw by member itself', async () => {
     })
     expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
     expect(balanceIncrease.toString()).toBe(amount.toString())
-}, 300000)
+}
+
+describe('DataUnion withdraw', () => {
+
+    describe('Member', () => {
+
+        it('by member itself', () => {
+            const getBalanceBefore = async (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
+            const withdraw = async (dataUnionAddress: string, memberClient: StreamrClient) => memberClient.getDataUnion(dataUnionAddress).withdraw()
+            const getBalanceAfter = async (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
+            return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, true)
+        }, 300000)
+
+        it('from member to any address', () => {
+            const outsiderWallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${Date.now()}`, providerSidechain)
+            const getBalanceBefore = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(outsiderWallet.address)
+            const withdraw = (dataUnionAddress: string, memberClient: StreamrClient) => memberClient.getDataUnion(dataUnionAddress).withdrawTo(outsiderWallet.address)
+            const getBalanceAfter = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(outsiderWallet.address)
+            return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, true)
+        }, 300000)
+
+    })
+
+    describe('Admin', () => {
+        it('non-signed', async () => {
+            const getBalanceBefore = (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
+            const withdraw = (dataUnionAddress: string, _: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => adminClient.getDataUnion(dataUnionAddress).withdrawMember(memberWallet.address)
+            const getBalanceAfter = (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
+            return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, false)
+        }, 300000)
+        
+        
+        it('signed', async () => {
+            const member2Wallet = new Wallet(`0x100000000000000000000000000000000000000012300000002${Date.now()}`, providerSidechain)
+            const getBalanceBefore = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(member2Wallet.address)
+            const withdraw = async (dataUnionAddress: string, memberClient: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => {
+                const signature = await memberClient.getDataUnion(dataUnionAddress).signWithdrawTo(member2Wallet.address)
+                const withdrawTr = await adminClient.getDataUnion(dataUnionAddress).withdrawToSigned(memberWallet.address, member2Wallet.address, signature)
+                return withdrawTr
+            }
+            const getBalanceAfter = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(member2Wallet.address)
+            return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, false)
+        }, 300000)
+    })
+
+});
