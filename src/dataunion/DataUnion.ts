@@ -1,12 +1,18 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { DataUnionEndpoints } from '../rest/DataUnionEndpoints'
-import { Todo } from '../types'
 
-export interface DataUnionOptions {
+export interface DataUnionDeployOptions {
+    owner?: string,
+    joinPartAgents?: string[],
+    dataUnionName?: string,
+    adminFee?: number,
+    sidechainPollingIntervalMs?: number,
+    sidechainRetryTimeoutMs?: number
+    /* TODO these were maybe included for DUv1, should we add the support to deployDataUnion method or remove the fields
     wallet?: Todo,
     provider?: Todo,
     confirmations?: Todo,
-    gasPrice?: Todo,
+    gasPrice?: Todo,*/
 }
 
 export interface DataUnionWithdrawOptions {

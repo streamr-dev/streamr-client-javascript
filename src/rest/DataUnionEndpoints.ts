@@ -18,7 +18,7 @@ import { keccak256 } from '@ethersproject/keccak256'
 import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 import { verifyMessage } from '@ethersproject/wallet'
 import debug from 'debug'
-import { DataUnionOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
+import { DataUnionDeployOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
 import StreamrClient from '../StreamrClient'
 import { Todo } from '../types'
 
@@ -604,7 +604,7 @@ export class DataUnionEndpoints {
      * @param {DeployOptions} options such as adminFee (default: 0)
      * @return {Promise<Contract>} that resolves when the new DU is deployed over the bridge to side-chain
      */
-    async deployDataUnion(options: DataUnionOptions = {}): Promise<Contract> {
+    async deployDataUnion(options: DataUnionDeployOptions = {}): Promise<Contract> {
         const {
             owner,
             joinPartAgents,
@@ -612,7 +612,7 @@ export class DataUnionEndpoints {
             adminFee = 0,
             sidechainPollingIntervalMs = 1000,
             sidechainRetryTimeoutMs = 600000,
-        }: Todo = options
+        } = options
 
         let duName = dataUnionName
         if (!duName) {

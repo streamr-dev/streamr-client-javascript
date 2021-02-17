@@ -27,7 +27,6 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     const duMainnetAddress = await adminClient.calculateDataUnionMainnetAddress(dataUnionName, adminWalletMainnet.address)
     const duSidechainAddress = await adminClient.calculateDataUnionSidechainAddress(duMainnetAddress)
 
-    // @ts-expect-error
     const dataUnion = await adminClient.deployDataUnion({ dataUnionName })
 
     const version = await adminClient.getDataUnionVersion(dataUnion.address)

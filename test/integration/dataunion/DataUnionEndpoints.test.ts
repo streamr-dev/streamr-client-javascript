@@ -55,7 +55,6 @@ describe('DataUnionEndPoints', () => {
         await adminMutex.runExclusive(async () => {
             const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
-            // @ts-expect-error
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
             log(`DataUnion ${dataUnion.address} is ready to roll`)
 

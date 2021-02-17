@@ -331,7 +331,7 @@ This library provides functions for working with Data Unions.
 
 TODO: check all this documentation before merging/publishing, probably some of it is out of date (DU1 era)
 
-TODO: if these parameters (and `confirmations` parameter) are not used at all, remove also from DataUnionOptions interface
+TODO: do we need these parameters (and `confirmations` parameter) somewhere? Either add the support, or remove from `DataUnionDeployOptions` interface (currently commented out)
 | Property                 | Default                                                | Description                                                                                                      |
 | :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
 | wallet                   | given in auth                                          | ethers.js Wallet object to use to sign and send withdraw transaction                                             |

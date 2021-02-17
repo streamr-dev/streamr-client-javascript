@@ -19,7 +19,7 @@ import { DataUnionEndpoints } from './rest/DataUnionEndpoints'
 import { BigNumber } from '@ethersproject/bignumber'
 import Stream, { StreamProperties } from './stream'
 import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
-import { DataUnion, DataUnionOptions } from './dataunion/DataUnion'
+import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
 
 export interface StreamrClientOptions {
     id?: string
@@ -473,7 +473,7 @@ export default class StreamrClient extends EventEmitter {
     }
 
     // TODO could this return DataUnion?
-    async deployDataUnion(options?: DataUnionOptions) {
+    async deployDataUnion(options?: DataUnionDeployOptions) {
         return this.dataUnionEndpoints.deployDataUnion(options)
     }
 
