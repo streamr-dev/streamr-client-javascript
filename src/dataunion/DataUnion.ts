@@ -31,60 +31,12 @@ export class DataUnion {
         this.dataUnionEndpoints = dataUnionEndpoints
     }
 
-    async kick(memberAddressList: string[], requiredConfirmationCount: number = 1) {
-        return this.dataUnionEndpoints.kick(memberAddressList, requiredConfirmationCount, this.contractAddress)
-    }
-
-    async addMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
-        return this.dataUnionEndpoints.addMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
-    }
-
-    async withdrawMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
-        return this.dataUnionEndpoints.withdrawMember(memberAddress, options, this.contractAddress)
-    }
-
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
-        return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
-    }
-
-    async setAdminFee(newFeeFraction: number) {
-        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
-    }
-
-    async getAdminFee() {
-        return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
-    }
-
-    async getAdminAddress() {
-        return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
-    }
-
     async join(memberAddress: string, secret?: string) {
         return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
     }
 
     async hasJoined(memberAddress: string, options?: { pollingIntervalMs?: number, retryTimeoutMs?: number }) {
         return this.dataUnionEndpoints.hasJoined(memberAddress, options, this.contractAddress)
-    }
-
-    async getMembers() {
-        return this.dataUnionEndpoints.getMembers(this.contractAddress)
-    }
-
-    async getDataUnionStats() {
-        return this.dataUnionEndpoints.getDataUnionStats(this.contractAddress)
-    }
-
-    async getMemberStats(memberAddress?: string) {
-        return this.dataUnionEndpoints.getMemberStats(memberAddress, this.contractAddress)
-    }
-
-    async getMemberBalance(memberAddress: string) {
-        return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
-    }
-
-    async getTokenBalance(address: string|null|undefined) {
-        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
     }
 
     async withdrawAll(options?: DataUnionWithdrawOptions) {
@@ -101,5 +53,54 @@ export class DataUnion {
 
     async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string) {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
+    }
+
+    async kick(memberAddressList: string[], requiredConfirmationCount: number = 1) {
+        return this.dataUnionEndpoints.kick(memberAddressList, requiredConfirmationCount, this.contractAddress)
+    }
+
+    async addMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
+        return this.dataUnionEndpoints.addMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
+    }
+
+    async getAdminAddress() {
+        return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
+    }
+
+    async getMembers() {
+        return this.dataUnionEndpoints.getMembers(this.contractAddress)
+    }
+
+    async setAdminFee(newFeeFraction: number) {
+        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
+    }
+
+    async getAdminFee() {
+        return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
+    }
+
+    async getDataUnionStats() {
+        return this.dataUnionEndpoints.getDataUnionStats(this.contractAddress)
+    }
+
+    async getMemberStats(memberAddress?: string) {
+        return this.dataUnionEndpoints.getMemberStats(memberAddress, this.contractAddress)
+    }
+
+    async getMemberBalance(memberAddress: string) {
+        return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
+    }
+
+    async withdrawMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawMember(memberAddress, options, this.contractAddress)
+    }
+
+    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
+    }
+
+    // TODO move to somewhere else?
+    async getTokenBalance(address: string|null|undefined) {
+        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
     }
 }
