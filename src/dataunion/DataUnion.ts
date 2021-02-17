@@ -1,5 +1,5 @@
 import { BigNumber } from '@ethersproject/bignumber'
-import { DataUnionEndpoints, DataUnionEndpointOptions } from '../rest/DataUnionEndpoints'
+import { DataUnionEndpoints } from '../rest/DataUnionEndpoints'
 import { Todo } from '../types'
 
 export interface DataUnionOptions {
@@ -7,8 +7,12 @@ export interface DataUnionOptions {
     provider?: Todo,
     confirmations?: Todo,
     gasPrice?: Todo,
-    minimumWithdrawTokenWei?: BigNumber|number|string,
-    payForSignatureTransport?: boolean
+}
+
+export interface DataUnionWithdrawOptions {
+    pollingIntervalMs?: number
+    retryTimeoutMs?: number
+    payForSignatureTransport?: boolean    
 }
 
 export class DataUnion {
@@ -21,40 +25,40 @@ export class DataUnion {
         this.dataUnionEndpoints = dataUnionEndpoints
     }
 
-    async kick(memberAddressList: string[], options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.kick(memberAddressList, this.getEndpointOptions(options))
+    async kick(memberAddressList: string[], requiredConfirmationCount: number = 1) {
+        return this.dataUnionEndpoints.kick(memberAddressList, requiredConfirmationCount, this.contractAddress)
     }
 
-    async addMembers(memberAddressList: string[], options?: DataUnionOptions ) {
-        return this.dataUnionEndpoints.addMembers(memberAddressList, this.getEndpointOptions(options))
+    async addMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
+        return this.dataUnionEndpoints.addMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
     }
 
-    async withdrawMember(memberAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.withdrawMember(memberAddress, this.getEndpointOptions(options))
+    async withdrawMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawMember(memberAddress, options, this.contractAddress)
     }
 
-    async getWithdrawMemberTx(memberAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getWithdrawMemberTx(memberAddress, this.getEndpointOptions(options))
+    async getWithdrawMemberTx(memberAddress: string) {
+        return this.dataUnionEndpoints.getWithdrawMemberTx(memberAddress, this.contractAddress)
     }
 
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, this.getEndpointOptions(options))
+    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
     }
 
-    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getWithdrawToSignedTx(memberAddress, recipientAddress, signature, this.getEndpointOptions(options))
+    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string) {
+        return this.dataUnionEndpoints.getWithdrawToSignedTx(memberAddress, recipientAddress, signature, this.contractAddress)
     }
 
-    async setAdminFee(newFeeFraction: number, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.getEndpointOptions(options))
+    async setAdminFee(newFeeFraction: number) {
+        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
     }
 
-    async getAdminFee(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getAdminFee(this.getEndpointOptions(options))
+    async getAdminFee() {
+        return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
     }
 
-    async getAdminAddress(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getAdminAddress(this.getEndpointOptions(options))
+    async getAdminAddress() {
+        return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
     }
 
     async join(memberAddress: string, secret?: string) {
@@ -65,54 +69,47 @@ export class DataUnion {
         return this.dataUnionEndpoints.hasJoined(memberAddress, options, this.contractAddress)
     }
 
-    async getMembers(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getMembers(this.getEndpointOptions(options))
+    async getMembers() {
+        return this.dataUnionEndpoints.getMembers(this.contractAddress)
     }
 
-    async getDataUnionStats(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getDataUnionStats(this.getEndpointOptions(options))
+    async getDataUnionStats() {
+        return this.dataUnionEndpoints.getDataUnionStats(this.contractAddress)
     }
 
-    async getMemberStats(memberAddress?: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getMemberStats(memberAddress, this.getEndpointOptions(options))
+    async getMemberStats(memberAddress?: string) {
+        return this.dataUnionEndpoints.getMemberStats(memberAddress, this.contractAddress)
     }
 
-    async getMemberBalance(memberAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.getEndpointOptions(options))
+    async getMemberBalance(memberAddress: string) {
+        return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
     }
 
-    async getTokenBalance(address: string|null|undefined, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getTokenBalance(address, this.getEndpointOptions(options))
+    async getTokenBalance(address: string|null|undefined) {
+        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
     }
 
-    async withdrawAll(options?: DataUnionOptions) {
+    async withdrawAll(options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawAll(this.contractAddress, options)
     }
 
-    async getWithdrawTx(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getWithdrawTx(this.getEndpointOptions(options))
+    async getWithdrawTx() {
+        return this.dataUnionEndpoints.getWithdrawTx(this.contractAddress)
     }
 
-    async withdrawTo(recipientAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.withdrawAllTo(recipientAddress, this.contractAddress, options)
+    async withdrawTo(recipientAddress: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawAllTo(recipientAddress, options, this.contractAddress)
     }
 
-    async getWithdrawTxTo(recipientAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.getWithdrawTxTo(recipientAddress, this.getEndpointOptions(options))
+    async getWithdrawTxTo(recipientAddress: string) {
+        return this.dataUnionEndpoints.getWithdrawTxTo(recipientAddress, this.contractAddress)
     }
 
-    async signWithdrawTo(recipientAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.signWithdrawTo(recipientAddress, this.getEndpointOptions(options))
+    async signWithdrawTo(recipientAddress: string) {
+        return this.dataUnionEndpoints.signWithdrawTo(recipientAddress, this.contractAddress)
     }
 
-    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.getEndpointOptions(options))
-    }
-
-    getEndpointOptions(options?: DataUnionOptions) {
-        return {
-            dataUnion: this.contractAddress,
-            ...options
-        }
+    async signWithdrawAmountTo(recipientAddress: string, amountTokenWei: BigNumber|number|string) {
+        return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
     }
 }

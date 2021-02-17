@@ -15,11 +15,11 @@ import { getUserId } from './user'
 import { Todo } from './types'
 import { StreamEndpoints, StreamListQuery } from './rest/StreamEndpoints'
 import { LoginEndpoints } from './rest/LoginEndpoints'
-import { DataUnionEndpointOptions, DataUnionEndpoints } from './rest/DataUnionEndpoints'
+import { DataUnionEndpoints } from './rest/DataUnionEndpoints'
 import { BigNumber } from '@ethersproject/bignumber'
 import Stream, { StreamProperties } from './stream'
 import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
-import { DataUnion } from './dataunion/DataUnion'
+import { DataUnion, DataUnionOptions } from './dataunion/DataUnion'
 
 export interface StreamrClientOptions {
     id?: string
@@ -473,21 +473,21 @@ export default class StreamrClient extends EventEmitter {
     }
 
     // TODO could this return DataUnion?
-    async deployDataUnion(options?: DataUnionEndpointOptions) {
+    async deployDataUnion(options?: DataUnionOptions) {
         return this.dataUnionEndpoints.deployDataUnion(options)
     }
 
     // TODO move most of these methods to DataUnion class?
-    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string, options?: DataUnionEndpointOptions) {
-        return this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress, options)
+    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string) {
+        return this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
     }
 
-    async calculateDataUnionSidechainAddress(duMainnetAddress: string, options?: DataUnionEndpointOptions) {
-        return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress, options)
+    async calculateDataUnionSidechainAddress(duMainnetAddress: string) {
+        return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress)
     }
 
-    async getDataUnionContract(options?: DataUnionEndpointOptions) {
-        return this.dataUnionEndpoints.getDataUnionContract(options)
+    async getDataUnionContract(contractAddress: string) {
+        return this.dataUnionEndpoints.getDataUnionContract(contractAddress)
     }
 
     async createSecret(dataUnionMainnetAddress: string, name: string = 'Untitled Data Union Secret') {
