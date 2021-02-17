@@ -11,7 +11,6 @@ export interface DataUnionOptions {
     minimumWithdrawTokenWei?: BigNumber|number|string,
     sidechainTokenAddress?: string,
     factoryMainnetAddress?: string,
-    sidechainAmbAddress?: string,
     payForSignatureTransport?: boolean
 }
 

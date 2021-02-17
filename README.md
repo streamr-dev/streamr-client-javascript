@@ -344,7 +344,6 @@ Data union functions take a third parameter, `options`, which are either overrid
 | minimumWithdrawTokenWei  | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
 | sidechainTokenAddress    | TODO                                                   | sidechain token address                                                                                          |
 | factoryMainnetAddress    | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
-| sidechainAmbAddress      | TODO                                                   | Arbitrary Message-passing Bridge (AMB), see [Tokenbridge github page](https://github.com/poanetwork/tokenbridge) |
 | payForSignatureTransport | `true`                                                 | Someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator                       |
 
 ### Admin Functions

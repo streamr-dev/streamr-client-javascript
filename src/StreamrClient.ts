@@ -54,7 +54,6 @@ export interface StreamrClientOptions {
     minimumWithdrawTokenWei?: BigNumber|number|string,
     sidechainTokenAddress?: string
     factoryMainnetAddress?: string
-    sidechainAmbAddress?: string
     payForSignatureTransport?: boolean
     cache?: {
         maxSize?: number,

@@ -54,8 +54,6 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         sidechainTokenAddress: null, // TODO // sidechain token
         // @ts-expect-error
         factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
-        // @ts-expect-error
-        sidechainAmbAddress: null, // Arbitrary Message-passing Bridge (AMB), see https://github.com/poanetwork/tokenbridge
         payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
         ...opts,
         cache: {
