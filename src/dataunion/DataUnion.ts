@@ -43,16 +43,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.withdrawMember(memberAddress, options, this.contractAddress)
     }
 
-    async getWithdrawMemberTx(memberAddress: string) {
-        return this.dataUnionEndpoints.getWithdrawMemberTx(memberAddress, this.contractAddress)
-    }
-
     async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
-    }
-
-    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string) {
-        return this.dataUnionEndpoints.getWithdrawToSignedTx(memberAddress, recipientAddress, signature, this.contractAddress)
     }
 
     async setAdminFee(newFeeFraction: number) {
@@ -99,16 +91,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.withdrawAll(this.contractAddress, options)
     }
 
-    async getWithdrawTx() {
-        return this.dataUnionEndpoints.getWithdrawTx(this.contractAddress)
-    }
-
     async withdrawAllTo(recipientAddress: string, options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawAllTo(recipientAddress, options, this.contractAddress)
-    }
-
-    async getWithdrawTxTo(recipientAddress: string) {
-        return this.dataUnionEndpoints.getWithdrawTxTo(recipientAddress, this.contractAddress)
     }
 
     async signWithdrawAllTo(recipientAddress: string) {

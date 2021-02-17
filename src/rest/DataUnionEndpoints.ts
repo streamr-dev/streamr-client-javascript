@@ -1016,7 +1016,7 @@ export class DataUnionEndpoints {
     async withdrawAll(contractAddress: string, options?: DataUnionWithdrawOptions): Promise<TransactionReceipt> {
         const tr = await untilWithdrawIsComplete(
             this.client,
-            () => this.getWithdrawTx(contractAddress),
+            () => this.getWithdrawAllTx(contractAddress),
             () => this.getTokenBalance(this.client.getAddress(), contractAddress),
             options
         )
@@ -1027,7 +1027,7 @@ export class DataUnionEndpoints {
      * Get the tx promise for withdrawing all your earnings
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawTx(contractAddress: string): Promise<TransactionResponse> {
+    async getWithdrawAllTx(contractAddress: string): Promise<TransactionResponse> {
         const signer = await this.client.ethereum.getSidechainSigner()
         // @ts-expect-error
         const address = await signer.getAddress()
@@ -1054,7 +1054,7 @@ export class DataUnionEndpoints {
         const to = getAddress(recipientAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
             this.client,
-            () => this.getWithdrawTxTo(to, contractAddress),
+            () => this.getWithdrawAllToTx(to, contractAddress),
             () => this.getTokenBalance(to, contractAddress),
             options
         )
@@ -1067,7 +1067,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawTxTo(recipientAddress: string, contractAddress: string): Promise<TransactionResponse> {
+    async getWithdrawAllToTx(recipientAddress: string, contractAddress: string): Promise<TransactionResponse> {
         const signer = await this.client.ethereum.getSidechainSigner()
         // @ts-expect-error
         const address = await signer.getAddress()
