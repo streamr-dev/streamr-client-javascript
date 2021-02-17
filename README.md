@@ -343,8 +343,13 @@ Data union functions take a third parameter, `options`, which are either overrid
 | tokenAddress             | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
 | minimumWithdrawTokenWei  | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
 | sidechainTokenAddress    | TODO                                                   | sidechain token address                                                                                          |
-| factoryMainnetAddress    | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
 | payForSignatureTransport | `true`                                                 | Someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator                       |
+
+Also these DataUnion-specific options are used from `StreamrClient` options:
+| Property                 | Default                                                | Description                                                                                                      |
+| :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| factoryMainnetAddress    | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
+
 
 ### Admin Functions
 

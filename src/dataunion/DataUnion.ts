@@ -10,7 +10,6 @@ export interface DataUnionOptions {
     tokenAddress?: Todo,
     minimumWithdrawTokenWei?: BigNumber|number|string,
     sidechainTokenAddress?: string,
-    factoryMainnetAddress?: string,
     payForSignatureTransport?: boolean
 }
 

@@ -311,7 +311,7 @@ async function getSidechainAmb(client: StreamrClient, options: DataUnionEndpoint
     if (!cachedSidechainAmb) {
         const getAmbPromise = async () => {
             const mainnetProvider = client.ethereum.getMainnetProvider()
-            const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+            const factoryMainnetAddress = client.options.factoryMainnetAddress
             const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, mainnetProvider)
             const sidechainProvider = client.ethereum.getSidechainProvider()
             const factorySidechainAddress = await factoryMainnet.data_union_sidechain_factory()
@@ -333,9 +333,9 @@ async function getSidechainAmb(client: StreamrClient, options: DataUnionEndpoint
     return cachedSidechainAmb
 }
 
-async function getMainnetAmb(client: StreamrClient, options: DataUnionEndpointOptions) {
+async function getMainnetAmb(client: StreamrClient) {
     const mainnetProvider = client.ethereum.getMainnetProvider()
-    const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+    const factoryMainnetAddress = client.options.factoryMainnetAddress
     const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, mainnetProvider)
     const mainnetAmbAddress = await factoryMainnet.amb()
     return new Contract(mainnetAmbAddress, mainnetAmbABI, mainnetProvider)
@@ -377,7 +377,7 @@ async function transportSignatures(client: StreamrClient, messageHash: Todo, opt
     log(`All signatures packed into one: ${packedSignatures}`)
 
     // Gas estimation also checks that the transaction would succeed, and provides a helpful error message in case it would fail
-    const mainnetAmb = await getMainnetAmb(client, options)
+    const mainnetAmb = await getMainnetAmb(client)
     log(`Estimating gas using mainnet AMB @ ${mainnetAmb.address}, message=${message}`)
     let gasLimit
     try {
@@ -468,7 +468,7 @@ async function untilWithdrawIsComplete(client: StreamrClient, getWithdrawTxFunc:
             await until(async () => requiredSignaturesHaveBeenCollected(client, messageHash, options), pollingIntervalMs, retryTimeoutMs)
 
             log(`Checking mainnet AMB hasn't already processed messageId=${messageId}`)
-            const mainnetAmb = await getMainnetAmb(client, options)
+            const mainnetAmb = await getMainnetAmb(client)
             const alreadySent = await mainnetAmb.messageCallStatus(messageId)
             const failAddress = await mainnetAmb.failedMessageSender(messageId)
             if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
@@ -496,10 +496,10 @@ async function untilWithdrawIsComplete(client: StreamrClient, getWithdrawTxFunc:
 // key the cache with name only, since PROBABLY one StreamrClient will ever use only one private key
 const mainnetAddressCache: Todo = {} // mapping: "name" -> mainnet address
 /** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
-async function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: string, options: DataUnionEndpointOptions = {}) {
+async function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: string) {
     if (!mainnetAddressCache[dataUnionName]) {
         const provider = client.ethereum.getMainnetProvider()
-        const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+        const factoryMainnetAddress = client.options.factoryMainnetAddress
         const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
         const addressPromise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
         mainnetAddressCache[dataUnionName] = addressPromise
@@ -511,10 +511,10 @@ async function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: 
 // TODO: calculate addresses in JS
 const sidechainAddressCache: Todo = {} // mapping: mainnet address -> sidechain address
 /** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
-async function getDataUnionSidechainAddress(client: StreamrClient, duMainnetAddress: string, options: DataUnionEndpointOptions = {}) {
+async function getDataUnionSidechainAddress(client: StreamrClient, duMainnetAddress: string) {
     if (!sidechainAddressCache[duMainnetAddress]) {
         const provider = client.ethereum.getMainnetProvider()
-        const factoryMainnetAddress = options.factoryMainnetAddress || client.options.factoryMainnetAddress
+        const factoryMainnetAddress = client.options.factoryMainnetAddress
         const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
         const addressPromise = factoryMainnet.sidechainAddress(duMainnetAddress)
         sidechainAddressCache[duMainnetAddress] = addressPromise
@@ -547,7 +547,7 @@ function getMainnetContract(client: StreamrClient, options: DataUnionEndpointOpt
 async function getSidechainContract(client: StreamrClient, options: DataUnionEndpointOptions = {}) {
     const signer = await client.ethereum.getSidechainSigner()
     const duMainnet = getMainnetContractReadOnly(client, options)
-    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address, options)
+    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address)
     // @ts-expect-error
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, signer)
     return duSidechain
@@ -556,7 +556,7 @@ async function getSidechainContract(client: StreamrClient, options: DataUnionEnd
 async function getSidechainContractReadOnly(client: StreamrClient, options: DataUnionEndpointOptions = {}) {
     const provider = await client.ethereum.getSidechainProvider()
     const duMainnet = getMainnetContractReadOnly(client, options)
-    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address, options)
+    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address)
     // @ts-expect-error
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, provider)
     return duSidechain
@@ -574,14 +574,14 @@ export class DataUnionEndpoints {
     //          admin: DEPLOY AND SETUP DATA UNION
     // //////////////////////////////////////////////////////////////////
 
-    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string, options?: DataUnionEndpointOptions) {
+    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string, options?: DataUnionEndpointOptions) {//TGTEST
         const address = getAddress(deployerAddress) // throws if bad address
-        return getDataUnionMainnetAddress(this.client, dataUnionName, address, options)
+        return getDataUnionMainnetAddress(this.client, dataUnionName, address)
     }
 
     async calculateDataUnionSidechainAddress(duMainnetAddress: string, options?: DataUnionEndpointOptions) {
         const address = getAddress(duMainnetAddress) // throws if bad address
-        return getDataUnionSidechainAddress(this.client, address, options)
+        return getDataUnionSidechainAddress(this.client, address)
     }
 
     /**
@@ -600,7 +600,6 @@ export class DataUnionEndpoints {
      * @property {EthereumAddress} owner new data union owner, defaults to StreamrClient authenticated user
      * @property {Array<EthereumAddress>} joinPartAgents defaults to just the owner
      * @property {number} adminFee fraction (number between 0...1 where 1 means 100%)
-     * @property {EthereumAddress} factoryMainnetAddress defaults to StreamrClient options
      * @property {string} dataUnionName unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
      */
     /**
@@ -654,14 +653,14 @@ export class DataUnionEndpoints {
 
         // @ts-expect-error
         const duMainnetAddress = await getDataUnionMainnetAddress(this.client, duName, ownerAddress, options)
-        const duSidechainAddress = await getDataUnionSidechainAddress(this.client, duMainnetAddress, options)
+        const duSidechainAddress = await getDataUnionSidechainAddress(this.client, duMainnetAddress)
 
         if (await mainnetProvider.getCode(duMainnetAddress) !== '0x') {
             throw new Error(`Mainnet data union "${duName}" contract ${duMainnetAddress} already exists!`)
         }
 
         const factoryMainnetAddress = throwIfBadAddress(
-            (options.factoryMainnetAddress || this.client.options.factoryMainnetAddress)!,
+            this.client.options.factoryMainnetAddress!,
             'StreamrClient.options.factoryMainnetAddress'
         )
         if (await mainnetProvider.getCode(factoryMainnetAddress) === '0x') {
