@@ -18,7 +18,7 @@ import { keccak256 } from '@ethersproject/keccak256'
 import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 import { verifyMessage } from '@ethersproject/wallet'
 import debug from 'debug'
-import { DataUnionDeployOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
+import { DataUnionDeployOptions, DataUnionMemberListModificationOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
 import StreamrClient from '../StreamrClient'
 import { Todo } from '../types'
 
@@ -727,12 +727,13 @@ export class DataUnionEndpoints {
      * @param {List<EthereumAddress>} memberAddressList to add
      * @returns {Promise<TransactionReceipt>} addMembers sidechain transaction
      */
-    async addMembers(memberAddressList: string[], requiredConfirmationCount: number, contractAddress: string): Promise<TransactionReceipt> {
+    async addMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         const tx = await duSidechain.addMembers(members)
         // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
-        return tx.wait(requiredConfirmationCount)
+        const { confirmations = 1 } = options
+        return tx.wait(confirmations)
     }
 
     /**
@@ -740,12 +741,13 @@ export class DataUnionEndpoints {
      * @param {List<EthereumAddress>} memberAddressList to remove
      * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
      */
-    async partMembers(memberAddressList: string[], requiredConfirmationCount: number, contractAddress: string): Promise<TransactionReceipt> {
+    async partMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         const tx = await duSidechain.partMembers(members)
         // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
-        return tx.wait(requiredConfirmationCount)
+        const { confirmations = 1 } = options
+        return tx.wait(confirmations)
     }
 
     /**

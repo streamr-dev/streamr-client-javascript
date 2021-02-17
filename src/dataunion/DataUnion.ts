@@ -21,6 +21,10 @@ export interface DataUnionWithdrawOptions {
     payForSignatureTransport?: boolean    
 }
 
+export interface DataUnionMemberListModificationOptions {
+    confirmations?: number
+}
+
 export class DataUnion {
 
     contractAddress: string
@@ -55,12 +59,12 @@ export class DataUnion {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
     }
 
-    async addMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
-        return this.dataUnionEndpoints.addMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
+    async addMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
+        return this.dataUnionEndpoints.addMembers(memberAddressList, options, this.contractAddress)
     }
 
-    async partMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
-        return this.dataUnionEndpoints.partMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
+    async partMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
+        return this.dataUnionEndpoints.partMembers(memberAddressList, options, this.contractAddress)
     }
 
     async getAdminAddress() {

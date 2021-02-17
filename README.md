@@ -350,8 +350,8 @@ These DataUnion-specific options are used from `StreamrClient` options:
 
 | Name                                                                  | Returns             | Description                                                    |
 | :-------------------------------------------------------------------- | :------------------ | :------------------------------------------------------------- |
-| addMembers(memberAddressList, options)                                | Transaction receipt | Add members                                                    |
-| partMembers(memberAddressList, options)                               | Transaction receipt | Remove members from Data Union                                 |
+| addMembers(memberAddressList, \[options])                             | Transaction receipt | Add members                                                    |
+| partMembers(memberAddressList, \[options])                            | Transaction receipt | Remove members from Data Union                                 |
 | deployDataUnion(options)                                              | Dataunion contract  | Deploy a new Data Union                                        |
 | createSecret(dataUnionContractAddress, secret\[, name])               |                     | Create a secret for a Data Union                               |
 | withdrawAllToMember(memberAddress, options)                           |                     |                                                                |
