@@ -340,13 +340,13 @@ Data union functions take a third parameter, `options`, which are either overrid
 | confirmations            | `1`                                                    | Number of blocks to wait after the withdraw transaction is mined                                                 |
 | gasPrice                 | ethers.js supplied                                     | Probably uses the network estimate                                                                               |
 | dataUnion                | -                                                      | Address or contract object of the data union that is the target of the operation                                 |
-| tokenAddress             | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
 | minimumWithdrawTokenWei  | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
 | payForSignatureTransport | `true`                                                 | Someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator                       |
 
 Also these DataUnion-specific options are used from `StreamrClient` options:
 | Property                 | Default                                                | Description                                                                                                      |
 | :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| tokenAddress             | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
 | factoryMainnetAddress    | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
 
 

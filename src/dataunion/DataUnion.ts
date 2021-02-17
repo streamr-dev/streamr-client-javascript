@@ -7,7 +7,6 @@ export interface DataUnionOptions {
     provider?: Todo,
     confirmations?: Todo,
     gasPrice?: Todo,
-    tokenAddress?: Todo,
     minimumWithdrawTokenWei?: BigNumber|number|string,
     payForSignatureTransport?: boolean
 }

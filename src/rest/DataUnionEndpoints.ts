@@ -977,10 +977,7 @@ export class DataUnionEndpoints {
      */
     async getTokenBalance(address: string|null|undefined, options?: DataUnionEndpointOptions): Promise<BigNumber> {
         const a = parseAddress(this.client, address)
-        // @ts-expect-error
-        const tokenAddressMainnet = options.tokenAddress || (
-            await getMainnetContractReadOnly(this.client, options).then((c: Todo) => c.token()).catch(() => null) || this.client.options.tokenAddress
-        )
+        const tokenAddressMainnet = await getMainnetContractReadOnly(this.client, options).then((c: Todo) => c.token()).catch(() => null) || this.client.options.tokenAddress
         if (!tokenAddressMainnet) { throw new Error('tokenAddress option not found') }
         const provider = this.client.ethereum.getMainnetProvider()
         const token = new Contract(tokenAddressMainnet, [{
