@@ -51,8 +51,6 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
         minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
         // @ts-expect-error
-        sidechainTokenAddress: null, // TODO // sidechain token
-        // @ts-expect-error
         factoryMainnetAddress: null, // TODO // Data Union factory that creates a new Data Union
         payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
         ...opts,

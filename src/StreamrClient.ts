@@ -52,7 +52,6 @@ export interface StreamrClientOptions {
     dataUnion?: string
     tokenAddress?: string,
     minimumWithdrawTokenWei?: BigNumber|number|string,
-    sidechainTokenAddress?: string
     factoryMainnetAddress?: string
     payForSignatureTransport?: boolean
     cache?: {
