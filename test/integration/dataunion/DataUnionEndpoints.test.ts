@@ -98,7 +98,7 @@ describe('DataUnionEndPoints', () => {
             const dataUnion = await deployDataUnionSync('remove-members-test')
             await adminMutex.runExclusive(async () => {
                 await adminClient.getDataUnion(dataUnion.address).addMembers(memberAddressList)
-                await adminClient.getDataUnion(dataUnion.address).kick(memberAddressList.slice(1))
+                await adminClient.getDataUnion(dataUnion.address).partMembers(memberAddressList.slice(1))
             })
             const res = await adminClient.getDataUnion(dataUnion.address).getDataUnionStats()
             expect(+res.activeMemberCount).toEqual(1)

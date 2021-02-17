@@ -5,7 +5,7 @@
  *      ABIs
  *      helper utils
  *      admin: DEPLOY AND SETUP DATA UNION  Functions for deploying the contract and adding secrets for smooth joining
- *      admin: MANAGE DATA UNION            Kick and add members
+ *      admin: MANAGE DATA UNION            add and part members
  *      member: JOIN & QUERY DATA UNION     Publicly available info about dataunions and their members (with earnings and proofs)
  *      member: WITHDRAW EARNINGS           Withdrawing functions, there's many: normal, agent, donate
  */
@@ -723,19 +723,6 @@ export class DataUnionEndpoints {
     // //////////////////////////////////////////////////////////////////
 
     /**
-     * Kick given members from data union
-     * @param {List<EthereumAddress>} memberAddressList to kick
-     * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
-     */
-    async kick(memberAddressList: string[], requiredConfirmationCount: number, contractAddress: string): Promise<TransactionReceipt> {
-        const members = memberAddressList.map(getAddress) // throws if there are bad addresses
-        const duSidechain = await getSidechainContract(contractAddress, this.client)
-        const tx = await duSidechain.partMembers(members)
-        // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
-        return tx.wait(requiredConfirmationCount)
-    }
-
-    /**
      * Add given Ethereum addresses as data union members
      * @param {List<EthereumAddress>} memberAddressList to add
      * @returns {Promise<TransactionReceipt>} addMembers sidechain transaction
@@ -744,6 +731,19 @@ export class DataUnionEndpoints {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         const tx = await duSidechain.addMembers(members)
+        // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
+        return tx.wait(requiredConfirmationCount)
+    }
+
+    /**
+     * Remove given members from data union
+     * @param {List<EthereumAddress>} memberAddressList to remove
+     * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
+     */
+    async partMembers(memberAddressList: string[], requiredConfirmationCount: number, contractAddress: string): Promise<TransactionReceipt> {
+        const members = memberAddressList.map(getAddress) // throws if there are bad addresses
+        const duSidechain = await getSidechainContract(contractAddress, this.client)
+        const tx = await duSidechain.partMembers(members)
         // TODO: wrap promise for better error reporting in case tx fails (parse reason, throw proper error)
         return tx.wait(requiredConfirmationCount)
     }

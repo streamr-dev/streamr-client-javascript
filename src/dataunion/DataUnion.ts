@@ -55,12 +55,12 @@ export class DataUnion {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
     }
 
-    async kick(memberAddressList: string[], requiredConfirmationCount: number = 1) {
-        return this.dataUnionEndpoints.kick(memberAddressList, requiredConfirmationCount, this.contractAddress)
-    }
-
     async addMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
         return this.dataUnionEndpoints.addMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
+    }
+
+    async partMembers(memberAddressList: string[], requiredConfirmationCount: number = 1) {
+        return this.dataUnionEndpoints.partMembers(memberAddressList, requiredConfirmationCount, this.contractAddress)
     }
 
     async getAdminAddress() {
