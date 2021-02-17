@@ -89,8 +89,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.getTokenBalance(address, this.getEndpointOptions(options))
     }
 
-    async withdraw(options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.withdraw(this.getEndpointOptions(options))
+    async withdrawAll(options?: DataUnionOptions) {
+        return this.dataUnionEndpoints.withdrawAll(this.contractAddress, options)
     }
 
     async getWithdrawTx(options?: DataUnionOptions) {

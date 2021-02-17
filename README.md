@@ -376,7 +376,7 @@ await client.setAdminFee(0.3, { dataUnion })
 | :-------------------------------------------------------------- | :------------------ | :-------------------------------------------------------------------------- |
 | join(memberAddress, \[secret])                                  | JoinRequest         | Join a Data Union                                                           |
 | hasJoined(memberAddress, \[options])                            | -                   | Wait until member has been accepted                                         |
-| withdraw(options)                                               | Transaction receipt | Withdraw funds from Data Union                                              |
+| withdrawAll(\[options])                                         | Transaction receipt | Withdraw funds from Data Union                                              |
 | withdrawTo(recipientAddress, dataUnionContractAddress, options) | Transaction receipt | Donate/move your earnings to recipientAddress instead of your memberAddress |
 | signWithdrawTo(recipientAddress, options)                       | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |
 | signWithdrawAmountTo(recipientAddress, amountTokenWei, options) | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |

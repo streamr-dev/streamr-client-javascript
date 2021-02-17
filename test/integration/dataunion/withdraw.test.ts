@@ -158,7 +158,7 @@ describe('DataUnion withdraw', () => {
 
         it('by member itself', () => {
             const getBalanceBefore = async (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
-            const withdraw = async (dataUnionAddress: string, memberClient: StreamrClient) => memberClient.getDataUnion(dataUnionAddress).withdraw()
+            const withdraw = async (dataUnionAddress: string, memberClient: StreamrClient) => memberClient.getDataUnion(dataUnionAddress).withdrawAll()
             const getBalanceAfter = async (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
             return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, true)
         }, 300000)

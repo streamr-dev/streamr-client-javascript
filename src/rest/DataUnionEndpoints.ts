@@ -1029,12 +1029,12 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options (including e.g. `dataUnion` Contract object or address)
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
-    async withdraw(options: DataUnionEndpointOptions = {}): Promise<TransactionReceipt> {
+    async withdrawAll(contractAddress: string, options?: DataUnionOptions): Promise<TransactionReceipt> {
         const tr = await untilWithdrawIsComplete(
             this.client,
             (opts) => this.getWithdrawTx(opts),
-            (opts) => this.getTokenBalance(null, opts), // null means this StreamrClient's auth credentials
-            { ...this.client.options, ...options }
+            (opts) => this.getTokenBalance(this.client.getAddress(), opts),
+            { dataUnion: contractAddress, ...this.client.options, ...options }
         )
         return tr
     }
@@ -1103,7 +1103,7 @@ export class DataUnionEndpoints {
      * This signature is only valid until next withdrawal takes place (using this signature or otherwise).
      * Note that while it's a "blank cheque" for withdrawing all earnings at the moment it's used, it's
      *   invalidated by the first withdraw after signing it. In other words, any signature can be invalidated
-     *   by making a "normal" withdraw e.g. `await streamrClient.withdraw()`
+     *   by making a "normal" withdraw e.g. `await streamrClient.withdrawAll()`
      * Admin can execute the withdraw using this signature: ```
      *   await adminStreamrClient.withdrawToSigned(memberAddress, recipientAddress, signature)
      * ```
