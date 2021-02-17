@@ -354,8 +354,8 @@ These DataUnion-specific options are used from `StreamrClient` options:
 | createSecret(dataUnionContractAddress, secret\[, name])               |                     | Create a secret for a Data Union                               |
 | addMembers(memberAddressList, options)                                | Transaction receipt | Add members                                                    |
 | kick(memberAddressList, options)                                      | Transaction receipt | Kick members out from Data Union                               |
-| withdrawMember(memberAddress, options)                                |                     |                                                                |
-| withdrawToSigned(memberAddress, recipientAddress, signature, options) |                     |                                                                |
+| withdrawAllToMember(memberAddress, options)                           |                     |                                                                |
+| withdrawAllToSigned(memberAddress, recipientAddress, signature, options) |                     |                                                                |
 | setAdminFee(newFeeFraction, options)                                  | Transaction receipt | `newFeeFraction` is a `Number` between 0.0 and 1.0 (inclusive) |
 
 Here's an example how to deploy a data union contract and set the admin fee:

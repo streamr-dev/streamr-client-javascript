@@ -176,7 +176,7 @@ describe('DataUnion withdraw', () => {
     describe('Admin', () => {
         it('non-signed', async () => {
             const getBalanceBefore = (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
-            const withdraw = (dataUnionAddress: string, _: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => adminClient.getDataUnion(dataUnionAddress).withdrawMember(memberWallet.address)
+            const withdraw = (dataUnionAddress: string, _: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => adminClient.getDataUnion(dataUnionAddress).withdrawAllToMember(memberWallet.address)
             const getBalanceAfter = (memberWallet: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(memberWallet.address)
             return testWithdraw(getBalanceBefore, withdraw, getBalanceAfter, false)
         }, 300000)
@@ -187,7 +187,7 @@ describe('DataUnion withdraw', () => {
             const getBalanceBefore = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(member2Wallet.address)
             const withdraw = async (dataUnionAddress: string, memberClient: StreamrClient, memberWallet: Wallet, adminClient: StreamrClient) => {
                 const signature = await memberClient.getDataUnion(dataUnionAddress).signWithdrawAllTo(member2Wallet.address)
-                const withdrawTr = await adminClient.getDataUnion(dataUnionAddress).withdrawToSigned(memberWallet.address, member2Wallet.address, signature)
+                const withdrawTr = await adminClient.getDataUnion(dataUnionAddress).withdrawAllToSigned(memberWallet.address, member2Wallet.address, signature)
                 return withdrawTr
             }
             const getBalanceAfter = (_: Wallet, adminTokenMainnet: Contract) => adminTokenMainnet.balanceOf(member2Wallet.address)

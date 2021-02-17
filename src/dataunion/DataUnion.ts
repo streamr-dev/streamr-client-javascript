@@ -91,12 +91,12 @@ export class DataUnion {
         return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
     }
 
-    async withdrawMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
-        return this.dataUnionEndpoints.withdrawMember(memberAddress, options, this.contractAddress)
+    async withdrawAllToMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawAllToMember(memberAddress, options, this.contractAddress)
     }
 
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
-        return this.dataUnionEndpoints.withdrawToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
+    async withdrawAllToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
+        return this.dataUnionEndpoints.withdrawAllToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
     }
 
     // TODO move to somewhere else?

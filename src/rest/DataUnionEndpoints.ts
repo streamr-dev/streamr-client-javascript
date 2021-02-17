@@ -755,11 +755,11 @@ export class DataUnionEndpoints {
      * @param options
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
-    async withdrawMember(memberAddress: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
+    async withdrawAllToMember(memberAddress: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
         const address = getAddress(memberAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
             this.client,
-            () => this.getWithdrawMemberTx(address, contractAddress),
+            () => this.getWithdrawAllToMemberTx(address, contractAddress),
             () => this.getTokenBalance(address, contractAddress),
             options
         )
@@ -773,7 +773,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawMemberTx(memberAddress: string, contractAddress: string): Promise<TransactionResponse> {
+    async getWithdrawAllToMemberTx(memberAddress: string, contractAddress: string): Promise<TransactionResponse> {
         const a = getAddress(memberAddress) // throws if bad address
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         return duSidechain.withdrawAll(a, true) // sendToMainnet=true
@@ -788,12 +788,12 @@ export class DataUnionEndpoints {
      * @param options
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
-    async withdrawToSigned(memberAddress: string, recipientAddress: string, signature: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
+    async withdrawAllToSigned(memberAddress: string, recipientAddress: string, signature: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
         const from = getAddress(memberAddress) // throws if bad address
         const to = getAddress(recipientAddress)
         const tr = await untilWithdrawIsComplete(
             this.client,
-            () => this.getWithdrawToSignedTx(from, to, signature, contractAddress),
+            () => this.getWithdrawAllToSignedTx(from, to, signature, contractAddress),
             () => this.getTokenBalance(to, contractAddress),
             options
         )
@@ -809,7 +809,7 @@ export class DataUnionEndpoints {
      * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
-    async getWithdrawToSignedTx(memberAddress: string, recipientAddress: string, signature: string, contractAddress: string): Promise<TransactionResponse> {
+    async getWithdrawAllToSignedTx(memberAddress: string, recipientAddress: string, signature: string, contractAddress: string): Promise<TransactionResponse> {
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, true, signature) // sendToMainnet=true
     }
@@ -1087,7 +1087,7 @@ export class DataUnionEndpoints {
      *   invalidated by the first withdraw after signing it. In other words, any signature can be invalidated
      *   by making a "normal" withdraw e.g. `await streamrClient.withdrawAll()`
      * Admin can execute the withdraw using this signature: ```
-     *   await adminStreamrClient.withdrawToSigned(memberAddress, recipientAddress, signature)
+     *   await adminStreamrClient.withdrawAllToSigned(memberAddress, recipientAddress, signature)
      * ```
      * @param {EthereumAddress} recipientAddress the address authorized to receive the tokens
      * @returns {string} signature authorizing withdrawing all earnings to given recipientAddress
