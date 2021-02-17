@@ -65,8 +65,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
     }
 
-    async hasJoined(memberAddress: string, options?: DataUnionOptions) {
-        return this.dataUnionEndpoints.hasJoined(memberAddress, this.getEndpointOptions(options))
+    async hasJoined(memberAddress: string, options?: { pollingIntervalMs?: number, retryTimeoutMs?: number }) {
+        return this.dataUnionEndpoints.hasJoined(memberAddress, options, this.contractAddress)
     }
 
     async getMembers(options?: DataUnionOptions) {

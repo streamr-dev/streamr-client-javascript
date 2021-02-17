@@ -887,18 +887,18 @@ export class DataUnionEndpoints {
 
     /**
      * Await this function when you want to make sure a member is accepted in the data union
-     * @param {EthereumAddress} memberAddress (optional, default is StreamrClient's auth: privateKey)
+     * @param {EthereumAddress} memberAddress
      * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
      * @param {Number} retryTimeoutMs (optional, default: 60000) give up
      * @return {Promise} resolves when member is in the data union (or fails with HTTP error)
      */
-    async hasJoined(memberAddress: string, options?: DataUnionEndpointOptions): Promise<void> {
+    async hasJoined(memberAddress: string, options: { pollingIntervalMs?: number, retryTimeoutMs?: number } | undefined, contractAddress: string): Promise<void> {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
-        }: Todo = options
+        }: any = options
         const address = parseAddress(this.client, memberAddress)
-        const duSidechain = await getSidechainContractReadOnly(this.client, options)
+        const duSidechain = await getSidechainContractReadOnly(this.client, { dataUnion: contractAddress } )
 
         // memberData[0] is enum ActiveStatus {None, Active, Inactive}, and zero means member has never joined
         await until(async () => (await duSidechain.memberData(address))[0] !== 0, retryTimeoutMs, pollingIntervalMs)
