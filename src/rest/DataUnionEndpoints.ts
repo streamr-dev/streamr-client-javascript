@@ -860,27 +860,18 @@ export class DataUnionEndpoints {
 
     /**
      * Send a joinRequest, or get into data union instantly with a data union secret
-     * @param {JoinOptions} options
      *
-     * @typedef {object} JoinOptions
-     * @property {String} dataUnion Ethereum mainnet address of the data union. If not given, use one given when creating StreamrClient
-     * @property {String} member Ethereum mainnet address of the joining member. If not given, use StreamrClient authentication key
+     * @property {String} memberAddress Ethereum mainnet address of the joining member
      * @property {String} secret if given, and correct, join the data union immediately
+     * @property {String} contractAddress Ethereum mainnet address of the data union
      */
-    async joinDataUnion(options: DataUnionEndpointOptions = {}): Promise<Todo> {
-        const {
-            member,
-            secret,
-        }: Todo = options
-        const dataUnion = getMainnetContractReadOnly(this.client, options)
-
-        const body = {
-            memberAddress: parseAddress(this.client, member)
+    async join(memberAddress: string, secret: string|undefined, contractAddress: string): Promise<Todo> {
+        const body: any = {
+            memberAddress: getAddress(memberAddress)
         }
-        // @ts-expect-error
         if (secret) { body.secret = secret }
 
-        const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', dataUnion.address, 'joinRequests')
+        const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', contractAddress, 'joinRequests')
         return authFetch(
             url,
             this.client.session,

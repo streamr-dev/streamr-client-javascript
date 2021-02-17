@@ -77,8 +77,7 @@ const testWithdraw = async (
             dataUnionVersion: 2
         })
     })
-    // @ts-expect-error
-    const res = await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
+    const res = await memberClient.getDataUnion(dataUnion.address).join(memberWallet.address, secret)
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
     log(`Member joined data union: ${JSON.stringify(res)}`)
 

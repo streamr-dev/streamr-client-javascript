@@ -45,8 +45,7 @@ it('DataUnion signature', async () => {
             dataUnionVersion: 2
         })
     })
-    // @ts-expect-error
-    await memberClient.getDataUnion(dataUnion.address).joinDataUnion({ secret })
+    await memberClient.getDataUnion(dataUnion.address).join(memberWallet.address, secret)
 
     const sidechainContract = new Contract(dataUnion.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)
