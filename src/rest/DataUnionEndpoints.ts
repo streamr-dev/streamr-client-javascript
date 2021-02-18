@@ -686,7 +686,7 @@ export class DataUnionEndpoints {
         return dataUnion
     }
 
-    async getDataUnionContract(contractAddress: string) {
+    async getContract(contractAddress: string) {
         const ret = getMainnetContract(contractAddress, this.client)
         // @ts-expect-error
         ret.sidechain = await getSidechainContract(contractAddress, this.client)

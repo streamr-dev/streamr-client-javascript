@@ -472,9 +472,9 @@ export default class StreamrClient extends EventEmitter {
         return new DataUnion(contractAddress, this.dataUnionEndpoints)
     }
 
-    // TODO could this return DataUnion?
     async deployDataUnion(options?: DataUnionDeployOptions) {
-        return this.dataUnionEndpoints.deployDataUnion(options)
+        const contract = await this.dataUnionEndpoints.deployDataUnion(options)
+        return this.getDataUnion(contract.address)
     }
 
     // TODO move most of these methods to DataUnion class?
@@ -484,10 +484,6 @@ export default class StreamrClient extends EventEmitter {
 
     async calculateDataUnionSidechainAddress(duMainnetAddress: string) {
         return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress)
-    }
-
-    async getDataUnionContract(contractAddress: string) {
-        return this.dataUnionEndpoints.getDataUnionContract(contractAddress)
     }
 
     async createSecret(dataUnionMainnetAddress: string, name: string = 'Untitled Data Union Secret') {

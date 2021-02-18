@@ -35,6 +35,14 @@ export class DataUnion {
         this.dataUnionEndpoints = dataUnionEndpoints
     }
 
+    getContractAddress() {
+        return this.contractAddress
+    }
+
+    async getContract() {
+        return this.dataUnionEndpoints.getContract(this.contractAddress)
+    }
+
     async join(memberAddress: string, secret?: string) {
         return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
     }
