@@ -67,6 +67,10 @@ export class DataUnion {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
     }
 
+    async createSecret(name: string = 'Untitled Data Union Secret') {
+        return this.dataUnionEndpoints.createSecret(this.contractAddress, name)
+    }
+
     async addMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
         return this.dataUnionEndpoints.addMembers(memberAddressList, options, this.contractAddress)
     }
@@ -109,6 +113,10 @@ export class DataUnion {
 
     async withdrawAllToSigned(memberAddress: string, recipientAddress: string, signature: string, options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawAllToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
+    }
+
+    async getVersion() {
+        return this.dataUnionEndpoints.getVersion(this.contractAddress)
     }
 
     // TODO move to somewhere else?

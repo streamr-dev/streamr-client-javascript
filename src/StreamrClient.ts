@@ -485,12 +485,4 @@ export default class StreamrClient extends EventEmitter {
     async calculateDataUnionSidechainAddress(duMainnetAddress: string) {
         return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress)
     }
-
-    async createSecret(dataUnionMainnetAddress: string, name: string = 'Untitled Data Union Secret') {
-        return this.dataUnionEndpoints.createSecret(dataUnionMainnetAddress, name)
-    }
-
-    async getDataUnionVersion(contractAddress: string) {
-        return this.dataUnionEndpoints.getDataUnionVersion(contractAddress)
-    }
 }

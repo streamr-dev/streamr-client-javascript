@@ -406,7 +406,7 @@ These are available for everyone and anyone, to query publicly available info fr
 | getMemberStats(\[memberAddress], options)                  | Member stats object                            | Various metrics from the smart contract |
 | getMemberBalance(\[memberAddress], options)                | `BigNumber` withdrawable DATA tokens in the DU |                                         |
 | getTokenBalance(address, options)                          | `BigNumber`                                    | Mainnet DATA token balance              |
-| getDataUnionVersion(contractAddress)                       | `0`, `1` or `2`                                | `0` if the contract is not a data union |
+| getVersion()                                               | `0`, `1` or `2`                                | `0` if the contract is not a data union |
 
 Here's an example how to get a member's withdrawable token balance (in "wei", where 1 DATA = 10^18 wei)
 

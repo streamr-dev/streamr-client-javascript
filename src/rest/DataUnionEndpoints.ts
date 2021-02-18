@@ -988,7 +988,7 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} contractAddress
      * @returns {number} 1 for old, 2 for current, zero for "not a data union"
      */
-    async getDataUnionVersion(contractAddress: string): Promise<number> {
+    async getVersion(contractAddress: string): Promise<number> {
         const a = getAddress(contractAddress) // throws if bad address
         const provider = this.client.ethereum.getMainnetProvider()
         const du = new Contract(a, [{

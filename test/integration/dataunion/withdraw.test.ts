@@ -43,7 +43,7 @@ const testWithdraw = async (
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
-    const secret = await adminClient.createSecret(dataUnion.getContractAddress(), 'DataUnionEndpoints test secret')
+    const secret = await dataUnion.createSecret('DataUnionEndpoints test secret')
     log(`DataUnion ${dataUnion.getContractAddress()} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 

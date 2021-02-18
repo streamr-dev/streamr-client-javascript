@@ -20,7 +20,7 @@ it('DataUnion signature', async () => {
     const adminClient = new StreamrClient(config.clientOptions as any)
     await adminClient.ensureConnected()
     const dataUnion = await adminClient.deployDataUnion()
-    const secret = await adminClient.createSecret(dataUnion.getContractAddress(), 'DataUnionEndpoints test secret')
+    const secret = await dataUnion.createSecret('DataUnionEndpoints test secret')
     log(`DataUnion ${dataUnion.getContractAddress()} is ready to roll`)
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
