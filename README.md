@@ -397,12 +397,11 @@ These are available for everyone and anyone, to query publicly available info fr
 
 | Name                                                       | Returns                                        | Description                             |
 | :--------------------------------------------------------- | :--------------------------------------------- | :-------------------------------------- |
-| getMemberStats(dataUnionContractAddress\[, memberAddress]) | {earnings, proof, ...}                         | Get member's stats                      |
-| getDataUnionStats(dataUnionContractAddress)                | {activeMemberCount, totalEarnings, ...}        | Get Data Union's statistics             |
+| getStats()                                                 | {activeMemberCount, totalEarnings, ...}        | Get Data Union's statistics             |
+| getMemberStats(\[memberAddress])                           | {earnings, proof, ...}                         | Get member's stats                      |
 | ~~getMembers(dataUnionContractAddress)~~                   |                                                | NOT available in DU2 at the moment      |
 | getAdminFee(options)                                       | `Number` between 0.0 and 1.0 (inclusive)       | Admin's cut from revenues               |
 | getAdminAddress(options)                                   | Ethereum address                               | Data union admin's address              |
-| getDataUnionStats(options)                                 | Stats object                                   | Various metrics from the smart contract |
 | getMemberStats(\[memberAddress], options)                  | Member stats object                            | Various metrics from the smart contract |
 | getMemberBalance(\[memberAddress], options)                | `BigNumber` withdrawable DATA tokens in the DU |                                         |
 | getTokenBalance(address, options)                          | `BigNumber`                                    | Mainnet DATA token balance              |

@@ -95,8 +95,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
     }
 
-    async getDataUnionStats() {
-        return this.dataUnionEndpoints.getDataUnionStats(this.contractAddress)
+    async getStats() {
+        return this.dataUnionEndpoints.getStats(this.contractAddress)
     }
 
     async getMemberStats(memberAddress?: string) {

@@ -904,7 +904,7 @@ export class DataUnionEndpoints {
         // event MemberParted(address indexed);
     }
 
-    async getDataUnionStats(contractAddress: string): Promise<DataUnionStats> {
+    async getStats(contractAddress: string): Promise<DataUnionStats> {
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
         const [
             totalEarnings,
