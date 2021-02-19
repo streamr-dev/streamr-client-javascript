@@ -8,11 +8,8 @@ export interface DataUnionDeployOptions {
     adminFee?: number,
     sidechainPollingIntervalMs?: number,
     sidechainRetryTimeoutMs?: number
-    /* TODO these were maybe included for DUv1, should we add the support to deployDataUnion method or remove the fields
-    wallet?: Todo,
-    provider?: Todo,
-    confirmations?: Todo,
-    gasPrice?: Todo */
+    confirmations?: number
+    gasPrice?: BigNumber
 }
 
 export interface DataUnionWithdrawOptions {

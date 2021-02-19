@@ -612,6 +612,8 @@ export class DataUnionEndpoints {
             adminFee = 0,
             sidechainPollingIntervalMs = 1000,
             sidechainRetryTimeoutMs = 600000,
+            confirmations = 1,
+            gasPrice
         } = options
 
         let duName = dataUnionName
@@ -661,13 +663,18 @@ export class DataUnionEndpoints {
         // function deployNewDataUnion(address owner, uint256 adminFeeFraction, address[] agents, string duName)
         // @ts-expect-error
         const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, mainnetWallet)
+        const ethersOptions: any = {}
+        if (gasPrice) {
+            ethersOptions.gasPrice = gasPrice
+        }
         const tx = await factoryMainnet.deployNewDataUnion(
             ownerAddress,
             adminFeeBN,
             agentAddressList,
             duName,
+            ethersOptions
         )
-        const tr = await tx.wait()
+        const tr = await tx.wait(confirmations)
 
         log(`Data Union "${duName}" (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployed to mainnet, waiting for side-chain...`)
         await until(
