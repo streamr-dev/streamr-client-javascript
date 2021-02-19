@@ -27,7 +27,8 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     await adminClient.ensureConnected()
 
     const dataUnionName = 'test-' + Date.now()
-    const dataUnionPredicted = adminClient._getDataUnionFromName({dataUnionName, deployerAddress: adminWalletMainnet.address})
+    // eslint-disable-next-line no-underscore-dangle
+    const dataUnionPredicted = adminClient._getDataUnionFromName({ dataUnionName, deployerAddress: adminWalletMainnet.address })
 
     const dataUnionDeployed = await adminClient.deployDataUnion({ dataUnionName })
     const version = await dataUnionDeployed.getVersion()

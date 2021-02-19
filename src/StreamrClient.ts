@@ -482,7 +482,7 @@ export default class StreamrClient extends EventEmitter {
         return new DataUnion(contract.address, contract.sidechain.address, this.dataUnionEndpoints)
     }
 
-    _getDataUnionFromName({dataUnionName, deployerAddress}: any) {
+    _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: string}) {
         const contractAddress = this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
         return this.getDataUnion(contractAddress)
     }

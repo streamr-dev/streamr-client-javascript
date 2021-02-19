@@ -47,6 +47,7 @@ it('DataUnion signature', async () => {
     })
     await memberClient.getDataUnion(dataUnion.getAddress()).join(memberWallet.address, secret)
 
+    // eslint-disable-next-line no-underscore-dangle
     const contract = await dataUnion._getContract()
     const sidechainContract = new Contract(contract.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)

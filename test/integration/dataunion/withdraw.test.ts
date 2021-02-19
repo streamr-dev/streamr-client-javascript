@@ -81,6 +81,7 @@ const testWithdraw = async (
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
     log(`Member joined data union: ${JSON.stringify(res)}`)
 
+    // eslint-disable-next-line no-underscore-dangle
     const contract = await dataUnion._getContract()
     const tokenAddress = await contract.token()
     log(`Token address: ${tokenAddress}`)
@@ -126,7 +127,7 @@ const testWithdraw = async (
     const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
-    const stats = await memberClient.getDataUnion(dataUnion.getAddress()).getMemberStats()
+    const stats = await memberClient.getDataUnion(dataUnion.getAddress()).getMemberStats(memberWallet.address)
     log(`Stats: ${JSON.stringify(stats)}`)
 
     const balanceBefore = await getBalanceBefore(memberWallet, adminTokenMainnet)

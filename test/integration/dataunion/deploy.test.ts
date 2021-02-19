@@ -1,11 +1,10 @@
-import { providers, Wallet } from 'ethers'
+import { providers } from 'ethers'
 import debug from 'debug'
 
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
-
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -23,7 +22,7 @@ describe('DataUnion deployment', () => {
         const network = await providerMainnet.getNetwork()
         log('Connected to "mainnet" network: ', JSON.stringify(network))
         const network2 = await providerSidechain.getNetwork()
-        log('Connected to sidechain network: ', JSON.stringify(network2))    
+        log('Connected to sidechain network: ', JSON.stringify(network2))
         adminClient = new StreamrClient(config.clientOptions as any)
         await adminClient.ensureConnected()
     }, 60000)
@@ -33,18 +32,18 @@ describe('DataUnion deployment', () => {
         it('not specified: defaults to deployer', async () => {
             const dataUnion = await adminClient.deployDataUnion()
             expect(await dataUnion.getAdminAddress()).toBe(adminClient.getAddress())
-        }, 60000);
+        }, 60000)
 
         it('specified', async () => {
             const owner = createMockAddress()
             const dataUnion = await adminClient.deployDataUnion({ owner })
             expect(await dataUnion.getAdminAddress()).toBe(owner)
-        }, 60000);
+        }, 60000)
 
         it('invalid', () => {
-            return expect(async () => await adminClient.deployDataUnion({ owner: 'foobar' })).rejects.toThrow('invalid address')
-        }, 60000);
+            return expect(() => adminClient.deployDataUnion({ owner: 'foobar' })).rejects.toThrow('invalid address')
+        }, 60000)
 
     })
-});
+})
 

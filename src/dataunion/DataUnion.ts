@@ -41,7 +41,7 @@ export class DataUnion {
     getSidechainAddress() {
         return this.sidechainAddress
     }
-    
+
     // Member functions
 
     async join(memberAddress: string, secret?: string) {

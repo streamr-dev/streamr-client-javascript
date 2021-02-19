@@ -18,12 +18,10 @@ import { keccak256 } from '@ethersproject/keccak256'
 import { defaultAbiCoder } from '@ethersproject/abi'
 import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 import { verifyMessage } from '@ethersproject/wallet'
-import { toUtf8Bytes } from '@ethersproject/strings'
 import debug from 'debug'
 import { DataUnionDeployOptions, DataUnionMemberListModificationOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
 import StreamrClient from '../StreamrClient'
 import { Todo } from '../types'
-
 
 import { until, getEndpointUrl } from '../utils'
 
