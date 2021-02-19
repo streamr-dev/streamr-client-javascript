@@ -447,7 +447,7 @@ async function untilWithdrawIsComplete(client: StreamrClient, getWithdrawTxFunc:
     const tx = await getWithdrawTxFunc()
     const tr = await tx.wait()
 
-    if (options?.payForSignatureTransport || client.options.payForSignatureTransport) {
+    if (options.payForSignatureTransport || client.options.payForSignatureTransport) {
         log(`Got receipt, filtering UserRequestForSignature from ${tr.events.length} events...`)
         // event UserRequestForSignature(bytes32 indexed messageId, bytes encodedData);
         const sigEventArgsArray = tr.events.filter((e: Todo) => e.event === 'UserRequestForSignature').map((e: Todo) => e.args)

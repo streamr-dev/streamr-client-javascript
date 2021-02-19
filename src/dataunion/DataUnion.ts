@@ -12,13 +12,13 @@ export interface DataUnionDeployOptions {
     wallet?: Todo,
     provider?: Todo,
     confirmations?: Todo,
-    gasPrice?: Todo,*/
+    gasPrice?: Todo */
 }
 
 export interface DataUnionWithdrawOptions {
     pollingIntervalMs?: number
     retryTimeoutMs?: number
-    payForSignatureTransport?: boolean    
+    payForSignatureTransport?: boolean
 }
 
 export interface DataUnionMemberListModificationOptions {
@@ -29,7 +29,7 @@ export class DataUnion {
 
     contractAddress: string
     dataUnionEndpoints: DataUnionEndpoints
-    
+
     constructor(contractAddress: string, dataUnionEndpoints: DataUnionEndpoints) {
         this.contractAddress = contractAddress
         this.dataUnionEndpoints = dataUnionEndpoints
