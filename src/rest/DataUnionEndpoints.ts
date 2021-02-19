@@ -291,19 +291,6 @@ function throwIfBadAddress(address: string, variableDescription: Todo) {
     }
 }
 
-/**
- * Parse address, or use this client's auth address if input not given
- * @param {StreamrClient} this
- * @param {EthereumAddress} inputAddress from user (NOT case sensitive)
- * @returns {EthereumAddress} with checksum case
- */
-function parseAddress(client: StreamrClient, inputAddress: string|null|undefined) {
-    if (inputAddress && isAddress(inputAddress)) {
-        return getAddress(inputAddress)
-    }
-    return client.getAddress()
-}
-
 // Find the Asyncronous Message-passing Bridge sidechain ("home") contract
 let cachedSidechainAmb: Todo
 async function getSidechainAmb(client: StreamrClient) {
@@ -648,8 +635,7 @@ export class DataUnionEndpoints {
         const mainnetWallet = this.client.ethereum.getSigner()
         const sidechainProvider = this.client.ethereum.getSidechainProvider()
 
-        // parseAddress defaults to authenticated user (also if "owner" is not an address)
-        const ownerAddress = parseAddress(this.client, owner)
+        const ownerAddress = getAddress((owner || this.client.getAddress())!)
 
         let agentAddressList
         if (Array.isArray(joinPartAgents)) {
@@ -915,7 +901,7 @@ export class DataUnionEndpoints {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
         }: any = options
-        const address = parseAddress(this.client, memberAddress)
+        const address = getAddress(memberAddress)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
 
         // memberData[0] is enum ActiveStatus {None, Active, Inactive}, and zero means member has never joined
@@ -956,8 +942,8 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} dataUnion to query
      * @param {EthereumAddress} memberAddress (optional) if not supplied, get the stats of currently logged in StreamrClient (if auth: privateKey)
      */
-    async getMemberStats(memberAddress: string|undefined, contractAddress: string): Promise<MemberStats> {
-        const address = parseAddress(this.client, memberAddress)
+    async getMemberStats(memberAddress: string, contractAddress: string): Promise<MemberStats> {
+        const address = getAddress(memberAddress)
         // TODO: use duSidechain.getMemberStats(address) once it's implemented, to ensure atomic read
         //        (so that memberData is from same block as getEarnings, otherwise withdrawable will be foobar)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
@@ -981,7 +967,7 @@ export class DataUnionEndpoints {
      * @return {Promise<BigNumber>}
      */
     async getWithdrawableEarnings(memberAddress: string, contractAddress: string): Promise<BigNumber> {
-        const address = parseAddress(this.client, memberAddress)
+        const address = getAddress(memberAddress)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
         return duSidechain.getWithdrawableEarnings(address)
     }
@@ -992,7 +978,7 @@ export class DataUnionEndpoints {
      * @returns {Promise<BigNumber>} token balance in "wei" (10^-18 parts)
      */
     async getTokenBalance(address: string): Promise<BigNumber> {
-        const a = parseAddress(this.client, address)
+        const a = getAddress(address)
         const provider = this.client.ethereum.getMainnetProvider()
         const token = new Contract(this.client.options.tokenAddress, [{
             name: 'balanceOf',

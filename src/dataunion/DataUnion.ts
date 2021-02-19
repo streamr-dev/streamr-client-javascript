@@ -74,7 +74,7 @@ export class DataUnion {
         return this.dataUnionEndpoints.getStats(this.contractAddress)
     }
 
-    async getMemberStats(memberAddress?: string) {
+    async getMemberStats(memberAddress: string) {
         return this.dataUnionEndpoints.getMemberStats(memberAddress, this.contractAddress)
     }
 
