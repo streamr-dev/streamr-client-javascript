@@ -43,6 +43,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.getContract(this.contractAddress)
     }
 
+    // Member functions
+
     async join(memberAddress: string, secret?: string) {
         return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
     }
@@ -67,33 +69,7 @@ export class DataUnion {
         return this.dataUnionEndpoints.signWithdrawAmountTo(recipientAddress, amountTokenWei, this.contractAddress)
     }
 
-    async createSecret(name: string = 'Untitled Data Union Secret') {
-        return this.dataUnionEndpoints.createSecret(this.contractAddress, name)
-    }
-
-    async addMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
-        return this.dataUnionEndpoints.addMembers(memberAddressList, options, this.contractAddress)
-    }
-
-    async partMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
-        return this.dataUnionEndpoints.partMembers(memberAddressList, options, this.contractAddress)
-    }
-
-    async getAdminAddress() {
-        return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
-    }
-
-    async getMembers() {
-        return this.dataUnionEndpoints.getMembers(this.contractAddress)
-    }
-
-    async setAdminFee(newFeeFraction: number) {
-        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
-    }
-
-    async getAdminFee() {
-        return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
-    }
+    // Query functions
 
     async getStats() {
         return this.dataUnionEndpoints.getStats(this.contractAddress)
@@ -107,6 +83,41 @@ export class DataUnion {
         return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
     }
 
+    async getMembers() {
+        return this.dataUnionEndpoints.getMembers(this.contractAddress)
+    }
+
+    async getAdminFee() {
+        return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
+    }
+
+    async getAdminAddress() {
+        return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
+    }
+
+    // TODO move to somewhere else?
+    async getTokenBalance(address: string|null|undefined) {
+        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
+    }
+
+    async getVersion() {
+        return this.dataUnionEndpoints.getVersion(this.contractAddress)
+    }
+
+    // Admin functions
+
+    async createSecret(name: string = 'Untitled Data Union Secret') {
+        return this.dataUnionEndpoints.createSecret(this.contractAddress, name)
+    }
+
+    async addMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
+        return this.dataUnionEndpoints.addMembers(memberAddressList, options, this.contractAddress)
+    }
+
+    async partMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
+        return this.dataUnionEndpoints.partMembers(memberAddressList, options, this.contractAddress)
+    }
+
     async withdrawAllToMember(memberAddress: string, options?: DataUnionWithdrawOptions) {
         return this.dataUnionEndpoints.withdrawAllToMember(memberAddress, options, this.contractAddress)
     }
@@ -115,12 +126,7 @@ export class DataUnion {
         return this.dataUnionEndpoints.withdrawAllToSigned(memberAddress, recipientAddress, signature, options, this.contractAddress)
     }
 
-    async getVersion() {
-        return this.dataUnionEndpoints.getVersion(this.contractAddress)
-    }
-
-    // TODO move to somewhere else?
-    async getTokenBalance(address: string|null|undefined) {
-        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
+    async setAdminFee(newFeeFraction: number) {
+        return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
     }
 }

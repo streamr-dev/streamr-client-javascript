@@ -350,12 +350,12 @@ These DataUnion-specific options are used from `StreamrClient` options:
 
 | Name                                                                  | Returns             | Description                                                    |
 | :-------------------------------------------------------------------- | :------------------ | :------------------------------------------------------------- |
-| addMembers(memberAddressList, \[options])                             | Transaction receipt | Add members                                                    |
-| partMembers(memberAddressList, \[options])                            | Transaction receipt | Remove members from Data Union                                 |
 | deployDataUnion(options)                                              | DataUnion object    | Deploy a new Data Union                                        |
 | createSecret(\[name])                                                 |                     | Create a secret for a Data Union                               |
+| addMembers(memberAddressList, \[options])                             | Transaction receipt | Add members                                                    |
+| partMembers(memberAddressList, \[options])                            | Transaction receipt | Remove members from Data Union                                 |
 | withdrawAllToMember(memberAddress, options)                           |                     |                                                                |
-| withdrawAllToSigned(memberAddress, recipientAddress, signature, options) |                     |                                                                |
+| withdrawAllToSigned(memberAddress, recipientAddress, signature, \[options]) |                     |                                                                |
 | setAdminFee(newFeeFraction, options)                                  | Transaction receipt | `newFeeFraction` is a `Number` between 0.0 and 1.0 (inclusive) |
 
 Here's an example how to deploy a data union contract and set the admin fee:
@@ -399,11 +399,10 @@ These are available for everyone and anyone, to query publicly available info fr
 | :--------------------------------------------------------- | :--------------------------------------------- | :-------------------------------------- |
 | getStats()                                                 | {activeMemberCount, totalEarnings, ...}        | Get Data Union's statistics             |
 | getMemberStats(\[memberAddress])                           | {earnings, proof, ...}                         | Get member's stats                      |
+| getMemberBalance(\[memberAddress], options)                | `BigNumber` withdrawable DATA tokens in the DU |                                         |
 | ~~getMembers(dataUnionContractAddress)~~                   |                                                | NOT available in DU2 at the moment      |
 | getAdminFee(options)                                       | `Number` between 0.0 and 1.0 (inclusive)       | Admin's cut from revenues               |
 | getAdminAddress(options)                                   | Ethereum address                               | Data union admin's address              |
-| getMemberStats(\[memberAddress], options)                  | Member stats object                            | Various metrics from the smart contract |
-| getMemberBalance(\[memberAddress], options)                | `BigNumber` withdrawable DATA tokens in the DU |                                         |
 | getTokenBalance(address, options)                          | `BigNumber`                                    | Mainnet DATA token balance              |
 | getVersion()                                               | `0`, `1` or `2`                                | `0` if the contract is not a data union |
 
