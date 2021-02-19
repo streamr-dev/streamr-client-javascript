@@ -649,8 +649,9 @@ export class DataUnionEndpoints {
             }
         }
 
+        const deployerAddress = getAddress(this.client.getAddress()!)
         // @ts-expect-error
-        const duMainnetAddress = await fetchDataUnionMainnetAddress(this.client, duName, ownerAddress, options)
+        const duMainnetAddress = await fetchDataUnionMainnetAddress(this.client, duName, deployerAddress, options)
         const duSidechainAddress = await fetchDataUnionSidechainAddress(this.client, duMainnetAddress)
 
         if (await mainnetProvider.getCode(duMainnetAddress) !== '0x') {
