@@ -50,7 +50,7 @@ export interface StreamrClientOptions {
         url?: string
     },
     dataUnion?: string
-    tokenAddress?: string,
+    tokenAddress: string,
     minimumWithdrawTokenWei?: BigNumber|number|string,
     factoryMainnetAddress?: string
     payForSignatureTransport?: boolean
@@ -179,7 +179,7 @@ export default class StreamrClient extends EventEmitter {
     loginEndpoints: LoginEndpoints
     dataUnionEndpoints: DataUnionEndpoints
 
-    constructor(options: StreamrClientOptions = {}, connection?: StreamrConnection) {
+    constructor(options: Partial<StreamrClientOptions> = {}, connection?: StreamrConnection) {
         super()
         this.id = counterId(`${this.constructor.name}:${uid}`)
         this.debug = Debug(this.id)
@@ -398,7 +398,7 @@ export default class StreamrClient extends EventEmitter {
         return this.connection.enableAutoDisconnect(...args)
     }
 
-    getAddress() {
+    getAddress(): string|null {
         return this.ethereum.getAddress()
     }
 
@@ -466,6 +466,10 @@ export default class StreamrClient extends EventEmitter {
 
     async getUserInfo() {
         return this.loginEndpoints.getUserInfo()
+    }
+
+    async getTokenBalance(address: string) {
+        return this.dataUnionEndpoints.getTokenBalance(address)
     }
 
     getDataUnion(contractAddress: string) {

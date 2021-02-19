@@ -399,11 +399,10 @@ These are available for everyone and anyone, to query publicly available info fr
 | :--------------------------------------------------------- | :--------------------------------------------- | :-------------------------------------- |
 | getStats()                                                 | {activeMemberCount, totalEarnings, ...}        | Get Data Union's statistics             |
 | getMemberStats(\[memberAddress])                           | {earnings, proof, ...}                         | Get member's stats                      |
-| getMemberBalance(\[memberAddress], options)                | `BigNumber` withdrawable DATA tokens in the DU |                                         |
+| getWithdrawableEarnings(memberAddress)                     | `BigNumber` withdrawable DATA tokens in the DU |                                         |
 | ~~getMembers(dataUnionContractAddress)~~                   |                                                | NOT available in DU2 at the moment      |
 | getAdminFee(options)                                       | `Number` between 0.0 and 1.0 (inclusive)       | Admin's cut from revenues               |
 | getAdminAddress(options)                                   | Ethereum address                               | Data union admin's address              |
-| getTokenBalance(address, options)                          | `BigNumber`                                    | Mainnet DATA token balance              |
 | getVersion()                                               | `0`, `1` or `2`                                | `0` if the contract is not a data union |
 
 Here's an example how to get a member's withdrawable token balance (in "wei", where 1 DATA = 10^18 wei)
@@ -421,6 +420,7 @@ const withdrawableWei = await client.getMemberBalance(memberAddress)
 | Name                                    | Description                                                                                                                                                                                                                                                       |
 | :-------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | StreamrClient.generateEthereumAccount() | Generates a random Ethereum private key and returns an object with fields `address` and privateKey. Note that this private key can be used to authenticate to the Streamr API by passing it in the authentication options, as described earlier in this document. |
+| getTokenBalance(address)                                   | `BigNumber`                                    | Mainnet DATA token balance              |
 
 ## Events
 

@@ -79,8 +79,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.getMemberStats(memberAddress, this.contractAddress)
     }
 
-    async getMemberBalance(memberAddress: string) {
-        return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
+    async getWithdrawableEarnings(memberAddress: string) {
+        return this.dataUnionEndpoints.getWithdrawableEarnings(memberAddress, this.contractAddress)
     }
 
     async getAdminFee() {
@@ -89,11 +89,6 @@ export class DataUnion {
 
     async getAdminAddress() {
         return this.dataUnionEndpoints.getAdminAddress(this.contractAddress)
-    }
-
-    // TODO move to somewhere else?
-    async getTokenBalance(address: string|null|undefined) {
-        return this.dataUnionEndpoints.getTokenBalance(address, this.contractAddress)
     }
 
     async getVersion() {

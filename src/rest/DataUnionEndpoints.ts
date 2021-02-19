@@ -762,7 +762,7 @@ export class DataUnionEndpoints {
         const tr = await untilWithdrawIsComplete(
             this.client,
             () => this.getWithdrawAllToMemberTx(address, contractAddress),
-            () => this.getTokenBalance(address, contractAddress),
+            () => this.getTokenBalance(address),
             options
         )
         return tr
@@ -796,7 +796,7 @@ export class DataUnionEndpoints {
         const tr = await untilWithdrawIsComplete(
             this.client,
             () => this.getWithdrawAllToSignedTx(from, to, signature, contractAddress),
-            () => this.getTokenBalance(to, contractAddress),
+            () => this.getTokenBalance(to),
             options
         )
         return tr
@@ -954,7 +954,7 @@ export class DataUnionEndpoints {
      * @param memberAddress whose balance is returned
      * @return {Promise<BigNumber>}
      */
-    async getMemberBalance(memberAddress: string, contractAddress: string): Promise<BigNumber> {
+    async getWithdrawableEarnings(memberAddress: string, contractAddress: string): Promise<BigNumber> {
         const address = parseAddress(this.client, memberAddress)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
         return duSidechain.getWithdrawableEarnings(address)
@@ -965,12 +965,10 @@ export class DataUnionEndpoints {
      * @param {EthereumAddress} address
      * @returns {Promise<BigNumber>} token balance in "wei" (10^-18 parts)
      */
-    async getTokenBalance(address: string|null|undefined, contractAddress: string): Promise<BigNumber> {
+    async getTokenBalance(address: string): Promise<BigNumber> {
         const a = parseAddress(this.client, address)
-        const tokenAddressMainnet = await getMainnetContractReadOnly(contractAddress, this.client).token().catch(() => null) || this.client.options.tokenAddress
-        if (!tokenAddressMainnet) { throw new Error('tokenAddress option not found') }
         const provider = this.client.ethereum.getMainnetProvider()
-        const token = new Contract(tokenAddressMainnet, [{
+        const token = new Contract(this.client.options.tokenAddress, [{
             name: 'balanceOf',
             inputs: [{ type: 'address' }],
             outputs: [{ type: 'uint256' }],
@@ -1016,13 +1014,18 @@ export class DataUnionEndpoints {
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
     async withdrawAll(contractAddress: string, options?: DataUnionWithdrawOptions): Promise<TransactionReceipt> {
-        const tr = await untilWithdrawIsComplete(
-            this.client,
-            () => this.getWithdrawAllTx(contractAddress),
-            () => this.getTokenBalance(this.client.getAddress(), contractAddress),
-            options
-        )
-        return tr
+        const recipientAddress = this.client.getAddress()
+        if (recipientAddress) {
+            const tr = await untilWithdrawIsComplete(
+                this.client,
+                () => this.getWithdrawAllTx(contractAddress),
+                () => this.getTokenBalance(recipientAddress),
+                options
+            )
+            return tr
+        } else {
+            throw new Error('Unknown recipient: StreamrClient must be authenticated')
+        }
     }
 
     /**
@@ -1057,7 +1060,7 @@ export class DataUnionEndpoints {
         const tr = await untilWithdrawIsComplete(
             this.client,
             () => this.getWithdrawAllToTx(to, contractAddress),
-            () => this.getTokenBalance(to, contractAddress),
+            () => this.getTokenBalance(to),
             options
         )
         return tr

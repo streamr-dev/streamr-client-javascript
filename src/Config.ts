@@ -9,7 +9,7 @@ import { StreamrClientOptions } from './StreamrClient'
 const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
 
-export default function ClientConfig(opts: StreamrClientOptions = {}) {
+export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
     const { id = counterId('StreamrClient') } = opts
 
     const options: StreamrClientOptions = {
