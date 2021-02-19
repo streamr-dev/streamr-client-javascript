@@ -83,10 +83,6 @@ export class DataUnion {
         return this.dataUnionEndpoints.getMemberBalance(memberAddress, this.contractAddress)
     }
 
-    async getMembers() {
-        return this.dataUnionEndpoints.getMembers(this.contractAddress)
-    }
-
     async getAdminFee() {
         return this.dataUnionEndpoints.getAdminFee(this.contractAddress)
     }
