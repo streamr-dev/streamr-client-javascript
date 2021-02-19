@@ -10,17 +10,20 @@
  *      member: WITHDRAW EARNINGS           Withdrawing functions, there's many: normal, agent, donate
  */
 
-import { getAddress, isAddress } from '@ethersproject/address'
+import { getAddress, getCreate2Address, isAddress } from '@ethersproject/address'
 import { BigNumber } from '@ethersproject/bignumber'
 import { arrayify, hexZeroPad } from '@ethersproject/bytes'
 import { Contract } from '@ethersproject/contracts'
 import { keccak256 } from '@ethersproject/keccak256'
+import { defaultAbiCoder } from '@ethersproject/abi'
 import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 import { verifyMessage } from '@ethersproject/wallet'
+import { toUtf8Bytes } from '@ethersproject/strings'
 import debug from 'debug'
 import { DataUnionDeployOptions, DataUnionMemberListModificationOptions, DataUnionWithdrawOptions } from '../dataunion/DataUnion'
 import StreamrClient from '../StreamrClient'
 import { Todo } from '../types'
+
 
 import { until, getEndpointUrl } from '../utils'
 
@@ -310,7 +313,7 @@ async function getSidechainAmb(client: StreamrClient) {
             const factoryMainnetAddress = client.options.factoryMainnetAddress
             const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, mainnetProvider)
             const sidechainProvider = client.ethereum.getSidechainProvider()
-            const factorySidechainAddress = await factoryMainnet.data_union_sidechain_factory()
+            const factorySidechainAddress = await factoryMainnet.data_union_sidechain_factory() // TODO use getDataUnionSidechainAddress()
             const factorySidechain = new Contract(factorySidechainAddress, [{
                 name: 'amb',
                 inputs: [],
@@ -488,11 +491,10 @@ async function untilWithdrawIsComplete(client: StreamrClient, getWithdrawTxFunc:
     return tr
 }
 
-// TODO: calculate addresses in JS instead of asking over RPC, see data-union-solidity/contracts/CloneLib.sol
-// key the cache with name only, since PROBABLY one StreamrClient will ever use only one private key
+// TODO remove caching as we calculate the values only when deploying the DU
 const mainnetAddressCache: Todo = {} // mapping: "name" -> mainnet address
 /** @returns {Promise<EthereumAddress>} Mainnet address for Data Union */
-async function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: string) {
+async function fetchDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: string) {
     if (!mainnetAddressCache[dataUnionName]) {
         const provider = client.ethereum.getMainnetProvider()
         const factoryMainnetAddress = client.options.factoryMainnetAddress
@@ -504,10 +506,18 @@ async function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: 
     return mainnetAddressCache[dataUnionName]
 }
 
-// TODO: calculate addresses in JS
+function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: string) {
+    const factoryMainnetAddress = client.options.factoryMainnetAddress
+    // NOTE! this must be updated when DU sidechain smartcontract changes: keccak256(CloneLib.cloneBytecode(data_union_mainnet_template));
+    const codeHash = '0x50a78bac973bdccfc8415d7d9cfd62898b8f7cf6e9b3a15e7d75c0cb820529eb'
+    const salt = keccak256(defaultAbiCoder.encode(['string', 'address'], [dataUnionName, deployerAddress]))
+    return getCreate2Address(factoryMainnetAddress, salt, codeHash)
+}
+
+// TODO remove caching as we calculate the values only when deploying the DU
 const sidechainAddressCache: Todo = {} // mapping: mainnet address -> sidechain address
 /** @returns {Promise<EthereumAddress>} Sidechain address for Data Union */
-async function getDataUnionSidechainAddress(client: StreamrClient, duMainnetAddress: string) {
+async function fetchDataUnionSidechainAddress(client: StreamrClient, duMainnetAddress: string) {
     if (!sidechainAddressCache[duMainnetAddress]) {
         const provider = client.ethereum.getMainnetProvider()
         const factoryMainnetAddress = client.options.factoryMainnetAddress
@@ -517,6 +527,13 @@ async function getDataUnionSidechainAddress(client: StreamrClient, duMainnetAddr
         sidechainAddressCache[duMainnetAddress] = await addressPromise // eslint-disable-line require-atomic-updates
     }
     return sidechainAddressCache[duMainnetAddress]
+}
+
+function getDataUnionSidechainAddress(client: StreamrClient, mainnetAddress: string) {
+    const factorySidechainAddress = client.options.factorySidechainAddress
+    // NOTE! this must be updated when DU sidechain smartcontract changes: keccak256(CloneLib.cloneBytecode(data_union_sidechain_template))
+    const codeHash = '0x040cf686e25c97f74a23a4bf01c29dd77e260c4b694f5611017ce9713f58de83'
+    return getCreate2Address(factorySidechainAddress, hexZeroPad(mainnetAddress, 32), codeHash)
 }
 
 function getMainnetContractReadOnly(contractAddress: string, client: StreamrClient) {
@@ -538,7 +555,7 @@ function getMainnetContract(contractAddress: string, client: StreamrClient) {
 async function getSidechainContract(contractAddress: string, client: StreamrClient) {
     const signer = await client.ethereum.getSidechainSigner()
     const duMainnet = getMainnetContractReadOnly(contractAddress, client)
-    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address)
+    const duSidechainAddress = getDataUnionSidechainAddress(client, duMainnet.address)
     // @ts-expect-error
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, signer)
     return duSidechain
@@ -547,7 +564,7 @@ async function getSidechainContract(contractAddress: string, client: StreamrClie
 async function getSidechainContractReadOnly(contractAddress: string, client: StreamrClient) {
     const provider = await client.ethereum.getSidechainProvider()
     const duMainnet = getMainnetContractReadOnly(contractAddress, client)
-    const duSidechainAddress = await getDataUnionSidechainAddress(client, duMainnet.address)
+    const duSidechainAddress = getDataUnionSidechainAddress(client, duMainnet.address)
     // @ts-expect-error
     const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, provider)
     return duSidechain
@@ -565,12 +582,14 @@ export class DataUnionEndpoints {
     //          admin: DEPLOY AND SETUP DATA UNION
     // //////////////////////////////////////////////////////////////////
 
-    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string) {
+    // TODO inline this function?
+    calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string) {
         const address = getAddress(deployerAddress) // throws if bad address
         return getDataUnionMainnetAddress(this.client, dataUnionName, address)
     }
 
-    async calculateDataUnionSidechainAddress(duMainnetAddress: string) {
+    // TODO inline this function?
+    calculateDataUnionSidechainAddress(duMainnetAddress: string) {
         const address = getAddress(duMainnetAddress) // throws if bad address
         return getDataUnionSidechainAddress(this.client, address)
     }
@@ -645,8 +664,8 @@ export class DataUnionEndpoints {
         }
 
         // @ts-expect-error
-        const duMainnetAddress = await getDataUnionMainnetAddress(this.client, duName, ownerAddress, options)
-        const duSidechainAddress = await getDataUnionSidechainAddress(this.client, duMainnetAddress)
+        const duMainnetAddress = await fetchDataUnionMainnetAddress(this.client, duName, ownerAddress, options)
+        const duSidechainAddress = await fetchDataUnionSidechainAddress(this.client, duMainnetAddress)
 
         if (await mainnetProvider.getCode(duMainnetAddress) !== '0x') {
             throw new Error(`Mainnet data union "${duName}" contract ${duMainnetAddress} already exists!`)

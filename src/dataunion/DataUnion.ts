@@ -25,10 +25,12 @@ export interface DataUnionMemberListModificationOptions {
 export class DataUnion {
 
     contractAddress: string
+    sidechainAddress: string
     dataUnionEndpoints: DataUnionEndpoints
 
-    constructor(contractAddress: string, dataUnionEndpoints: DataUnionEndpoints) {
+    constructor(contractAddress: string, sidechainAddress: string|undefined, dataUnionEndpoints: DataUnionEndpoints) {
         this.contractAddress = contractAddress
+        this.sidechainAddress = sidechainAddress || dataUnionEndpoints.calculateDataUnionSidechainAddress(contractAddress)
         this.dataUnionEndpoints = dataUnionEndpoints
     }
 
@@ -36,10 +38,10 @@ export class DataUnion {
         return this.contractAddress
     }
 
-    async getContract() {
-        return this.dataUnionEndpoints.getContract(this.contractAddress)
+    getSidechainAddress() {
+        return this.sidechainAddress
     }
-
+    
     // Member functions
 
     async join(memberAddress: string, secret?: string) {
@@ -116,5 +118,11 @@ export class DataUnion {
 
     async setAdminFee(newFeeFraction: number) {
         return this.dataUnionEndpoints.setAdminFee(newFeeFraction, this.contractAddress)
+    }
+
+    // Internal functions
+
+    async _getContract() {
+        return this.dataUnionEndpoints.getContract(this.contractAddress)
     }
 }

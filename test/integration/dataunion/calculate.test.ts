@@ -13,6 +13,9 @@ const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sid
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
+// This test will fail when new docker images are pushed with updated DU smart contracts
+// -> generate new codehashes for getDataUnionMainnetAddress() and getDataUnionSidechainAddress()
+
 it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
@@ -23,20 +26,17 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     const adminClient = new StreamrClient(config.clientOptions as any)
     await adminClient.ensureConnected()
 
-    const dataUnionName = '6be8ceda7a3c4fe7991eab501975b85ec2bb90452d0e4c93bc2' + Date.now()
-    const duMainnetAddress = await adminClient.calculateDataUnionMainnetAddress(dataUnionName, adminWalletMainnet.address)
-    const duSidechainAddress = await adminClient.calculateDataUnionSidechainAddress(duMainnetAddress)
+    const dataUnionName = 'test-' + Date.now()
+    const dataUnionPredicted = adminClient._getDataUnionFromName({dataUnionName, deployerAddress: adminWalletMainnet.address})
 
-    const dataUnion = await adminClient.deployDataUnion({ dataUnionName })
-
-    const version = await dataUnion.getVersion()
+    const dataUnionDeployed = await adminClient.deployDataUnion({ dataUnionName })
+    const version = await dataUnionDeployed.getVersion()
 
     await providerMainnet.removeAllListeners()
     await providerSidechain.removeAllListeners()
     await adminClient.ensureDisconnected()
 
-    expect(duMainnetAddress).toBe(dataUnion.getContractAddress())
-    const contract = await dataUnion.getContract()
-    expect(duSidechainAddress).toBe(contract.sidechain.address)
+    expect(dataUnionPredicted.getContractAddress()).toBe(dataUnionDeployed.getContractAddress())
+    expect(dataUnionPredicted.getSidechainAddress()).toBe(dataUnionDeployed.getSidechainAddress())
     expect(version).toBe(2)
 }, 60000)

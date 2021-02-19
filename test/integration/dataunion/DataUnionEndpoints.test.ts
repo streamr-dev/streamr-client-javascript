@@ -130,7 +130,7 @@ describe('DataUnionEndPoints', () => {
             })
 
             const amount = parseEther('2')
-            const contract = await dataUnion.getContract()
+            const contract = await dataUnion._getContract()
             const tokenAddress = await contract.token()
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 

@@ -47,7 +47,7 @@ it('DataUnion signature', async () => {
     })
     await memberClient.getDataUnion(dataUnion.getContractAddress()).join(memberWallet.address, secret)
 
-    const contract = await dataUnion.getContract()
+    const contract = await dataUnion._getContract()
     const sidechainContract = new Contract(contract.sidechain.address, DataUnionSidechain.abi, adminWalletSidechain)
     const tokenSidechain = new Contract(config.clientOptions.tokenAddressSidechain, Token.abi, adminWalletSidechain)
 

@@ -81,7 +81,7 @@ const testWithdraw = async (
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
     log(`Member joined data union: ${JSON.stringify(res)}`)
 
-    const contract = await dataUnion.getContract()
+    const contract = await dataUnion._getContract()
     const tokenAddress = await contract.token()
     log(`Token address: ${tokenAddress}`)
     const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)

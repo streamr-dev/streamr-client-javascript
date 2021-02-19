@@ -52,7 +52,8 @@ export interface StreamrClientOptions {
     dataUnion?: string
     tokenAddress: string,
     minimumWithdrawTokenWei?: BigNumber|number|string,
-    factoryMainnetAddress?: string
+    factoryMainnetAddress: string
+    factorySidechainAddress: string
     payForSignatureTransport?: boolean
     cache?: {
         maxSize?: number,
@@ -473,20 +474,16 @@ export default class StreamrClient extends EventEmitter {
     }
 
     getDataUnion(contractAddress: string) {
-        return new DataUnion(contractAddress, this.dataUnionEndpoints)
+        return new DataUnion(contractAddress, undefined, this.dataUnionEndpoints)
     }
 
     async deployDataUnion(options?: DataUnionDeployOptions) {
         const contract = await this.dataUnionEndpoints.deployDataUnion(options)
-        return this.getDataUnion(contract.address)
+        return new DataUnion(contract.address, contract.sidechain.address, this.dataUnionEndpoints)
     }
 
-    // TODO move most of these methods to DataUnion class?
-    async calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: string) {
-        return this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
-    }
-
-    async calculateDataUnionSidechainAddress(duMainnetAddress: string) {
-        return this.dataUnionEndpoints.calculateDataUnionSidechainAddress(duMainnetAddress)
+    _getDataUnionFromName({dataUnionName, deployerAddress}: any) {
+        const contractAddress = this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
+        return this.getDataUnion(contractAddress)
     }
 }
