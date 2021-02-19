@@ -44,7 +44,7 @@ const testWithdraw = async (
 
     const dataUnion = await adminClient.deployDataUnion()
     const secret = await dataUnion.createSecret('DataUnionEndpoints test secret')
-    log(`DataUnion ${dataUnion.getContractAddress()} is ready to roll`)
+    log(`DataUnion ${dataUnion.getAddress()} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
@@ -63,7 +63,7 @@ const testWithdraw = async (
         auth: {
             privateKey: memberWallet.privateKey
         },
-        dataUnion: dataUnion.getContractAddress(),
+        dataUnion: dataUnion.getAddress(),
     } as any)
     await memberClient.ensureConnected()
 
@@ -72,12 +72,12 @@ const testWithdraw = async (
     await authFetch(createProductUrl, adminClient.session, {
         method: 'POST',
         body: JSON.stringify({
-            beneficiaryAddress: dataUnion.getContractAddress(),
+            beneficiaryAddress: dataUnion.getAddress(),
             type: 'DATAUNION',
             dataUnionVersion: 2
         })
     })
-    const res = await memberClient.getDataUnion(dataUnion.getContractAddress()).join(memberWallet.address, secret)
+    const res = await memberClient.getDataUnion(dataUnion.getAddress()).join(memberWallet.address, secret)
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
     log(`Member joined data union: ${JSON.stringify(res)}`)
 
@@ -89,17 +89,17 @@ const testWithdraw = async (
     const amount = parseEther('1')
     const duSidechainEarningsBefore = await contract.sidechain.totalEarnings()
 
-    const duBalance1 = await adminTokenMainnet.balanceOf(dataUnion.getContractAddress())
-    log(`Token balance of ${dataUnion.getContractAddress()}: ${formatEther(duBalance1)} (${duBalance1.toString()})`)
+    const duBalance1 = await adminTokenMainnet.balanceOf(dataUnion.getAddress())
+    log(`Token balance of ${dataUnion.getAddress()}: ${formatEther(duBalance1)} (${duBalance1.toString()})`)
     const balance1 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance1)} (${balance1.toString()})`)
 
-    log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.getContractAddress()}`)
-    const txTokenToDU = await adminTokenMainnet.transfer(dataUnion.getContractAddress(), amount)
+    log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.getAddress()}`)
+    const txTokenToDU = await adminTokenMainnet.transfer(dataUnion.getAddress(), amount)
     await txTokenToDU.wait()
 
-    const duBalance2 = await adminTokenMainnet.balanceOf(dataUnion.getContractAddress())
-    log(`Token balance of ${dataUnion.getContractAddress()}: ${formatEther(duBalance2)} (${duBalance2.toString()})`)
+    const duBalance2 = await adminTokenMainnet.balanceOf(dataUnion.getAddress())
+    log(`Token balance of ${dataUnion.getAddress()}: ${formatEther(duBalance2)} (${duBalance2.toString()})`)
     const balance2 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance2)} (${balance2.toString()})`)
 
@@ -121,18 +121,18 @@ const testWithdraw = async (
     log(`refreshRevenue returned ${JSON.stringify(tr3)}`)
     log(`DU balance: ${await contract.sidechain.totalEarnings()}`)
 
-    const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.getContractAddress())
-    log(`Token balance of ${dataUnion.getContractAddress()}: ${formatEther(duBalance3)} (${duBalance3.toString()})`)
+    const duBalance3 = await adminTokenMainnet.balanceOf(dataUnion.getAddress())
+    log(`Token balance of ${dataUnion.getAddress()}: ${formatEther(duBalance3)} (${duBalance3.toString()})`)
     const balance3 = await adminTokenMainnet.balanceOf(adminWalletMainnet.address)
     log(`Token balance of ${adminWalletMainnet.address}: ${formatEther(balance3)} (${balance3.toString()})`)
 
-    const stats = await memberClient.getDataUnion(dataUnion.getContractAddress()).getMemberStats()
+    const stats = await memberClient.getDataUnion(dataUnion.getAddress()).getMemberStats()
     log(`Stats: ${JSON.stringify(stats)}`)
 
     const balanceBefore = await getBalanceBefore(memberWallet, adminTokenMainnet)
     log(`Balance before: ${balanceBefore}. Withdrawing tokens...`)
 
-    const withdrawTr = await withdraw(dataUnion.getContractAddress(), memberClient, memberWallet, adminClient)
+    const withdrawTr = await withdraw(dataUnion.getAddress(), memberClient, memberWallet, adminClient)
     log(`Tokens withdrawn, sidechain tx receipt: ${JSON.stringify(withdrawTr)}`)
     const balanceAfter = await getBalanceAfter(memberWallet, adminTokenMainnet)
     const balanceIncrease = balanceAfter.sub(balanceBefore)

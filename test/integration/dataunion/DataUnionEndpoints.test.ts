@@ -57,7 +57,7 @@ describe('DataUnionEndPoints', () => {
             const dataUnionName = testName + Date.now()
             log(`Starting deployment of dataUnionName=${dataUnionName}`)
             dataUnion = await adminClient.deployDataUnion({ dataUnionName })
-            log(`DataUnion ${dataUnion.getContractAddress()} is ready to roll`)
+            log(`DataUnion ${dataUnion.getAddress()} is ready to roll`)
 
             // product is needed for join requests to analyze the DU version
             const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
@@ -67,7 +67,7 @@ describe('DataUnionEndPoints', () => {
                 {
                     method: 'POST',
                     body: JSON.stringify({
-                        beneficiaryAddress: dataUnion.getContractAddress(),
+                        beneficiaryAddress: dataUnion.getAddress(),
                         type: 'DATAUNION',
                         dataUnionVersion: 2
                     })
@@ -135,8 +135,8 @@ describe('DataUnionEndPoints', () => {
             const adminTokenMainnet = new Contract(tokenAddress, Token.abi, adminWalletMainnet)
 
             await adminMutex.runExclusive(async () => {
-                log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.getContractAddress()}`)
-                const txTokenToDU = await adminTokenMainnet.transfer(dataUnion.getContractAddress(), amount)
+                log(`Transferring ${amount} token-wei ${adminWalletMainnet.address}->${dataUnion.getAddress()}`)
+                const txTokenToDU = await adminTokenMainnet.transfer(dataUnion.getAddress(), amount)
                 await txTokenToDU.wait()
             })
 
@@ -182,7 +182,7 @@ describe('DataUnionEndPoints', () => {
                 await dataUnion.addMembers(memberAddressList)
             })
             const client = await getOutsiderClient(dataUnion)
-            const stats = await client.getDataUnion(dataUnion.getContractAddress()).getStats()
+            const stats = await client.getDataUnion(dataUnion.getAddress()).getStats()
             expect(+stats.activeMemberCount).toEqual(3)
             expect(+stats.inactiveMemberCount).toEqual(0)
             expect(+stats.joinPartAgentCount).toEqual(2)
@@ -197,7 +197,7 @@ describe('DataUnionEndPoints', () => {
                 await dataUnion.addMembers(memberAddressList)
             })
             const client = await getOutsiderClient(dataUnion)
-            const memberStats = await Promise.all(memberAddressList.map((m) => client.getDataUnion(dataUnion.getContractAddress()).getMemberStats(m)))
+            const memberStats = await Promise.all(memberAddressList.map((m) => client.getDataUnion(dataUnion.getAddress()).getMemberStats(m)))
             expect(memberStats).toMatchObject([{
                 status: 'active',
                 earningsBeforeLastJoin: '0',

@@ -34,7 +34,7 @@ export class DataUnion {
         this.dataUnionEndpoints = dataUnionEndpoints
     }
 
-    getContractAddress() {
+    getAddress() {
         return this.contractAddress
     }
 
