@@ -166,7 +166,6 @@ describe('DataUnionEndPoints', () => {
                 auth: {
                     apiKey: 'tester1-api-key'
                 },
-                dataUnion: dataUnion.address,
                 autoConnect: false,
                 autoDisconnect: false,
             } as any)

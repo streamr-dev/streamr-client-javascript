@@ -50,7 +50,6 @@ export interface StreamrClientOptions {
     sidechain?: {
         url?: string
     },
-    dataUnion?: string
     tokenAddress: string,
     minimumWithdrawTokenWei?: BigNumber|number|string,
     factoryMainnetAddress: string

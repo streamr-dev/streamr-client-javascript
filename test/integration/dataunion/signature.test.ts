@@ -30,8 +30,7 @@ it('DataUnion signature', async () => {
         ...config.clientOptions,
         auth: {
             privateKey: memberWallet.privateKey
-        },
-        dataUnion: dataUnion.getAddress(),
+        }
     } as any)
     await memberClient.ensureConnected()
 
