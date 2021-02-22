@@ -353,7 +353,7 @@ These DataUnion-specific options are used from `StreamrClient` options:
 | deployDataUnion(options)                                              | DataUnion object    | Deploy a new Data Union                                        |
 | createSecret(\[name])                                                 |                     | Create a secret for a Data Union                               |
 | addMembers(memberAddressList, \[options])                             | Transaction receipt | Add members                                                    |
-| partMembers(memberAddressList, \[options])                            | Transaction receipt | Remove members from Data Union                                 |
+| removeMembers(memberAddressList, \[options])                          | Transaction receipt | Remove members from Data Union                                 |
 | withdrawAllToMember(memberAddress, options)                           |                     |                                                                |
 | withdrawAllToSigned(memberAddress, recipientAddress, signature, \[options]) |                     |                                                                |
 | setAdminFee(newFeeFraction, options)                                  | Transaction receipt | `newFeeFraction` is a `Number` between 0.0 and 1.0 (inclusive) |
@@ -374,7 +374,7 @@ await client.setAdminFee(0.3, { dataUnion })
 | Name                                                            | Returns             | Description                                                                 |
 | :-------------------------------------------------------------- | :------------------ | :-------------------------------------------------------------------------- |
 | join(memberAddress, \[secret])                                  | JoinRequest         | Join a Data Union                                                           |
-| hasJoined(memberAddress, \[options])                            | -                   | Wait until member has been accepted                                         |
+| isMember(memberAddress)                                         | boolean             |                                                                             |
 | withdrawAll(\[options])                                         | Transaction receipt | Withdraw funds from Data Union                                              |
 | withdrawAllTo(recipientAddress, \[options])                     | Transaction receipt | Donate/move your earnings to recipientAddress instead of your memberAddress |
 | signWithdrawAllTo(recipientAddress)                             | Signature (string)  | Signature that can be used to withdraw tokens to given recipientAddress     |

@@ -48,8 +48,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
     }
 
-    async hasJoined(memberAddress: string, options?: { pollingIntervalMs?: number, retryTimeoutMs?: number }) {
-        return this.dataUnionEndpoints.hasJoined(memberAddress, options, this.contractAddress)
+    async isMember(memberAddress: string) {
+        return this.dataUnionEndpoints.isMember(memberAddress, this.contractAddress)
     }
 
     async withdrawAll(options?: DataUnionWithdrawOptions) {
@@ -104,8 +104,8 @@ export class DataUnion {
         return this.dataUnionEndpoints.addMembers(memberAddressList, options, this.contractAddress)
     }
 
-    async partMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
-        return this.dataUnionEndpoints.partMembers(memberAddressList, options, this.contractAddress)
+    async removeMembers(memberAddressList: string[], options?: DataUnionMemberListModificationOptions) {
+        return this.dataUnionEndpoints.removeMembers(memberAddressList, options, this.contractAddress)
     }
 
     async withdrawAllToMember(memberAddress: string, options?: DataUnionWithdrawOptions) {

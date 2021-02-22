@@ -750,9 +750,9 @@ export class DataUnionEndpoints {
     /**
      * Remove given members from data union
      * @param {List<EthereumAddress>} memberAddressList to remove
-     * @returns {Promise<TransactionReceipt>} partMembers sidechain transaction
+     * @returns {Promise<TransactionReceipt>} removeMembers sidechain transaction
      */
-    async partMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
+    async removeMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
         const duSidechain = await getSidechainContract(contractAddress, this.client)
         const tx = await duSidechain.partMembers(members)
@@ -889,22 +889,16 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * Await this function when you want to make sure a member is accepted in the data union
      * @param {EthereumAddress} memberAddress
-     * @param {Number} pollingIntervalMs (optional, default: 1000) ask server if member is in
-     * @param {Number} retryTimeoutMs (optional, default: 60000) give up
-     * @return {Promise} resolves when member is in the data union (or fails with HTTP error)
+     * @return {Promise} boolean
      */
-    async hasJoined(memberAddress: string, options: { pollingIntervalMs?: number, retryTimeoutMs?: number } | undefined = {}, contractAddress: string): Promise<void> {
-        const {
-            pollingIntervalMs = 1000,
-            retryTimeoutMs = 60000,
-        }: any = options
+    async isMember(memberAddress: string, contractAddress: string): Promise<boolean> {
         const address = getAddress(memberAddress)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
-
-        // memberData[0] is enum ActiveStatus {None, Active, Inactive}, and zero means member has never joined
-        await until(async () => (await duSidechain.memberData(address))[0] !== 0, retryTimeoutMs, pollingIntervalMs)
+        const ACTIVE = 1 // memberData[0] is enum ActiveStatus {None, Active, Inactive}
+        const memberData = await duSidechain.memberData(address)
+        const state = memberData[0]
+        return (state === ACTIVE)
     }
 
     // TODO: this needs more thought: probably something like getEvents from sidechain? Heavy on RPC?

@@ -86,10 +86,7 @@ describe('DataUnionEndPoints', () => {
 
         it('can add members', async () => {
             const dataUnion = await deployDataUnionSync('add-members-test')
-            await adminMutex.runExclusive(async () => {
-                await dataUnion.addMembers(memberAddressList)
-                await dataUnion.hasJoined(memberAddressList[0])
-            })
+            await adminMutex.runExclusive(() => dataUnion.addMembers(memberAddressList))
             const res = await dataUnion.getStats()
             expect(+res.activeMemberCount).toEqual(3)
             expect(+res.inactiveMemberCount).toEqual(0)
@@ -99,7 +96,7 @@ describe('DataUnionEndPoints', () => {
             const dataUnion = await deployDataUnionSync('remove-members-test')
             await adminMutex.runExclusive(async () => {
                 await dataUnion.addMembers(memberAddressList)
-                await dataUnion.partMembers(memberAddressList.slice(1))
+                await dataUnion.removeMembers(memberAddressList.slice(1))
             })
             const res = await dataUnion.getStats()
             expect(+res.activeMemberCount).toEqual(1)
