@@ -4,7 +4,7 @@ import debug from 'debug'
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
+const log = debug('StreamrClient::DataUnionEndpoints::integration-test-deploy')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
