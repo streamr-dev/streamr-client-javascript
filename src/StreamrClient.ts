@@ -1,5 +1,4 @@
 import EventEmitter from 'eventemitter3'
-// @ts-expect-error
 import { ControlLayer } from 'streamr-client-protocol'
 import Debug from 'debug'
 
@@ -8,7 +7,7 @@ import { validateOptions } from './stream/utils'
 import Config from './Config'
 import StreamrEthereum from './Ethereum'
 import Session from './Session'
-import Connection from './Connection'
+import Connection, { ConnectionError } from './Connection'
 import Publisher from './publish'
 import Subscriber from './subscribe'
 import { getUserId } from './user'
@@ -237,12 +236,12 @@ export default class StreamrClient extends EventEmitter {
     }
 
     onConnectionError(err: Todo) {
-        this.emit('error', new Connection.ConnectionError(err))
+        this.emit('error', new ConnectionError(err))
     }
 
     getErrorEmitter(source: Todo) {
         return (err: Todo) => {
-            if (!(err instanceof Connection.ConnectionError || err.reason instanceof Connection.ConnectionError)) {
+            if (!(err instanceof ConnectionError || err.reason instanceof ConnectionError)) {
                 // emit non-connection errors
                 this.emit('error', err)
             } else {
@@ -337,7 +336,7 @@ export default class StreamrClient extends EventEmitter {
         return this.publisher.rotateGroupKey(...args)
     }
 
-    async subscribe(opts: Todo, onMessage: OnMessageCallback) {
+    async subscribe(opts: Todo, onMessage?: OnMessageCallback) {
         let subTask: Todo
         let sub: Todo
         const hasResend = !!(opts.resend || opts.from || opts.to || opts.last)
@@ -372,7 +371,7 @@ export default class StreamrClient extends EventEmitter {
         await this.subscriber.unsubscribe(opts)
     }
 
-    async resend(opts: Todo, onMessage: OnMessageCallback) {
+    async resend(opts: Todo, onMessage?: OnMessageCallback) {
         const task = this.subscriber.resend(opts)
         if (typeof onMessage !== 'function') {
             return task
