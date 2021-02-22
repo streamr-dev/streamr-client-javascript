@@ -918,7 +918,7 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * Get token balance in "wei" (10^-18 parts) for given address 
+     * Get token balance in "wei" (10^-18 parts) for given address
      */
     async getTokenBalance(address: string): Promise<BigNumber> {
         const a = getAddress(address)
@@ -953,7 +953,8 @@ export class DataUnionEndpoints {
             const version = await du.version()
             return +version
         } catch (e) {
-            return 0  // "not a data union"
+            // "not a data union"
+            return 0
         }
     }
 

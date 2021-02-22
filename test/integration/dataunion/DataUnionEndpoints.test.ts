@@ -160,7 +160,7 @@ describe('DataUnionEndPoints', () => {
             `0x300000000000000000000000000${nonce}`,
         ]
 
-        async function getOutsiderClient(dataUnion) {
+        async function getOutsiderClient() {
             const client = new StreamrClient({
                 ...config.clientOptions,
                 auth: {
@@ -178,7 +178,7 @@ describe('DataUnionEndPoints', () => {
             await adminMutex.runExclusive(async () => {
                 await dataUnion.addMembers(memberAddressList)
             })
-            const client = await getOutsiderClient(dataUnion)
+            const client = await getOutsiderClient()
             const stats = await client.getDataUnion(dataUnion.getAddress()).getStats()
             expect(+stats.activeMemberCount).toEqual(3)
             expect(+stats.inactiveMemberCount).toEqual(0)
@@ -193,7 +193,7 @@ describe('DataUnionEndPoints', () => {
             await adminMutex.runExclusive(async () => {
                 await dataUnion.addMembers(memberAddressList)
             })
-            const client = await getOutsiderClient(dataUnion)
+            const client = await getOutsiderClient()
             const memberStats = await Promise.all(memberAddressList.map((m) => client.getDataUnion(dataUnion.getAddress()).getMemberStats(m)))
             expect(memberStats).toMatchObject([{
                 status: 'active',
