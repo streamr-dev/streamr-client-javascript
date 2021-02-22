@@ -580,32 +580,8 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * TODO: update this comment
-     * @typedef {object} EthereumOptions all optional, hence "options"
-     * @property {Wallet | string} wallet or private key, default is currently logged in StreamrClient (if auth: privateKey)
-     * @property {string} key private key, alias for String wallet
-     * @property {string} privateKey, alias for String wallet
-     * @property {providers.Provider} provider to use in case wallet was a String, or omitted
-     * @property {number} confirmations, default is 1
-     * @property {BigNumber} gasPrice in wei (part of ethers overrides), default is whatever the network recommends (ethers.js default)
-     * @see https://docs.ethers.io/ethers.js/html/api-contract.html#overrides
-     */
-    /**
-     * @typedef {object} AdditionalDeployOptions for deployDataUnion
-     * @property {EthereumAddress} owner new data union owner, defaults to StreamrClient authenticated user
-     * @property {Array<EthereumAddress>} joinPartAgents defaults to just the owner
-     * @property {number} adminFee fraction (number between 0...1 where 1 means 100%)
-     * @property {string} dataUnionName unique (to the DataUnionFactory) identifier of the new data union, must not exist yet
-     */
-    /**
-     * @typedef {EthereumOptions & AdditionalDeployOptions} DeployOptions
-     */
-    // TODO: gasPrice to overrides (not needed for browser, but would be useful in node.js)
-
-    /**
      * Create a new DataUnionMainnet contract to mainnet with DataUnionFactoryMainnet
      * This triggers DataUnionSidechain contract creation in sidechain, over the bridge (AMB)
-     * @param {DeployOptions} options such as adminFee (default: 0)
      * @return {Promise<Contract>} that resolves when the new DU is deployed over the bridge to side-chain
      */
     async deployDataUnion(options: DataUnionDeployOptions = {}): Promise<Contract> {
@@ -706,11 +682,8 @@ export class DataUnionEndpoints {
 
     /**
      * Add a new data union secret
-     * @param {EthereumAddress} dataUnionMainnetAddress
-     * @param {String} name describes the secret
-     * @returns {String} the server-generated secret
      */
-    async createSecret(dataUnionMainnetAddress: string, name: string = 'Untitled Data Union Secret') {
+    async createSecret(dataUnionMainnetAddress: string, name: string = 'Untitled Data Union Secret'): Promise<string> {
         const duAddress = getAddress(dataUnionMainnetAddress) // throws if bad address
         const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', duAddress, 'secrets')
         const res = await authFetch(
@@ -735,8 +708,6 @@ export class DataUnionEndpoints {
 
     /**
      * Add given Ethereum addresses as data union members
-     * @param {List<EthereumAddress>} memberAddressList to add
-     * @returns {Promise<TransactionReceipt>} addMembers sidechain transaction
      */
     async addMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
@@ -749,8 +720,6 @@ export class DataUnionEndpoints {
 
     /**
      * Remove given members from data union
-     * @param {List<EthereumAddress>} memberAddressList to remove
-     * @returns {Promise<TransactionReceipt>} removeMembers sidechain transaction
      */
     async removeMembers(memberAddressList: string[], options: DataUnionMemberListModificationOptions|undefined = {}, contractAddress: string): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
@@ -782,8 +751,6 @@ export class DataUnionEndpoints {
     /**
      * Admin: get the tx promise for withdrawing all earnings on behalf of a member
      * @param {EthereumAddress} memberAddress the other member who gets their tokens out of the Data Union
-     * @param {EthereumAddress} dataUnion to withdraw my earnings from
-     * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
     async getWithdrawAllToMemberTx(memberAddress: string, contractAddress: string): Promise<TransactionResponse> {
@@ -794,11 +761,9 @@ export class DataUnionEndpoints {
 
     /**
      * Admin: Withdraw a member's earnings to another address, signed by the member
-     * @param {EthereumAddress} dataUnion to withdraw my earnings from
      * @param {EthereumAddress} memberAddress the member whose earnings are sent out
      * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
      * @param {string} signature from member, produced using signWithdrawAllTo
-     * @param options
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw transaction is confirmed
      */
     async withdrawAllToSigned(memberAddress: string, recipientAddress: string, signature: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
@@ -815,11 +780,9 @@ export class DataUnionEndpoints {
 
     /**
      * Admin: Withdraw a member's earnings to another address, signed by the member
-     * @param {EthereumAddress} dataUnion to withdraw my earnings from
      * @param {EthereumAddress} memberAddress the member whose earnings are sent out
      * @param {EthereumAddress} recipientAddress the address to receive the tokens in mainnet
      * @param {string} signature from member, produced using signWithdrawAllTo
-     * @param {EthereumOptions} options
      * @returns {Promise<providers.TransactionResponse>} await on call .wait to actually send the tx
      */
     async getWithdrawAllToSignedTx(memberAddress: string, recipientAddress: string, signature: string, contractAddress: string): Promise<TransactionResponse> {
@@ -828,9 +791,7 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * Admin: set admin fee for the data union
-     * @param {number} newFeeFraction between 0.0 and 1.0
-     * @param {EthereumOptions} options
+     * Admin: set admin fee (between 0.0 and 1.0) for the data union
      */
     async setAdminFee(newFeeFraction: number, contractAddress: string): Promise<Todo> {
         if (newFeeFraction < 0 || newFeeFraction > 1) {
@@ -843,8 +804,7 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * Get data union admin fee fraction that admin gets from each revenue event
-     * @returns {Promise<number>} between 0.0 and 1.0
+     * Get data union admin fee fraction (between 0.0 and 1.0) that admin gets from each revenue event
      */
     async getAdminFee(contractAddress: string): Promise<number> {
         const duMainnet = getMainnetContractReadOnly(contractAddress, this.client)
@@ -863,9 +823,6 @@ export class DataUnionEndpoints {
 
     /**
      * Send a joinRequest, or get into data union instantly with a data union secret
-     *
-     * @property {String} secret if given, and correct, join the data union immediately
-     * @property {String} contractAddress Ethereum mainnet address of the data union
      */
     async join(secret: string|undefined, contractAddress: string): Promise<Todo> {
         const memberAddress = this.client.getAddress()
@@ -892,10 +849,6 @@ export class DataUnionEndpoints {
         return response
     }
 
-    /**
-     * @param {EthereumAddress} memberAddress
-     * @return {Promise} boolean
-     */
     async isMember(memberAddress: string, contractAddress: string): Promise<boolean> {
         const address = getAddress(memberAddress)
         const duSidechain = await getSidechainContractReadOnly(contractAddress, this.client)
@@ -936,8 +889,6 @@ export class DataUnionEndpoints {
 
     /**
      * Get stats of a single data union member
-     * @param {EthereumAddress} dataUnion to query
-     * @param {EthereumAddress} memberAddress (optional) if not supplied, get the stats of currently logged in StreamrClient (if auth: privateKey)
      */
     async getMemberStats(memberAddress: string, contractAddress: string): Promise<MemberStats> {
         const address = getAddress(memberAddress)
@@ -959,9 +910,6 @@ export class DataUnionEndpoints {
 
     /**
      * Get the amount of tokens the member would get from a successful withdraw
-     * @param dataUnion to query
-     * @param memberAddress whose balance is returned
-     * @return {Promise<BigNumber>}
      */
     async getWithdrawableEarnings(memberAddress: string, contractAddress: string): Promise<BigNumber> {
         const address = getAddress(memberAddress)
@@ -970,9 +918,7 @@ export class DataUnionEndpoints {
     }
 
     /**
-     * Get token balance for given address
-     * @param {EthereumAddress} address
-     * @returns {Promise<BigNumber>} token balance in "wei" (10^-18 parts)
+     * Get token balance in "wei" (10^-18 parts) for given address 
      */
     async getTokenBalance(address: string): Promise<BigNumber> {
         const a = getAddress(address)
@@ -992,8 +938,6 @@ export class DataUnionEndpoints {
     /**
      * Figure out if given mainnet address is old DataUnion (v 1.0) or current 2.0
      * NOTE: Current version of streamr-client-javascript can only handle current version!
-     * @param {EthereumAddress} contractAddress
-     * @returns {number} 1 for old, 2 for current, zero for "not a data union"
      */
     async getVersion(contractAddress: string): Promise<number> {
         const a = getAddress(contractAddress) // throws if bad address
@@ -1009,7 +953,7 @@ export class DataUnionEndpoints {
             const version = await du.version()
             return +version
         } catch (e) {
-            return 0
+            return 0  // "not a data union"
         }
     }
 
@@ -1019,8 +963,7 @@ export class DataUnionEndpoints {
 
     /**
      * Withdraw all your earnings
-     * @param options
-     * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
+     *  @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
     async withdrawAll(contractAddress: string, options?: DataUnionWithdrawOptions): Promise<TransactionReceipt> {
         const recipientAddress = this.client.getAddress()
@@ -1057,7 +1000,6 @@ export class DataUnionEndpoints {
 
     /**
      * Withdraw earnings and "donate" them to the given address
-     * @param {EthereumAddress} recipientAddress the address to receive the tokens
      * @returns {Promise<providers.TransactionReceipt>} get receipt once withdraw is complete (tokens are seen in mainnet)
      */
     async withdrawAllTo(recipientAddress: string, options: DataUnionWithdrawOptions|undefined, contractAddress: string): Promise<TransactionReceipt> {
