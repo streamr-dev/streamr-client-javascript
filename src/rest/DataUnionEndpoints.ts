@@ -633,7 +633,7 @@ export class DataUnionEndpoints {
         const mainnetWallet = this.client.ethereum.getSigner()
         const sidechainProvider = this.client.ethereum.getSidechainProvider()
 
-        const ownerAddress = getAddress((owner || this.client.getAddress())!)
+        const ownerAddress = (owner) ? getAddress(owner) : this.client.getAddress()
 
         let agentAddressList
         if (Array.isArray(joinPartAgents)) {
@@ -647,7 +647,7 @@ export class DataUnionEndpoints {
             }
         }
 
-        const deployerAddress = getAddress(this.client.getAddress()!)
+        const deployerAddress = this.client.getAddress()
         // @ts-expect-error
         const duMainnetAddress = await fetchDataUnionMainnetAddress(this.client, duName, deployerAddress, options)
         const duSidechainAddress = await fetchDataUnionSidechainAddress(this.client, duMainnetAddress)
@@ -864,18 +864,18 @@ export class DataUnionEndpoints {
     /**
      * Send a joinRequest, or get into data union instantly with a data union secret
      *
-     * @property {String} memberAddress Ethereum mainnet address of the joining member
      * @property {String} secret if given, and correct, join the data union immediately
      * @property {String} contractAddress Ethereum mainnet address of the data union
      */
-    async join(memberAddress: string, secret: string|undefined, contractAddress: string): Promise<Todo> {
+    async join(secret: string|undefined, contractAddress: string): Promise<Todo> {
+        const memberAddress = this.client.getAddress()
         const body: any = {
-            memberAddress: getAddress(memberAddress)
+            memberAddress
         }
         if (secret) { body.secret = secret }
 
         const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', contractAddress, 'joinRequests')
-        return authFetch(
+        const response = await authFetch(
             url,
             this.client.session,
             {
@@ -886,6 +886,10 @@ export class DataUnionEndpoints {
                 },
             },
         )
+        if (secret) {
+            await until(async () => this.isMember(memberAddress, contractAddress))
+        }
+        return response
     }
 
     /**
@@ -1020,17 +1024,13 @@ export class DataUnionEndpoints {
      */
     async withdrawAll(contractAddress: string, options?: DataUnionWithdrawOptions): Promise<TransactionReceipt> {
         const recipientAddress = this.client.getAddress()
-        if (recipientAddress) {
-            const tr = await untilWithdrawIsComplete(
-                this.client,
-                () => this.getWithdrawAllTx(contractAddress),
-                () => this.getTokenBalance(recipientAddress),
-                options
-            )
-            return tr
-        } else {
-            throw new Error('Unknown recipient: StreamrClient must be authenticated')
-        }
+        const tr = await untilWithdrawIsComplete(
+            this.client,
+            () => this.getWithdrawAllTx(contractAddress),
+            () => this.getTokenBalance(recipientAddress),
+            options
+        )
+        return tr
     }
 
     /**

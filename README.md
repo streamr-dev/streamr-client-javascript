@@ -373,7 +373,7 @@ await client.setAdminFee(0.3, { dataUnion })
 
 | Name                                                            | Returns             | Description                                                                 |
 | :-------------------------------------------------------------- | :------------------ | :-------------------------------------------------------------------------- |
-| join(memberAddress, \[secret])                                  | JoinRequest         | Join a Data Union                                                           |
+| join(\[secret])                                                 | JoinRequest         | Join the Data Union (if a valid secret is given, the promise waits until the automatic join request has been processed)  |
 | isMember(memberAddress)                                         | boolean             |                                                                             |
 | withdrawAll(\[options])                                         | Transaction receipt | Withdraw funds from Data Union                                              |
 | withdrawAllTo(recipientAddress, \[options])                     | Transaction receipt | Donate/move your earnings to recipientAddress instead of your memberAddress |

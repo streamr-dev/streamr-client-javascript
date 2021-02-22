@@ -45,7 +45,7 @@ it('DataUnion signature', async () => {
             dataUnionVersion: 2
         })
     })
-    await memberClient.getDataUnion(dataUnion.getAddress()).join(memberWallet.address, secret)
+    await memberClient.getDataUnion(dataUnion.getAddress()).join(secret)
 
     // eslint-disable-next-line no-underscore-dangle
     const contract = await dataUnion._getContract()

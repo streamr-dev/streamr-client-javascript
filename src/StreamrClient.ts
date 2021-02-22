@@ -20,6 +20,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import Stream, { StreamProperties } from './stream'
 import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
 import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
+import { getAddress } from '@ethersproject/address'
 
 export interface StreamrClientOptions {
     id?: string
@@ -399,8 +400,13 @@ export default class StreamrClient extends EventEmitter {
         return this.connection.enableAutoDisconnect(...args)
     }
 
-    getAddress(): string|null {
-        return this.ethereum.getAddress()
+    getAddress(): string {
+        const address = this.ethereum.getAddress()
+        if (address) {
+            return getAddress(address)
+        } else {
+            throw new Error('StreamrClient is not authenticated with private key')
+        }
     }
 
     async getPublisherId() {

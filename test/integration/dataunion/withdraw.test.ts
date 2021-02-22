@@ -77,7 +77,7 @@ const testWithdraw = async (
             dataUnionVersion: 2
         })
     })
-    const res = await memberClient.getDataUnion(dataUnion.getAddress()).join(memberWallet.address, secret)
+    const res = await memberClient.getDataUnion(dataUnion.getAddress()).join(secret)
     // await adminClient.addMembers([memberWallet.address], { dataUnion })
     log(`Member joined data union: ${JSON.stringify(res)}`)
 

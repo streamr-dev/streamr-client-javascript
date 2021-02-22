@@ -12,6 +12,17 @@ export interface DataUnionDeployOptions {
     gasPrice?: BigNumber
 }
 
+export enum JoinRequestState {
+    PENDING = 'PENDING',
+    ACCEPTED = 'ACCEPTED',
+    REJECTED = 'REJECTED'
+}
+
+export interface JoinResponse {
+    id: string
+    state: JoinRequestState
+}
+
 export interface DataUnionWithdrawOptions {
     pollingIntervalMs?: number
     retryTimeoutMs?: number
@@ -44,8 +55,8 @@ export class DataUnion {
 
     // Member functions
 
-    async join(memberAddress: string, secret?: string) {
-        return this.dataUnionEndpoints.join(memberAddress, secret, this.contractAddress)
+    async join(secret?: string) {
+        return this.dataUnionEndpoints.join(secret, this.contractAddress)
     }
 
     async isMember(memberAddress: string) {
