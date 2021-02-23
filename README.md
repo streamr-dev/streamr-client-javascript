@@ -324,16 +324,9 @@ All the below functions return a Promise which gets resolved with the result.
 
 ## Data Unions
 
-This library provides functions for working with Data Unions.
+This library provides functions for working with Data Unions. To get a DataUnion instance, call `client.getDataUnion(address)`. To deploy a new DataUnion, call `deployDataUnion(options)`
 
-TODO: check all this documentation before merging/publishing, probably some of it is out of date (DU1 era)
-
-TODO: do we need these parameters (and `confirmations` parameter) somewhere? Either add the support, or remove from `DataUnionDeployOptions` interface (currently commented out)
-| Property                 | Default                                                | Description                                                                                                      |
-| :----------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| wallet                   | given in auth                                          | ethers.js Wallet object to use to sign and send withdraw transaction                                             |
-| provider                 | mainnet                                                | ethers.js Provider to use if wallet wasn't provided                                                              |
-| gasPrice                 | ethers.js supplied                                     | Probably uses the network estimate                                                                               |
+TODO: All `options`-parameters should be documented (see TypeScript interfaces for the definitions)
 
 These DataUnion-specific options are used from `StreamrClient` options:
 | Property                 | Default                                                | Description                                                                                                      |
@@ -347,8 +340,7 @@ These DataUnion-specific options are used from `StreamrClient` options:
 
 | Name                                                                        | Returns             | Description                                                    |
 | :-------------------------------------------------------------------------- | :------------------ | :------------------------------------------------------------- |
-| deployDataUnion(options)                                                    | DataUnion object    | Deploy a new Data Union                                        |
-| createSecret(\[name])                                                       |                     | Create a secret for a Data Union                               |
+| createSecret(\[name])                                                       | string              | Create a secret for a Data Union                               |
 | addMembers(memberAddressList, \[options])                                   | Transaction receipt | Add members                                                    |
 | removeMembers(memberAddressList, \[options])                                | Transaction receipt | Remove members from Data Union                                 |
 | withdrawAllToMember(memberAddress, \[options])                              |                     |                                                                |
