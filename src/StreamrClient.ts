@@ -11,11 +11,14 @@ import Connection, { ConnectionError } from './Connection'
 import Publisher from './publish'
 import Subscriber from './subscribe'
 import { getUserId } from './user'
-import { Todo, MaybeAsync } from './types'
+import { Todo, MaybeAsync, EthereumAddress } from './types'
 import { StreamEndpoints } from './rest/StreamEndpoints'
 import { LoginEndpoints } from './rest/LoginEndpoints'
-import { DataUnionEndpoints } from './rest/DataUnionEndpoints'
 import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
+import { BigNumber } from '@ethersproject/bignumber'
+import { getAddress } from '@ethersproject/address'
+import { Contract } from '@ethersproject/contracts'
+import { getDataUnionMainnetAddress } from './dataunion/Contracts'
 
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
@@ -137,7 +140,7 @@ function Plugin(targetInstance: any, srcInstance: any) {
 }
 
 // these are mixed in via Plugin function above
-interface StreamrClient extends StreamEndpoints, LoginEndpoints, DataUnionEndpoints {}
+interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 
 // eslint-disable-next-line no-redeclare
 class StreamrClient extends EventEmitter {
@@ -152,7 +155,6 @@ class StreamrClient extends EventEmitter {
     ethereum: StreamrEthereum
     streamEndpoints: StreamEndpoints
     loginEndpoints: LoginEndpoints
-    dataUnionEndpoints: DataUnionEndpoints
 
     constructor(options: Partial<StreamrClientOptions> = {}, connection?: StreamrConnection) {
         super()
@@ -195,7 +197,6 @@ class StreamrClient extends EventEmitter {
 
         this.streamEndpoints = Plugin(this, new StreamEndpoints(this))
         this.loginEndpoints = Plugin(this, new LoginEndpoints(this))
-        this.dataUnionEndpoints = Plugin(this, new DataUnionEndpoints(this))
         this.cached = new StreamrCached(this)
     }
 
@@ -380,18 +381,47 @@ class StreamrClient extends EventEmitter {
         return this.getAddress()
     }
 
+    /**
+     * Get token balance in "wei" (10^-18 parts) for given address
+     */
+    async getTokenBalance(address: string): Promise<BigNumber> {
+        const { tokenAddress } = this.options
+        if (!tokenAddress) {
+            throw new Error('StreamrClient has no tokenAddress configuration.')
+        }
+        const addr = getAddress(address)
+        const provider = this.ethereum.getMainnetProvider()
+
+        const token = new Contract(tokenAddress, [{
+            name: 'balanceOf',
+            inputs: [{ type: 'address' }],
+            outputs: [{ type: 'uint256' }],
+            constant: true,
+            payable: false,
+            stateMutability: 'view',
+            type: 'function'
+        }], provider)
+        return token.balanceOf(addr)
+    }
+
     getDataUnion(contractAddress: string) {
-        return new DataUnion(contractAddress, undefined, this.dataUnionEndpoints)
+        return new DataUnion(contractAddress, undefined, this)
     }
 
     async deployDataUnion(options?: DataUnionDeployOptions) {
-        const contract = await this.dataUnionEndpoints.deployDataUnionContract(options)
-        return new DataUnion(contract.address, contract.sidechain.address, this.dataUnionEndpoints)
+        const contract = await DataUnion._deployContract(options, this) // eslint-disable-line no-underscore-dangle
+        return new DataUnion(contract.address, contract.sidechain.address, this)
     }
 
     _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: string}) {
-        const contractAddress = this.dataUnionEndpoints.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
+        const contractAddress = this.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
         return this.getDataUnion(contractAddress)
+    }
+
+    // TODO inline this function?
+    private calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: EthereumAddress) {
+        const address = getAddress(deployerAddress) // throws if bad address
+        return getDataUnionMainnetAddress(this, dataUnionName, address)
     }
 
     static generateEthereumAccount() {
