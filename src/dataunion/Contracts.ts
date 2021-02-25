@@ -14,24 +14,15 @@ import { DataUnionWithdrawOptions } from './DataUnion'
 
 const log = debug('StreamrClient::DataUnion')
 
-// TODO remove caching as we calculate the values only when deploying the DU
-const mainnetAddressCache: Todo = {} // mapping: "name" -> mainnet address
-
-/** @returns Mainnet address for Data Union */
 export async function fetchDataUnionMainnetAddress(
     client: StreamrClient,
     dataUnionName: string,
     deployerAddress: EthereumAddress
 ): Promise<EthereumAddress> {
-    if (!mainnetAddressCache[dataUnionName]) {
-        const provider = client.ethereum.getMainnetProvider()
-        const { factoryMainnetAddress } = client.options
-        const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
-        const addressPromise = factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
-        mainnetAddressCache[dataUnionName] = addressPromise
-        mainnetAddressCache[dataUnionName] = await addressPromise // eslint-disable-line require-atomic-updates
-    }
-    return mainnetAddressCache[dataUnionName]
+    const provider = client.ethereum.getMainnetProvider()
+    const { factoryMainnetAddress } = client.options
+    const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
+    return factoryMainnet.mainnetAddress(deployerAddress, dataUnionName)
 }
 
 export function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName: string, deployerAddress: EthereumAddress) {
@@ -45,19 +36,11 @@ export function getDataUnionMainnetAddress(client: StreamrClient, dataUnionName:
     return getCreate2Address(factoryMainnetAddress, salt, codeHash)
 }
 
-// TODO remove caching as we calculate the values only when deploying the DU
-const sidechainAddressCache: Todo = {} // mapping: mainnet address -> sidechain address
-/** @returns Sidechain address for Data Union */
 export async function fetchDataUnionSidechainAddress(client: StreamrClient, duMainnetAddress: EthereumAddress): Promise<EthereumAddress> {
-    if (!sidechainAddressCache[duMainnetAddress]) {
-        const provider = client.ethereum.getMainnetProvider()
-        const { factoryMainnetAddress } = client.options
-        const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
-        const addressPromise = factoryMainnet.sidechainAddress(duMainnetAddress)
-        sidechainAddressCache[duMainnetAddress] = addressPromise
-        sidechainAddressCache[duMainnetAddress] = await addressPromise // eslint-disable-line require-atomic-updates
-    }
-    return sidechainAddressCache[duMainnetAddress]
+    const provider = client.ethereum.getMainnetProvider()
+    const { factoryMainnetAddress } = client.options
+    const factoryMainnet = new Contract(factoryMainnetAddress!, factoryMainnetABI, provider)
+    return factoryMainnet.sidechainAddress(duMainnetAddress)
 }
 
 export function getDataUnionSidechainAddress(client: StreamrClient, mainnetAddress: EthereumAddress) {
