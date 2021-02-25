@@ -10,6 +10,7 @@ import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
 import authFetch from '../../../src/rest/authFetch'
 import { createClient, createMockAddress, expectInvalidAddress } from '../../utils'
+import { MemberStatus } from '../../../src/dataunion/DataUnion'
 
 const log = debug('StreamrClient::DataUnion::integration-test-withdraw')
 
@@ -141,11 +142,10 @@ const testWithdraw = async (
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
     expect(stats).toMatchObject({
-        status: 'active',
-        earningsBeforeLastJoin: '0',
-        lmeAtJoin: '0',
-        totalEarnings: '1000000000000000000',
-        withdrawableEarnings: '1000000000000000000',
+        status: MemberStatus.ACTIVE,
+        earningsBeforeLastJoin: BigNumber.from(0),
+        totalEarnings: BigNumber.from('1000000000000000000'),
+        withdrawableEarnings: BigNumber.from('1000000000000000000')
     })
     expect(withdrawTr.logs[0].address).toBe(config.clientOptions.tokenAddressSidechain)
     expect(balanceIncrease.toString()).toBe(amount.toString())
