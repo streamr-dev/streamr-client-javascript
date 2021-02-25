@@ -9,7 +9,7 @@ import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
 import authFetch from '../../../src/rest/authFetch'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-signature')
+const log = debug('StreamrClient::DataUnion::integration-test-signature')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -20,7 +20,7 @@ it('DataUnion signature', async () => {
     const adminClient = new StreamrClient(config.clientOptions as any)
     await adminClient.ensureConnected()
     const dataUnion = await adminClient.deployDataUnion()
-    const secret = await dataUnion.createSecret('DataUnionEndpoints test secret')
+    const secret = await dataUnion.createSecret('test secret')
     log(`DataUnion ${dataUnion.getAddress()} is ready to roll`)
 
     const memberWallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)

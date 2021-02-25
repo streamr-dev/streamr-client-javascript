@@ -8,7 +8,7 @@ import { createMockAddress, expectInvalidAddress, fakePrivateKey } from '../../u
 import authFetch from '../../../src/rest/authFetch'
 import { getEndpointUrl } from '../../../src/utils'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-member')
+const log = debug('StreamrClient::DataUnion::integration-test-member')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -22,7 +22,6 @@ const joinMember = async (memberWallet: Wallet, secret: string|undefined, dataUn
             privateKey: memberWallet.privateKey,
         }
     } as any)
-    await memberClient.ensureConnected()
     return memberClient.getDataUnion(dataUnionAddress).join(secret)
 }
 

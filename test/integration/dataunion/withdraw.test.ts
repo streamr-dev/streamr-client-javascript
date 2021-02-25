@@ -11,8 +11,7 @@ import config from '../config'
 import authFetch from '../../../src/rest/authFetch'
 import { createClient, createMockAddress, expectInvalidAddress } from '../../utils'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
-// const { log } = console
+const log = debug('StreamrClient::DataUnion::integration-test-withdraw')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -49,7 +48,7 @@ const testWithdraw = async (
     await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
-    const secret = await dataUnion.createSecret('DataUnionEndpoints test secret')
+    const secret = await dataUnion.createSecret('test secret')
     log(`DataUnion ${dataUnion.getAddress()} is ready to roll`)
     // dataUnion = await adminClient.getDataUnionContract({dataUnion: "0xd778CfA9BB1d5F36E42526B2BAFD07B74b4066c0"})
 

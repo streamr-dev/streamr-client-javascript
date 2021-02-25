@@ -5,7 +5,7 @@ import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
 import { createMockAddress } from '../../utils'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-deploy')
+const log = debug('StreamrClient::DataUnion::integration-test-deploy')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -25,6 +25,10 @@ describe('DataUnion deployment', () => {
         adminClient = new StreamrClient(config.clientOptions as any)
         await adminClient.ensureConnected()
     }, 60000)
+
+    afterAll(async () => {
+        await adminClient.ensureDisconnected()
+    })
 
     describe('owner', () => {
 

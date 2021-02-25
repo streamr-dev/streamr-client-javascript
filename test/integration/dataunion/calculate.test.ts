@@ -3,9 +3,9 @@ import debug from 'debug'
 
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
+import { createClient, expectInvalidAddress } from '../../utils'
 
-const log = debug('StreamrClient::DataUnionEndpoints::integration-test-calculate')
-// const { log } = console
+const log = debug('StreamrClient::DataUnion::integration-test-calculate')
 
 // @ts-expect-error
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
@@ -16,7 +16,7 @@ const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, prov
 // This test will fail when new docker images are pushed with updated DU smart contracts
 // -> generate new codehashes for getDataUnionMainnetAddress() and getDataUnionSidechainAddress()
 
-it('DataUnionEndPoints: calculate DU address before deployment', async () => {
+it('calculate DU address before deployment', async () => {
     log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
     const network = await providerMainnet.getNetwork()
     log('Connected to "mainnet" network: ', JSON.stringify(network))
@@ -41,3 +41,8 @@ it('DataUnionEndPoints: calculate DU address before deployment', async () => {
     expect(dataUnionPredicted.getSidechainAddress()).toBe(dataUnionDeployed.getSidechainAddress())
     expect(version).toBe(2)
 }, 60000)
+
+it('get DataUnion: invalid address', () => {
+    const client = createClient(providerSidechain)
+    return expectInvalidAddress(async () => client.getDataUnion('invalid-address'))
+})
