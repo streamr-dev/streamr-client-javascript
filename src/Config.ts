@@ -3,7 +3,6 @@ import Debug from 'debug'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
-import { O } from 'ts-toolbelt'
 import { getVersionString, counterId } from './utils'
 import { Todo } from './types'
 
@@ -11,54 +10,52 @@ export type EthereumConfig = ExternalProvider|JsonRpcFetchFunc
 
 export type StreamrClientOptions = {
     id?: string
-    debug?: Debug.Debugger,
-    auth?: {
+    debug: Debug.Debugger,
+    auth: {
         privateKey?: string
         ethereum?: EthereumConfig
         apiKey?: string
         username?: string
         password?: string
     }
-    url?: string
-    restUrl?: string
-    streamrNodeAddress?: string
-    autoConnect?: boolean
-    autoDisconnect?: boolean
-    orderMessages?: boolean,
-    retryResendAfter?: number,
-    gapFillTimeout?: number,
-    maxGapRequests?: number,
-    maxPublishQueueSize?: number,
-    publishWithSignature?: Todo,
-    verifySignatures?: Todo,
-    publisherStoreKeyHistory?: boolean,
-    groupKeys?: Todo
-    keyExchange?: Todo
+    url: string
+    restUrl: string
+    streamrNodeAddress: string
+    autoConnect: boolean
+    autoDisconnect: boolean
+    orderMessages: boolean,
+    retryResendAfter: number,
+    gapFillTimeout: number,
+    maxGapRequests: number,
+    maxPublishQueueSize: number,
+    publishWithSignature: Todo,
+    verifySignatures: Todo,
+    publisherStoreKeyHistory: boolean,
+    groupKeys: Todo
+    keyExchange: Todo
     mainnet?: Todo
-    sidechain?: {
+    sidechain: {
         url?: string
     },
     dataUnion?: string
-    tokenAddress?: string,
+    tokenAddress: string,
     minimumWithdrawTokenWei?: BigNumber|number|string,
-    sidechainTokenAddress?: string
-    factoryMainnetAddress?: string
-    factorySidechainAddress?: string
-    payForSignatureTransport?: boolean
-    cache?: {
-        maxSize?: number,
-        maxAge?: number
+    factoryMainnetAddress: string
+    factorySidechainAddress: string
+    payForSignatureTransport: boolean
+    cache: {
+        maxSize: number,
+        maxAge: number
     }
 }
 
-export type StreamrClientConfig = O.Compulsory<StreamrClientOptions, 'url' | 'restUrl'>
 const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
 
 export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
     const { id = counterId('StreamrClient') } = opts
 
-    const defaults = {
+    const defaults: StreamrClientOptions = {
         debug: Debug(id),
         // Authentication: identity used by this StreamrClient instance
         auth: {}, // can contain member privateKey or (window.)ethereum
@@ -94,9 +91,8 @@ export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
         },
         tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
         minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
-        sidechainTokenAddress: undefined, // TODO // sidechain token
-        factoryMainnetAddress: undefined, // TODO // Data Union factory that creates a new Data Union
-        factorySidechainAddress: undefined,
+        factoryMainnetAddress: 'TODO', // TODO // Data Union factory that creates a new Data Union
+        factorySidechainAddress: 'TODO',
         payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
         cache: {
             maxSize: 10000,
@@ -104,7 +100,7 @@ export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
         }
     }
 
-    const options: StreamrClientConfig = {
+    const options: StreamrClientOptions = {
         ...defaults,
         ...opts,
         cache: {

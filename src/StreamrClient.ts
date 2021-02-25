@@ -4,7 +4,7 @@ import Debug from 'debug'
 
 import { counterId, uuid, CacheAsyncFn } from './utils'
 import { validateOptions } from './stream/utils'
-import Config, { StreamrClientOptions, StreamrClientConfig } from './Config'
+import Config, { StreamrClientOptions } from './Config'
 import StreamrEthereum from './Ethereum'
 import Session from './Session'
 import Connection, { ConnectionError } from './Connection'
@@ -146,7 +146,7 @@ interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
-    options: StreamrClientConfig
+    options: StreamrClientOptions
     session: Session
     connection: StreamrConnection
     publisher: Todo
