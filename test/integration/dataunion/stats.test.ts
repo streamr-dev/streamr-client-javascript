@@ -32,7 +32,6 @@ describe('DataUnion stats', () => {
         const network2 = await providerSidechain.getNetwork()
         log('Connected to sidechain network: ', JSON.stringify(network2))
         adminClient = new StreamrClient(config.clientOptions as any)
-        await adminClient.ensureConnected()
         dataUnion = await adminClient.deployDataUnion()
         const inactiveMember = createMockAddress()
         await dataUnion.addMembers(activeMemberAddressList.concat([inactiveMember]))
@@ -41,8 +40,8 @@ describe('DataUnion stats', () => {
     }, 60000)
 
     afterAll(() => {
-        adminClient.ensureDisconnected()
-        queryClient.ensureDisconnected()
+        providerMainnet.removeAllListeners()
+        providerSidechain.removeAllListeners()
     })
 
     it('DataUnion stats', async () => {

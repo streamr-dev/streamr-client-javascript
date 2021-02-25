@@ -20,26 +20,22 @@ describe('Admin fee', () => {
     const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)
     const tokenMainnet = new Contract(config.clientOptions.tokenAddress, Token.abi, tokenAdminWallet)
 
-    afterAll(async () => {
-        providerMainnet.removeAllListeners()
-        providerSidechain.removeAllListeners()
-        await adminClient.ensureDisconnected()
-    })
-
     beforeAll(async () => {
         log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
         const network = await providerMainnet.getNetwork()
         log('Connected to "mainnet" network: ', JSON.stringify(network))
         const network2 = await providerSidechain.getNetwork()
         log('Connected to sidechain network: ', JSON.stringify(network2))
-
         log(`Minting 100 tokens to ${adminWalletMainnet.address}`)
         const tx1 = await tokenMainnet.mint(adminWalletMainnet.address, parseEther('100'))
         await tx1.wait()
-
         adminClient = new StreamrClient(config.clientOptions as any)
-        await adminClient.ensureConnected()
     }, 10000)
+
+    afterAll(() => {
+        providerMainnet.removeAllListeners()
+        providerSidechain.removeAllListeners()
+    })
 
     it('can set admin fee', async () => {
         const dataUnion = await adminClient.deployDataUnion()

@@ -23,11 +23,11 @@ describe('DataUnion deployment', () => {
         const network2 = await providerSidechain.getNetwork()
         log('Connected to sidechain network: ', JSON.stringify(network2))
         adminClient = new StreamrClient(config.clientOptions as any)
-        await adminClient.ensureConnected()
     }, 60000)
 
-    afterAll(async () => {
-        await adminClient.ensureDisconnected()
+    afterAll(() => {
+        providerMainnet.removeAllListeners()
+        providerSidechain.removeAllListeners()
     })
 
     describe('owner', () => {

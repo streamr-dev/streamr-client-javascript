@@ -45,7 +45,6 @@ const testWithdraw = async (
     await tx1.wait()
 
     const adminClient = new StreamrClient(config.clientOptions as any)
-    await adminClient.ensureConnected()
 
     const dataUnion = await adminClient.deployDataUnion()
     const secret = await dataUnion.createSecret('test secret')
@@ -69,7 +68,6 @@ const testWithdraw = async (
             privateKey: memberWallet.privateKey
         }
     } as any)
-    await memberClient.ensureConnected()
 
     // product is needed for join requests to analyze the DU version
     const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
@@ -142,11 +140,6 @@ const testWithdraw = async (
     const balanceAfter = await getBalanceAfter(memberWallet, adminTokenMainnet)
     const balanceIncrease = balanceAfter.sub(balanceBefore)
 
-    await providerMainnet.removeAllListeners()
-    await providerSidechain.removeAllListeners()
-    await memberClient.ensureDisconnected()
-    await adminClient.ensureDisconnected()
-
     expect(stats).toMatchObject({
         status: 'active',
         earningsBeforeLastJoin: '0',
@@ -159,6 +152,11 @@ const testWithdraw = async (
 }
 
 describe('DataUnion withdraw', () => {
+
+    afterAll(() => {
+        providerMainnet.removeAllListeners()
+        providerSidechain.removeAllListeners()
+    })
 
     describe('Member', () => {
 

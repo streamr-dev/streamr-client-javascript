@@ -37,7 +37,6 @@ describe('DataUnion member', () => {
         const network2 = await providerSidechain.getNetwork()
         log('Connected to sidechain network: ', JSON.stringify(network2))
         const adminClient = new StreamrClient(config.clientOptions as any)
-        await adminClient.ensureConnected()
         dataUnion = await adminClient.deployDataUnion()
         // product is needed for join requests to analyze the DU version
         const createProductUrl = getEndpointUrl(config.clientOptions.restUrl, 'products')
@@ -55,6 +54,11 @@ describe('DataUnion member', () => {
         )
         secret = await dataUnion.createSecret()
     }, 60000)
+
+    afterAll(() => {
+        providerMainnet.removeAllListeners()
+        providerSidechain.removeAllListeners()
+    })
 
     it('random user is not a member', async () => {
         const userAddress = createMockAddress()
