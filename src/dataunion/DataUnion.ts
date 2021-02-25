@@ -43,20 +43,25 @@ export interface DataUnionMemberListModificationOptions {
 }
 
 export interface DataUnionStats {
-    activeMemberCount: Todo,
-    inactiveMemberCount: Todo,
-    joinPartAgentCount: Todo,
-    totalEarnings: Todo,
-    totalWithdrawable: Todo,
-    lifetimeMemberEarnings: Todo
+    activeMemberCount: BigNumber,
+    inactiveMemberCount: BigNumber,
+    joinPartAgentCount: BigNumber,
+    totalEarnings: BigNumber,
+    totalWithdrawable: BigNumber,
+    lifetimeMemberEarnings: BigNumber
+}
+
+export enum MemberStatus {
+    ACTIVE = 'ACTIVE',
+    INACTIVE = 'INACTIVE',
+    NONE = 'NONE',
 }
 
 export interface MemberStats {
-    status: Todo
-    earningsBeforeLastJoin: Todo
-    lmeAtJoin: Todo
-    totalEarnings: Todo
-    withdrawableEarnings: Todo
+    status: MemberStatus
+    earningsBeforeLastJoin: BigNumber
+    totalEarnings: BigNumber
+    withdrawableEarnings: BigNumber
 }
 
 const log = debug('StreamrClient::DataUnion')
@@ -261,15 +266,15 @@ export class DataUnion {
         //        (so that memberData is from same block as getEarnings, otherwise withdrawable will be foobar)
         const duSidechain = await this.getContracts().getSidechainContractReadOnly(this.contractAddress)
         const mdata = await duSidechain.memberData(address)
-        const total = await duSidechain.getEarnings(address).catch(() => 0)
-        const withdrawnEarnings = mdata[3].toString()
-        const withdrawable = total ? total.sub(withdrawnEarnings) : 0
+        const total = await duSidechain.getEarnings(address).catch(() => BigNumber.from(0))
+        const withdrawnEarnings = mdata[3]
+        const withdrawable = total ? total.sub(withdrawnEarnings) : BigNumber.from(0)
+        const STATUSES = [MemberStatus.NONE, MemberStatus.ACTIVE, MemberStatus.INACTIVE]
         return {
-            status: ['unknown', 'active', 'inactive', 'blocked'][mdata[0]],
-            earningsBeforeLastJoin: mdata[1].toString(),
-            lmeAtJoin: mdata[2].toString(),
-            totalEarnings: total.toString(),
-            withdrawableEarnings: withdrawable.toString(),
+            status: STATUSES[mdata[0]],
+            earningsBeforeLastJoin: mdata[1],
+            totalEarnings: total,
+            withdrawableEarnings: withdrawable,
         }
     }
 

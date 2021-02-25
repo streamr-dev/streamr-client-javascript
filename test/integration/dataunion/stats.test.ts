@@ -3,8 +3,9 @@ import debug from 'debug'
 
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
-import { DataUnion } from '../../../src/dataunion/DataUnion'
+import { DataUnion, MemberStatus } from '../../../src/dataunion/DataUnion'
 import { createClient, createMockAddress, expectInvalidAddress } from '../../utils'
+import { BigNumber } from '@ethersproject/bignumber'
 
 const log = debug('StreamrClient::DataUnion::integration-test-stats')
 
@@ -24,6 +25,7 @@ describe('DataUnion stats', () => {
         `0x200000000000000000000000000${nonce}`,
         `0x300000000000000000000000000${nonce}`,
     ]
+    const inactiveMember = createMockAddress()
 
     beforeAll(async () => {
         log(`Connecting to Ethereum networks, config = ${JSON.stringify(config)}`)
@@ -33,7 +35,6 @@ describe('DataUnion stats', () => {
         log('Connected to sidechain network: ', JSON.stringify(network2))
         adminClient = new StreamrClient(config.clientOptions as any)
         dataUnion = await adminClient.deployDataUnion()
-        const inactiveMember = createMockAddress()
         await dataUnion.addMembers(activeMemberAddressList.concat([inactiveMember]))
         await dataUnion.removeMembers([inactiveMember])
         queryClient = createClient(providerSidechain)
@@ -46,36 +47,50 @@ describe('DataUnion stats', () => {
 
     it('DataUnion stats', async () => {
         const stats = await queryClient.getDataUnion(dataUnion.getAddress()).getStats()
-        expect(+stats.activeMemberCount).toEqual(3)
-        expect(+stats.inactiveMemberCount).toEqual(1)
-        expect(+stats.joinPartAgentCount).toEqual(2)
-        expect(+stats.totalEarnings).toEqual(0)
-        expect(+stats.totalWithdrawable).toEqual(0)
-        expect(+stats.lifetimeMemberEarnings).toEqual(0)
+        expect(stats.activeMemberCount).toEqual(BigNumber.from(3))
+        expect(stats.inactiveMemberCount).toEqual(BigNumber.from(1))
+        expect(stats.joinPartAgentCount).toEqual(BigNumber.from(2))
+        expect(stats.totalEarnings).toEqual(BigNumber.from(0))
+        expect(stats.totalWithdrawable).toEqual(BigNumber.from(0))
+        expect(stats.lifetimeMemberEarnings).toEqual(BigNumber.from(0))
     }, 150000)
 
     it('member stats', async () => {
-        const memberStats = await Promise.all(activeMemberAddressList.map((m) => queryClient.getDataUnion(dataUnion.getAddress()).getMemberStats(m)))
+        const memberStats = await Promise.all(activeMemberAddressList.concat([inactiveMember]).map((m) => queryClient.getDataUnion(dataUnion.getAddress()).getMemberStats(m)))
+        const ZERO = BigNumber.from(0)
         expect(memberStats).toMatchObject([{
-            status: 'active',
-            earningsBeforeLastJoin: '0',
-            lmeAtJoin: '0',
-            totalEarnings: '0',
-            withdrawableEarnings: '0',
+            status: MemberStatus.ACTIVE,
+            earningsBeforeLastJoin: ZERO,
+            totalEarnings: ZERO,
+            withdrawableEarnings: ZERO,
         }, {
-            status: 'active',
-            earningsBeforeLastJoin: '0',
-            lmeAtJoin: '0',
-            totalEarnings: '0',
-            withdrawableEarnings: '0',
+            status: MemberStatus.ACTIVE,
+            earningsBeforeLastJoin: ZERO,
+            totalEarnings: ZERO,
+            withdrawableEarnings: ZERO,
         }, {
-            status: 'active',
-            earningsBeforeLastJoin: '0',
-            lmeAtJoin: '0',
-            totalEarnings: '0',
-            withdrawableEarnings: '0',
+            status: MemberStatus.ACTIVE,
+            earningsBeforeLastJoin: ZERO,
+            totalEarnings: ZERO,
+            withdrawableEarnings: ZERO,
+        }, {
+            status: MemberStatus.INACTIVE,
+            earningsBeforeLastJoin: ZERO,
+            totalEarnings: ZERO,
+            withdrawableEarnings: ZERO,
         }])
     }, 150000)
+
+    it('member stats: no member', async () => {
+        const memberStats = await queryClient.getDataUnion(dataUnion.getAddress()).getMemberStats(createMockAddress())
+        const ZERO = BigNumber.from(0)
+        expect(memberStats).toMatchObject({
+            status: MemberStatus.NONE,
+            earningsBeforeLastJoin: ZERO,
+            totalEarnings: ZERO,
+            withdrawableEarnings: ZERO
+        })
+    })
 
     it('member stats: invalid address', () => {
         return expectInvalidAddress(() => dataUnion.getMemberStats('invalid-address'))
