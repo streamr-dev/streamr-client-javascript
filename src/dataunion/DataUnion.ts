@@ -78,9 +78,9 @@ export class DataUnion {
     sidechainAddress: string
     client: StreamrClient
 
-    constructor(contractAddress: string, sidechainAddress: string|undefined, client: StreamrClient) {
+    constructor(contractAddress: string, sidechainAddress: string, client: StreamrClient) {
         this.contractAddress = contractAddress
-        this.sidechainAddress = sidechainAddress ||  getDataUnionSidechainAddress(client, getAddress(this.contractAddress)) // throws if bad address
+        this.sidechainAddress = sidechainAddress
         this.client = client
     }
 
