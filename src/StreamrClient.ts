@@ -11,7 +11,7 @@ import Connection, { ConnectionError } from './Connection'
 import Publisher from './publish'
 import Subscriber from './subscribe'
 import { getUserId } from './user'
-import { Todo, MaybeAsync, EthereumAddress } from './types'
+import { Todo, MaybeAsync } from './types'
 import { StreamEndpoints } from './rest/StreamEndpoints'
 import { LoginEndpoints } from './rest/LoginEndpoints'
 import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
@@ -146,7 +146,7 @@ interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
-    options: StreamrClientOptions
+    options: StreamrClientConfig
     session: Session
     connection: StreamrConnection
     publisher: Todo
@@ -414,15 +414,10 @@ class StreamrClient extends EventEmitter {
     }
 
     _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: string}) {
-        const contractAddress = this.calculateDataUnionMainnetAddress(dataUnionName, deployerAddress)
+        const contractAddress = getDataUnionMainnetAddress(this, dataUnionName, getAddress(deployerAddress)) // throws if bad address
         return this.getDataUnion(contractAddress)
     }
 
-    // TODO inline this function?
-    private calculateDataUnionMainnetAddress(dataUnionName: string, deployerAddress: EthereumAddress) {
-        const address = getAddress(deployerAddress) // throws if bad address
-        return getDataUnionMainnetAddress(this, dataUnionName, address)
-    }
 
     static generateEthereumAccount() {
         return StreamrEthereum.generateEthereumAccount()

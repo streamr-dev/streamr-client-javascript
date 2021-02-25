@@ -79,9 +79,9 @@ export class DataUnion {
     client: StreamrClient
 
     constructor(contractAddress: string, sidechainAddress: string|undefined, client: StreamrClient) {
-        this.client = client
         this.contractAddress = contractAddress
-        this.sidechainAddress = sidechainAddress || this.calculateDataUnionSidechainAddress(contractAddress)
+        this.sidechainAddress = sidechainAddress ||  getDataUnionSidechainAddress(client, getAddress(this.contractAddress)) // throws if bad address
+        this.client = client
     }
 
     getAddress() {
@@ -568,11 +568,5 @@ export class DataUnion {
         // @ts-expect-error
         ret.sidechain = await getSidechainContract(this.contractAddress, this.client)
         return ret
-    }
-
-    // TODO inline this function?
-    private calculateDataUnionSidechainAddress(duMainnetAddress: EthereumAddress) {
-        const address = getAddress(duMainnetAddress) // throws if bad address
-        return getDataUnionSidechainAddress(this.client, address)
     }
 }
