@@ -3,6 +3,7 @@ import debug from 'debug'
 
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
+import { createMockAddress } from '../../utils'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-deploy')
 
@@ -10,8 +11,6 @@ const log = debug('StreamrClient::DataUnionEndpoints::integration-test-deploy')
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
 // @ts-expect-error
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-
-const createMockAddress = () => '0x000000000000000000000000000' + Date.now()
 
 describe('DataUnion deployment', () => {
 

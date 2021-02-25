@@ -9,6 +9,7 @@ import StreamrClient from '../../../src/StreamrClient'
 import * as Token from '../../../contracts/TestToken.json'
 import config from '../config'
 import { DataUnion } from '../../../src/dataunion/DataUnion'
+import { createClient, createMockAddress, expectInvalidAddress } from '../../utils'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test')
 // const log = console.log
@@ -215,5 +216,16 @@ describe('DataUnionEndPoints', () => {
                 withdrawableEarnings: '0',
             }])
         }, 150000)
+
+        it('member stats: invalid address', () => {
+            const client = createClient(providerSidechain)
+            const dataUnion = client.getDataUnion(createMockAddress())
+            return expectInvalidAddress(() => dataUnion.getMemberStats('invalid-address'))
+        })
+
+        it('get DataUnion: invalid address', () => {
+            const client = createClient(providerSidechain)
+            return expectInvalidAddress(async () => client.getDataUnion('invalid-address'))
+        })
     })
 })

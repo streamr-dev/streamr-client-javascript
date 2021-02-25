@@ -22,8 +22,8 @@ import { until, getEndpointUrl } from '../utils'
 import authFetch from '../rest/authFetch'
 
 export interface DataUnionDeployOptions {
-    owner?: string,
-    joinPartAgents?: string[],
+    owner?: EthereumAddress,
+    joinPartAgents?: EthereumAddress[],
     dataUnionName?: string,
     adminFee?: number,
     sidechainPollingIntervalMs?: number,
@@ -74,13 +74,14 @@ const log = debug('StreamrClient::DataUnion')
 
 export class DataUnion {
 
-    contractAddress: string
-    sidechainAddress: string
+    contractAddress: EthereumAddress
+    sidechainAddress: EthereumAddress
     client: StreamrClient
 
-    constructor(contractAddress: string, sidechainAddress: string, client: StreamrClient) {
-        this.contractAddress = contractAddress
-        this.sidechainAddress = sidechainAddress
+    constructor(contractAddress: EthereumAddress, sidechainAddress: EthereumAddress, client: StreamrClient) {
+        // validate and convert to checksum case
+        this.contractAddress = getAddress(contractAddress)
+        this.sidechainAddress = getAddress(sidechainAddress)
         this.client = client
     }
 
@@ -173,7 +174,7 @@ export class DataUnion {
      */
     async withdrawAllTo(
         recipientAddress: EthereumAddress,
-        options: DataUnionWithdrawOptions|undefined
+        options?: DataUnionWithdrawOptions
     ): Promise<TransactionReceipt> {
         const to = getAddress(recipientAddress) // throws if bad address
         const tr = await untilWithdrawIsComplete(
@@ -315,9 +316,8 @@ export class DataUnion {
      * NOTE: Current version of streamr-client-javascript can only handle current version!
      */
     async getVersion(): Promise<number> {
-        const a = getAddress(this.contractAddress) // throws if bad address
         const provider = this.client.ethereum.getMainnetProvider()
-        const du = new Contract(a, [{
+        const du = new Contract(this.contractAddress, [{
             name: 'version',
             inputs: [],
             outputs: [{ type: 'uint256' }],
@@ -339,8 +339,7 @@ export class DataUnion {
      * Add a new data union secret
      */
     async createSecret(name: string = 'Untitled Data Union Secret'): Promise<string> {
-        const duAddress = getAddress(this.contractAddress) // throws if bad address
-        const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', duAddress, 'secrets')
+        const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', this.contractAddress, 'secrets')
         const res = await authFetch(
             url,
             this.client.session,
@@ -361,7 +360,7 @@ export class DataUnion {
      * Add given Ethereum addresses as data union members
      */
     async addMembers(
-        memberAddressList: string[],
+        memberAddressList: EthereumAddress[],
         options: DataUnionMemberListModificationOptions = {}
     ): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses
@@ -376,7 +375,7 @@ export class DataUnion {
      * Remove given members from data union
      */
     async removeMembers(
-        memberAddressList: string[],
+        memberAddressList: EthereumAddress[],
         options: DataUnionMemberListModificationOptions = {},
     ): Promise<TransactionReceipt> {
         const members = memberAddressList.map(getAddress) // throws if there are bad addresses

@@ -4,8 +4,10 @@ import { wait } from 'streamr-test-utils'
 
 import { pTimeout, counterId, AggregatedError } from '../src/utils'
 import { validateOptions } from '../src/stream/utils'
+import StreamrClient from '../src/StreamrClient'
 
 const crypto = require('crypto')
+const config = require('./integration/config')
 
 export const uid = (prefix) => counterId(`p${process.pid}${prefix ? '-' + prefix : ''}`)
 
@@ -32,7 +34,7 @@ describeRepeats.only = (msg, fn) => {
     describeRepeats(msg, fn, describe.only)
 }
 
-export async function collect(iterator, fn = async () => {}) {
+export async function collect(iterator, fn: (item: any) => void = async () => {}) {
     const received = []
     for await (const msg of iterator) {
         received.push(msg.getParsedContent())
@@ -49,6 +51,7 @@ export function addAfterFn() {
     afterEach(async () => {
         const fns = afterFns.slice()
         afterFns.length = 0
+        // @ts-expect-error
         AggregatedError.throwAllSettled(await Promise.allSettled(fns.map((fn) => fn())))
     })
 
@@ -98,7 +101,7 @@ export function getWaitForStorage(client, defaultOpts = {}) {
                     publishRequest,
                     last: last.map((l) => l.content),
                 })
-                const err = new Error(`timed out after ${duration}ms waiting for message`)
+                const err: any = new Error(`timed out after ${duration}ms waiting for message`)
                 err.publishRequest = publishRequest
                 throw err
             }
@@ -230,4 +233,20 @@ export function getPublishTestMessages(client, defaultOpts = {}) {
 
     publishTestMessages.raw = publishTestMessagesRaw
     return publishTestMessages
+}
+
+export const createMockAddress = () => '0x000000000000000000000000000' + Date.now()
+
+export const createClient = (providerSidechain) => {
+    const wallet = new Wallet(`0x100000000000000000000000000000000000000012300000001${Date.now()}`, providerSidechain)
+    return new StreamrClient({
+        ...config.clientOptions,
+        auth: {
+            privateKey: wallet.privateKey
+        }
+    })
+}
+
+export const expectInvalidAddress = (operation) => {
+    return expect(async () => await operation()).rejects.toThrow('invalid address')
 }

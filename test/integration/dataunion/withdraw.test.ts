@@ -9,6 +9,7 @@ import * as Token from '../../../contracts/TestToken.json'
 import * as DataUnionSidechain from '../../../contracts/DataUnionSidechain.json'
 import config from '../config'
 import authFetch from '../../../src/rest/authFetch'
+import { createClient, createMockAddress, expectInvalidAddress } from '../../utils'
 
 const log = debug('StreamrClient::DataUnionEndpoints::integration-test-withdraw')
 // const { log } = console
@@ -208,4 +209,16 @@ describe('DataUnion withdraw', () => {
         }, 300000)
     })
 
+    it('Validate address', async () => {
+        const client = createClient(providerSidechain)
+        const dataUnion = client.getDataUnion(createMockAddress())
+        return Promise.all([
+            expectInvalidAddress(() => dataUnion.getWithdrawableEarnings('invalid-address')),
+            expectInvalidAddress(() => dataUnion.withdrawAllTo('invalid-address')),
+            expectInvalidAddress(() => dataUnion.signWithdrawAllTo('invalid-address')),
+            expectInvalidAddress(() => dataUnion.signWithdrawAmountTo('invalid-address', '123')),
+            expectInvalidAddress(() => dataUnion.withdrawAllToMember('invalid-address')),
+            expectInvalidAddress(() => dataUnion.withdrawAllToSigned('invalid-address', 'invalid-address', 'mock-signature'))
+        ])
+    })
 })

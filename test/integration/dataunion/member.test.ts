@@ -4,7 +4,7 @@ import debug from 'debug'
 import StreamrClient from '../../../src/StreamrClient'
 import config from '../config'
 import { DataUnion, JoinRequestState } from '../../../src/dataunion/DataUnion'
-import { fakePrivateKey } from '../../utils'
+import { createMockAddress, expectInvalidAddress, fakePrivateKey } from '../../utils'
 import authFetch from '../../../src/rest/authFetch'
 import { getEndpointUrl } from '../../../src/utils'
 
@@ -14,8 +14,6 @@ const log = debug('StreamrClient::DataUnionEndpoints::integration-test-member')
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
 // @ts-expect-error
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
-
-const createMockAddress = () => '0x000000000000000000000000000' + Date.now()
 
 const joinMember = async (memberWallet: Wallet, secret: string|undefined, dataUnionAddress: string) => {
     const memberClient = new StreamrClient({
@@ -99,4 +97,11 @@ describe('DataUnion member', () => {
         expect(isMember).toBe(false)
     }, 60000)
 
+    it('invalid address', () => {
+        return Promise.all([
+            expectInvalidAddress(() => dataUnion.addMembers(['invalid-address'])),
+            expectInvalidAddress(() => dataUnion.removeMembers(['invalid-address'])),
+            expectInvalidAddress(() => dataUnion.isMember('invalid-address'))
+        ])
+    })
 })
