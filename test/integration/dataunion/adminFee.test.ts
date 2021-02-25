@@ -14,7 +14,7 @@ const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sid
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, providerMainnet)
 
-describe('Admin fee', () => {
+describe('DataUnion admin fee', () => {
     let adminClient: StreamrClient
 
     const tokenAdminWallet = new Wallet(config.tokenAdminPrivateKey, providerMainnet)

@@ -16,7 +16,7 @@ const adminWalletMainnet = new Wallet(config.clientOptions.auth.privateKey, prov
 // This test will fail when new docker images are pushed with updated DU smart contracts
 // -> generate new codehashes for getDataUnionMainnetAddress() and getDataUnionSidechainAddress()
 
-describe('Calculate', () => {
+describe('DataUnion calculate', () => {
 
     afterAll(() => {
         providerMainnet.removeAllListeners()

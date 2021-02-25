@@ -15,7 +15,7 @@ const log = debug('StreamrClient::DataUnion::integration-test-signature')
 const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sidechain)
 const adminWalletSidechain = new Wallet(config.clientOptions.auth.privateKey, providerSidechain)
 
-describe('DataUnion signature', async () => {
+describe('DataUnion signature', () => {
 
     afterAll(() => {
         providerSidechain.removeAllListeners()

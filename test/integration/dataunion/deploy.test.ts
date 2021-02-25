@@ -12,7 +12,7 @@ const providerSidechain = new providers.JsonRpcProvider(config.clientOptions.sid
 // @ts-expect-error
 const providerMainnet = new providers.JsonRpcProvider(config.clientOptions.mainnet)
 
-describe('DataUnion deployment', () => {
+describe('DataUnion deploy', () => {
 
     let adminClient: StreamrClient
 
