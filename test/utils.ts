@@ -1,7 +1,6 @@
 import { inspect } from 'util'
-
 import { wait } from 'streamr-test-utils'
-
+import { Wallet } from 'ethers'
 import { pTimeout, counterId, AggregatedError } from '../src/utils'
 import { validateOptions } from '../src/stream/utils'
 import StreamrClient from '../src/StreamrClient'
@@ -248,5 +247,5 @@ export const createClient = (providerSidechain) => {
 }
 
 export const expectInvalidAddress = (operation) => {
-    return expect(async () => await operation()).rejects.toThrow('invalid address')
+    return expect(() => operation()).rejects.toThrow('invalid address')
 }

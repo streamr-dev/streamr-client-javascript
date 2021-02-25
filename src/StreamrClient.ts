@@ -18,7 +18,7 @@ import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
-import { getDataUnionMainnetAddress, getDataUnionSidechainAddress } from './dataunion/Contracts'
+import { getDataUnionMainnetAddress, getDataUnionSidechainAddress } from './dataunion/contracts'
 
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
@@ -146,7 +146,7 @@ interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
-    options: StreamrClientConfig
+    options: StreamrClientOptions
     session: Session
     connection: StreamrConnection
     publisher: Todo
@@ -418,7 +418,6 @@ class StreamrClient extends EventEmitter {
         const contractAddress = getDataUnionMainnetAddress(this, dataUnionName, getAddress(deployerAddress)) // throws if bad address
         return this.getDataUnion(contractAddress)
     }
-
 
     static generateEthereumAccount() {
         return StreamrEthereum.generateEthereumAccount()

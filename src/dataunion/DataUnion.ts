@@ -8,14 +8,13 @@ import { factoryMainnetABI, dataUnionMainnetABI, dataUnionSidechainABI } from '.
 import {
     fetchDataUnionMainnetAddress,
     fetchDataUnionSidechainAddress,
-    getDataUnionSidechainAddress,
     getMainnetContract,
     getMainnetContractReadOnly,
     getSidechainContract,
     getSidechainContractReadOnly,
     throwIfBadAddress,
     untilWithdrawIsComplete
-} from './contracts'
+} from './Contracts'
 import StreamrClient from '../StreamrClient'
 import { EthereumAddress, Todo } from '../types'
 import { until, getEndpointUrl } from '../utils'
