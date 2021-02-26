@@ -9,7 +9,6 @@ import { EthereumAddress, Todo } from '../types'
 import { dataUnionMainnetABI, dataUnionSidechainABI, factoryMainnetABI, mainnetAmbABI, sidechainAmbABI } from './abi'
 import { until } from '../utils'
 import { BigNumber } from '@ethersproject/bignumber'
-import { DataUnionWithdrawOptions } from './DataUnion'
 import StreamrEthereum from '../Ethereum'
 import StreamrClient from '../StreamrClient'
 
@@ -219,61 +218,43 @@ export class Contracts {
         return trAMB
     }
 
-    // template for withdraw functions
-    // client could be replaced with AMB (mainnet and sidechain)
-    async untilWithdrawIsComplete(
-        getWithdrawTxFunc: () => Promise<Todo & { events: any[] }>,
-        getBalanceFunc: () => Promise<BigNumber>,
-        options: DataUnionWithdrawOptions = {}
-    ) {
+    async payForSignatureTransport(tr: { events: any[] }, options: { pollingIntervalMs?: number, retryTimeoutMs?: number } = {}) {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
-            payForSignatureTransport
-        }: any = options
-        const balanceBefore = await getBalanceFunc()
-        const tx = await getWithdrawTxFunc()
-        const tr = await tx.wait()
-
-        if (payForSignatureTransport) {
-            log(`Got receipt, filtering UserRequestForSignature from ${tr.events.length} events...`)
-            // event UserRequestForSignature(bytes32 indexed messageId, bytes encodedData);
-            const sigEventArgsArray = tr.events.filter((e: Todo) => e.event === 'UserRequestForSignature').map((e: Todo) => e.args)
-            if (sigEventArgsArray.length < 1) {
-                throw new Error("No UserRequestForSignature events emitted from withdraw transaction, can't transport withdraw to mainnet")
-            }
-            /* eslint-disable no-await-in-loop */
-            // eslint-disable-next-line no-restricted-syntax
-            for (const eventArgs of sigEventArgsArray) {
-                const messageId = eventArgs[0]
-                const messageHash = keccak256(eventArgs[1])
-
-                log(`Waiting until sidechain AMB has collected required signatures for hash=${messageHash}...`)
-                await until(async () => this.requiredSignaturesHaveBeenCollected(messageHash), pollingIntervalMs, retryTimeoutMs)
-
-                log(`Checking mainnet AMB hasn't already processed messageId=${messageId}`)
-                const mainnetAmb = await this.getMainnetAmb()
-                const alreadySent = await mainnetAmb.messageCallStatus(messageId)
-                const failAddress = await mainnetAmb.failedMessageSender(messageId)
-                if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
-                    log(`WARNING: Mainnet bridge has already processed withdraw messageId=${messageId}`)
-                    log([
-                        'This could happen if payForSignatureTransport=true, but bridge operator also pays for',
-                        'signatures, and got there before your client',
-                    ].join(' '))
-                    continue
-                }
-
-                log(`Transporting signatures for hash=${messageHash}`)
-                await this.transportSignatures(messageHash)
-            }
-            /* eslint-enable no-await-in-loop */
+        } = options
+        log(`Got receipt, filtering UserRequestForSignature from ${tr.events.length} events...`)
+        // event UserRequestForSignature(bytes32 indexed messageId, bytes encodedData);
+        const sigEventArgsArray = tr.events.filter((e: Todo) => e.event === 'UserRequestForSignature').map((e: Todo) => e.args)
+        if (sigEventArgsArray.length < 1) {
+            throw new Error("No UserRequestForSignature events emitted from withdraw transaction, can't transport withdraw to mainnet")
         }
+        /* eslint-disable no-await-in-loop */
+        // eslint-disable-next-line no-restricted-syntax
+        for (const eventArgs of sigEventArgsArray) {
+            const messageId = eventArgs[0]
+            const messageHash = keccak256(eventArgs[1])
 
-        log(`Waiting for balance ${balanceBefore.toString()} to change`)
-        await until(async () => !(await getBalanceFunc()).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+            log(`Waiting until sidechain AMB has collected required signatures for hash=${messageHash}...`)
+            await until(async () => this.requiredSignaturesHaveBeenCollected(messageHash), pollingIntervalMs, retryTimeoutMs)
 
-        return tr
+            log(`Checking mainnet AMB hasn't already processed messageId=${messageId}`)
+            const mainnetAmb = await this.getMainnetAmb()
+            const alreadySent = await mainnetAmb.messageCallStatus(messageId)
+            const failAddress = await mainnetAmb.failedMessageSender(messageId)
+            if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
+                log(`WARNING: Mainnet bridge has already processed withdraw messageId=${messageId}`)
+                log([
+                    'This could happen if payForSignatureTransport=true, but bridge operator also pays for',
+                    'signatures, and got there before your client',
+                ].join(' '))
+                continue
+            }
+
+            log(`Transporting signatures for hash=${messageHash}`)
+            await this.transportSignatures(messageHash)
+        }
+        /* eslint-enable no-await-in-loop */
     }
 
     async deployDataUnion({

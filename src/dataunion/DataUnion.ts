@@ -536,15 +536,27 @@ export class DataUnion {
         return new Contracts(this.client)
     }
 
+    // template for withdraw functions
+    // client could be replaced with AMB (mainnet and sidechain)
     private async _executeWithdraw(
         getWithdrawTxFunc: () => Promise<Todo & { events: any[] }>,
         recipientAddress: EthereumAddress,
-        options?: DataUnionWithdrawOptions
+        options: DataUnionWithdrawOptions = {}
     ): Promise<TransactionReceipt> {
-        return this.getContracts().untilWithdrawIsComplete(
-            getWithdrawTxFunc,
-            () => this.client.getTokenBalance(recipientAddress),
-            { payForSignatureTransport: this.client.options.payForSignatureTransport, ...options }
-        )
+        const {
+            pollingIntervalMs = 1000,
+            retryTimeoutMs = 60000,
+            payForSignatureTransport = this.client.options.payForSignatureTransport
+        }: any = options
+        const getBalanceFunc = () => this.client.getTokenBalance(recipientAddress)
+        const balanceBefore = await getBalanceFunc()
+        const tx = await getWithdrawTxFunc()
+        const tr = await tx.wait()
+        if (payForSignatureTransport) {
+            await this.getContracts().payForSignatureTransport(tr, options)
+        }
+        log(`Waiting for balance ${balanceBefore.toString()} to change`)
+        await until(async () => !(await getBalanceFunc()).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)
+        return tr
     }
 }
