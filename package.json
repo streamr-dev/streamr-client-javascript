@@ -113,6 +113,7 @@
     "@ethersproject/sha2": "^5.0.8",
     "@ethersproject/transactions": "^5.0.10",
     "@ethersproject/wallet": "^5.0.11",
+    "@ethersproject/web": "^5.0.13",
     "debug": "^4.3.2",
     "eventemitter3": "^4.0.7",
     "lodash.uniqueid": "^4.0.1",
