@@ -5,6 +5,20 @@ import StorageNode from './StorageNode'
 import StreamrClient from '../StreamrClient'
 import { Todo } from '../types'
 
+interface StreamPermisionBase {
+    operation: StreamOperation
+}
+
+export interface UserStreamPermission extends StreamPermisionBase {
+    user: string
+}
+
+export interface AnonymousStreamPermisson extends StreamPermisionBase {
+    anonymous: true
+}
+
+export type StreamPermision = UserStreamPermission | AnonymousStreamPermisson
+
 export enum StreamOperation {
     STREAM_GET = 'stream_get',
     STREAM_EDIT = 'stream_edit',
@@ -59,7 +73,7 @@ export default class Stream {
     }
 
     async update() {
-        const json = await authFetch(
+        const json = await authFetch<StreamProperties>(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id),
             this._client.session,
             {
@@ -82,7 +96,7 @@ export default class Stream {
     }
 
     async delete() {
-        return authFetch(
+        await authFetch(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id),
             this._client.session,
             {
@@ -92,14 +106,14 @@ export default class Stream {
     }
 
     async getPermissions() {
-        return authFetch(
+        return authFetch<StreamPermision[]>(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'permissions'),
             this._client.session,
         )
     }
 
     async getMyPermissions() {
-        return authFetch(
+        return authFetch<StreamPermision[]>(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'permissions', 'me'),
             this._client.session,
         )
@@ -134,7 +148,7 @@ export default class Stream {
             permissionObject.anonymous = true
         }
 
-        return authFetch(
+        return authFetch<StreamPermision>(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'permissions'),
             this._client.session,
             {
@@ -145,7 +159,7 @@ export default class Stream {
     }
 
     async revokePermission(permissionId: number) {
-        return authFetch(
+        await authFetch(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'permissions', String(permissionId)),
             this._client.session,
             {
@@ -183,7 +197,7 @@ export default class Stream {
     }
 
     async addToStorageNode(address: string) {
-        return authFetch(
+        await authFetch(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'storageNodes'),
             this._client.session,
             {
@@ -196,7 +210,7 @@ export default class Stream {
     }
 
     async removeFromStorageNode(address: string) {
-        return authFetch(
+        await authFetch(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'storageNodes', address),
             this._client.session,
             {
@@ -206,7 +220,7 @@ export default class Stream {
     }
 
     async getStorageNodes() {
-        const json = await authFetch(
+        const json = await authFetch<{ storageNodeAddress: string}[] >(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id, 'storageNodes'),
             this._client.session,
         )

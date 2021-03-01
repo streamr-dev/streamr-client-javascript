@@ -7,6 +7,10 @@ import { uuid, getEndpointUrl } from '../../src/utils'
 
 const debug = Debug('StreamrClient::test::utils')
 
+interface TestResponse {
+    test: string
+}
+
 describe('utils', () => {
     let session
     let expressApp
@@ -44,7 +48,7 @@ describe('utils', () => {
     describe('authFetch', () => {
         it('should return normally when valid session token is passed', async () => {
             session.getSessionToken = sinon.stub().resolves('session-token')
-            const res = await authFetch(baseUrl + testUrl, session)
+            const res = await authFetch<TestResponse>(baseUrl + testUrl, session)
             expect(session.getSessionToken.calledOnce).toBeTruthy()
             expect(res.test).toBeTruthy()
         })
@@ -52,7 +56,7 @@ describe('utils', () => {
         it('should return 401 error when invalid session token is passed twice', async () => {
             session.getSessionToken = sinon.stub().resolves('invalid token')
             const onCaught = jest.fn()
-            await authFetch(baseUrl + testUrl, session).catch((err) => {
+            await authFetch<TestResponse>(baseUrl + testUrl, session).catch((err) => {
                 onCaught()
                 expect(session.getSessionToken.calledTwice).toBeTruthy()
                 expect(err.toString()).toMatch(
@@ -68,7 +72,7 @@ describe('utils', () => {
             session.getSessionToken.onCall(0).resolves('expired-session-token')
             session.getSessionToken.onCall(1).resolves('session-token')
 
-            const res = await authFetch(baseUrl + testUrl, session)
+            const res = await authFetch<TestResponse>(baseUrl + testUrl, session)
             expect(session.getSessionToken.calledTwice).toBeTruthy()
             expect(res.test).toBeTruthy()
         })
