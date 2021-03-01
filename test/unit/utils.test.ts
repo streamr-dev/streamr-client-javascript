@@ -1,9 +1,10 @@
 import sinon from 'sinon'
 import Debug from 'debug'
-import express from 'express'
+import express, { Application } from 'express'
 
 import authFetch from '../../src/rest/authFetch'
 import { uuid, getEndpointUrl } from '../../src/utils'
+import { Server } from 'http'
 
 const debug = Debug('StreamrClient::test::utils')
 
@@ -12,9 +13,9 @@ interface TestResponse {
 }
 
 describe('utils', () => {
-    let session
-    let expressApp
-    let server
+    let session: any
+    let expressApp: Application
+    let server: Server
     const baseUrl = 'http://127.0.0.1:30000'
     const testUrl = '/some-test-url'
 
@@ -23,7 +24,7 @@ describe('utils', () => {
         session.options = {}
         expressApp = express()
 
-        function handle(req, res) {
+        function handle(req: any, res: any) {
             if (req.get('Authorization') !== 'Bearer session-token') {
                 res.sendStatus(401)
             } else {
@@ -33,7 +34,7 @@ describe('utils', () => {
             }
         }
 
-        expressApp.get(testUrl, (req, res) => handle(req, res))
+        expressApp.get(testUrl, (req: any, res: any) => handle(req, res))
 
         server = expressApp.listen(30000, () => {
             debug('Mock server started on port 30000\n')
