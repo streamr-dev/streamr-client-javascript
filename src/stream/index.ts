@@ -28,7 +28,19 @@ export enum StreamOperation {
     STREAM_SHARE = 'stream_share'
 }
 
-export type StreamProperties = Todo
+export interface StreamProperties {
+    id?: string
+    name?: string
+    description?: string
+    config?: {
+        fields: Field[];
+    }
+    partitions?: number
+    requireSignedData?: boolean
+    requireEncryptedData?: boolean
+    storageDays?: number
+    inactivityThresholdHours?: number
+}
 
 const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map'] as const
 

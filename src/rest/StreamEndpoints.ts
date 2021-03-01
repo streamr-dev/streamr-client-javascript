@@ -252,9 +252,10 @@ export class StreamEndpoints {
     }
 
     async getStreamPartsByStorageNode(address: string) {
-        const json = await authFetch<StreamProperties>(getEndpointUrl(this.client.options.restUrl, 'storageNodes', address, 'streams'), this.client.session)
+        type ItemType = { id: string, partitions: number}
+        const json = await authFetch<ItemType[]>(getEndpointUrl(this.client.options.restUrl, 'storageNodes', address, 'streams'), this.client.session)
         let result: StreamPart[] = []
-        json.forEach((stream: StreamProperties) => {
+        json.forEach((stream: ItemType) => {
             result = result.concat(StreamPart.fromStream(stream))
         })
         return result
