@@ -1,17 +1,14 @@
 import qs from 'qs'
-import Debug from 'debug'
 import { ControlLayer, MessageLayer } from 'streamr-client-protocol'
 import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
-import { getVersionString, counterId } from './utils'
+import { getVersionString } from './utils'
 import { ConnectionInfo } from '@ethersproject/web'
 import { Todo } from './types'
 
 export type EthereumConfig = ExternalProvider|JsonRpcFetchFunc
 
 export type StreamrClientOptions = {
-    id?: string
-    debug: Debug.Debugger
     auth: {
         privateKey?: string
         ethereum?: EthereumConfig
@@ -52,10 +49,7 @@ const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
 
 export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
-    const { id = counterId('StreamrClient') } = opts
-
     const defaults: StreamrClientOptions = {
-        debug: Debug(id),
         // Authentication: identity used by this StreamrClient instance
         auth: {}, // can contain member privateKey or (window.)ethereum
 

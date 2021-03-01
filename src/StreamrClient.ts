@@ -34,8 +34,8 @@ export { StreamrClientOptions }
 
 class StreamrConnection extends Connection {
     // TODO define args type when we convert Connection class to TypeScript
-    constructor(...args: any) {
-        super(...args)
+    constructor(options: Todo, client: StreamrClient) {
+        super(options, client)
         this.on('message', this.onConnectionMessage)
     }
 
@@ -160,11 +160,7 @@ class StreamrClient extends EventEmitter {
         this.id = counterId(`${this.constructor.name}:${uid}`)
         this.debug = Debug(this.id)
 
-        this.options = Config({
-            id: this.id,
-            debug: this.debug,
-            ...options,
-        })
+        this.options = Config(options)
 
         this.debug('new StreamrClient %s: %o', this.id, {
             version: process.env.version,
@@ -183,7 +179,7 @@ class StreamrClient extends EventEmitter {
         this.on('error', this._onError) // attach before creating sub-components incase they fire error events
 
         this.session = new Session(this, this.options.auth)
-        this.connection = connection || new StreamrConnection(this.options)
+        this.connection = connection || new StreamrConnection(this.options, this)
 
         this.connection
             .on('connected', this.onConnectionConnected)
