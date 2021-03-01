@@ -2,18 +2,20 @@ import fetch from 'node-fetch'
 import Debug from 'debug'
 
 import { getVersionString } from '../utils'
+import { parseErrorCode } from './ErrorCode'
 
 export const DEFAULT_HEADERS = {
     'Streamr-Client': `streamr-client-javascript/${getVersionString()}`,
 }
 
 export class AuthFetchError extends Error {
-    constructor(message, response, body) {
+    constructor(message, response, body, errorCode) {
         // add leading space if there is a body set
         const bodyMessage = body ? ` ${(typeof body === 'string' ? body : JSON.stringify(body).slice(0, 1024))}...` : ''
         super(message + bodyMessage)
         this.response = response
         this.body = body
+        this.errorCode = errorCode
 
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor)
@@ -70,6 +72,6 @@ export default async function authFetch(url, session, opts, requireNewToken = fa
         return authFetch(url, session, options, true)
     } else {
         debug('%d %s – failed', id, url)
-        throw new AuthFetchError(`Request ${id} to ${url} returned with error code ${response.status}.`, response, body)
+        throw new AuthFetchError(`Request ${id} to ${url} returned with error code ${response.status}.`, response, body, parseErrorCode(body))
     }
 }
