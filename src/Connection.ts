@@ -6,7 +6,6 @@ import WebSocket from 'ws'
 
 import { Scaffold, counterId, pLimitFn, pOne } from './utils'
 import { Todo } from './types'
-import StreamrClient from './StreamrClient'
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -313,9 +312,9 @@ export default class Connection extends EventEmitter {
         }))
     }
 
-    constructor(options = {}, client: StreamrClient) {
+    constructor(options = {}, debug: Debug.Debugger) {
         super()
-        this._debug = client.debug.extend(counterId(this.constructor.name))
+        this._debug = debug.extend(counterId(this.constructor.name))
 
         this.options = options
         this.options.autoConnect = !!this.options.autoConnect

@@ -5,14 +5,10 @@ import Debug from 'debug'
 import { describeRepeats } from '../utils'
 import Connection from '../../src/Connection'
 import { Defer } from '../../src/utils'
-import StreamrClient from '../../src/StreamrClient'
 
 /* eslint-disable require-atomic-updates */
 
 const debug = Debug('StreamrClient').extend('test')
-const mockClient = {
-    debug
-} as StreamrClient
 
 describeRepeats('Connection', () => {
     let s
@@ -51,7 +47,7 @@ describeRepeats('Connection', () => {
             url: `ws://localhost:${port}/`,
             maxRetries: 2,
             disconnectDelay: 1,
-        }, mockClient)
+        }, debug)
 
         onConnected = jest.fn()
         s.on('connected', onConnected)
@@ -159,7 +155,7 @@ describeRepeats('Connection', () => {
                 url: 'badurl',
                 maxRetries: 2,
                 disconnectDelay: 1,
-            }, mockClient)
+            }, debug)
 
             await expect(async () => (
                 s2.connect()
@@ -169,7 +165,7 @@ describeRepeats('Connection', () => {
             const s3 = new Connection({
                 url: `ws://localhost:${port}/`,
                 disconnectDelay: 1,
-            }, mockClient)
+            }, debug)
             await s3.connect()
             expect(Connection.getOpen()).toEqual(2)
             await Connection.closeOpen()
@@ -374,7 +370,7 @@ describeRepeats('Connection', () => {
                 url: undefined,
                 maxRetries: 2,
                 disconnectDelay: 1,
-            }, mockClient)
+            }, debug)
             s.on('connected', onConnected)
             s.on('error', onError)
             await expect(async () => {
@@ -388,7 +384,7 @@ describeRepeats('Connection', () => {
                 url: 'badurl',
                 maxRetries: 2,
                 disconnectDelay: 1,
-            }, mockClient)
+            }, debug)
             s.on('connected', onConnected)
             s.on('error', onError)
             s.on('done', onDone)
@@ -404,7 +400,7 @@ describeRepeats('Connection', () => {
                 url: 'wss://streamr.network/nope',
                 maxRetries: 2,
                 disconnectDelay: 1,
-            }, mockClient)
+            }, debug)
             s.on('connected', onConnected)
             s.on('done', onDone)
             await expect(async () => {
