@@ -11,7 +11,7 @@ import Connection, { ConnectionError } from './Connection'
 import Publisher from './publish'
 import { Subscriber } from './subscribe'
 import { getUserId } from './user'
-import { Todo, MaybeAsync } from './types'
+import { Todo, MaybeAsync, EthereumAddress } from './types'
 import { StreamEndpoints } from './rest/StreamEndpoints'
 import { LoginEndpoints } from './rest/LoginEndpoints'
 import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
@@ -377,7 +377,7 @@ export class StreamrClient extends EventEmitter {
     /**
      * Get token balance in "wei" (10^-18 parts) for given address
      */
-    async getTokenBalance(address: string): Promise<BigNumber> {
+    async getTokenBalance(address: EthereumAddress): Promise<BigNumber> {
         const { tokenAddress } = this.options
         if (!tokenAddress) {
             throw new Error('StreamrClient has no tokenAddress configuration.')
@@ -397,7 +397,7 @@ export class StreamrClient extends EventEmitter {
         return token.balanceOf(addr)
     }
 
-    getDataUnion(contractAddress: string) {
+    getDataUnion(contractAddress: EthereumAddress) {
         return DataUnion._fromContractAddress(contractAddress, this) // eslint-disable-line no-underscore-dangle
     }
 
@@ -405,7 +405,7 @@ export class StreamrClient extends EventEmitter {
         return DataUnion._deploy(options, this) // eslint-disable-line no-underscore-dangle
     }
 
-    _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: string}) {
+    _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: EthereumAddress}) {
         return DataUnion._fromName({ // eslint-disable-line no-underscore-dangle
             dataUnionName,
             deployerAddress

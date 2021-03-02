@@ -17,8 +17,8 @@ const log = debug('StreamrClient::DataUnion')
 export class Contracts {
 
     ethereum: StreamrEthereum
-    factoryMainnetAddress: string
-    factorySidechainAddress: string
+    factoryMainnetAddress: EthereumAddress
+    factorySidechainAddress: EthereumAddress
     cachedSidechainAmb?: Todo
 
     constructor(client: StreamrClient) {

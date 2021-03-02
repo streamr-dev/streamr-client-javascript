@@ -4,13 +4,13 @@ import { ExternalProvider, JsonRpcFetchFunc } from '@ethersproject/providers'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getVersionString } from './utils'
 import { ConnectionInfo } from '@ethersproject/web'
-import { Todo } from './types'
+import { EthereumAddress, Todo } from './types'
 
 export type EthereumConfig = ExternalProvider|JsonRpcFetchFunc
 
 export type StreamrClientOptions = {
     auth: {
-        privateKey?: string
+        privateKey?: EthereumAddress
         ethereum?: EthereumConfig
         apiKey?: string
         username?: string
@@ -18,7 +18,7 @@ export type StreamrClientOptions = {
     }
     url: string
     restUrl: string
-    streamrNodeAddress: string
+    streamrNodeAddress: EthereumAddress
     autoConnect: boolean
     autoDisconnect: boolean
     orderMessages: boolean
@@ -34,10 +34,10 @@ export type StreamrClientOptions = {
     mainnet?: ConnectionInfo|string
     sidechain?: ConnectionInfo|string
     dataUnion?: string
-    tokenAddress: string,
+    tokenAddress: EthereumAddress,
     minimumWithdrawTokenWei?: BigNumber|number|string
-    factoryMainnetAddress: string
-    factorySidechainAddress: string
+    factoryMainnetAddress: EthereumAddress
+    factorySidechainAddress: EthereumAddress
     payForSignatureTransport: boolean
     cache: {
         maxSize: number,

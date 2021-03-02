@@ -2,6 +2,7 @@ import EventEmitter from 'eventemitter3'
 import { Wallet } from '@ethersproject/wallet'
 import { ExternalProvider, JsonRpcFetchFunc, Web3Provider } from '@ethersproject/providers'
 import { StreamrClient } from './StreamrClient'
+import { EthereumAddress } from './types'
 
 enum State {
     LOGGING_OUT = 'logging out',
@@ -11,7 +12,7 @@ enum State {
 }
 
 export interface SessionOptions {
-    privateKey?: string
+    privateKey?: EthereumAddress
     ethereum?: ExternalProvider|JsonRpcFetchFunc
     apiKey?: string
     username?: string

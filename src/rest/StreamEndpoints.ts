@@ -11,7 +11,7 @@ import StreamPart from '../stream/StreamPart'
 import { isKeyExchangeStream } from '../stream/KeyExchange'
 
 import authFetch, { AuthFetchError } from './authFetch'
-import { Todo } from '../types'
+import { EthereumAddress, Todo } from '../types'
 import { StreamrClient } from '../StreamrClient'
 import { ErrorCode } from './ErrorCode'
 // TODO change this import when streamr-client-protocol exports StreamMessage type or the enums types directly
@@ -243,7 +243,7 @@ export class StreamEndpoints {
         return json
     }
 
-    async getStreamPartsByStorageNode(address: string) {
+    async getStreamPartsByStorageNode(address: EthereumAddress) {
         type ItemType = { id: string, partitions: number}
         const json = await authFetch<ItemType[]>(getEndpointUrl(this.client.options.restUrl, 'storageNodes', address, 'streams'), this.client.session)
         let result: StreamPart[] = []
