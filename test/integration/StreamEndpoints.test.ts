@@ -1,5 +1,6 @@
-import { ethers } from 'ethers'
+import { ethers, Wallet } from 'ethers'
 import { NotFoundError, ValidationError } from '../../src/rest/authFetch'
+import Stream, { StreamOperation } from '../../src/stream'
 
 import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
@@ -11,16 +12,16 @@ import config from './config'
  */
 
 function TestStreamEndpoints(getName) {
-    let client
-    let wallet
-    let createdStream
+    let client: StreamrClient
+    let wallet: Wallet
+    let createdStream: Stream
 
     const createClient = (opts = {}) => new StreamrClient({
         ...config.clientOptions,
         autoConnect: false,
         autoDisconnect: false,
         ...opts,
-    })
+    } as any)
 
     beforeAll(() => {
         wallet = ethers.Wallet.createRandom()
@@ -206,18 +207,18 @@ function TestStreamEndpoints(getName) {
         })
 
         it('Stream.hasPermission', async () => {
-            expect(await createdStream.hasPermission('stream_share', wallet.address)).toBeTruthy()
+            expect(await createdStream.hasPermission(StreamOperation.STREAM_SHARE, wallet.address)).toBeTruthy()
         })
 
         it('Stream.grantPermission', async () => {
-            await createdStream.grantPermission('stream_subscribe', null) // public read
-            expect(await createdStream.hasPermission('stream_subscribe', null)).toBeTruthy()
+            await createdStream.grantPermission(StreamOperation.STREAM_SUBSCRIBE, null) // public read
+            expect(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null)).toBeTruthy()
         })
 
         it('Stream.revokePermission', async () => {
-            const publicRead = await createdStream.hasPermission('stream_subscribe', null)
+            const publicRead = await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null)
             await createdStream.revokePermission(publicRead.id)
-            expect(!(await createdStream.hasPermission('stream_subscribe', null))).toBeTruthy()
+            expect(!(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null))).toBeTruthy()
         })
     })
 
