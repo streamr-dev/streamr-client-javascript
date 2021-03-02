@@ -9,7 +9,7 @@ import StreamrEthereum from './Ethereum'
 import Session from './Session'
 import Connection, { ConnectionError } from './Connection'
 import Publisher from './publish'
-import Subscriber from './subscribe'
+import { Subscriber } from './subscribe'
 import { getUserId } from './user'
 import { Todo, MaybeAsync } from './types'
 import { StreamEndpoints } from './rest/StreamEndpoints'
@@ -25,8 +25,6 @@ export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void
 interface MessageEvent {
     data: any
 }
-
-export { StreamrClientOptions }
 
 /**
  * Wrap connection message events with message parsing.

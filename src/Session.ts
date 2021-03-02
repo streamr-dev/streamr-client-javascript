@@ -20,10 +20,11 @@ export interface SessionOptions {
     unauthenticated?: boolean
 }
 
-export interface TokenObject {
+interface TokenObject {
     token: string
 }
 
+/** @internal */
 export default class Session extends EventEmitter {
 
     _client: StreamrClient

@@ -6,7 +6,7 @@ import debugFactory from 'debug'
 
 import { getEndpointUrl } from '../utils'
 import { validateOptions } from '../stream/utils'
-import Stream, { StreamOperation, StreamProperties } from '../stream'
+import { Stream, StreamOperation, StreamProperties } from '../stream'
 import StreamPart from '../stream/StreamPart'
 import { isKeyExchangeStream } from '../stream/KeyExchange'
 
@@ -77,6 +77,7 @@ function getKeepAliveAgentForUrl(url: string) {
     throw new Error(`Unknown protocol in URL: ${url}`)
 }
 
+/** @internal */
 export class StreamEndpoints {
 
     client: StreamrClient

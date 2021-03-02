@@ -25,6 +25,7 @@ async function getSessionToken(url: string, props: any) {
     )
 }
 
+/** @internal */
 export class LoginEndpoints {
 
     client: StreamrClient

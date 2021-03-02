@@ -48,6 +48,7 @@ export type StreamrClientOptions = {
 const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
 
+/** @internal */
 export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
     const defaults: StreamrClientOptions = {
         // Authentication: identity used by this StreamrClient instance

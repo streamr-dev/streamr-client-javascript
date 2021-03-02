@@ -68,7 +68,7 @@ function getFieldType(value: any): (Field['type'] | undefined) {
     }
 }
 
-export default class Stream {
+export class Stream {
     // TODO add field definitions for all fields
     // @ts-expect-error
     id: string
