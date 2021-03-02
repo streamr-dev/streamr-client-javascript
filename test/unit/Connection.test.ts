@@ -1,4 +1,4 @@
-import { Server } from 'ws'
+import { AddressInfo, Server } from 'ws'
 import { wait } from 'streamr-test-utils'
 import Debug from 'debug'
 
@@ -20,7 +20,7 @@ describeRepeats('Connection', () => {
     let onDone
     let onError
     let onMessage
-    let wss
+    let wss: Server
     let port
     let errors
 
@@ -29,7 +29,7 @@ describeRepeats('Connection', () => {
         wss = new Server({
             port: 0,
         }).once('listening', () => {
-            port = wss.address().port
+            port = (wss.address() as AddressInfo).port
             done()
         })
 
@@ -76,7 +76,7 @@ describeRepeats('Connection', () => {
     })
 
     afterEach(async () => {
-        await wait()
+        await wait(0)
         // ensure no unexpected errors
         try {
             expect(errors).toHaveLength(expectErrors)
@@ -287,7 +287,7 @@ describeRepeats('Connection', () => {
                     await expect(async () => {
                         await s.connect()
                     }).rejects.toThrow()
-                    done.resolve()
+                    done.resolve(undefined)
                 }))
 
                 await expect(async () => {
@@ -449,7 +449,7 @@ describeRepeats('Connection', () => {
                     s.once('connecting', () => {
                         // purposely unchained
                         // eslint-disable-next-line promise/catch-or-return
-                        wait().then(() => (
+                        wait(0).then(() => (
                             s.disconnect()
                         )).then(resolve, reject)
                     })
@@ -496,7 +496,7 @@ describeRepeats('Connection', () => {
             })
             s.once('error', done.wrap(async (err) => {
                 expect(err).toBe(error)
-                await wait()
+                await wait(0)
                 expect(s.getState()).toBe('connected')
             }))
             await s.connect()
@@ -777,7 +777,7 @@ describeRepeats('Connection', () => {
             expect(err).toBeTruthy()
             expect(onConnected).toHaveBeenCalledTimes(1)
             expect(s.getState()).toBe('disconnected')
-            await wait()
+            await wait(0)
             expect(onDone).toHaveBeenCalledTimes(1)
         })
 
@@ -791,7 +791,7 @@ describeRepeats('Connection', () => {
             )).rejects.toThrow('badurl')
             expect(onConnected).toHaveBeenCalledTimes(1)
             expect(s.getState()).toBe('disconnected')
-            await wait()
+            await wait(0)
             expect(onDone).toHaveBeenCalledTimes(1)
         })
 
@@ -812,7 +812,7 @@ describeRepeats('Connection', () => {
                 }
             })
             s.once('connected', () => {
-                done.resolve()
+                done.resolve(undefined)
             })
             s.socket.close()
             await done
@@ -850,7 +850,7 @@ describeRepeats('Connection', () => {
             expect(err).toBeTruthy()
             s.options.url = goodUrl
             await s.connect()
-            await wait()
+            await wait(0)
             expect(s.isReconnecting()).toBeFalsy()
             expect(s.getState()).toBe('connected')
         })
@@ -933,7 +933,7 @@ describeRepeats('Connection', () => {
             s.once('message', done.resolve)
 
             await s.send('test')
-            const { data } = await done
+            const { data }: any = await done
             expect(data).toEqual('test')
         })
 
@@ -949,7 +949,7 @@ describeRepeats('Connection', () => {
 
             s.connect() // no await
             await s.send('test')
-            const { data } = await done
+            const { data }: any = await done
             expect(data).toEqual('test')
         })
 
@@ -959,7 +959,7 @@ describeRepeats('Connection', () => {
             s.once('message', done.resolve)
             // no connect
             await s.send('test')
-            const { data } = await done
+            const { data }: any = await done
             expect(data).toEqual('test')
         })
 
@@ -969,7 +969,7 @@ describeRepeats('Connection', () => {
             s.once('message', done.resolve)
             s.socket.close() // will trigger reconnect
             await s.send('test')
-            const { data } = await done
+            const { data }: any = await done
             expect(data).toEqual('test')
         })
 
@@ -994,7 +994,7 @@ describeRepeats('Connection', () => {
         it('fails send if autoconnected but intentionally disconnected', async () => {
             s.enableAutoConnect()
             const received = []
-            s.on('message', ({ data } = {}) => {
+            s.on('message', ({ data }: any = {}) => {
                 received.push(data)
             })
             const nextMessage = Defer()
@@ -1174,7 +1174,7 @@ describeRepeats('Connection', () => {
             await s.removeHandle(2)
             expect(s.getState()).toBe('connected')
             const t = s.removeHandle(1)
-            await wait()
+            await wait(0)
             await s.disconnect() // disconnect while auto-disconnecting
             await t
             expect(s.getState()).toBe('disconnected')
