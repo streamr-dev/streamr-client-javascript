@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { NotFoundError, ValidationError } from '../../src/rest/authFetch'
 
 import StreamrClient from '../../src/StreamrClient'
 import { uid } from '../utils'
@@ -53,7 +54,7 @@ function TestStreamEndpoints(getName) {
         })
 
         it('invalid id', () => {
-            return expect(() => client.createStream({ id: 'invalid.eth/foobar' })).rejects.toThrow()
+            return expect(() => client.createStream({ id: 'invalid.eth/foobar' })).rejects.toThrow(ValidationError)
         })
     })
 
@@ -66,7 +67,7 @@ function TestStreamEndpoints(getName) {
 
         it('get a non-existing Stream', async () => {
             const id = `${wallet.address}/StreamEndpoints-integration-nonexisting-${Date.now()}`
-            return expect(() => client.getStream(id)).rejects.toThrow()
+            return expect(() => client.getStream(id)).rejects.toThrow(NotFoundError)
         })
     })
 
@@ -79,7 +80,7 @@ function TestStreamEndpoints(getName) {
 
         it('get a non-existing Stream', async () => {
             const name = `${wallet.address}/StreamEndpoints-integration-nonexisting-${Date.now()}`
-            return expect(() => client.getStreamByName(name)).rejects.toThrow()
+            return expect(() => client.getStreamByName(name)).rejects.toThrow(NotFoundError)
         })
     })
 
@@ -223,7 +224,7 @@ function TestStreamEndpoints(getName) {
     describe('Stream deletion', () => {
         it('Stream.delete', async () => {
             await createdStream.delete()
-            return expect(() => client.getStream(createdStream.id)).rejects.toThrow()
+            return expect(() => client.getStream(createdStream.id)).rejects.toThrow(NotFoundError)
         })
     })
 
