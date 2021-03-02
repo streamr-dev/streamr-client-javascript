@@ -529,7 +529,7 @@ export default class Connection extends EventEmitter {
         await this.step()
     }
 
-    async needsConnection(msg: Todo) {
+    async needsConnection(msg?: Todo) {
         await this.maybeConnect()
         if (!this.isConnected()) {
             const { autoConnect, autoDisconnect } = this.options

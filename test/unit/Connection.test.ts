@@ -5,24 +5,25 @@ import Debug from 'debug'
 import { describeRepeats } from '../utils'
 import Connection from '../../src/Connection'
 import { Defer } from '../../src/utils'
+import { Todo } from '../../src/types'
 
 /* eslint-disable require-atomic-updates */
 
 const debug = Debug('StreamrClient').extend('test')
 
 describeRepeats('Connection', () => {
-    let s
-    let onConnected
-    let onConnecting
-    let onDisconnecting
-    let onDisconnected
-    let onReconnecting
-    let onDone
-    let onError
-    let onMessage
+    let s: Connection
+    let onConnected: Todo
+    let onConnecting: Todo
+    let onDisconnecting: Todo
+    let onDisconnected: Todo
+    let onReconnecting: Todo
+    let onDone: Todo
+    let onError: Todo
+    let onMessage: Todo
     let wss: Server
-    let port
-    let errors
+    let port: number
+    let errors: Todo
 
     let expectErrors = 0 // check no errors by default
     beforeAll((done) => {
@@ -993,7 +994,7 @@ describeRepeats('Connection', () => {
 
         it('fails send if autoconnected but intentionally disconnected', async () => {
             s.enableAutoConnect()
-            const received = []
+            const received: Todo[] = []
             s.on('message', ({ data }: any = {}) => {
                 received.push(data)
             })
