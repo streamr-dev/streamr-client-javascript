@@ -11,10 +11,6 @@ export const parseErrorCode = (body: string) => {
     } catch (err) {
         return ErrorCode.UNKNOWN
     }
-    const code = json.code
-    const keys = Object.keys(ErrorCode)
-    if (keys.includes(code)) {
-        return code as ErrorCode
-    }
-    return ErrorCode.UNKNOWN
+    const { code } = json
+    return code in ErrorCode ? code : ErrorCode.UNKNOWN
 }
