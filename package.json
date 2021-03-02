@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
-  "types": "dist/types/src/StreamrClient.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "main": "dist/node/src/StreamrClient.js",
   "browser": "dist/streamr-client.web.min.js",
   "directories": {

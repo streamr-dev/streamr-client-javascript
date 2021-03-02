@@ -10,7 +10,7 @@ import { dataUnionMainnetABI, dataUnionSidechainABI, factoryMainnetABI, mainnetA
 import { until } from '../utils'
 import { BigNumber } from '@ethersproject/bignumber'
 import StreamrEthereum from '../Ethereum'
-import StreamrClient from '../StreamrClient'
+import { StreamrClient } from '../StreamrClient'
 
 const log = debug('StreamrClient::DataUnion')
 

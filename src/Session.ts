@@ -1,7 +1,7 @@
 import EventEmitter from 'eventemitter3'
 import { Wallet } from '@ethersproject/wallet'
 import { ExternalProvider, JsonRpcFetchFunc, Web3Provider } from '@ethersproject/providers'
-import StreamrClient from './StreamrClient'
+import { StreamrClient } from './StreamrClient'
 
 enum State {
     LOGGING_OUT = 'logging out',

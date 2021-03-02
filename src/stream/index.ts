@@ -2,7 +2,7 @@ import { getEndpointUrl } from '../utils'
 import authFetch from '../rest/authFetch'
 
 import StorageNode from './StorageNode'
-import StreamrClient from '../StreamrClient'
+import { StreamrClient } from '../StreamrClient'
 import { Todo } from '../types'
 
 interface StreamPermisionBase {

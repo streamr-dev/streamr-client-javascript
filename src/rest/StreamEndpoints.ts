@@ -12,7 +12,7 @@ import { isKeyExchangeStream } from '../stream/KeyExchange'
 
 import authFetch, { AuthFetchError } from './authFetch'
 import { Todo } from '../types'
-import StreamrClient from '../StreamrClient'
+import { StreamrClient } from '../StreamrClient'
 import { ErrorCode } from './ErrorCode'
 // TODO change this import when streamr-client-protocol exports StreamMessage type or the enums types directly
 import { ContentType, EncryptionType, SignatureType, StreamMessageType } from 'streamr-client-protocol/dist/src/protocol/message_layer/StreamMessage'

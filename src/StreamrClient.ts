@@ -139,10 +139,10 @@ function Plugin(targetInstance: any, srcInstance: any) {
 }
 
 // these are mixed in via Plugin function above
-interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
+export interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 
 // eslint-disable-next-line no-redeclare
-class StreamrClient extends EventEmitter {
+export class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
     options: StreamrClientOptions
@@ -418,7 +418,3 @@ class StreamrClient extends EventEmitter {
         return StreamrEthereum.generateEthereumAccount()
     }
 }
-
-export default StreamrClient
-
-module.exports = StreamrClient

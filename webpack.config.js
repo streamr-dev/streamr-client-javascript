@@ -24,7 +24,7 @@ module.exports = (env, argv) => {
 
     const commonConfig = {
         mode: isProduction ? 'production' : 'development',
-        entry: path.join(__dirname, 'src', 'StreamrClient.ts'),
+        entry: path.join(__dirname, 'src', 'index.ts'),
         devtool: 'source-map',
         output: {
             umdNamedDefine: true,

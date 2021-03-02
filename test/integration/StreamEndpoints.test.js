@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-import StreamrClient from '../../src/StreamrClient'
+import { StreamrClient } from '../../src/StreamrClient'
 import { uid } from '../utils'
 
 import config from './config'

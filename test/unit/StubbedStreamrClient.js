@@ -1,4 +1,4 @@
-import StreamrClient from '../../src/'
+import { StreamrClient } from '../../src/'
 import Stream from '../../src/stream'
 
 export default class StubbedStreamrClient extends StreamrClient {

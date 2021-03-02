@@ -1,4 +1,4 @@
-import StreamrClient from '../StreamrClient'
+import { StreamrClient } from '../StreamrClient'
 import { getEndpointUrl } from '../utils'
 
 import authFetch, { AuthFetchError } from './authFetch'
