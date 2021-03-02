@@ -309,7 +309,7 @@ export class Contracts {
             duName,
             ethersOptions
         )
-        const tr = await tx.wait(confirmations)
+        await tx.wait(confirmations)
 
         log(`Data Union "${duName}" (mainnet: ${duMainnetAddress}, sidechain: ${duSidechainAddress}) deployed to mainnet, waiting for side-chain...`)
         await until(
@@ -319,8 +319,6 @@ export class Contracts {
         )
 
         const dataUnion = new Contract(duMainnetAddress, dataUnionMainnetABI, mainnetWallet)
-        // @ts-expect-error
-        dataUnion.deployTxReceipt = tr
         // @ts-expect-error
         dataUnion.sidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, sidechainProvider)
         return dataUnion
