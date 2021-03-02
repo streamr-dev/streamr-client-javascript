@@ -33,7 +33,6 @@ export type StreamrClientOptions = {
     keyExchange: Todo
     mainnet?: ConnectionInfo|string
     sidechain?: ConnectionInfo|string
-    dataUnion?: string
     tokenAddress: EthereumAddress,
     minimumWithdrawTokenWei?: BigNumber|number|string
     factoryMainnetAddress: EthereumAddress
