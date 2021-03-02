@@ -138,7 +138,7 @@ export class StreamEndpoints {
         return new Stream(this.client, json)
     }
 
-    async getOrCreateStream(props: { id?: string, name?: string }) {
+    async getOrCreateStream(props: { id: string, name?: never } | { id?: never, name: string }) {
         this.client.debug('getOrCreateStream %o', {
             props,
         })
