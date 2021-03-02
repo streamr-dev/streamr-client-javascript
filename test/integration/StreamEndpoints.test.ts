@@ -11,7 +11,7 @@ import config from './config'
  * These tests should be run in sequential order!
  */
 
-function TestStreamEndpoints(getName) {
+function TestStreamEndpoints(getName: () => string) {
     let client: StreamrClient
     let wallet: Wallet
     let createdStream: Stream
@@ -211,14 +211,14 @@ function TestStreamEndpoints(getName) {
         })
 
         it('Stream.grantPermission', async () => {
-            await createdStream.grantPermission(StreamOperation.STREAM_SUBSCRIBE, null) // public read
-            expect(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null)).toBeTruthy()
+            await createdStream.grantPermission(StreamOperation.STREAM_SUBSCRIBE, undefined) // public read
+            expect(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, undefined)).toBeTruthy()
         })
 
         it('Stream.revokePermission', async () => {
-            const publicRead = await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null)
-            await createdStream.revokePermission(publicRead.id)
-            expect(!(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, null))).toBeTruthy()
+            const publicRead = await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, undefined)
+            await createdStream.revokePermission(publicRead!.id)
+            expect(!(await createdStream.hasPermission(StreamOperation.STREAM_SUBSCRIBE, undefined))).toBeTruthy()
         })
     })
 
