@@ -296,7 +296,7 @@ export class DataUnion {
         return +adminFeeBN.toString() / 1e18
     }
 
-    async getAdminAddress(): Promise<Todo> {
+    async getAdminAddress(): Promise<string> {
         const duMainnet = this.getContracts().getMainnetContractReadOnly(this.contractAddress)
         return duMainnet.owner()
     }
@@ -446,14 +446,14 @@ export class DataUnion {
     /**
      * Admin: set admin fee (between 0.0 and 1.0) for the data union
      */
-    async setAdminFee(newFeeFraction: number): Promise<Todo> {
+    async setAdminFee(newFeeFraction: number): Promise<void> {
         if (newFeeFraction < 0 || newFeeFraction > 1) {
             throw new Error('newFeeFraction argument must be a number between 0...1, got: ' + newFeeFraction)
         }
         const adminFeeBN = BigNumber.from((newFeeFraction * 1e18).toFixed()) // last 2...3 decimals are going to be gibberish
         const duMainnet = this.getContracts().getMainnetContract(this.contractAddress)
         const tx = await duMainnet.setAdminFee(adminFeeBN)
-        return tx.wait()
+        await tx.wait()
     }
 
     /**
