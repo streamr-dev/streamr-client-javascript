@@ -14,6 +14,8 @@ import authFetch, { AuthFetchError } from './authFetch'
 import { Todo } from '../types'
 import StreamrClient from '../StreamrClient'
 import { ErrorCode } from './ErrorCode'
+// TODO change this import when streamr-client-protocol exports StreamMessage type or the enums types directly
+import { ContentType, EncryptionType, SignatureType, StreamMessageType } from 'streamr-client-protocol/dist/src/protocol/message_layer/StreamMessage'
 
 const debug = debugFactory('StreamrClient')
 
@@ -29,6 +31,28 @@ export interface StreamListQuery {
     grantedAccess?: boolean
     publicAccess?: boolean
     operation?: StreamOperation
+}
+
+export interface StreamValidationInfo {
+    partitions: number,
+    requireSignedData: boolean
+    requireEncryptedData: boolean
+}
+
+export interface StreamMessageAsObject { // TODO this could be in streamr-protocol
+    streamId: string
+    streamPartition: number
+    timestamp: number
+    sequenceNumber: number
+    publisherId: string
+    msgChainId: string
+    messageType: StreamMessageType
+    contentType: ContentType
+    encryptionType: EncryptionType
+    groupKeyId: string|null
+    content: any
+    signatureType: SignatureType
+    signature: string|null
 }
 
 const agentSettings = {
@@ -74,7 +98,7 @@ export class StreamEndpoints {
         }
 
         const url = getEndpointUrl(this.client.options.restUrl, 'streams', streamId)
-        const json = await authFetch(url, this.client.session)
+        const json = await authFetch<StreamProperties>(url, this.client.session)
         return new Stream(this.client, json)
     }
 
@@ -83,8 +107,8 @@ export class StreamEndpoints {
             query,
         })
         const url = getEndpointUrl(this.client.options.restUrl, 'streams') + '?' + qs.stringify(query)
-        const json = await authFetch(url, this.client.session)
-        return json ? json.map((stream: any) => new Stream(this.client, stream)) : []
+        const json = await authFetch<StreamProperties[]>(url, this.client.session)
+        return json ? json.map((stream: StreamProperties) => new Stream(this.client, stream)) : []
     }
 
     async getStreamByName(name: string) {
@@ -104,7 +128,7 @@ export class StreamEndpoints {
             props,
         })
 
-        const json = await authFetch(
+        const json = await authFetch<StreamProperties>(
             getEndpointUrl(this.client.options.restUrl, 'streams'),
             this.client.session,
             {
@@ -144,7 +168,7 @@ export class StreamEndpoints {
             streamId,
         })
         const url = getEndpointUrl(this.client.options.restUrl, 'streams', streamId, 'publishers')
-        const json = await authFetch(url, this.client.session)
+        const json = await authFetch<{ addresses: string[]}>(url, this.client.session)
         return json.addresses.map((a: string) => a.toLowerCase())
     }
 
@@ -171,7 +195,7 @@ export class StreamEndpoints {
             streamId,
         })
         const url = getEndpointUrl(this.client.options.restUrl, 'streams', streamId, 'subscribers')
-        const json = await authFetch(url, this.client.session)
+        const json = await authFetch<{ addresses: string[] }>(url, this.client.session)
         return json.addresses.map((a: string) => a.toLowerCase())
     }
 
@@ -197,11 +221,11 @@ export class StreamEndpoints {
             streamId,
         })
         const url = getEndpointUrl(this.client.options.restUrl, 'streams', streamId, 'validation')
-        const json = await authFetch(url, this.client.session)
+        const json = await authFetch<StreamValidationInfo>(url, this.client.session)
         return json
     }
 
-    async getStreamLast(streamObjectOrId: Stream|string) {
+    async getStreamLast(streamObjectOrId: Stream|string): Promise<StreamMessageAsObject> {
         const { streamId, streamPartition = 0, count = 1 } = validateOptions(streamObjectOrId)
         this.client.debug('getStreamLast %o', {
             streamId,
@@ -214,14 +238,15 @@ export class StreamEndpoints {
             + `?${qs.stringify({ count })}`
         )
 
-        const json = await authFetch(url, this.client.session)
+        const json = await authFetch<Todo>(url, this.client.session)
         return json
     }
 
     async getStreamPartsByStorageNode(address: string) {
-        const json = await authFetch(getEndpointUrl(this.client.options.restUrl, 'storageNodes', address, 'streams'), this.client.session)
+        type ItemType = { id: string, partitions: number}
+        const json = await authFetch<ItemType[]>(getEndpointUrl(this.client.options.restUrl, 'storageNodes', address, 'streams'), this.client.session)
         let result: StreamPart[] = []
-        json.forEach((stream: { id: string, partitions: number }) => {
+        json.forEach((stream: ItemType) => {
             result = result.concat(StreamPart.fromStream(stream))
         })
         return result
@@ -239,7 +264,7 @@ export class StreamEndpoints {
         })
 
         // Send data to the stream
-        return authFetch(
+        await authFetch(
             getEndpointUrl(this.client.options.restUrl, 'streams', streamId, 'data'),
             this.client.session,
             {
