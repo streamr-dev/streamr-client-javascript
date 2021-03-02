@@ -6,7 +6,7 @@ import { TransactionReceipt, TransactionResponse } from '@ethersproject/provider
 import debug from 'debug'
 import { Contracts } from './Contracts'
 import StreamrClient from '../StreamrClient'
-import { EthereumAddress, Todo } from '../types'
+import { EthereumAddress } from '../types'
 import { until, getEndpointUrl } from '../utils'
 import authFetch from '../rest/authFetch'
 
