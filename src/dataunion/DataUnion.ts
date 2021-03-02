@@ -539,7 +539,7 @@ export class DataUnion {
     // template for withdraw functions
     // client could be replaced with AMB (mainnet and sidechain)
     private async _executeWithdraw(
-        getWithdrawTxFunc: () => Promise<Todo & { events: any[] }>,
+        getWithdrawTxFunc: () => Promise<TransactionResponse>,
         recipientAddress: EthereumAddress,
         options: DataUnionWithdrawOptions = {}
     ): Promise<TransactionReceipt> {
