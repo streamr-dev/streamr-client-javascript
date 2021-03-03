@@ -77,7 +77,7 @@ function getKeepAliveAgentForUrl(url: string) {
     throw new Error(`Unknown protocol in URL: ${url}`)
 }
 
-/** @internal */
+/** TODO the class should be annotated with at-internal, but adding the annotation hides the methods */
 export class StreamEndpoints {
 
     client: StreamrClient

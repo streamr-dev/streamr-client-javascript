@@ -25,7 +25,7 @@ async function getSessionToken(url: string, props: any) {
     )
 }
 
-/** @internal */
+/** TODO the class should be annotated with at-internal, but adding the annotation hides the methods */
 export class LoginEndpoints {
 
     client: StreamrClient
