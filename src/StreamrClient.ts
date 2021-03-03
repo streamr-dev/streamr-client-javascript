@@ -34,7 +34,7 @@ export { StreamrClientOptions }
 
 class StreamrConnection extends Connection {
     // TODO define args type when we convert Connection class to TypeScript
-    constructor(options: Todo, debug: Debug.Debugger) {
+    constructor(options: Todo, debug?: Debug.Debugger) {
         super(options, debug)
         this.on('message', this.onConnectionMessage)
     }
