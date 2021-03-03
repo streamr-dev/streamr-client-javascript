@@ -11,7 +11,6 @@ export * from './rest/LoginEndpoints'
 export * from './rest/StreamEndpoints'
 export * from './dataunion/DataUnion'
 export * from './rest/authFetch'
-export * from './rest/ErrorCode'
 export * from './types'
 
 // TODO should export these to support StreamMessageAsObject: export { StreamMessageType, ContentType, EncryptionType, SignatureType } from 'streamr-client-protocol/dist/src/protocol/message_layer/StreamMessage'
