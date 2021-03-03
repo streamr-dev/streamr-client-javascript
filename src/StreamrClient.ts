@@ -32,8 +32,8 @@ interface MessageEvent {
 
 class StreamrConnection extends Connection {
     // TODO define args type when we convert Connection class to TypeScript
-    constructor(options: Todo, client: StreamrClient) {
-        super(options, client)
+    constructor(options: Todo, debug?: Debug.Debugger) {
+        super(options, debug)
         this.on('message', this.onConnectionMessage)
     }
 
@@ -177,7 +177,7 @@ export class StreamrClient extends EventEmitter {
         this.on('error', this._onError) // attach before creating sub-components incase they fire error events
 
         this.session = new Session(this, this.options.auth)
-        this.connection = connection || new StreamrConnection(this.options, this)
+        this.connection = connection || new StreamrConnection(this.options, this.debug)
 
         this.connection
             .on('connected', this.onConnectionConnected)
