@@ -18,4 +18,6 @@ export { BigNumber } from '@ethersproject/bignumber'
 export { ConnectionInfo } from '@ethersproject/web'
 export { Contract } from '@ethersproject/contracts'
 export { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
+
 export default StreamrClient
+module.exports = StreamrClient
