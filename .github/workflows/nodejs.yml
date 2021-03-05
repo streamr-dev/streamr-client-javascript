@@ -84,8 +84,8 @@ jobs:
           path: streamr-client-testing
       - name: setup-client-testing
         uses: actions/setup-java@v1
-          with:
-            java-version: '8'
+        with:
+          java-version: '8'
         working-directory: streamr-client-testing
         run: |
           ## npm install is used because package-lock.json could be from a previous client version.
