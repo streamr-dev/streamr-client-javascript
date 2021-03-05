@@ -24,7 +24,7 @@ module.exports = (env, argv) => {
 
     const commonConfig = {
         mode: isProduction ? 'production' : 'development',
-        entry: path.join(__dirname, 'src', 'index.ts'),
+        entry: path.join(__dirname, 'src', 'StreamrClient.ts'),
         devtool: 'source-map',
         output: {
             umdNamedDefine: true,
@@ -88,7 +88,7 @@ module.exports = (env, argv) => {
             // `window.StreamrClient = { default: StreamrClient, … }`
             // which is wrong for browser builds.
             // see: https://github.com/webpack/webpack/issues/706#issuecomment-438007763
-            libraryExport: 'default', // This fixes the above.
+            libraryExport: 'StreamrClient', // This fixes the above.
         },
         resolve: {
             alias: {
