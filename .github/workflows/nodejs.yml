@@ -250,6 +250,7 @@ jobs:
           ## npm install is used because package-lock.json could be from a previous client version.
           npm install
           npm link streamr-client
+          java -version
           ./gradlew fatjar
       - name: run-client-testing
         timeout-minutes: 10
