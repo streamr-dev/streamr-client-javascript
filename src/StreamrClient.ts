@@ -144,6 +144,7 @@ export class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
     options: StreamrClientOptions
+    /** @internal */
     session: Session
     connection: StreamrConnection
     publisher: Todo
