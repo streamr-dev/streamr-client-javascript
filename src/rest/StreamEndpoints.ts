@@ -123,7 +123,7 @@ export class StreamEndpoints {
         return json[0] ? new Stream(this.client, json[0]) : Promise.reject(new NotFoundError('Stream: name=' + name))
     }
 
-    async createStream(props?: StreamProperties) {
+    async createStream(props?: Partial<StreamProperties>) {
         this.client.debug('createStream %o', {
             props,
         })
