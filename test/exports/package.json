@@ -5,6 +5,7 @@
   "main": "commonjs.js",
   "private": true,
   "scripts": {
+    "pretest": "rm -Rf dist",
     "test": "npm run test-commonjs && npm run test-esm && npm run test-ts && npm run webpack",
     "build-ts": "tsc --project ./tsconfig.json",
     "pretest-ts": "npm run build-ts",
