@@ -20,3 +20,5 @@ export { Contract } from '@ethersproject/contracts'
 export { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 
 export default StreamrClient
+
+// Note awful export wrappers in index-commonjs.js & index-esm.mjs

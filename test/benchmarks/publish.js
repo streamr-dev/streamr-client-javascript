@@ -6,6 +6,8 @@ const { Benchmark } = require('benchmark')
 const StreamrClient = require('../../dist')
 const config = require('../integration/config')
 
+console.log('StreamrClient', { StreamrClient })
+
 /* eslint-disable no-console */
 
 let count = 100000 // pedantic: use large initial number so payload size is similar

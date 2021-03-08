@@ -1,3 +1,5 @@
+// check ts esm works via tsc
+
 import DefaultExport, * as NamedExports from 'streamr-client'
 
 console.info('import DefaultExport, * as NamedExports from \'streamr-client\':', { DefaultExport, NamedExports })

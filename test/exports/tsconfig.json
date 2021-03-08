@@ -10,6 +10,6 @@
         "module": "commonjs"
     },
     "include": [
-        "typescript.ts"
+        "tests/typescript.ts"
     ]
 }

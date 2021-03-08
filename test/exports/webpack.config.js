@@ -12,8 +12,9 @@ module.exports = (env, argv) => {
         mode: isProduction ? 'production' : 'development',
         target: 'web',
         entry: {
-            commonjs: path.join(__dirname, 'commonjs.js'),
-            esm: path.join(__dirname, 'esm.mjs'),
+            commonjs: path.join(__dirname, 'tests/commonjs.js'),
+            typescript: path.join(__dirname, 'tests/typescript.ts'),
+            esm: path.join(__dirname, 'tests/esm.mjs'),
         },
         devtool: false,
         output: {
@@ -39,8 +40,8 @@ module.exports = (env, argv) => {
             ],
         },
         resolve: {
-            modules: [path.resolve('./node_modules'), path.resolve('./'), path.resolve('../../node_modules')],
-            extensions: ['.json', '.js', '.mjs'],
+            modules: [path.resolve('./node_modules'), path.resolve('./tests/'), path.resolve('../../node_modules')],
+            extensions: ['.json', '.js', '.ts', '.mjs'],
         },
     }
 }

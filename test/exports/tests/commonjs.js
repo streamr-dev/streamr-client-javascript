@@ -1,3 +1,4 @@
+// checks that require works
 const StreamrClient = require('streamr-client')
 
 console.info('const StreamrClient = require(\'streamr-client\'):', { StreamrClient })
