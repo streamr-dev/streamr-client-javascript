@@ -45,7 +45,7 @@ export interface StreamProperties {
 
 const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map'] as const
 
-type Field = {
+export type Field = {
     name: string;
     type: typeof VALID_FIELD_TYPES[number];
 }
