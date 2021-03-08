@@ -140,6 +140,24 @@ jobs:
           retry_on: error
           command: npm run test-flakey || echo "::warning::Flakey Tests Failed"
 
+  test-exports:
+    name: Test Exports using Node 14.x
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+      - uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: dist
+      - name: npm ci
+        run: npm ci
+      - name: npm run test-exports
+        run: npm run test-exports
+
   browser:
     name: Test Browser using Node 14.x
     runs-on: ubuntu-latest

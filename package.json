@@ -6,17 +6,29 @@
     "type": "git",
     "url": "git://github.com/streamr-dev/streamr-client.git"
   },
-  "types": "dist/types/src/index.d.ts",
-  "main": "dist/node/src/index.js",
-  "browser": "dist/streamr-client.web.min.js",
+  "types": "./types/src/index.d.ts",
+  "main": "./src/index.js",
+  "browser": "streamr-client.web.min.js",
   "directories": {
     "example": "examples",
     "test": "test"
   },
+  "exports": {
+      "browser": "./streamr-client.web.js",
+      "default": {
+          "import": "./src/index-esm.mjs",
+          "require": "./src/index-commonjs.js"
+      }
+  },
   "scripts": {
-    "build": "rm -rf dist; NODE_ENV=production webpack --mode=production --progress && npm run build-node && npm run build:types",
-    "build-node": "tsc --incremental --project ./tsconfig.node.json",
-    "watch-node": "tsc --incremental --watch --project ./tsconfig.node.json",
+    "build": "rm -rf dist; npm run build-browser && npm run build-node && npm run build:types",
+    "build-node": "npm run bootstrap-dist && tsc --incremental --project ./tsconfig.node.json",
+    "build-browser": "npm run bootstrap-dist && NODE_ENV=production webpack --mode=production --progress ",
+    "watch-browser": "npm run bootstrap-dist && webpack --progress --watch",
+    "watch-node": "npm run bootstrap-dist && tsc --incremental --watch --project ./tsconfig.node.json",
+    "bootstrap-dist": "npm run copy-package && npm run fix-esm",
+    "fix-esm": "mkdir -p dist/src/; cp -Rf src/index-esm.mjs dist/src/index-esm.mjs",
+    "copy-package": "mkdir -p dist/; cp -Rf package.json package-lock.json dist",
     "build:types": "tsc --incremental --emitDeclarationOnly --stripInternal",
     "benchmarks": "node test/benchmarks/publish.js && node test/benchmarks/subscribe.js",
     "prebuild-benchmark": "npm run build -- --config-name=node-lib",
@@ -32,6 +44,7 @@
     "test-types": "tsc --noEmit --incremental --project ./tsconfig.test.json",
     "coverage": "jest --coverage",
     "test-integration": "jest --forceExit test/integration",
+    "test-exports": "cd test/exports && npm install && npm test",
     "test-integration-no-resend": "jest --forceExit --testTimeout=10000 --testPathIgnorePatterns='resend|Resend' --testNamePattern='^((?!(resend|Resend|resent|Resent|gap|Gap)).)*$' test/integration/*.test.js",
     "test-integration-resend": "jest --forceExit --testTimeout=15000 --testNamePattern='(resend|Resend|resent|Resent)' test/integration/*.test.js",
     "test-integration-dataunions": "jest --forceExit --testTimeout=15000 --runInBand test/integration/dataunion",

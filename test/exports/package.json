@@ -1,0 +1,21 @@
+{
+  "name": "test-streamr-exports",
+  "version": "1.0.0",
+  "description": "",
+  "main": "commonjs.js",
+  "private": true,
+  "scripts": {
+    "test": "npm run test-commonjs && npm run test-esm && npm run test-ts && npm run webpack",
+    "build-ts": "tsc --project ./tsconfig.json",
+    "pretest-ts": "npm run build-ts",
+    "test-ts": "node dist/typescript.js",
+    "test-esm": "node esm.mjs",
+    "test-commonjs": "node commonjs.js",
+    "webpack": "../../node_modules/.bin/webpack --progress"
+  },
+  "author": "Tim Oxley <secoif@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "streamr-client": "../../dist/"
+  }
+}
