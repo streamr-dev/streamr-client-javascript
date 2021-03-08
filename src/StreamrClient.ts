@@ -4,7 +4,7 @@ import Debug from 'debug'
 
 import { counterId, uuid, CacheAsyncFn } from './utils'
 import { validateOptions } from './stream/utils'
-import Config, { StreamrClientOptions } from './Config'
+import Config, { StreamrClientOptions, StrictStreamrClientOptions } from './Config'
 import StreamrEthereum from './Ethereum'
 import Session from './Session'
 import Connection, { ConnectionError } from './Connection'
@@ -143,7 +143,7 @@ export interface StreamrClient extends StreamEndpoints, LoginEndpoints {}
 export class StreamrClient extends EventEmitter {
     id: string
     debug: Debug.Debugger
-    options: StreamrClientOptions
+    options: StrictStreamrClientOptions
     /** @internal */
     session: Session
     connection: StreamrConnection
@@ -154,7 +154,7 @@ export class StreamrClient extends EventEmitter {
     streamEndpoints: StreamEndpoints
     loginEndpoints: LoginEndpoints
 
-    constructor(options: Partial<StreamrClientOptions> = {}, connection?: StreamrConnection) {
+    constructor(options: StreamrClientOptions = {}, connection?: StreamrConnection) {
         super()
         this.id = counterId(`${this.constructor.name}:${uid}`)
         this.debug = Debug(this.id)

@@ -8,7 +8,7 @@ import { EthereumAddress, Todo } from './types'
 
 export type EthereumConfig = ExternalProvider|JsonRpcFetchFunc
 
-export type StreamrClientOptions = {
+export type StrictStreamrClientOptions = {
     auth: {
         privateKey?: EthereumAddress
         ethereum?: EthereumConfig
@@ -44,12 +44,14 @@ export type StreamrClientOptions = {
     }
 }
 
+export type StreamrClientOptions = Partial<StrictStreamrClientOptions>
+
 const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
 
 /** @internal */
-export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
-    const defaults: StreamrClientOptions = {
+export default function ClientConfig(opts: StreamrClientOptions = {}) {
+    const defaults: StrictStreamrClientOptions = {
         // Authentication: identity used by this StreamrClient instance
         auth: {}, // can contain member privateKey or (window.)ethereum
 
@@ -89,7 +91,7 @@ export default function ClientConfig(opts: Partial<StreamrClientOptions> = {}) {
         }
     }
 
-    const options: StreamrClientOptions = {
+    const options: StrictStreamrClientOptions = {
         ...defaults,
         ...opts,
         cache: {
