@@ -20,4 +20,3 @@ export { Contract } from '@ethersproject/contracts'
 export { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
 
 export default StreamrClient
-module.exports = StreamrClient

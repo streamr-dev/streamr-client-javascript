@@ -43,10 +43,10 @@ const client = new StreamrClient({
 })
 ```
 
-When using Node.js remember to require the library with:
+When using Node.js remember to import the library with:
 
 ```js
-const StreamrClient = require('streamr-client')
+import { StreamrClient } from 'streamr-client';
 ```
 
 ### Subscribing to real-time events in a stream
