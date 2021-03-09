@@ -54,7 +54,7 @@ module.exports = (env, argv) => {
             ],
         },
         resolve: {
-            modules: [path.resolve('./node_modules'), path.resolve('./src')],
+            modules: [path.resolve('./node_modules'), path.resolve('./vendor'), path.resolve('./src')],
             extensions: ['.json', '.js', '.ts'],
         },
         plugins: [
