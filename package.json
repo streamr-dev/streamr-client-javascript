@@ -28,7 +28,7 @@
     "watch-node": "npm run bootstrap-dist && tsc --incremental --watch --project ./tsconfig.node.json",
     "bootstrap-dist": "npm run vendor && npm run copy-package && npm run fix-esm",
     "fix-esm": "mkdir -p dist/src/; cp -Rf src/index-esm.mjs dist/src/index-esm.mjs",
-    "vendor": "mkdir -p vendor/quick-lru && cp -Rpfv node_modules/quick-lru/ vendor/quick-lru",
+    "vendor": "mkdir -p vendor/quick-lru && cp -rpf node_modules/quick-lru/ vendor/quick-lru",
     "copy-package": "mkdir -p dist/; cp -Rf package.json package-lock.json dist",
     "build:types": "tsc --incremental --emitDeclarationOnly --stripInternal",
     "benchmarks": "node test/benchmarks/publish.js && node test/benchmarks/subscribe.js",
@@ -39,7 +39,7 @@
     "prepack": "npm run build",
     "prebuild": "npm run vendor && npm run eslint -- --cache",
     "watch": "webpack --progress --watch --mode=development",
-    "eslint": "eslint --cache-location=node_modules/.cache/.eslintcache/ '*/**/*.{js,ts}'",
+    "eslint": "npm run vendor && eslint --cache-location=node_modules/.cache/.eslintcache/ '*/**/*.{js,ts}'",
     "test": "jest --detectOpenHandles",
     "test-unit": "jest test/unit --detectOpenHandles",
     "test-types": "tsc --noEmit --incremental --project ./tsconfig.test.json",
@@ -53,7 +53,7 @@
     "test-browser": "node ./test/browser/server.js & node node_modules/nightwatch/bin/nightwatch ./test/browser/browser.js && pkill -f server.js",
     "install-example": "cd examples/webpack && npm ci",
     "build-example": "cd examples/webpack && npm run build-with-parent",
-    "clear-cache": "rm -rf node_modules/.cache; rm -rf .cache; rm -rf dist; jest --clearCache;"
+    "clear-cache": "rm -rf node_modules/.cache; rm -rf .cache; rm -rf dist; rm -rf vendor; jest --clearCache;"
   },
   "engines": {
     "node": ">= 12"
