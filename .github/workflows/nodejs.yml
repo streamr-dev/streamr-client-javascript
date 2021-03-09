@@ -257,7 +257,7 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: npm link
-        run: npm link
+        run: cd dist && npm link
       - uses: actions/checkout@v2
         with:
           repository: streamr-dev/streamr-client-testing
