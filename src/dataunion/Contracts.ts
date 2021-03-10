@@ -44,6 +44,7 @@ export class Contracts {
         if (!isAddress(this.factoryMainnetAddress)) {
             throw new Error('StreamrClient factoryMainnetAddress configuration is ' + this.factoryMainnetAddress ? 'missing' : 'not a valid Ethereum address')
         }
+
         if (!isAddress(this.templateMainnetAddress)) {
             throw new Error('StreamrClient dataUnionTemplateMainnetAddress configuration is ' + this.templateMainnetAddress ? 'missing' : 'not a valid Ethereum address')
         }
@@ -63,6 +64,7 @@ export class Contracts {
         if (!isAddress(this.factorySidechainAddress)) {
             throw new Error('StreamrClient factorySidechainAddress configuration is ' + this.factorySidechainAddress ? 'missing' : 'not a valid Ethereum address')
         }
+
         if (!isAddress(this.templateSidechainAddress)) {
             throw new Error('StreamrClient dataUnionTemplateSidechainAddress configuration is ' + this.templateSidechainAddress ? 'missing' : 'not a valid Ethereum address')
         }
