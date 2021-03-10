@@ -107,11 +107,8 @@ export class Contracts {
     async getSidechainAmb() {
         if (!this.cachedSidechainAmb) {
             const getAmbPromise = async () => {
-                const mainnetProvider = this.ethereum.getMainnetProvider()
-                const factoryMainnet = new Contract(this.factoryMainnetAddress, factoryMainnetABI, mainnetProvider)
                 const sidechainProvider = this.ethereum.getSidechainProvider()
-                const factorySidechainAddress = await factoryMainnet.data_union_sidechain_factory() // TODO use getDataUnionSidechainAddress()
-                const factorySidechain = new Contract(factorySidechainAddress, [{
+                const factorySidechain = new Contract(this.factorySidechainAddress, [{
                     name: 'amb',
                     inputs: [],
                     outputs: [{ type: 'address' }],
