@@ -25,8 +25,8 @@ export class Contracts {
 
     constructor(client: StreamrClient) {
         this.ethereum = client.ethereum
-        this.factoryMainnetAddress = client.options.factoryMainnetAddress
-        this.factorySidechainAddress = client.options.factorySidechainAddress
+        this.factoryMainnetAddress = client.options.dataUnionFactoryMainnetAddress
+        this.factorySidechainAddress = client.options.dataUnionFactorySidechainAddress
         this.templateMainnetAddress = client.options.dataUnionTemplateMainnetAddress
         this.templateSidechainAddress = client.options.dataUnionTemplateSidechainAddress
     }

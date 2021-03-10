@@ -333,8 +333,8 @@ These DataUnion-specific options are used from `StreamrClient` options:
 | :--------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
 | tokenAddress                       | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
 | minimumWithdrawTokenWei            | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
-| factoryMainnetAddress              | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
-| factorySidechainAddress            | TODO                                                   |                                                                                                                  |
+| dataUnionFactoryMainnetAddress     | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
+| dataUnionFactorySidechainAddress   | TODO                                                   |                                                                                                                  |
 | dataUnionTemplateMainnetAddress    | TODO                                                   |                                                                                                                  |
 | dataUnionTemplateSidechainAddress  | TODO                                                   |                                                                                                                  |
 
