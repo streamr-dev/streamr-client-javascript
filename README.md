@@ -329,14 +329,15 @@ This library provides functions for working with Data Unions. To get a DataUnion
 TODO: All `options`-parameters should be documented (see TypeScript interfaces for the definitions)
 
 These DataUnion-specific options are used from `StreamrClient` options:
-| Property                           | Default                                                | Description                                                                                                      |
-| :--------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| tokenAddress                       | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
-| minimumWithdrawTokenWei            | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
-| dataUnionFactoryMainnetAddress     | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
-| dataUnionFactorySidechainAddress   | TODO                                                   |                                                                                                                  |
-| dataUnionTemplateMainnetAddress    | TODO                                                   |                                                                                                                  |
-| dataUnionTemplateSidechainAddress  | TODO                                                   |                                                                                                                  |
+| Property                            | Default                                                | Description                                                                                                      |
+| :---------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| tokenAddress                        | 0x0Cf0Ee637<br>88A0849fE52<br>97F3407f701<br>E122cC023 | Token used by the DU                                                                                             |
+| dataUnion.minimumWithdrawTokenWei   | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
+| dataUnion.payForSignatureTransport  | TODO                                                   |                                                                                                                  |
+| dataUnion.factoryMainnetAddress     | TODO                                                   | Data Union factory that creates a new Data Union                                                                 |
+| dataUnion.factorySidechainAddress   | TODO                                                   |                                                                                                                  |
+| dataUnion.templateMainnetAddress    | TODO                                                   |                                                                                                                  |
+| dataUnion.templateSidechainAddress  | TODO                                                   |                                                                                                                  |
 
 
 ### Admin Functions

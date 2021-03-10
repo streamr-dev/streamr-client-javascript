@@ -25,10 +25,10 @@ export class Contracts {
 
     constructor(client: StreamrClient) {
         this.ethereum = client.ethereum
-        this.factoryMainnetAddress = client.options.dataUnionFactoryMainnetAddress
-        this.factorySidechainAddress = client.options.dataUnionFactorySidechainAddress
-        this.templateMainnetAddress = client.options.dataUnionTemplateMainnetAddress
-        this.templateSidechainAddress = client.options.dataUnionTemplateSidechainAddress
+        this.factoryMainnetAddress = client.options.dataUnion.factoryMainnetAddress
+        this.factorySidechainAddress = client.options.dataUnion.factorySidechainAddress
+        this.templateMainnetAddress = client.options.dataUnion.templateMainnetAddress
+        this.templateSidechainAddress = client.options.dataUnion.templateSidechainAddress
     }
 
     async fetchDataUnionMainnetAddress(
@@ -306,7 +306,7 @@ export class Contracts {
         }
 
         if (await mainnetProvider.getCode(this.factoryMainnetAddress) === '0x') {
-            throw new Error(`Data union factory contract not found at ${this.factoryMainnetAddress}, check StreamrClient.options.factoryMainnetAddress!`)
+            throw new Error(`Data union factory contract not found at ${this.factoryMainnetAddress}, check StreamrClient.options.dataUnion.factoryMainnetAddress!`)
         }
 
         const factoryMainnet = new Contract(this.factoryMainnetAddress!, factoryMainnetABI, mainnetWallet)

@@ -153,9 +153,9 @@ export class DataUnion {
             throw new Error(`${address} has nothing to withdraw in (sidechain) data union ${duSidechain.address}`)
         }
 
-        if (this.client.options.minimumWithdrawTokenWei && withdrawable.lt(this.client.options.minimumWithdrawTokenWei)) {
+        if (this.client.options.dataUnion.minimumWithdrawTokenWei && withdrawable.lt(this.client.options.dataUnion.minimumWithdrawTokenWei)) {
             throw new Error(`${address} has only ${withdrawable} to withdraw in `
-                + `(sidechain) data union ${duSidechain.address} (min: ${this.client.options.minimumWithdrawTokenWei})`)
+                + `(sidechain) data union ${duSidechain.address} (min: ${this.client.options.dataUnion.minimumWithdrawTokenWei})`)
         }
         return duSidechain.withdrawAll(address, true) // sendToMainnet=true
     }
@@ -546,7 +546,7 @@ export class DataUnion {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
-            payForSignatureTransport = this.client.options.payForSignatureTransport
+            payForSignatureTransport = this.client.options.dataUnion.payForSignatureTransport
         }: any = options
         const getBalanceFunc = () => this.client.getTokenBalance(recipientAddress)
         const balanceBefore = await getBalanceFunc()

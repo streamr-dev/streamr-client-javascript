@@ -34,12 +34,14 @@ export type StrictStreamrClientOptions = {
     mainnet?: ConnectionInfo|string
     sidechain?: ConnectionInfo|string
     tokenAddress: EthereumAddress,
-    minimumWithdrawTokenWei?: BigNumber|number|string
-    dataUnionFactoryMainnetAddress: EthereumAddress
-    dataUnionFactorySidechainAddress: EthereumAddress
-    dataUnionTemplateMainnetAddress: EthereumAddress
-    dataUnionTemplateSidechainAddress: EthereumAddress
-    payForSignatureTransport: boolean
+    dataUnion: {
+        minimumWithdrawTokenWei?: BigNumber|number|string
+        payForSignatureTransport: boolean
+        factoryMainnetAddress: EthereumAddress
+        factorySidechainAddress: EthereumAddress
+        templateMainnetAddress: EthereumAddress
+        templateSidechainAddress: EthereumAddress
+    },
     cache: {
         maxSize: number,
         maxAge: number
@@ -83,12 +85,14 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         mainnet: undefined, // Default to ethers.js default provider settings
         sidechain: 'https://rpc.xdaichain.com/',
         tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
-        minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
-        dataUnionFactoryMainnetAddress: '0x7d55f9981d4E10A193314E001b96f72FCc901e40',
-        dataUnionFactorySidechainAddress: '0x1b55587Beea0b5Bc96Bb2ADa56bD692870522e9f',
-        dataUnionTemplateMainnetAddress: '0x5FE790E3751dd775Cb92e9086Acd34a2adeB8C7b',
-        dataUnionTemplateSidechainAddress: '0xf1E9d6E254BeA3f0129018AcA1A50AEcb7D528be',
-        payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
+        dataUnion: {
+            minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
+            payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
+            factoryMainnetAddress: '0x7d55f9981d4E10A193314E001b96f72FCc901e40',
+            factorySidechainAddress: '0x1b55587Beea0b5Bc96Bb2ADa56bD692870522e9f',
+            templateMainnetAddress: '0x5FE790E3751dd775Cb92e9086Acd34a2adeB8C7b',
+            templateSidechainAddress: '0xf1E9d6E254BeA3f0129018AcA1A50AEcb7D528be',    
+        },
         cache: {
             maxSize: 10000,
             maxAge: 30 * 60 * 1000, // 30 minutes
