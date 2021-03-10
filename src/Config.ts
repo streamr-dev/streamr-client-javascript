@@ -81,13 +81,13 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         // Ethereum and Data Union related options
         // For ethers.js provider params, see https://docs.ethers.io/ethers.js/v5-beta/api-providers.html#provider
         mainnet: undefined, // Default to ethers.js default provider settings
-        sidechain: undefined, // TODO: add our default public service sidechain node, also find good PoA params below
+        sidechain: 'https://rpc.xdaichain.com/',
         tokenAddress: '0x0Cf0Ee63788A0849fE5297F3407f701E122cC023',
         minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
-        dataUnionFactoryMainnetAddress: 'TODO', // TODO // Data Union factory that creates a new Data Union
-        dataUnionFactorySidechainAddress: 'TODO',
-        dataUnionTemplateMainnetAddress: 'TODO',
-        dataUnionTemplateSidechainAddress: 'TODO',
+        dataUnionFactoryMainnetAddress: '0x7d55f9981d4E10A193314E001b96f72FCc901e40',
+        dataUnionFactorySidechainAddress: '0x1b55587Beea0b5Bc96Bb2ADa56bD692870522e9f',
+        dataUnionTemplateMainnetAddress: '0x5FE790E3751dd775Cb92e9086Acd34a2adeB8C7b',
+        dataUnionTemplateSidechainAddress: '0xf1E9d6E254BeA3f0129018AcA1A50AEcb7D528be',
         payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
         cache: {
             maxSize: 10000,
