@@ -19,12 +19,16 @@ export class Contracts {
     ethereum: StreamrEthereum
     factoryMainnetAddress: EthereumAddress
     factorySidechainAddress: EthereumAddress
+    dataUnionMainnetTemplateAddress: EthereumAddress
+    dataUnionSidechainTemplateAddress: EthereumAddress
     cachedSidechainAmb?: Todo
 
     constructor(client: StreamrClient) {
         this.ethereum = client.ethereum
         this.factoryMainnetAddress = client.options.factoryMainnetAddress
         this.factorySidechainAddress = client.options.factorySidechainAddress
+        this.dataUnionMainnetTemplateAddress = client.options.dataUnionMainnetTemplateAddress
+        this.dataUnionSidechainTemplateAddress = client.options.dataUnionSidechainTemplateAddress
     }
 
     async fetchDataUnionMainnetAddress(
@@ -37,11 +41,14 @@ export class Contracts {
     }
 
     getDataUnionMainnetAddress(dataUnionName: string, deployerAddress: EthereumAddress) {
-        if (!this.factoryMainnetAddress) {
-            throw new Error('StreamrClient has no factoryMainnetAddress configuration.')
+        if (!isAddress(this.factoryMainnetAddress)) {
+            throw new Error('StreamrClient factoryMainnetAddress configuration is ' + this.factoryMainnetAddress ? 'missing' : 'not a valid Ethereum address')
         }
-        // NOTE! this must be updated when DU sidechain smartcontract changes: keccak256(CloneLib.cloneBytecode(data_union_mainnet_template));
-        const codeHash = '0x50a78bac973bdccfc8415d7d9cfd62898b8f7cf6e9b3a15e7d75c0cb820529eb'
+        if (!isAddress(this.dataUnionMainnetTemplateAddress)) {
+            throw new Error('StreamrClient dataUnionMainnetTemplateAddress configuration is ' + this.dataUnionMainnetTemplateAddress ? 'missing' : 'not a valid Ethereum address')
+        }
+        // This magic hex comes from https://github.com/streamr-dev/data-union-solidity/blob/master/contracts/CloneLib.sol#L19
+        const codeHash = keccak256(`0x3d602d80600a3d3981f3363d3d373d3d3d363d73${this.dataUnionMainnetTemplateAddress.slice(2)}5af43d82803e903d91602b57fd5bf3`)
         const salt = keccak256(defaultAbiCoder.encode(['string', 'address'], [dataUnionName, deployerAddress]))
         return getCreate2Address(this.factoryMainnetAddress, salt, codeHash)
     }
@@ -53,11 +60,14 @@ export class Contracts {
     }
 
     getDataUnionSidechainAddress(mainnetAddress: EthereumAddress) {
-        if (!this.factorySidechainAddress) {
-            throw new Error('StreamrClient has no factorySidechainAddress configuration.')
+        if (!isAddress(this.factorySidechainAddress)) {
+            throw new Error('StreamrClient factorySidechainAddress configuration is ' + this.factorySidechainAddress ? 'missing' : 'not a valid Ethereum address')
         }
-        // NOTE! this must be updated when DU sidechain smartcontract changes: keccak256(CloneLib.cloneBytecode(data_union_sidechain_template))
-        const codeHash = '0x040cf686e25c97f74a23a4bf01c29dd77e260c4b694f5611017ce9713f58de83'
+        if (!isAddress(this.dataUnionSidechainTemplateAddress)) {
+            throw new Error('StreamrClient dataUnionSidechainTemplateAddress configuration is ' + this.dataUnionSidechainTemplateAddress ? 'missing' : 'not a valid Ethereum address')
+        }
+        // This magic hex comes from https://github.com/streamr-dev/data-union-solidity/blob/master/contracts/CloneLib.sol#L19
+        const codeHash = keccak256(`0x3d602d80600a3d3981f3363d3d373d3d3d363d73${this.dataUnionSidechainTemplateAddress.slice(2)}5af43d82803e903d91602b57fd5bf3`)
         return getCreate2Address(this.factorySidechainAddress, hexZeroPad(mainnetAddress, 32), codeHash)
     }
 

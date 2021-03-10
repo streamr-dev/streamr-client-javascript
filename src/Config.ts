@@ -35,8 +35,10 @@ export type StrictStreamrClientOptions = {
     sidechain?: ConnectionInfo|string
     tokenAddress: EthereumAddress,
     minimumWithdrawTokenWei?: BigNumber|number|string
-    factoryMainnetAddress: EthereumAddress
+    factoryMainnetAddress: EthereumAddress // TODO consistent naming: prefix dataUnion, same order for factory/template
     factorySidechainAddress: EthereumAddress
+    dataUnionMainnetTemplateAddress: EthereumAddress
+    dataUnionSidechainTemplateAddress: EthereumAddress
     payForSignatureTransport: boolean
     cache: {
         maxSize: number,
@@ -84,6 +86,8 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         minimumWithdrawTokenWei: '1000000', // Threshold value set in AMB configs, smallest token amount to pass over the bridge
         factoryMainnetAddress: 'TODO', // TODO // Data Union factory that creates a new Data Union
         factorySidechainAddress: 'TODO',
+        dataUnionMainnetTemplateAddress: 'TODO',
+        dataUnionSidechainTemplateAddress: 'TODO',
         payForSignatureTransport: true, // someone must pay for transporting the withdraw tx to mainnet, either us or bridge operator
         cache: {
             maxSize: 10000,
