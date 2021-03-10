@@ -11,8 +11,8 @@ module.exports = {
         tokenAddressSidechain: process.env.TOKEN_ADDRESS_SIDECHAIN || '0x73Be21733CC5D08e1a14Ea9a399fb27DB3BEf8fF',
         factoryMainnetAddress: process.env.DU_FACTORY_MAINNET || '0x4bbcBeFBEC587f6C4AF9AF9B48847caEa1Fe81dA',
         factorySidechainAddress: process.env.DU_FACTORY_SIDECHAIN || '0x4A4c4759eb3b7ABee079f832850cD3D0dC48D927',
-        dataUnionTemplateMainnetAddress: process.env.DU_TEMPLATE_MAINNET || '', // WIP
-        dataUnionTemplateSidechainAddress: process.env.DU_TEMPLATE_SIDECHAIN || '', // WIP
+        dataUnionTemplateMainnetAddress: process.env.DU_TEMPLATE_MAINNET || '0x7bFBAe10AE5b5eF45e2aC396E0E605F6658eF3Bc',
+        dataUnionTemplateSidechainAddress: process.env.DU_TEMPLATE_SIDECHAIN || '0x36afc8c9283CC866b8EB6a61C6e6862a83cd6ee8',
         sidechain: {
             url: process.env.SIDECHAIN_URL || 'http://10.200.10.1:8546',
             timeout: process.env.TEST_TIMEOUT,
