@@ -102,6 +102,10 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
     const options: StrictStreamrClientOptions = {
         ...defaults,
         ...opts,
+        dataUnion: {
+            ...defaults.dataUnion,
+            ...opts.dataUnion
+        },
         cache: {
             ...opts.cache,
             ...defaults.cache,
