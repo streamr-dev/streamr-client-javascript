@@ -65,8 +65,8 @@ export class Subscription extends Emitter {
 
     /**
      * Expose cleanup
+     * @internal
      */
-
     async onPipelineEnd(err: Todo) {
         try {
             await this._onFinally(err)
@@ -75,6 +75,7 @@ export class Subscription extends Emitter {
         }
     }
 
+    /** @internal */
     async onDone() {
         return this._onDone
     }
@@ -99,6 +100,7 @@ export class Subscription extends Emitter {
         return msgs
     }
 
+    /** @internal */
     [Symbol.asyncIterator]() {
         // only iterate sub once
         if (this.iterated) {
@@ -109,14 +111,17 @@ export class Subscription extends Emitter {
         return this.pipeline
     }
 
+    /** @internal */
     async cancel(...args: Todo[]) {
         return this.pipeline.cancel(...args)
     }
 
+    /** @internal */
     async return(...args: Todo[]) {
         return this.pipeline.return(...args)
     }
 
+    /** @internal */
     async throw(...args: Todo[]) {
         return this.pipeline.throw(...args)
     }
