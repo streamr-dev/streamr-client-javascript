@@ -5,16 +5,19 @@ import { StreamrClient } from '../../src/StreamrClient'
 import Connection from '../../src/Connection'
 
 import config from './config'
+import Stream from '../../src/stream'
+import Subscriber from '../../src/subscribe'
+import { Todo } from '../../src/types'
 
 const MAX_MESSAGES = 10
 
 describeRepeats('GapFill with resends', () => {
     let expectErrors = 0 // check no errors by default
-    let publishTestMessages
+    let publishTestMessages: Todo
     let onError = jest.fn()
-    let client
-    let stream
-    let subscriber
+    let client: StreamrClient
+    let stream: Stream
+    let subscriber: Subscriber
 
     const createClient = (opts = {}) => {
         const c = new StreamrClient({
@@ -23,6 +26,7 @@ describeRepeats('GapFill with resends', () => {
             },
             autoConnect: false,
             autoDisconnect: false,
+            // @ts-expect-error
             maxRetries: 2,
             ...config.clientOptions,
             ...opts,
@@ -32,7 +36,7 @@ describeRepeats('GapFill with resends', () => {
         return c
     }
 
-    async function setupClient(opts) {
+    async function setupClient(opts: Todo) {
         // eslint-disable-next-line require-atomic-updates
         client = createClient(opts)
         subscriber = client.subscriber
@@ -61,7 +65,7 @@ describeRepeats('GapFill with resends', () => {
     })
 
     afterEach(async () => {
-        await wait()
+        await wait(0)
         // ensure no unexpected errors
         expect(onError).toHaveBeenCalledTimes(expectErrors)
         if (client) {
@@ -70,7 +74,7 @@ describeRepeats('GapFill with resends', () => {
     })
 
     afterEach(async () => {
-        await wait()
+        await wait(0)
         if (client) {
             client.debug('disconnecting after test >>')
             await client.disconnect()
@@ -84,7 +88,7 @@ describeRepeats('GapFill with resends', () => {
         }
     })
 
-    let subs = []
+    let subs: Todo[] = []
 
     beforeEach(async () => {
         const existingSubs = subs
@@ -108,7 +112,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg = parse.call(client.connection, ...args)
+                const msg: Todo = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -142,8 +146,8 @@ describeRepeats('GapFill with resends', () => {
             const sub = await client.subscribe(stream.id)
             const { parse } = client.connection
             let count = 0
-            client.connection.parse = (...args) => {
-                const msg = parse.call(client.connection, ...args)
+            client.connection.parse = (...args): Todo => {
+                const msg: Todo = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -176,7 +180,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg = parse.call(client.connection, ...args)
+                const msg: Todo = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -208,7 +212,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg = parse.call(client.connection, ...args)
+                const msg: Todo = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -242,9 +246,9 @@ describeRepeats('GapFill with resends', () => {
         it('can fill gaps in resends even if gap cannot be filled', async () => {
             const { parse } = client.connection
             let count = 0
-            let droppedMsgRef
+            let droppedMsgRef: Todo
             client.connection.parse = (...args) => {
-                const msg = parse.call(client.connection, ...args)
+                const msg: Todo = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -277,7 +281,7 @@ describeRepeats('GapFill with resends', () => {
                 received.push(m.getParsedContent())
                 // should not need to explicitly end
             }
-            expect(received).toEqual(published.filter((_value, index) => index !== 2))
+            expect(received).toEqual(published.filter((_value: Todo, index: Todo) => index !== 2))
             expect(client.connection.getState()).toBe('connected')
         }, 60000)
 

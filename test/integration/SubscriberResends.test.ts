@@ -7,6 +7,9 @@ import Connection from '../../src/Connection'
 import { Defer } from '../../src/utils'
 
 import config from './config'
+import Stream from '../../src/stream'
+import { Todo } from '../../src/types'
+import Subscriber from '../../src/subscribe'
 
 const { ControlMessage } = ControlLayer
 
@@ -18,13 +21,13 @@ const MAX_MESSAGES = 5
 describeRepeats('resends', () => {
     let expectErrors = 0 // check no errors by default
     let onError = jest.fn()
-    let client
-    let stream
-    let published
-    let publishedRequests
-    let publishTestMessages
-    let waitForStorage
-    let subscriber
+    let client: StreamrClient
+    let stream: Stream
+    let published: Todo
+    let publishedRequests: Todo
+    let publishTestMessages: Todo
+    let waitForStorage: Todo
+    let subscriber: Subscriber
 
     const createClient = (opts = {}) => {
         const c = new StreamrClient({
@@ -32,6 +35,7 @@ describeRepeats('resends', () => {
             auth: {
                 privateKey: fakePrivateKey(),
             },
+            // @ts-expect-error
             publishAutoDisconnectDelay: 10,
             autoConnect: false,
             autoDisconnect: false,
@@ -75,7 +79,7 @@ describeRepeats('resends', () => {
     })
 
     afterEach(async () => {
-        await wait()
+        await wait(0)
         // ensure no unexpected errors
         expect(onError).toHaveBeenCalledTimes(expectErrors)
         if (client) {
@@ -98,7 +102,7 @@ describeRepeats('resends', () => {
     })
 
     describe('no data', () => {
-        let emptyStream
+        let emptyStream: Stream
 
         it('throws error if bad stream id', async () => {
             await expect(async () => {
@@ -181,8 +185,8 @@ describeRepeats('resends', () => {
             const results = await publishTestMessages.raw(MAX_MESSAGES, {
                 waitForLast: true,
             })
-            published = results.map(([msg]) => msg)
-            publishedRequests = results.map(([, req]) => req)
+            published = results.map(([msg]: Todo) => msg)
+            publishedRequests = results.map(([, req]: Todo) => req)
         }, WAIT_FOR_STORAGE_TIMEOUT * 2)
 
         beforeEach(async () => {
@@ -246,6 +250,7 @@ describeRepeats('resends', () => {
 
         it('closes connection with autoDisconnect', async () => {
             client.connection.enableAutoConnect()
+            // @ts-expect-error
             client.connection.enableAutoDisconnect(0) // set 0 delay
             const sub = await subscriber.resend({
                 streamId: stream.id,
@@ -278,7 +283,7 @@ describeRepeats('resends', () => {
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
-                const receivedMsgs = []
+                const receivedMsgs: Todo[] = []
 
                 sub.on('resent', onResent.wrap(() => {
                     expect(receivedMsgs).toEqual(publishedBefore)
@@ -289,12 +294,12 @@ describeRepeats('resends', () => {
                 const req = await client.publish(stream.id, newMessage) // should be realtime
                 published.push(newMessage)
                 publishedRequests.push(req)
-                let t
+                let t: NodeJS.Timeout|undefined
                 for await (const msg of sub) {
                     receivedMsgs.push(msg.getParsedContent())
                     if (receivedMsgs.length === published.length) {
                         await sub.return()
-                        clearTimeout(t)
+                        clearTimeout(t!)
                         t = setTimeout(() => {
                             // await wait() // give resent event a chance to fire
                             onResent.reject(new Error('resent never called'))
@@ -303,7 +308,7 @@ describeRepeats('resends', () => {
                 }
 
                 await onResent
-                clearTimeout(t)
+                clearTimeout(t!)
 
                 expect(receivedMsgs).toHaveLength(published.length)
                 expect(receivedMsgs).toEqual(published)
@@ -353,7 +358,7 @@ describeRepeats('resends', () => {
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
-                const receivedMsgs = []
+                const receivedMsgs: Todo[] = []
 
                 sub.once('resent', onResent.wrap(() => {
                     expect(receivedMsgs).toEqual(publishedBefore)
@@ -464,7 +469,8 @@ describeRepeats('resends', () => {
             })
 
             it('can end inside resend', async () => {
-                const unsubscribeEvents = []
+                const unsubscribeEvents: Todo[] = []
+                // @ts-expect-error
                 client.connection.on(ControlMessage.TYPES.UnsubscribeResponse, (m) => {
                     unsubscribeEvents.push(m)
                 })

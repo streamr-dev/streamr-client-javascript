@@ -4,6 +4,9 @@ import { uid, fakePrivateKey } from '../utils'
 import { StreamrClient } from '../../src/StreamrClient'
 
 import config from './config'
+import Stream from '../../src/stream'
+import { Subscription } from '../../src/subscribe'
+import { Todo } from '../../src/types'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...config.clientOptions,
@@ -22,13 +25,13 @@ const RESEND_ALL = {
 }
 
 describe('Subscription', () => {
-    let stream
-    let client
-    let subscription
-    let errors = []
+    let stream: Stream
+    let client: StreamrClient
+    let subscription: Subscription
+    let errors: Todo[] = []
     let expectedErrors = 0
 
-    function onError(err) {
+    function onError(err: Todo) {
         errors.push(err)
     }
 
@@ -39,7 +42,7 @@ describe('Subscription', () => {
 
     async function createMonitoredSubscription(opts = {}) {
         if (!client) { throw new Error('No client') }
-        const events = []
+        const events: Todo[] = []
         subscription = await client.subscribe({
             stream: stream.id,
             resend: RESEND_ALL,

@@ -5,12 +5,11 @@ import { StreamrClient } from '../../src/StreamrClient'
 import { Defer } from '../../src/utils'
 
 import config from './config'
+import Stream from '../../src/stream'
+import { Todo } from '../../src/types'
 
 const createClient = (opts = {}) => new StreamrClient({
-    ...(config.clientOptions || {
-        url: config.websocketUrl,
-        restUrl: config.restUrl,
-    }),
+    ...config.clientOptions,
     auth: {
         privateKey: fakePrivateKey(),
     },
@@ -22,10 +21,10 @@ const createClient = (opts = {}) => new StreamrClient({
 const MAX_MESSAGES = 3
 
 describe('resend/reconnect', () => {
-    let client
-    let stream
-    let publishedMessages
-    let publishTestMessages
+    let client: StreamrClient
+    let stream: Stream
+    let publishedMessages: Todo
+    let publishTestMessages: Todo
 
     beforeEach(async () => {
         client = createClient()
@@ -49,8 +48,8 @@ describe('resend/reconnect', () => {
 
     describe('reconnect with resend', () => {
         let shouldDisconnect = false
-        let sub
-        let messages = []
+        let sub: Todo
+        let messages: Todo[] = []
         beforeEach(async () => {
             const done = Defer()
             messages = []

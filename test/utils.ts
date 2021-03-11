@@ -59,7 +59,7 @@ export function addAfterFn() {
     }
 }
 
-export const Msg = (opts: any) => ({
+export const Msg = (opts?: any) => ({
     value: uid('msg'),
     ...opts,
 })
