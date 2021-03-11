@@ -35,7 +35,7 @@ export interface JoinResponse {
 export interface DataUnionWithdrawOptions {
     pollingIntervalMs?: number
     retryTimeoutMs?: number
-    payForSignatureTransport?: boolean
+    freeWithdraw?: boolean
 }
 
 export interface DataUnionMemberListModificationOptions {
@@ -546,14 +546,14 @@ export class DataUnion {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
-            payForSignatureTransport = this.client.options.dataUnion.payForSignatureTransport
+            freeWithdraw = this.client.options.dataUnion.freeWithdraw
         }: any = options
         const getBalanceFunc = () => this.client.getTokenBalance(recipientAddress)
         const balanceBefore = await getBalanceFunc()
         const tx = await getWithdrawTxFunc()
         const tr = await tx.wait()
-        if (payForSignatureTransport) {
-            await this.getContracts().payForSignatureTransport(tr, options)
+        if (!freeWithdraw) {
+            await this.getContracts().transportSignaturesForTransaction(tr, options)
         }
         log(`Waiting for balance ${balanceBefore.toString()} to change`)
         await until(async () => !(await getBalanceFunc()).eq(balanceBefore), retryTimeoutMs, pollingIntervalMs)

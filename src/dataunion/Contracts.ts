@@ -146,7 +146,7 @@ export class Contracts {
     }
 
     // move signatures from sidechain to mainnet
-    async transportSignatures(messageHash: string) {
+    async transportSignaturesForMessage(messageHash: string) {
         const sidechainAmb = await this.getSidechainAmb()
         const message = await sidechainAmb.message(messageHash)
         const messageId = '0x' + message.substr(2, 64)
@@ -180,7 +180,7 @@ export class Contracts {
             const alreadyProcessed = await mainnetAmb.relayedMessages(messageId)
             if (alreadyProcessed) {
                 log(`WARNING: Tried to transport signatures but they have already been transported (Message ${messageId} has already been processed)`)
-                log('This could happen if payForSignatureTransport=true, but bridge operator also pays for signatures, and got there before your client')
+                log('This could happen if freeWithdraw=false (attempt self-service), but bridge actually paid before your client')
                 return null
             }
 
@@ -227,7 +227,7 @@ export class Contracts {
         return trAMB
     }
 
-    async payForSignatureTransport(tr: ContractReceipt, options: { pollingIntervalMs?: number, retryTimeoutMs?: number } = {}) {
+    async transportSignaturesForTransaction(tr: ContractReceipt, options: { pollingIntervalMs?: number, retryTimeoutMs?: number } = {}) {
         const {
             pollingIntervalMs = 1000,
             retryTimeoutMs = 60000,
@@ -238,6 +238,7 @@ export class Contracts {
         if (sigEventArgsArray.length < 1) {
             throw new Error("No UserRequestForSignature events emitted from withdraw transaction, can't transport withdraw to mainnet")
         }
+
         /* eslint-disable no-await-in-loop */
         // eslint-disable-next-line no-restricted-syntax
         for (const eventArgs of sigEventArgsArray) {
@@ -251,17 +252,16 @@ export class Contracts {
             const mainnetAmb = await this.getMainnetAmb()
             const alreadySent = await mainnetAmb.messageCallStatus(messageId)
             const failAddress = await mainnetAmb.failedMessageSender(messageId)
-            if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') { // zero address means no failed messages
+
+            // zero address means no failed messages
+            if (alreadySent || failAddress !== '0x0000000000000000000000000000000000000000') {
                 log(`WARNING: Mainnet bridge has already processed withdraw messageId=${messageId}`)
-                log([
-                    'This could happen if payForSignatureTransport=true, but bridge operator also pays for',
-                    'signatures, and got there before your client',
-                ].join(' '))
+                log('This could happen if freeWithdraw=false (attempt self-service), but bridge actually paid before your client')
                 continue
             }
 
             log(`Transporting signatures for hash=${messageHash}`)
-            await this.transportSignatures(messageHash)
+            await this.transportSignaturesForMessage(messageHash)
         }
         /* eslint-enable no-await-in-loop */
     }
