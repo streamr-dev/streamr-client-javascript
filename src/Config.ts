@@ -35,7 +35,7 @@ export type StrictStreamrClientOptions = {
     sidechain?: ConnectionInfo|string
     tokenAddress: EthereumAddress,
     dataUnion: {
-        minimumWithdrawTokenWei?: BigNumber|number|string
+        minimumWithdrawTokenWei: BigNumber|number|string
         freeWithdraw: boolean
         factoryMainnetAddress: EthereumAddress
         factorySidechainAddress: EthereumAddress
@@ -48,7 +48,7 @@ export type StrictStreamrClientOptions = {
     }
 }
 
-export type StreamrClientOptions = Partial<StrictStreamrClientOptions>
+export type StreamrClientOptions = Partial<Omit<StrictStreamrClientOptions, 'dataUnion'> & { dataUnion: Partial<StrictStreamrClientOptions['dataUnion']>}>
 
 const { ControlMessage } = ControlLayer
 const { StreamMessage } = MessageLayer
