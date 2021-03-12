@@ -367,7 +367,7 @@ export class StreamrClient extends EventEmitter {
         return this.connection.enableAutoDisconnect(...args)
     }
 
-    getAddress() {
+    async getAddress(): Promise<EthereumAddress> {
         return this.ethereum.getAddress()
     }
 

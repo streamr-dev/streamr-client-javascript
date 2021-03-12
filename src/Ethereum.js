@@ -19,15 +19,17 @@ export default class StreamrEthereum {
         if (auth.privateKey) {
             const key = auth.privateKey
             const address = getAddress(computeAddress(key))
-            this._getAddress = () => address
+            this._getAddress = async () => address
             this.getSigner = () => new Wallet(key, this.getMainnetProvider())
             this.getSidechainSigner = async () => new Wallet(key, this.getSidechainProvider())
         } else if (auth.ethereum) {
-            this._getAddress = () => {
-                if (auth.ethereum.selectedAddress) {
-                    throw new Error('no addresses connected+selected in Metamask')
-                }
-                return getAddress(auth.ethereum.selectedAddress)
+            this._getAddress = async () => {
+                return auth.ethereum
+                    .request({ method: 'eth_requestAccounts' })
+                    .then((accounts) => getAddress(accounts[0])) // convert to checksum case
+                    .catch(() => {
+                        throw new Error('no addresses connected+selected in Metamask')
+                    })
             }
             this._getSigner = () => {
                 const metamaskProvider = new Web3Provider(auth.ethereum)
@@ -57,7 +59,7 @@ export default class StreamrEthereum {
         }
     }
 
-    getAddress() {
+    async getAddress() {
         if (!this._getAddress) {
             // _getAddress is assigned in constructor
             throw new Error('StreamrClient is not authenticated with private key')
