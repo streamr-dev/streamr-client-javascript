@@ -374,12 +374,12 @@ export class StreamrClient extends EventEmitter {
         return task
     }
 
-    enableAutoConnect(...args: Todo) {
-        return this.connection.enableAutoConnect(...args)
+    enableAutoConnect(autoConnect?: boolean) {
+        return this.connection.enableAutoConnect(autoConnect)
     }
 
-    enableAutoDisconnect(...args: Todo) {
-        return this.connection.enableAutoDisconnect(...args)
+    enableAutoDisconnect(autoDisconnect?: boolean) {
+        return this.connection.enableAutoDisconnect(autoDisconnect)
     }
 
     getAddress(): EthereumAddress {
