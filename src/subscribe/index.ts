@@ -127,8 +127,8 @@ export class Subscription extends Emitter {
     }
 
     // TODO should we expose this to the user as no-args method?
-    async unsubscribe(...args: Todo[]) {
-        return this.cancel(...args)
+    async unsubscribe() {
+        return this.cancel()
     }
 }
 
