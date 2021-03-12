@@ -45,7 +45,9 @@ export default class StreamrEthereum {
                 const metamaskProvider = new Web3Provider(auth.ethereum)
                 const { chainId } = await metamaskProvider.getNetwork()
                 if (chainId !== options.sidechain.chainId) {
-                    throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${options.sidechain.chainId}: current chainId is ${chainId}`)
+                    throw new Error(
+                        `Please connect Metamask to Ethereum blockchain with chainId ${options.sidechain.chainId}: current chainId is ${chainId}`
+                    )
                 }
                 const metamaskSigner = metamaskProvider.getSigner()
                 return metamaskSigner
