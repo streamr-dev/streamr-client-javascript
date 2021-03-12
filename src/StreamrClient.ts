@@ -23,13 +23,15 @@ import { StreamPartDefinition } from './stream'
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
 
-// TODO check if these are correct
-export interface SubscribeOptions {
-    resend?: boolean
+export type ResendOptions = {
     from?: { timestamp: number, sequenceNumber?: number }
     to?: { timestamp: number, sequenceNumber?: number }
     last?: number
 }
+
+export type SubscribeOptions = {
+    resend?: ResendOptions
+} & ResendOptions
 
 interface MessageEvent {
     data: any
