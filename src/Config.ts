@@ -109,7 +109,7 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
 
     const options: StrictStreamrClientOptions = {
         ...defaults,
-        ...opts,
+        ...opts, // sidechain is not merged with the defaults
         dataUnion: {
             ...defaults.dataUnion,
             ...opts.dataUnion
