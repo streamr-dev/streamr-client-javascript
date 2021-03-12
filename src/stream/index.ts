@@ -5,6 +5,11 @@ import StorageNode from './StorageNode'
 import { StreamrClient } from '../StreamrClient'
 import { Todo } from '../types'
 
+// TODO explicit types: e.g. we never provide both streamId and id, or both streamPartition and partition
+export type StreamPartDefinition = string | { streamId?: string, streamPartition?: number, id?: string, partition?: number, stream?: Stream }
+
+export type ValidatedStreamPartDefinition = { streamId: string, streamPartition: number, key: string}
+
 interface StreamPermisionBase {
     id: number
     operation: StreamOperation

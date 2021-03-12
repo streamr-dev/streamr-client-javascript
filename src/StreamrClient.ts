@@ -18,6 +18,7 @@ import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
+import { StreamPartDefinition } from './stream'
 
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
@@ -280,13 +281,13 @@ export class StreamrClient extends EventEmitter {
         ])
     }
 
-    getSubscriptions(...args: Todo) {
-        return this.subscriber.getAll(...args)
+    getSubscriptions(): Subscription[] {
+        return this.subscriber.getAll()
     }
 
-    getSubscription(...args: Todo) {
+    getSubscription(definition: StreamPartDefinition) {
         // @ts-expect-error
-        return this.subscriber.get(...args)
+        return this.subscriber.get(definition)
     }
 
     async ensureConnected() {

@@ -9,6 +9,7 @@ import { ControlLayer } from 'streamr-client-protocol'
 import { pTimeout } from '../utils'
 import { Todo } from '../types'
 import { StreamrClient } from '../StreamrClient'
+import { StreamPartDefinition, ValidatedStreamPartDefinition } from '.'
 
 export function StreamKey({ streamId, streamPartition = 0 }: Todo) {
     if (streamId == null) { throw new Error(`StreamKey: invalid streamId (${typeof streamId}): ${streamId}`) }
@@ -19,7 +20,7 @@ export function StreamKey({ streamId, streamPartition = 0 }: Todo) {
     return `${streamId}::${streamPartition}`
 }
 
-export function validateOptions(optionsOrStreamId: Todo): Todo {
+export function validateOptions(optionsOrStreamId: StreamPartDefinition): ValidatedStreamPartDefinition {
     if (!optionsOrStreamId) {
         throw new Error('streamId is required!')
     }

@@ -11,7 +11,7 @@ import Validator from './Validator'
 import messageStream from './messageStream'
 import resendStream from './resendStream'
 import { Todo } from '../types'
-import StreamrClient from '..'
+import StreamrClient, { StreamPartDefinition } from '..'
 
 export class Subscription extends Emitter {
 
@@ -441,7 +441,7 @@ class Subscriptions {
     /**
      * Remove all subscriptions, optionally only those matching options.
      */
-    async removeAll(options?: Todo) {
+    async removeAll(options?: StreamPartDefinition) {
         const subs = this.get(options)
         return allSettledValues(subs.map((sub: Todo) => (
             this.remove(sub)
@@ -464,7 +464,7 @@ class Subscriptions {
      * Count all matching subscriptions.
      */
 
-    count(options: Todo) {
+    count(options?: StreamPartDefinition) {
         if (options === undefined) { return this.countAll() }
         return this.get(options).length
     }
@@ -493,7 +493,7 @@ class Subscriptions {
      * Get all subscriptions matching options.
      */
 
-    get(options: Todo) {
+    get(options?: StreamPartDefinition) {
         if (options === undefined) { return this.getAll() }
 
         const { key } = validateOptions(options)
@@ -522,12 +522,11 @@ export class Subscriber {
         return this.subscriptions.getSubscriptionSession(...args)
     }
 
-    getAll(...args: Todo[]) {
-        // @ts-expect-error
-        return this.subscriptions.getAll(...args)
+    getAll() {
+        return this.subscriptions.getAll()
     }
 
-    count(options: Todo[]) {
+    count(options?: StreamPartDefinition) {
         return this.subscriptions.count(options)
     }
 
@@ -570,6 +569,7 @@ export class Subscriber {
         const options = validateOptions(opts)
 
         const resendMessageStream = resendStream(this.client, options)
+        // @ts-expect-error
         const realtimeMessageStream = messageStream(this.client.connection, options)
 
         // cancel both streams on end

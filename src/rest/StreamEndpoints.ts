@@ -226,6 +226,7 @@ export class StreamEndpoints {
     }
 
     async getStreamLast(streamObjectOrId: Stream|string): Promise<StreamMessageAsObject> {
+        // @ts-expect-error
         const { streamId, streamPartition = 0, count = 1 } = validateOptions(streamObjectOrId)
         this.client.debug('getStreamLast %o', {
             streamId,
@@ -234,6 +235,7 @@ export class StreamEndpoints {
         })
 
         const url = (
+            // @ts-expect-error
             getEndpointUrl(this.client.options.restUrl, 'streams', streamId, 'data', 'partitions', streamPartition, 'last')
             + `?${qs.stringify({ count })}`
         )
