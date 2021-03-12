@@ -7,7 +7,7 @@ import { validateOptions } from './stream/utils'
 import Config, { StreamrClientOptions, StrictStreamrClientOptions } from './Config'
 import StreamrEthereum from './Ethereum'
 import Session from './Session'
-import Connection, { ConnectionError } from './Connection'
+import Connection, { ConnectionError, ConnectionOptions } from './Connection'
 import Publisher from './publish'
 import { Subscriber, Subscription } from './subscribe'
 import { getUserId } from './user'
@@ -29,10 +29,9 @@ interface MessageEvent {
 /**
  * Wrap connection message events with message parsing.
  */
-
 class StreamrConnection extends Connection {
     // TODO define args type when we convert Connection class to TypeScript
-    constructor(options: Todo, debug?: Debug.Debugger) {
+    constructor(options: ConnectionOptions, debug?: Debug.Debugger) {
         super(options, debug)
         this.on('message', this.onConnectionMessage)
     }
@@ -160,6 +159,7 @@ export class StreamrClient extends EventEmitter {
     /** @internal */
     ethereum: StreamrEthereum
 
+    // TODO annotate connection parameter as internal parameter if possible?
     constructor(options: StreamrClientOptions = {}, connection?: StreamrConnection) {
         super()
         this.id = counterId(`${this.constructor.name}:${uid}`)
