@@ -37,7 +37,6 @@ export default class StreamrEthereum {
                 return metamaskSigner
             }
             this._getSidechainSigner = async () => {
-                // chainId is required for checking when using Metamask
                 if (!options.sidechain || !options.sidechain.chainId) {
                     throw new Error('Streamr sidechain not configured (with chainId) in the StreamrClient options!')
                 }
@@ -45,7 +44,7 @@ export default class StreamrEthereum {
                 const metamaskProvider = new Web3Provider(auth.ethereum)
                 const { chainId } = await metamaskProvider.getNetwork()
                 if (chainId !== options.sidechain.chainId) {
-                    throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${options.sidechain.chainId}`)
+                    throw new Error(`Please connect Metamask to Ethereum blockchain with chainId ${options.sidechain.chainId}: current chainId is ${chainId}`)
                 }
                 const metamaskSigner = metamaskProvider.getSigner()
                 return metamaskSigner
