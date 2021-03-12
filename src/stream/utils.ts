@@ -45,7 +45,7 @@ export function validateOptions(optionsOrStreamId: StreamPartDefinition): Valida
             options.streamId = optionsOrStreamId.id
         }
 
-        if (optionsOrStreamId.partition == null && optionsOrStreamId.streamPartition == null) {
+        if (optionsOrStreamId.partition != null && optionsOrStreamId.streamPartition == null) {
             options.streamPartition = optionsOrStreamId.partition
         }
 
