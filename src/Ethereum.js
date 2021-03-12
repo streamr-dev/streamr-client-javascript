@@ -24,12 +24,13 @@ export default class StreamrEthereum {
             this.getSidechainSigner = async () => new Wallet(key, this.getSidechainProvider())
         } else if (auth.ethereum) {
             this._getAddress = async () => {
-                return auth.ethereum
-                    .request({ method: 'eth_requestAccounts' })
-                    .then((accounts) => getAddress(accounts[0])) // convert to checksum case
-                    .catch(() => {
-                        throw new Error('no addresses connected+selected in Metamask')
-                    })
+                try {
+                    const accounts = await auth.ethereum.request({ method: 'eth_requestAccounts' })
+                    const account = getAddress(accounts[0]) // convert to checksum case
+                    return account
+                } catch {
+                    throw new Error('no addresses connected+selected in Metamask')
+                }
             }
             this._getSigner = () => {
                 const metamaskProvider = new Web3Provider(auth.ethereum)
