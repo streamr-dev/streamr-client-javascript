@@ -4,8 +4,8 @@ import { validateOptions } from '../../src/stream/utils'
 describe('Stream utils', () => {
 
     it('no definition', () => {
-        expect(() => validateOptions(undefined)).toThrow()
-        expect(() => validateOptions(null)).toThrow()
+        expect(() => validateOptions(undefined as any)).toThrow()
+        expect(() => validateOptions(null as any)).toThrow()
         expect(() => validateOptions({})).toThrow()
     })
 
