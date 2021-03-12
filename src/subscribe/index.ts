@@ -11,7 +11,7 @@ import Validator from './Validator'
 import messageStream from './messageStream'
 import resendStream from './resendStream'
 import { Todo } from '../types'
-import StreamrClient, { StreamPartDefinition } from '..'
+import StreamrClient, { StreamPartDefinition, SubscribeOptions } from '..'
 
 export class Subscription extends Emitter {
 
@@ -375,7 +375,7 @@ class Subscriptions {
         this.subSessions = new Map()
     }
 
-    async add(opts: Todo, onFinally: Todo = async () => {}) {
+    async add(opts: StreamPartDefinition, onFinally: Todo = async () => {}) {
         const options = validateOptions(opts)
         const { key } = options
 
@@ -530,21 +530,23 @@ export class Subscriber {
         return this.subscriptions.count(options)
     }
 
-    async subscribe(...args: Todo[]) {
-        // @ts-expect-error
-        return this.subscriptions.add(...args)
+    async subscribe(opts: StreamPartDefinition, onFinally?: Todo) {
+        return this.subscriptions.add(opts, onFinally)
     }
 
-    async unsubscribe(options: Todo): Promise<Todo> {
+    async unsubscribe(options: Subscription | StreamPartDefinition | { options: Subscription|StreamPartDefinition }): Promise<Todo> {
         if (options instanceof Subscription) {
             const sub = options
             return sub.cancel()
         }
 
+        // @ts-expect-error
         if (options && options.options) {
+            // @ts-expect-error
             return this.unsubscribe(options.options)
         }
 
+        // @ts-expect-error
         return this.subscriptions.removeAll(options)
     }
 
@@ -563,7 +565,7 @@ export class Subscriber {
         return sub
     }
 
-    async resendSubscribe(opts: Todo, onMessage: Todo) {
+    async resendSubscribe(opts: SubscribeOptions & StreamPartDefinition, onMessage: Todo) {
         // This works by passing a custom message stream to a subscription
         // the custom message stream iterates resends, then iterates realtime
         const options = validateOptions(opts)
@@ -644,6 +646,7 @@ export class Subscriber {
         const resendTask = resendMessageStream.subscribe()
         const realtimeTask = this.subscribe({
             ...options,
+            // @ts-expect-error
             msgStream: it,
             afterSteps: [
                 async function* detectEndOfResend(src: Todo) {

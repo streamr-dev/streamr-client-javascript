@@ -23,6 +23,14 @@ import { StreamPartDefinition } from './stream'
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
 
+// TODO check if these are correct
+export interface SubscribeOptions {
+    resend?: boolean
+    from?: { timestamp: number, sequenceNumber?: number }
+    to?: { timestamp: number, sequenceNumber?: number }
+    last?: number
+}
+
 interface MessageEvent {
     data: any
 }
@@ -302,8 +310,8 @@ export class StreamrClient extends EventEmitter {
         return this.session.logout()
     }
 
-    async publish(...args: Todo) {
-        return this.publisher.publish(...args)
+    async publish(streamObjectOrId: StreamPartDefinition, content: object, timestamp?: number|string|Date, partitionKey?: string) {
+        return this.publisher.publish(streamObjectOrId, content, timestamp, partitionKey)
     }
 
     async getUserId() {
@@ -320,7 +328,7 @@ export class StreamrClient extends EventEmitter {
         return this.publisher.rotateGroupKey(...args)
     }
 
-    async subscribe(opts: Todo, onMessage?: OnMessageCallback) {
+    async subscribe(opts: SubscribeOptions & StreamPartDefinition, onMessage?: OnMessageCallback) {
         let subTask: Todo
         let sub: Todo
         const hasResend = !!(opts.resend || opts.from || opts.to || opts.last)
@@ -351,10 +359,11 @@ export class StreamrClient extends EventEmitter {
         return subTask
     }
 
-    async unsubscribe(opts: Todo) {
-        await this.subscriber.unsubscribe(opts)
+    async unsubscribe(subscription: Subscription) {
+        await this.subscriber.unsubscribe(subscription)
     }
 
+    /** @internal */
     async resend(opts: Todo, onMessage?: OnMessageCallback): Promise<Subscription> {
         const task = this.subscriber.resend(opts)
         if (typeof onMessage !== 'function') {
