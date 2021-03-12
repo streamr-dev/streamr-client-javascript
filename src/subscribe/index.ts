@@ -84,7 +84,7 @@ export class Subscription extends Emitter {
      * Collect all messages into an array.
      * Returns array when subscription is ended.
      */
-    async collect(n?: Todo) {
+    async collect(n?: number) {
         const msgs = []
         for await (const msg of this) {
             if (n === 0) {
@@ -126,6 +126,7 @@ export class Subscription extends Emitter {
         return this.pipeline.throw(...args)
     }
 
+    // TODO should we expose this to the user as no-args method?
     async unsubscribe(...args: Todo[]) {
         return this.cancel(...args)
     }
