@@ -33,7 +33,7 @@ export type StrictStreamrClientOptions = {
     groupKeys: Todo
     keyExchange: Todo
     mainnet?: ConnectionInfo|string
-    sidechain: ConnectionInfo & { chainId?: number } // TODO should the chainId be a required parameter?
+    sidechain: ConnectionInfo & { chainId?: number }
     tokenAddress: EthereumAddress,
     dataUnion: {
         minimumWithdrawTokenWei: BigNumber|number|string
