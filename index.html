@@ -85,7 +85,8 @@
 					<h2>Installation</h2>
 				</a>
 				<p>The client is available on <a href="https://www.npmjs.com/package/streamr-client">npm</a> and can be installed simply by:</p>
-				<p><code>npm install streamr-client</code></p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> </span><span style="color: #001080">streamr</span><span style="color: #000000">-</span><span style="color: #001080">client</span>
+</code></pre>
 				<p>Node v14 or higher is recommended if you intend to use the client in a Node environment. For example, inside a script.</p>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
@@ -533,15 +534,22 @@
 				<a href="#data-unions" id="data-unions" style="color: inherit; text-decoration: none;">
 					<h2>Data Unions</h2>
 				</a>
-				<p>This library provides functions for working with Data Unions. To get a DataUnion instance, call <code>client.getDataUnion(address)</code>. To deploy a new DataUnion, call <code>deployDataUnion(options)</code></p>
-				<p>See <code>/docs</code> folder in this repo for Data Union <code>options</code> parameters. These docs can be rebuilt locally via:</p>
-				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">docs</span>
+				<p>This library provides functions for working with Data Unions.</p>
+				<p>To deploy a new DataUnion:</p>
+				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">()</span>
 </code></pre>
-				<p>These DataUnion-specific options are used from <code>StreamrClient</code> options:
-					| Property                            | Default                                                | Description                                                                                                      |
-					| :---------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-					| dataUnion.minimumWithdrawTokenWei   | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
-				| dataUnion.freeWithdraw              | false                                                  | true = someone else pays for the gas when transporting the withdraw tx to mainnet; false = client does the transport as self-service and pays the mainnet gas costs |</p>
+				<p>To get an existing (previously deployed) <code>DataUnion</code> instance:</p>
+				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
+</code></pre>
+				<!-- This stuff REALLY isn't for those who use our infrastructure, neither DU admins nor DU client devs. It's only relevant if you're setting up your own sidechain.
+These DataUnion-specific options can be given to `new StreamrClient` options:
+
+| Property                            | Default                                                | Description                                                                                                      |
+| :---------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| dataUnion.minimumWithdrawTokenWei   | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
+| dataUnion.freeWithdraw              | false                                                  | true = someone else pays for the gas when transporting the withdraw tx to mainnet |
+|                                     |                                                        | false = client does the transport as self-service and pays the mainnet gas costs |
+-->
 				<a href="#admin-functions" id="admin-functions" style="color: inherit; text-decoration: none;">
 					<h3>Admin Functions</h3>
 				</a>
@@ -559,38 +567,40 @@
 							<td align="left">Create a secret for a Data Union</td>
 						</tr>
 						<tr>
-							<td align="left">addMembers(memberAddressList, [options])</td>
-							<td align="left">Transaction receipt</td>
-							<td align="left">Add members</td>
-						</tr>
-						<tr>
-							<td align="left">removeMembers(memberAddressList, [options])</td>
-							<td align="left">Transaction receipt</td>
-							<td align="left">Remove members from Data Union</td>
-						</tr>
-						<tr>
-							<td align="left">withdrawAllToMember(memberAddress, [options])</td>
-							<td align="left"></td>
-							<td align="left"></td>
-						</tr>
-						<tr>
-							<td align="left">withdrawAllToSigned(memberAddress, recipientAddress, signature, [options])</td>
-							<td align="left"></td>
-							<td align="left"></td>
-						</tr>
-						<tr>
 							<td align="left">setAdminFee(newFeeFraction)</td>
 							<td align="left">Transaction receipt</td>
 							<td align="left"><code>newFeeFraction</code> is a <code>Number</code> between 0.0 and 1.0 (inclusive)</td>
 						</tr>
+						<tr>
+							<td align="left">addMembers(memberAddressList)</td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Add members</td>
+						</tr>
+						<tr>
+							<td align="left">removeMembers(memberAddressList)</td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Remove members from Data Union</td>
+						</tr>
+						<tr>
+							<td align="left">withdrawAllToMember(memberAddress[, <a href="#withdraw-options">options</a>])</td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Send all withdrawable earnings to the member&#39;s address</td>
+						</tr>
+						<tr>
+							<td align="left">withdrawAllToSigned(memberAddress, recipientAddress, signature[, <a href="#withdraw-options">options</a>])</td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Send all withdrawable earnings to the address signed off by the member (see <a href="#member-functions">example below</a>)</td>
+						</tr>
 				</tbody></table>
-				<p>Here&#39;s an example how to deploy a data union contract and set the admin fee:</p>
-				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
+				<p>Here&#39;s how to deploy a Data Union contract and set the admin fee to 30%:</p>
+				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
 <span style="color: #000000">    </span><span style="color: #001080">auth:</span><span style="color: #000000"> { </span><span style="color: #001080">privateKey</span><span style="color: #000000"> },</span>
 <span style="color: #000000">})</span>
 
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">()</span>
-<span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">setAdminFee</span><span style="color: #000000">(</span><span style="color: #098658">0.3</span><span style="color: #000000">, { </span><span style="color: #001080">dataUnion</span><span style="color: #000000"> })</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">setAdminFee</span><span style="color: #000000">(</span><span style="color: #098658">0.3</span><span style="color: #000000">)</span>
 </code></pre>
 				<a href="#member-functions" id="member-functions" style="color: inherit; text-decoration: none;">
 					<h3>Member functions</h3>
@@ -614,33 +624,45 @@
 							<td align="left"></td>
 						</tr>
 						<tr>
-							<td align="left">withdrawAll([options])</td>
+							<td align="left">withdrawAll([<a href="#withdraw-options">options</a>])</td>
 							<td align="left">Transaction receipt</td>
 							<td align="left">Withdraw funds from Data Union</td>
 						</tr>
 						<tr>
-							<td align="left">withdrawAllTo(recipientAddress, [options])</td>
+							<td align="left">withdrawAllTo(recipientAddress[, <a href="#withdraw-options">options</a>])</td>
 							<td align="left">Transaction receipt</td>
 							<td align="left">Donate/move your earnings to recipientAddress instead of your memberAddress</td>
 						</tr>
 						<tr>
 							<td align="left">signWithdrawAllTo(recipientAddress)</td>
 							<td align="left">Signature (string)</td>
-							<td align="left">Signature that can be used to withdraw tokens to given recipientAddress</td>
+							<td align="left">Signature that can be used to withdraw all available tokens to given recipientAddress</td>
 						</tr>
 						<tr>
 							<td align="left">signWithdrawAmountTo(recipientAddress, amountTokenWei)</td>
 							<td align="left">Signature (string)</td>
-							<td align="left">Signature that can be used to withdraw tokens to given recipientAddress</td>
+							<td align="left">Signature that can be used to withdraw a specific amount of tokens to given recipientAddress</td>
 						</tr>
 				</tbody></table>
-				<p>Here&#39;s an example how to sign off on a withdraw to (any) recipientAddress:</p>
-				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
+				<p>Here&#39;s an example on how to sign off on a withdraw to (any) recipientAddress (NOTE: this requires no gas!)</p>
+				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
 <span style="color: #000000">    </span><span style="color: #001080">auth:</span><span style="color: #000000"> { </span><span style="color: #001080">privateKey</span><span style="color: #000000"> },</span>
-<span style="color: #000000">    </span><span style="color: #001080">dataUnion</span><span style="color: #000000">,</span>
 <span style="color: #000000">})</span>
 
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signature</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">signWithdrawAllTo</span><span style="color: #000000">(</span><span style="color: #001080">recipientAddress</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">signature</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">signWithdrawAllTo</span><span style="color: #000000">(</span><span style="color: #001080">recipientAddress</span><span style="color: #000000">)</span>
+</code></pre>
+				<p>Later, anyone (e.g. Data Union admin) can send that withdraw transaction to the blockchain (and pay for the gas)</p>
+				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">auth:</span><span style="color: #000000"> { </span><span style="color: #001080">privateKey</span><span style="color: #000000"> },</span>
+<span style="color: #000000">})</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnions</span><span style="color: #000000">.</span><span style="color: #795E26">withdrawAllToSigned</span><span style="color: #000000">(</span><span style="color: #001080">memberAddress</span><span style="color: #000000">, </span><span style="color: #001080">recipientAddress</span><span style="color: #000000">, </span><span style="color: #001080">signature</span><span style="color: #000000">)</span>
 </code></pre>
 				<a href="#query-functions" id="query-functions" style="color: inherit; text-decoration: none;">
 					<h3>Query functions</h3>
@@ -686,12 +708,40 @@
 						</tr>
 				</tbody></table>
 				<p>Here&#39;s an example how to get a member&#39;s withdrawable token balance (in &quot;wei&quot;, where 1 DATA = 10^18 wei)</p>
-				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
-<span style="color: #000000">    </span><span style="color: #001080">dataUnion</span><span style="color: #000000">,</span>
-<span style="color: #000000">})</span>
+				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
 
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">withdrawableWei</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getMemberBalance</span><span style="color: #000000">(</span><span style="color: #001080">memberAddress</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">().</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">withdrawableWei</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">getWithdrawableEarnings</span><span style="color: #000000">(</span><span style="color: #001080">memberAddress</span><span style="color: #000000">)</span>
 </code></pre>
+				<a href="#withdraw-options" id="withdraw-options" style="color: inherit; text-decoration: none;">
+					<h3>Withdraw options</h3>
+				</a>
+				<p>The functions <code>withdrawAll</code>, <code>withdrawAllTo</code>, <code>withdrawAllToMember</code>, <code>withdrawAllToSigned</code> all take an extra &quot;options&quot; argument. It&#39;s an object that can contain the following parameters:</p>
+				<table>
+					<thead>
+						<tr>
+							<th align="left">Name</th>
+							<th align="left">Default</th>
+							<th align="left">Description</th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td align="left">sendToMainnet</td>
+							<td align="left">true</td>
+							<td align="left">Whether to send the withdrawn DATA tokens to mainnet address (or sidechain address)</td>
+						</tr>
+						<tr>
+							<td align="left">pollingIntervalMs</td>
+							<td align="left">1000 (1&nbsp;second)</td>
+							<td align="left">How often requests are sent to find out if the withdraw has completed</td>
+						</tr>
+						<tr>
+							<td align="left">retryTimeoutMs</td>
+							<td align="left">60000 (1&nbsp;minute)</td>
+							<td align="left">When to give up when waiting for the withdraw to complete</td>
+						</tr>
+				</tbody></table>
+				<p>These withdraw transactions are sent to the sidechain, so gas price shouldn&#39;t be manually set (fees will hopefully stay very low), but a little bit of <a href="https://www.xdaichain.com/for-users/get-xdai-tokens">sidechain native token</a> is nonetheless required.</p>
 				<a href="#utility-functions" id="utility-functions" style="color: inherit; text-decoration: none;">
 					<h2>Utility functions</h2>
 				</a>
@@ -699,18 +749,27 @@
 					<thead>
 						<tr>
 							<th align="left">Name</th>
+							<th align="left">Returns</th>
 							<th align="left">Description</th>
 						</tr>
 					</thead>
 					<tbody><tr>
-							<td align="left">StreamrClient.generateEthereumAccount()</td>
-							<td align="left">Generates a random Ethereum private key and returns an object with fields <code>address</code> and privateKey. Note that this private key can be used to authenticate to the Streamr API by passing it in the authentication options, as described earlier in this document.</td>
+							<td align="left"><code>*</code> generateEthereumAccount()</td>
+							<td align="left"><code>{address, privatekey}</code></td>
+							<td align="left">Generates a random Ethereum account</td>
 						</tr>
 						<tr>
 							<td align="left">getTokenBalance(address)</td>
 							<td align="left"><code>BigNumber</code></td>
+							<td align="left">Mainnet DATA token balance</td>
+						</tr>
+						<tr>
+							<td align="left">getSidechainTokenBalance(address)</td>
+							<td align="left"><code>BigNumber</code></td>
+							<td align="left">Sidechain DATA token balance</td>
 						</tr>
 				</tbody></table>
+				<p><code>*</code> The static function <code>StreamrClient.generateEthereumAccount()</code> generates a new Ethereum private key and returns an object with fields <code>address</code> and <code>privateKey</code>. Note that this private key can be used to authenticate to the Streamr API by passing it in the authentication options, as described earlier in this document.</p>
 				<a href="#events" id="events" style="color: inherit; text-decoration: none;">
 					<h2>Events</h2>
 				</a>
@@ -855,6 +914,9 @@
 					<h2>For Developers</h2>
 				</a>
 				<p>Publishing to npm is automated via Github Actions. Follow the steps below to publish <code>latest</code> or <code>beta</code>.</p>
+				<p>For more technical documentation on the Data Unions API, see the <a href="https://streamr-dev.github.io/streamr-client-javascript/">JS Client API Docs</a>. These can also be rebuilt locally via:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">docs</span>
+</code></pre>
 				<a href="#publishing-latest" id="publishing-latest" style="color: inherit; text-decoration: none;">
 					<h3>Publishing <code>latest</code></h3>
 				</a>
