@@ -69,7 +69,6 @@
 				<p>By using this client, you can easily interact with the <a href="https://streamr.network">Streamr</a> API from JavaScript-based environments, such as browsers and <a href="https://nodejs.org">node.js</a>. You can, for example, subscribe to real-time data in streams, produce new data to streams, and create new streams.</p>
 				<p>The client uses websockets for producing and consuming messages to/from streams. It should work in all modern browsers.</p>
 				<p><a href="https://travis-ci.com/streamr-dev/streamr-client-javascript"><img src="https://travis-ci.com/streamr-dev/streamr-client-javascript.svg?branch=master" alt="Build Status"></a></p>
-				<p><a href="https://streamr-dev.github.io/streamr-client-javascript/">API Docs</a></p>
 				<a href="#breaking-changes-notice" id="breaking-changes-notice" style="color: inherit; text-decoration: none;">
 					<h3>Breaking changes notice</h3>
 				</a>
@@ -80,7 +79,7 @@
 				<a href="#toc" id="toc" style="color: inherit; text-decoration: none;">
 					<h2>TOC</h2>
 				</a>
-				<p><a href="#installation">Installation</a> · <a href="#usage">Usage</a> · <a href="#client-options">Client options</a> · <a href="#authentication-options">Authentication options</a> · <a href="#message-handler-callback">Message handler callback</a> · <a href="#streamrclient-object">StreamrClient object</a> · <a href="#stream-object">Stream object</a> · <a href="#subscription-options">Subscription options</a> · <a href="#data-unions">Data Unions</a> · <a href="#utility-functions">Utility functions</a> · <a href="#binding-to-events">Events</a> · <a href="#partitioning">Partitioning</a> · <a href="#logging">Logging</a> · <a href="#publishing-latest">NPM Publishing</a></p>
+				<p><a href="#installation">Installation</a> · <a href="#usage">Usage</a> · <a href="#api-docs">API Docs</a> · <a href="#client-options">Client options</a> · <a href="#authentication-options">Authentication options</a> · <a href="#message-handler-callback">Message handler callback</a> · <a href="#streamrclient-object">StreamrClient object</a> · <a href="#stream-object">Stream object</a> · <a href="#subscription-options">Subscription options</a> · <a href="#data-unions">Data Unions</a> · <a href="#utility-functions">Utility functions</a> · <a href="#binding-to-events">Events</a> · <a href="#partitioning">Partitioning</a> · <a href="#logging">Logging</a> · <a href="#publishing-latest">NPM Publishing</a></p>
 				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
 					<h2>Installation</h2>
 				</a>
@@ -88,6 +87,12 @@
 				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> </span><span style="color: #001080">streamr</span><span style="color: #000000">-</span><span style="color: #001080">client</span>
 </code></pre>
 				<p>Node v14 or higher is recommended if you intend to use the client in a Node environment. For example, inside a script.</p>
+				<a href="#api-docs" id="api-docs" style="color: inherit; text-decoration: none;">
+					<h2>API Docs</h2>
+				</a>
+				<p>We have automatically generated API documentation available <a href="https://streamr-dev.github.io/streamr-client-javascript/">here</a>. These docs are generated from the repository TypeScript source code. They can also be rebuilt locally via:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">docs</span>
+</code></pre>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
 				</a>
