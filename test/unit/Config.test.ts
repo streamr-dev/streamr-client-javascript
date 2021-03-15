@@ -11,7 +11,7 @@ describe('Config', () => {
             return new StreamrClient(opts)
         }
         const propertyPaths: string[] = [
-            'streamrNodeAddress',            
+            'streamrNodeAddress',
             'tokenAddress',
             'tokenSidechainAddress',
             'dataUnion.factoryMainnetAddress',

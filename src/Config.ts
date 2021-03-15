@@ -76,16 +76,16 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
 
     // validate all Ethereum addresses which are required in StrictStreamrClientOptions: if user
     // overrides a setting, which has a default value, it must be a non-null valid Ethereum address
-    // TODO could also validate 
+    // TODO could also validate
     // - other optional Ethereum address (if there will be some)
     // - other overriden options (e.g. regexp check that "restUrl" is a valid url)
     validateOverridedEthereumAddresses(opts, [
         'streamrNodeAddress',
-        'tokenAddress', 
+        'tokenAddress',
         'tokenSidechainAddress',
-        'dataUnion.factoryMainnetAddress', 
-        'dataUnion.factorySidechainAddress', 
-        'dataUnion.templateMainnetAddress', 
+        'dataUnion.factoryMainnetAddress',
+        'dataUnion.factorySidechainAddress',
+        'dataUnion.templateMainnetAddress',
         'dataUnion.templateSidechainAddress'
     ])
 
