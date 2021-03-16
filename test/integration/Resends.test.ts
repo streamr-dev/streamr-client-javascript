@@ -6,7 +6,7 @@ import { Defer, pTimeout } from '../../src/utils'
 import Connection from '../../src/Connection'
 
 import config from './config'
-import Stream from '../../src/stream'
+import { Stream } from '../../src/stream'
 import { Todo } from '../../src/types'
 
 const MAX_MESSAGES = 10
@@ -106,7 +106,7 @@ describe('StreamrClient resends', () => {
                     })
 
                     await client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                     }, (message) => {
                         realtimeMessages.push(message)
                     })
@@ -129,7 +129,7 @@ describe('StreamrClient resends', () => {
                     }
 
                     await client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                     }, (message) => {
                         realtimeMessages.push(message)
                     })
@@ -162,7 +162,7 @@ describe('StreamrClient resends', () => {
                     }
 
                     client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                         resend: {
                             last: MAX_MESSAGES,
                         },
@@ -171,7 +171,7 @@ describe('StreamrClient resends', () => {
                     })
 
                     client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                     }, (message) => {
                         realtimeMessages.push(message)
                     })
@@ -194,14 +194,14 @@ describe('StreamrClient resends', () => {
                     }
 
                     client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                     }, (message) => {
                         realtimeMessages.push(message)
                     })
 
                     // subscribe with resend after realtime subscribe
                     client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                         resend: {
                             last: MAX_MESSAGES,
                         },
@@ -252,7 +252,7 @@ describe('StreamrClient resends', () => {
 
                     // eslint-disable-next-line no-await-in-loop
                     const sub = await client.subscribe({
-                        stream: stream.id,
+                        streamId: stream.id,
                         resend: {
                             last: MAX_MESSAGES,
                         },
@@ -269,7 +269,7 @@ describe('StreamrClient resends', () => {
                 const receivedMessages: Todo[] = []
 
                 await client.subscribe({
-                    stream: stream.id,
+                    streamId: stream.id,
                     resend: {
                         last: MAX_MESSAGES,
                     },
@@ -300,7 +300,7 @@ describe('StreamrClient resends', () => {
                 const receivedMessages: Todo = []
 
                 const sub = await client.subscribe({
-                    stream: stream.id,
+                    streamId: stream.id,
                     resend: {
                         last: MAX_MESSAGES,
                     },

@@ -5,7 +5,7 @@ import { StreamrClient } from '../../src/StreamrClient'
 import { Defer } from '../../src/utils'
 
 import config from './config'
-import Stream from '../../src/stream'
+import { Stream } from '../../src/stream'
 import { Todo } from '../../src/types'
 
 const createClient = (opts = {}) => new StreamrClient({
@@ -54,7 +54,7 @@ describe('resend/reconnect', () => {
             const done = Defer()
             messages = []
             sub = await client.subscribe({
-                stream: stream.id,
+                streamId: stream.id,
                 resend: {
                     last: MAX_MESSAGES,
                 },
