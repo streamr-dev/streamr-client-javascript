@@ -6,14 +6,15 @@ import Connection from '../../src/Connection'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Subscriber } from '../../src/subscribe'
-import { Todo } from '../../src/types'
+import { Subscriber, Subscription } from '../../src/subscribe'
+import { MessageRef } from 'streamr-client-protocol/dist/src/protocol/message_layer'
+import { StreamrClientOptions } from '../../src'
 
 const MAX_MESSAGES = 10
 
 describeRepeats('GapFill with resends', () => {
     let expectErrors = 0 // check no errors by default
-    let publishTestMessages: Todo
+    let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
     let onError = jest.fn()
     let client: StreamrClient
     let stream: Stream
@@ -36,7 +37,7 @@ describeRepeats('GapFill with resends', () => {
         return c
     }
 
-    async function setupClient(opts: Todo) {
+    async function setupClient(opts: StreamrClientOptions) {
         // eslint-disable-next-line require-atomic-updates
         client = createClient(opts)
         subscriber = client.subscriber
@@ -88,7 +89,7 @@ describeRepeats('GapFill with resends', () => {
         }
     })
 
-    let subs: Todo[] = []
+    let subs: Subscription[] = []
 
     beforeEach(async () => {
         const existingSubs = subs
@@ -112,7 +113,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg: Todo = parse.call(client.connection, ...args)
+                const msg: any = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -146,8 +147,8 @@ describeRepeats('GapFill with resends', () => {
             const sub = await client.subscribe(stream.id)
             const { parse } = client.connection
             let count = 0
-            client.connection.parse = (...args): Todo => {
-                const msg: Todo = parse.call(client.connection, ...args)
+            client.connection.parse = (...args) => {
+                const msg: any = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -180,7 +181,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg: Todo = parse.call(client.connection, ...args)
+                const msg: any = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -212,7 +213,7 @@ describeRepeats('GapFill with resends', () => {
             const { parse } = client.connection
             let count = 0
             client.connection.parse = (...args) => {
-                const msg: Todo = parse.call(client.connection, ...args)
+                const msg: any = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -246,9 +247,9 @@ describeRepeats('GapFill with resends', () => {
         it('can fill gaps in resends even if gap cannot be filled', async () => {
             const { parse } = client.connection
             let count = 0
-            let droppedMsgRef: Todo
+            let droppedMsgRef: MessageRef
             client.connection.parse = (...args) => {
-                const msg: Todo = parse.call(client.connection, ...args)
+                const msg: any = parse.call(client.connection, ...args)
                 if (!msg.streamMessage) {
                     return msg
                 }
@@ -281,7 +282,7 @@ describeRepeats('GapFill with resends', () => {
                 received.push(m.getParsedContent())
                 // should not need to explicitly end
             }
-            expect(received).toEqual(published.filter((_value: Todo, index: Todo) => index !== 2))
+            expect(received).toEqual(published.filter((_value: any, index: number) => index !== 2))
             expect(client.connection.getState()).toBe('connected')
         }, 60000)
 

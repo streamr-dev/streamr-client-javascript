@@ -131,7 +131,7 @@ export function getWaitForStorage(client: StreamrClient, defaultOpts = {}) {
     /* eslint-enable no-await-in-loop */
 }
 
-export function getPublishTestMessages(client: StreamrClient, defaultOpts = {}) {
+export function getPublishTestMessages(client: StreamrClient, defaultOpts: any = {}) {
     // second argument could also be streamId
     if (typeof defaultOpts === 'string') {
         // eslint-disable-next-line no-param-reassign
@@ -189,7 +189,7 @@ export function getPublishTestMessages(client: StreamrClient, defaultOpts = {}) 
         try {
             client.connection.once('done', onDone)
 
-            const published = []
+            const published: [ message: any, request: any ][] = []
             /* eslint-disable no-await-in-loop, no-loop-func */
             for (let i = 0; i < n; i++) {
                 checkDone()
