@@ -7,7 +7,6 @@ import Connection from '../../src/Connection'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Todo } from '../../src/types'
 
 const MAX_MESSAGES = 10
 const WAIT_FOR_STORAGE_TIMEOUT = 6000
@@ -38,7 +37,7 @@ describe('StreamrClient resends', () => {
 
         let client: StreamrClient
         let stream: Stream
-        let published: Todo
+        let published: any[]
         let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
 
         beforeEach(async () => {
@@ -89,8 +88,8 @@ describe('StreamrClient resends', () => {
 
             describe('issue resend and subscribe at the same time', () => {
                 it('works with resend -> subscribe', async () => {
-                    const resentMessages: Todo[] = []
-                    const realtimeMessages: Todo[] = []
+                    const resentMessages: any[] = []
+                    const realtimeMessages: any[] = []
 
                     const realtimeMessage = {
                         msg: uid('realtimeMessage'),
@@ -121,8 +120,8 @@ describe('StreamrClient resends', () => {
                 }, 18000)
 
                 it('works with subscribe -> resend', async () => {
-                    const resentMessages: Todo[] = []
-                    const realtimeMessages: Todo[] = []
+                    const resentMessages: any[] = []
+                    const realtimeMessages: any[] = []
 
                     const realtimeMessage = {
                         msg: uid('realtimeMessage'),
@@ -154,8 +153,8 @@ describe('StreamrClient resends', () => {
                 }, 15000)
 
                 it('works with subscribe+resend -> subscribe', async () => {
-                    const resentMessages: Todo[] = []
-                    const realtimeMessages: Todo[] = []
+                    const resentMessages: any[] = []
+                    const realtimeMessages: any[] = []
 
                     const realtimeMessage = {
                         msg: uid('realtimeMessage'),
@@ -186,8 +185,8 @@ describe('StreamrClient resends', () => {
                 }, 15000)
 
                 it('works with subscribe -> subscribe+resend', async () => {
-                    const resentMessages: Todo[] = []
-                    const realtimeMessages: Todo[] = []
+                    const resentMessages: any[] = []
+                    const realtimeMessages: any[] = []
 
                     const realtimeMessage = {
                         msg: uid('realtimeMessage'),
@@ -222,7 +221,7 @@ describe('StreamrClient resends', () => {
             describeRepeats('resend repeats', () => {
                 // eslint-disable-next-line no-loop-func
                 test('resend last using resend function', async () => {
-                    const receivedMessages: Todo[] = []
+                    const receivedMessages: any[] = []
 
                     // eslint-disable-next-line no-await-in-loop
                     const sub = await client.resend(
@@ -248,7 +247,7 @@ describe('StreamrClient resends', () => {
 
                 // eslint-disable-next-line no-loop-func
                 test('resend last using subscribe function', async () => {
-                    const receivedMessages: Todo[] = []
+                    const receivedMessages: any[] = []
 
                     // eslint-disable-next-line no-await-in-loop
                     const sub = await client.subscribe({
@@ -266,7 +265,7 @@ describe('StreamrClient resends', () => {
             })
 
             it('resend last using subscribe and publish messages after resend', async () => {
-                const receivedMessages: Todo[] = []
+                const receivedMessages: any[] = []
 
                 await client.subscribe({
                     streamId: stream.id,
@@ -297,7 +296,7 @@ describe('StreamrClient resends', () => {
             }, 40000)
 
             it('resend last using subscribe and publish realtime messages', async () => {
-                const receivedMessages: Todo = []
+                const receivedMessages: any[] = []
 
                 const sub = await client.subscribe({
                     streamId: stream.id,
@@ -352,7 +351,7 @@ describe('StreamrClient resends', () => {
                 // resend from LONG_RESEND messages
                 await client.connect()
 
-                const receivedMessages: Todo[] = []
+                const receivedMessages: any[] = []
                 const onGotFirstMessage = Defer()
                 const sub = await client.resend({
                     stream: stream.id,

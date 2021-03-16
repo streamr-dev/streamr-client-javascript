@@ -5,16 +5,15 @@ import { StreamrClient } from '../../src/StreamrClient'
 import Connection from '../../src/Connection'
 
 import config from './config'
-import { Todo } from '../../src/types'
 import { Stream } from '../../src/stream'
 
-const Msg = (opts?: Todo) => ({
+const Msg = (opts?: any) => ({
     value: uid('msg'),
     ...opts,
 })
 
-function toSeq(requests: Todo, ts = Date.now()) {
-    return requests.map((m: Todo) => {
+function toSeq(requests: any[], ts = Date.now()) {
+    return requests.map((m: any) => {
         const { prevMsgRef } = m.streamMessage
         return [
             [m.streamMessage.getTimestamp() - ts, m.streamMessage.getSequenceNumber()],
@@ -82,8 +81,8 @@ describe('Sequencing', () => {
 
     it('should sequence in order', async () => {
         const ts = Date.now()
-        const msgsPublished: Todo[] = []
-        const msgsReceieved: Todo[] = []
+        const msgsPublished: any[] = []
+        const msgsReceieved: any[] = []
 
         await client.subscribe(stream.id, (m) => msgsReceieved.push(m))
 
@@ -118,8 +117,8 @@ describe('Sequencing', () => {
 
     it('should sequence in order even if some calls delayed', async () => {
         const ts = Date.now()
-        const msgsPublished: Todo[] = []
-        const msgsReceieved: Todo[] = []
+        const msgsPublished: any[] = []
+        const msgsReceieved: any[] = []
 
         let calls = 0
         const getStream = client.getStream.bind(client)
@@ -167,12 +166,12 @@ describe('Sequencing', () => {
 
     it.skip('should sequence in order even if publish requests backdated', async () => {
         const ts = Date.now()
-        const msgsPublished: Todo[] = []
-        const msgsReceieved: Todo[] = []
+        const msgsPublished: any[] = []
+        const msgsReceieved: any[] = []
 
         await client.subscribe(stream.id, (m) => msgsReceieved.push(m))
 
-        const nextMsg = (...args: Todo[]) => {
+        const nextMsg = (...args: any[]) => {
             const msg = Msg(...args)
             msgsPublished.push(msg)
             return msg
@@ -203,7 +202,7 @@ describe('Sequencing', () => {
             timeout: 6000,
         })
         await waitForStorage(lastRequest)
-        const msgsResent: Todo[] = []
+        const msgsResent: any[] = []
         const sub = await client.resend({
             stream: stream.id,
             resend: {
@@ -232,12 +231,12 @@ describe('Sequencing', () => {
 
     it.skip('should sequence in order even if publish requests backdated in sequence', async () => {
         const ts = Date.now()
-        const msgsPublished: Todo[] = []
-        const msgsReceieved: Todo[] = []
+        const msgsPublished: any[] = []
+        const msgsReceieved: any[] = []
 
         await client.subscribe(stream.id, (m) => msgsReceieved.push(m))
 
-        const nextMsg = (...args: Todo[]) => {
+        const nextMsg = (...args: any[]) => {
             const msg = Msg(...args)
             msgsPublished.push(msg)
             return msg
@@ -273,7 +272,7 @@ describe('Sequencing', () => {
         })
         await waitForStorage(lastRequest)
 
-        const msgsResent: Todo[] = []
+        const msgsResent: any[] = []
         const sub = await client.resend({
             stream: stream.id,
             resend: {

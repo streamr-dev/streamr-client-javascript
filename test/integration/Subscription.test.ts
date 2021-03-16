@@ -6,7 +6,6 @@ import { StreamrClient } from '../../src/StreamrClient'
 import config from './config'
 import { Stream } from '../../src/stream'
 import { Subscription } from '../../src/subscribe'
-import { Todo } from '../../src/types'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...config.clientOptions,
@@ -28,10 +27,10 @@ describe('Subscription', () => {
     let stream: Stream
     let client: StreamrClient
     let subscription: Subscription
-    let errors: Todo[] = []
+    let errors: any[] = []
     let expectedErrors = 0
 
-    function onError(err: Todo) {
+    function onError(err: any) {
         errors.push(err)
     }
 
@@ -42,7 +41,7 @@ describe('Subscription', () => {
 
     async function createMonitoredSubscription(opts = {}) {
         if (!client) { throw new Error('No client') }
-        const events: Todo[] = []
+        const events: any[] = []
         subscription = await client.subscribe({
             streamId: stream.id,
             resend: RESEND_ALL,

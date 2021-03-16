@@ -8,8 +8,8 @@ import Connection from '../../src/Connection'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Subscriber } from '../../src/subscribe'
-import { Todo } from '../../src/types'
+import { Subscriber, Subscription } from '../../src/subscribe'
+import { StreamrClientOptions } from '../../src'
 
 const { ControlMessage } = ControlLayer
 const MAX_MESSAGES = 5
@@ -40,7 +40,7 @@ describeRepeats('Connection State', () => {
         return c
     }
 
-    async function setupClient(opts: Todo) {
+    async function setupClient(opts: StreamrClientOptions) {
         // eslint-disable-next-line require-atomic-updates
         client = createClient(opts)
         subscriber = client.subscriber
@@ -92,7 +92,7 @@ describeRepeats('Connection State', () => {
         }
     })
 
-    let subs: Todo[] = []
+    let subs: Subscription[] = []
 
     beforeEach(async () => {
         const existingSubs = subs
@@ -186,7 +186,7 @@ describeRepeats('Connection State', () => {
 
                 const done = Defer()
 
-                const msgs: Todo[] = []
+                const msgs: any[] = []
                 const sockets = new Set()
                 await otherClient.subscribe({
                     stream,
@@ -383,7 +383,7 @@ describeRepeats('Connection State', () => {
             it('should work', async () => {
                 const done = Defer()
 
-                const msgs: Todo[] = []
+                const msgs: any[] = []
 
                 await otherClient.subscribe(stream, (msg) => {
                     msgs.push(msg)

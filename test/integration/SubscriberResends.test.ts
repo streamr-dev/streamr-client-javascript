@@ -8,7 +8,6 @@ import { Defer } from '../../src/utils'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Todo } from '../../src/types'
 import { Subscriber } from '../../src/subscribe'
 
 const { ControlMessage } = ControlLayer
@@ -23,10 +22,10 @@ describeRepeats('resends', () => {
     let onError = jest.fn()
     let client: StreamrClient
     let stream: Stream
-    let published: Todo
-    let publishedRequests: Todo
+    let published: any[]
+    let publishedRequests: any[]
     let publishTestMessages: ((n?: number, opts?: any) => Promise<[message: any, request: any][]>) & { raw: (...args: any[]) => any }
-    let waitForStorage: Todo
+    let waitForStorage: (...args: any[]) => Promise<void>
     let subscriber: Subscriber
 
     const createClient = (opts = {}) => {
@@ -185,8 +184,8 @@ describeRepeats('resends', () => {
             const results = await publishTestMessages.raw(MAX_MESSAGES, {
                 waitForLast: true,
             })
-            published = results.map(([msg]: Todo) => msg)
-            publishedRequests = results.map(([, req]: Todo) => req)
+            published = results.map(([msg]: any) => msg)
+            publishedRequests = results.map(([, req]: any) => req)
         }, WAIT_FOR_STORAGE_TIMEOUT * 2)
 
         beforeEach(async () => {
@@ -283,7 +282,7 @@ describeRepeats('resends', () => {
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
-                const receivedMsgs: Todo[] = []
+                const receivedMsgs: any[] = []
 
                 sub.on('resent', onResent.wrap(() => {
                     expect(receivedMsgs).toEqual(publishedBefore)
@@ -358,7 +357,7 @@ describeRepeats('resends', () => {
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
-                const receivedMsgs: Todo[] = []
+                const receivedMsgs: any[] = []
 
                 sub.once('resent', onResent.wrap(() => {
                     expect(receivedMsgs).toEqual(publishedBefore)
@@ -469,7 +468,7 @@ describeRepeats('resends', () => {
             })
 
             it('can end inside resend', async () => {
-                const unsubscribeEvents: Todo[] = []
+                const unsubscribeEvents: any[] = []
                 // @ts-expect-error
                 client.connection.on(ControlMessage.TYPES.UnsubscribeResponse, (m) => {
                     unsubscribeEvents.push(m)

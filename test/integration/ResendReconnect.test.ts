@@ -6,7 +6,7 @@ import { Defer } from '../../src/utils'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Todo } from '../../src/types'
+import { Subscription } from '../../src'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...config.clientOptions,
@@ -48,8 +48,8 @@ describe('resend/reconnect', () => {
 
     describe('reconnect with resend', () => {
         let shouldDisconnect = false
-        let sub: Todo
-        let messages: Todo[] = []
+        let sub: Subscription
+        let messages: any[] = []
         beforeEach(async () => {
             const done = Defer()
             messages = []

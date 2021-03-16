@@ -12,7 +12,7 @@ import Connection from '../../src/Connection'
 
 import config from './config'
 import { Stream } from '../../src/stream'
-import { Todo } from '../../src/types'
+import { Subscription } from '../../src'
 
 const WebSocket = require('ws')
 
@@ -23,9 +23,9 @@ const MAX_MESSAGES = 20
 
 describeRepeats('StreamrClient', () => {
     let expectErrors = 0 // check no errors by default
-    let errors: Todo[] = []
+    let errors: any[] = []
 
-    const getOnError = (errs: Todo) => jest.fn((err) => {
+    const getOnError = (errs: any) => jest.fn((err) => {
         errs.push(err)
     })
 
@@ -71,7 +71,7 @@ describeRepeats('StreamrClient', () => {
                             resolve(undefined)
                             ws.close()
                         })
-                        ws.once('error', (err: Todo) => {
+                        ws.once('error', (err: any) => {
                             c.debug('err', c.options.url, err)
                             reject(err)
                             ws.terminate()
@@ -410,7 +410,7 @@ describeRepeats('StreamrClient', () => {
             it('should not subscribe to unsubscribed streams on reconnect', async () => {
                 client = createClient()
                 await client.connect()
-                const sessionToken: Todo = await client.session.getSessionToken()
+                const sessionToken: string = await client.session.getSessionToken()
 
                 const stream = await client.createStream({
                     name: uid('stream')
@@ -446,7 +446,7 @@ describeRepeats('StreamrClient', () => {
             it('should not subscribe after resend() on reconnect', async () => {
                 client = createClient()
                 await client.connect()
-                const sessionToken: Todo = await client.session.getSessionToken()
+                const sessionToken: string = await client.session.getSessionToken()
 
                 const stream = await client.createStream({
                     name: uid('stream')
@@ -625,13 +625,13 @@ describeRepeats('StreamrClient', () => {
 
     describe('StreamrClient', () => {
         let stream: Stream
-        let waitForStorage: Todo
-        let publishTestMessages: Todo
+        let waitForStorage: (...args: any[]) => Promise<void>
+        let publishTestMessages: ((n?: number, opts?: any) => Promise<[message: any, request: any][]>) & { raw: (...args: any[]) => any }
 
         // These tests will take time, especially on Travis
         const TIMEOUT = 30 * 1000
 
-        const attachSubListeners = (sub: Todo) => {
+        const attachSubListeners = (sub: Subscription) => {
             const onSubscribed = jest.fn()
             sub.on('subscribed', onSubscribed)
             const onResent = jest.fn()
@@ -892,7 +892,7 @@ describeRepeats('StreamrClient', () => {
             })
 
             it('client.subscribe with onMessage & collect', async () => {
-                const onMessageMsgs: Todo[] = []
+                const onMessageMsgs: any[] = []
                 const sub = await client.subscribe({
                     streamId: stream.id,
                 }, async (msg) => {
@@ -935,7 +935,7 @@ describeRepeats('StreamrClient', () => {
 
                 it('should work', async () => {
                     const done = Defer()
-                    const msgs: Todo[] = []
+                    const msgs: any[] = []
 
                     await otherClient.subscribe(stream, (msg) => {
                         msgs.push(msg)
@@ -989,7 +989,7 @@ describeRepeats('StreamrClient', () => {
             it('publish and subscribe a sequence of messages', async () => {
                 client.enableAutoConnect()
                 const done = Defer()
-                const received: Todo[] = []
+                const received: any[] = []
                 const sub = await client.subscribe({
                     streamId: stream.id,
                 }, done.wrapError((parsedContent, streamMessage) => {
@@ -1041,7 +1041,7 @@ describeRepeats('StreamrClient', () => {
                     waitForLast: true,
                 })
 
-                const received: Todo[] = []
+                const received: any[] = []
 
                 const sub = await client.subscribe({
                     streamId: stream.id,
@@ -1075,7 +1075,7 @@ describeRepeats('StreamrClient', () => {
                     waitForLast: true,
                 })
 
-                const received: Todo[] = []
+                const received: any[] = []
 
                 const sub = await client.subscribe({
                     streamId: stream.id,
@@ -1106,7 +1106,7 @@ describeRepeats('StreamrClient', () => {
                     waitForLast: true,
                 })
 
-                const received: Todo[] = []
+                const received: any[] = []
 
                 const sub = await client.subscribe({
                     streamId: stream.id,
@@ -1135,8 +1135,8 @@ describeRepeats('StreamrClient', () => {
         })
 
         describe('resend', () => {
-            let timestamps: Todo[] = []
-            let published: Todo[] = []
+            let timestamps: number[] = []
+            let published: any[] = []
 
             beforeEach(async () => {
                 publishTestMessages = getPublishTestMessages(client, {
@@ -1146,8 +1146,8 @@ describeRepeats('StreamrClient', () => {
                 })
 
                 const publishedRaw = await publishTestMessages.raw(5)
-                timestamps = publishedRaw.map(([, raw]: Todo) => raw.streamMessage.getTimestamp())
-                published = publishedRaw.map(([msg]: Todo) => msg)
+                timestamps = publishedRaw.map(([, raw]: any) => raw.streamMessage.getTimestamp())
+                published = publishedRaw.map(([msg]: any) => msg)
             })
 
             it('resend last', async () => {
@@ -1191,7 +1191,7 @@ describeRepeats('StreamrClient', () => {
             })
 
             it('works with message handler + resent event', async () => {
-                const messages: Todo[] = []
+                const messages: any[] = []
                 const sub = await client.resend({
                     stream: stream.id,
                     resend: {
