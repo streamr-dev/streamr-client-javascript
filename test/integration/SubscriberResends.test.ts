@@ -293,7 +293,7 @@ describeRepeats('resends', () => {
                 const req = await client.publish(stream.id, newMessage) // should be realtime
                 published.push(newMessage)
                 publishedRequests.push(req)
-                let t: ReturnType<typeof setTimeout>|undefined
+                let t: ReturnType<typeof setTimeout>
                 for await (const msg of sub) {
                     receivedMsgs.push(msg.getParsedContent())
                     if (receivedMsgs.length === published.length) {
