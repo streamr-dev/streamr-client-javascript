@@ -917,7 +917,7 @@ describeRepeats('StreamrClient', () => {
                         otherClient.connect(),
                         otherClient.session.getSessionToken(),
                     ]
-                    await Promise.allSettled(tasks)
+                    await (Promise as any).allSettled(tasks)
                     await Promise.all(tasks) // throw if there were an error
                 })
 
@@ -927,7 +927,7 @@ describeRepeats('StreamrClient', () => {
                         otherClient.disconnect(),
                         client.disconnect(),
                     ]
-                    await Promise.allSettled(tasks)
+                    await (Promise as any).allSettled(tasks)
                     await Promise.all(tasks) // throw if there were an error
                 })
 
