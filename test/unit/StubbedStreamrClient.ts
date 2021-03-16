@@ -1,15 +1,17 @@
-import { StreamrClient } from '../../src/'
+import { StreamrClient } from '../../src/index'
 import { Stream } from '../../src/stream'
 
 export default class StubbedStreamrClient extends StreamrClient {
     // @ts-expect-error
+    // eslint-disable-next-line class-methods-use-this
     getUserInfo() {
         return Promise.resolve({
             username: 'username',
         })
     }
 
-    async getStream () {
+    // eslint-disable-next-line class-methods-use-this
+    async getStream() {
         return new Stream(null as any, {
             id: 'streamId',
             partitions: 1,

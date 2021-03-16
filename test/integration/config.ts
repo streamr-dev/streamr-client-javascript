@@ -1,6 +1,8 @@
 import { StreamrClientOptions } from '../../src/Config'
 
-const toNumber = (value: string|undefined) => (value !== undefined) ? Number(value) : undefined
+const toNumber = (value: string|undefined) => {
+    return (value !== undefined) ? Number(value) : undefined
+}
 
 const clientOptions: StreamrClientOptions = {
     // ganache 1: 0x4178baBE9E5148c6D5fd431cD72884B07Ad855a0

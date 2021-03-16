@@ -102,7 +102,7 @@ describe('Subscription', () => {
             const subscriptionEvents = await createMonitoredSubscription({
                 resend: undefined,
             })
-            // @ts-expect-error 
+            // @ts-expect-error
             await client.unsubscribe(stream)
             expect(subscriptionEvents).toEqual([
                 'unsubscribed',
