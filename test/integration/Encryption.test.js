@@ -8,6 +8,7 @@ import { GroupKey } from '../../src/stream/Encryption'
 import Connection from '../../src/Connection'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const TIMEOUT = 30 * 1000
 
@@ -105,6 +106,8 @@ describe('decryption', () => {
             name,
             requireEncryptedData: true,
         })
+
+        await addToStorageNode(stream)
 
         publishTestMessages = getPublishTestMessages(client, {
             stream

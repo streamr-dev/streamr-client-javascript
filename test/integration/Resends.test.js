@@ -6,6 +6,7 @@ import { Defer, pTimeout } from '../../src/utils'
 import Connection from '../../src/Connection'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const MAX_MESSAGES = 10
 const WAIT_FOR_STORAGE_TIMEOUT = 6000
@@ -73,6 +74,8 @@ describe('StreamrClient resends', () => {
                 stream = await client.createStream({
                     name: uid('resends')
                 })
+
+                await addToStorageNode(stream)
 
                 publishTestMessages = getPublishTestMessages(client, {
                     stream
@@ -333,6 +336,9 @@ describe('StreamrClient resends', () => {
                 })
 
                 client.debug('CREATED')
+
+                await addToStorageNode(stream)
+
                 publishTestMessages = getPublishTestMessages(client, {
                     stream
                 })

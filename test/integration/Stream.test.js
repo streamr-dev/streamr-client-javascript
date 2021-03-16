@@ -2,6 +2,7 @@ import { StreamrClient } from '../../src/StreamrClient'
 import { uid, fakePrivateKey, getPublishTestMessages } from '../utils'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...config.clientOptions,
@@ -24,6 +25,7 @@ describe('Stream', () => {
         stream = await client.createStream({
             name: uid('stream-integration-test')
         })
+        await addToStorageNode(stream)
     })
 
     afterEach(async () => {

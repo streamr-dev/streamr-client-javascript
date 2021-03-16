@@ -7,6 +7,7 @@ import Connection from '../../src/Connection'
 import { Defer } from '../../src/utils'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const { ControlMessage } = ControlLayer
 
@@ -56,6 +57,7 @@ describeRepeats('resends', () => {
         stream = await client.createStream({
             name: uid('stream')
         })
+        await addToStorageNode(stream)
         client.debug('connecting before test <<')
 
         publishTestMessages = getPublishTestMessages(client, {
@@ -125,6 +127,7 @@ describeRepeats('resends', () => {
             emptyStream = await client.createStream({
                 name: uid('stream')
             })
+            await addToStorageNode(emptyStream)
 
             const sub = await subscriber.resend({
                 streamId: emptyStream.id,
@@ -144,6 +147,7 @@ describeRepeats('resends', () => {
             emptyStream = await client.createStream({
                 name: uid('stream')
             })
+            await addToStorageNode(emptyStream)
 
             const sub = await subscriber.resendSubscribe({
                 streamId: emptyStream.id,

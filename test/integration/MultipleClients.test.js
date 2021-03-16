@@ -7,6 +7,7 @@ import { counterId, Defer, pLimitFn } from '../../src/utils'
 import Connection from '../../src/Connection'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const { ControlMessage } = ControlLayer
 
@@ -50,6 +51,7 @@ describeRepeats('PubSub with multiple clients', () => {
         stream = await mainClient.createStream({
             name: uid('stream')
         })
+        await addToStorageNode(stream)
     })
 
     afterEach(async () => {

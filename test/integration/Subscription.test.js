@@ -4,6 +4,7 @@ import { uid, fakePrivateKey } from '../utils'
 import { StreamrClient } from '../../src/StreamrClient'
 
 import config from './config'
+import { addToStorageNode } from './storageNode'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...config.clientOptions,
@@ -70,6 +71,7 @@ describe('Subscription', () => {
         stream = await client.createStream({
             name: uid('stream')
         })
+        await addToStorageNode(stream)
         await client.connect()
     })
 
