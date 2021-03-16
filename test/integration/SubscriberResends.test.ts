@@ -25,7 +25,7 @@ describeRepeats('resends', () => {
     let stream: Stream
     let published: Todo
     let publishedRequests: Todo
-    let publishTestMessages: Todo
+    let publishTestMessages: ((n?: number, opts?: any) => Promise<[message: any, request: any][]>) & { raw: (...args: any[]) => any }
     let waitForStorage: Todo
     let subscriber: Subscriber
 

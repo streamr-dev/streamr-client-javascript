@@ -39,7 +39,7 @@ describe('StreamrClient resends', () => {
         let client: StreamrClient
         let stream: Stream
         let published: Todo
-        let publishTestMessages: Todo
+        let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
 
         beforeEach(async () => {
             client = createClient()

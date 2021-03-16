@@ -16,7 +16,7 @@ const MAX_MESSAGES = 5
 
 describeRepeats('Connection State', () => {
     let expectErrors = 0 // check no errors by default
-    let publishTestMessages: Todo
+    let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
     let onError = jest.fn()
     let client: StreamrClient
     let stream: Stream

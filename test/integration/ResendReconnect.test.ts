@@ -23,8 +23,8 @@ const MAX_MESSAGES = 3
 describe('resend/reconnect', () => {
     let client: StreamrClient
     let stream: Stream
-    let publishedMessages: Todo
-    let publishTestMessages: Todo
+    let publishedMessages: [message: any, request: any][]
+    let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
 
     beforeEach(async () => {
         client = createClient()
