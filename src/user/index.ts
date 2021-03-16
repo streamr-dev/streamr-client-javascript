@@ -2,7 +2,7 @@ import { computeAddress } from '@ethersproject/transactions'
 import { Web3Provider } from '@ethersproject/providers'
 import { hexlify } from '@ethersproject/bytes'
 import { sha256 } from '@ethersproject/sha2'
-import StreamrClient from '../StreamrClient'
+import { StreamrClient } from '../StreamrClient'
 import { EthereumConfig } from '../Config'
 
 async function getUsername(client: StreamrClient) {
