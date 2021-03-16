@@ -151,7 +151,7 @@ describeRepeats('resends', () => {
             const sub = await subscriber.resendSubscribe({
                 streamId: emptyStream.id,
                 last: 5,
-            }, () => {})
+            })
 
             const onResent = jest.fn()
             sub.on('resent', onResent)
@@ -278,7 +278,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
@@ -322,7 +322,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const onResent = jest.fn()
                 sub.on('resent', onResent)
@@ -353,7 +353,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const onResent = Defer()
                 const publishedBefore = published.slice()
@@ -385,7 +385,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const message = Msg()
                 // eslint-disable-next-line no-await-in-loop
@@ -412,7 +412,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 expect(subscriber.count(stream.id)).toBe(1)
                 const message = Msg()
@@ -437,7 +437,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const message = Msg()
                 // eslint-disable-next-line no-await-in-loop
@@ -476,7 +476,7 @@ describeRepeats('resends', () => {
                 const sub = await subscriber.resendSubscribe({
                     streamId: stream.id,
                     last: published.length,
-                }, () => {})
+                })
 
                 const message = Msg()
                 // eslint-disable-next-line no-await-in-loop
