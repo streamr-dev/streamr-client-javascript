@@ -7,8 +7,8 @@ import { Defer, pLimitFn } from '../../src/utils'
 import Connection from '../../src/Connection'
 
 import config from './config'
-import Stream from '../../src/stream'
-import Subscriber from '../../src/subscribe'
+import { Stream } from '../../src/stream'
+import { Subscriber } from '../../src/subscribe'
 import { Todo } from '../../src/types'
 
 const { ControlMessage } = ControlLayer
@@ -65,7 +65,7 @@ describeRepeats('Connection State', () => {
         if (!subscriber) { return }
         expect(subscriber.count(stream.id)).toBe(0)
         if (!client) { return }
-        expect(client.getSubscriptions(stream.id)).toEqual([])
+        expect(client.getSubscriptions()).toEqual([])
     })
 
     afterEach(async () => {
@@ -246,7 +246,7 @@ describeRepeats('Connection State', () => {
                 await subscriber.subscribe(stream.id)
             }).rejects.toThrow()
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toEqual([])
+            expect(client.getSubscriptions()).toEqual([])
         })
 
         it('should reconnect subscriptions when connection disconnected before subscribed & reconnected', async () => {
@@ -255,7 +255,7 @@ describeRepeats('Connection State', () => {
             client.connection.socket.close()
             const published = await publishTestMessages(2)
             const sub = await subTask
-            expect(client.getSubscriptions(stream.id)).toHaveLength(1)
+            expect(client.getSubscriptions()).toHaveLength(1)
             subs.push(sub)
             const received = []
             for await (const msg of sub) {
@@ -266,7 +266,7 @@ describeRepeats('Connection State', () => {
                 break
             }
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toEqual([])
+            expect(client.getSubscriptions()).toEqual([])
         })
 
         it('should re-subscribe when subscribed then reconnected + fill gaps', async () => {
@@ -289,7 +289,7 @@ describeRepeats('Connection State', () => {
                 }
             }
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toEqual([])
+            expect(client.getSubscriptions()).toEqual([])
         }, 30000)
 
         it('should end when subscribed then disconnected', async () => {
@@ -307,19 +307,19 @@ describeRepeats('Connection State', () => {
             }
             expect(received).toEqual(published.slice(0, 1))
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toEqual([])
+            expect(client.getSubscriptions()).toEqual([])
         })
 
         it('should end when subscribed then disconnected then connected', async () => {
             const sub = await subscriber.subscribe(stream.id)
-            expect(client.getSubscriptions(stream.id)).toHaveLength(1)
+            expect(client.getSubscriptions()).toHaveLength(1)
             subs.push(sub)
 
             await publishTestMessages(2)
             const received = []
             await client.disconnect()
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toHaveLength(0)
+            expect(client.getSubscriptions()).toHaveLength(0)
             for await (const msg of sub) {
                 received.push(msg.getParsedContent())
             }
@@ -331,7 +331,7 @@ describeRepeats('Connection State', () => {
             const published2 = await publishTestMessages(2)
             const received2 = []
             expect(subscriber.count(stream.id)).toBe(1)
-            expect(client.getSubscriptions(stream.id)).toHaveLength(1)
+            expect(client.getSubscriptions()).toHaveLength(1)
             for await (const msg of sub2) {
                 received2.push(msg.getParsedContent())
                 if (received2.length === 1) {
@@ -340,7 +340,7 @@ describeRepeats('Connection State', () => {
             }
             expect(received2).toEqual(published2.slice(0, 1))
             expect(subscriber.count(stream.id)).toBe(0)
-            expect(client.getSubscriptions(stream.id)).toEqual([])
+            expect(client.getSubscriptions()).toEqual([])
         })
 
         it('should just end subs when disconnected', async () => {

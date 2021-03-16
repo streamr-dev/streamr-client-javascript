@@ -5,8 +5,8 @@ import { StreamrClient } from '../../src/StreamrClient'
 import Connection from '../../src/Connection'
 
 import config from './config'
-import Stream from '../../src/stream'
-import Subscriber from '../../src/subscribe'
+import { Stream } from '../../src/stream'
+import { Subscriber } from '../../src/subscribe'
 import { Todo } from '../../src/types'
 
 const MAX_MESSAGES = 10
@@ -61,7 +61,7 @@ describeRepeats('GapFill with resends', () => {
         if (!subscriber) { return }
         expect(subscriber.count(stream.id)).toBe(0)
         if (!client) { return }
-        expect(client.getSubscriptions(stream.id)).toEqual([])
+        expect(client.getSubscriptions()).toEqual([])
     })
 
     afterEach(async () => {

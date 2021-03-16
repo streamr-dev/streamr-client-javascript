@@ -6,7 +6,7 @@ import Connection from '../../src/Connection'
 
 import config from './config'
 import { Todo } from '../../src/types'
-import Stream from '../../src/stream'
+import { Stream } from '../../src/stream'
 
 const Msg = (opts?: Todo) => ({
     value: uid('msg'),
