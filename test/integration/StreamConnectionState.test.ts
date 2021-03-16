@@ -364,7 +364,6 @@ describeRepeats('Connection State', () => {
                     otherClient.connect(),
                     otherClient.session.getSessionToken(),
                 ]
-                // @ts-expect-error
                 await Promise.allSettled(tasks)
                 // @ts-expect-error
                 await Promise.all(tasks) // throw if there were an error
@@ -375,7 +374,6 @@ describeRepeats('Connection State', () => {
                     otherClient.disconnect(),
                     client.disconnect(),
                 ]
-                // @ts-expect-error
                 await Promise.allSettled(tasks)
                 await Promise.all(tasks) // throw if there were an error
             })

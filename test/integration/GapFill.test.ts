@@ -22,6 +22,8 @@ describeRepeats('GapFill with resends', () => {
 
     const createClient = (opts = {}) => {
         const c = new StreamrClient({
+            ...config.clientOptions,
+            ...opts,
             auth: {
                 privateKey: fakePrivateKey(),
             },
@@ -29,8 +31,6 @@ describeRepeats('GapFill with resends', () => {
             autoDisconnect: false,
             // @ts-expect-error
             maxRetries: 2,
-            ...config.clientOptions,
-            ...opts,
         })
         c.onError = jest.fn()
         c.on('error', onError)

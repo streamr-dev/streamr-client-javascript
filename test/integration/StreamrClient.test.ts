@@ -410,7 +410,7 @@ describeRepeats('StreamrClient', () => {
             it('should not subscribe to unsubscribed streams on reconnect', async () => {
                 client = createClient()
                 await client.connect()
-                const sessionToken: string = await client.session.getSessionToken()
+                const sessionToken = await client.session.getSessionToken()!
 
                 const stream = await client.createStream({
                     name: uid('stream')
@@ -430,7 +430,7 @@ describeRepeats('StreamrClient', () => {
                 expect(connectionEventSpy.mock.calls[0]).toEqual([new SubscribeRequest({
                     streamId: stream.id,
                     streamPartition: 0,
-                    sessionToken,
+                    sessionToken: sessionToken!,
                     requestId: connectionEventSpy.mock.calls[0][0].requestId,
                 })])
 
@@ -438,7 +438,7 @@ describeRepeats('StreamrClient', () => {
                     streamId: stream.id,
                     streamPartition: 0,
                     // @ts-expect-error
-                    sessionToken,
+                    sessionToken: sessionToken!,
                     requestId: connectionEventSpy.mock.calls[1][0].requestId,
                 })])
             })
@@ -446,7 +446,7 @@ describeRepeats('StreamrClient', () => {
             it('should not subscribe after resend() on reconnect', async () => {
                 client = createClient()
                 await client.connect()
-                const sessionToken: string = await client.session.getSessionToken()
+                const sessionToken = await client.session.getSessionToken()!
 
                 const stream = await client.createStream({
                     name: uid('stream')
@@ -470,7 +470,7 @@ describeRepeats('StreamrClient', () => {
                 expect(connectionEventSpy.mock.calls[0]).toEqual([new ResendLastRequest({
                     streamId: stream.id,
                     streamPartition: 0,
-                    sessionToken,
+                    sessionToken: sessionToken!,
                     numberLast: 10,
                     requestId: connectionEventSpy.mock.calls[0][0].requestId,
                 })])
@@ -917,7 +917,6 @@ describeRepeats('StreamrClient', () => {
                         otherClient.connect(),
                         otherClient.session.getSessionToken(),
                     ]
-                    // @ts-expect-error
                     await Promise.allSettled(tasks)
                     await Promise.all(tasks) // throw if there were an error
                 })
@@ -928,7 +927,6 @@ describeRepeats('StreamrClient', () => {
                         otherClient.disconnect(),
                         client.disconnect(),
                     ]
-                    // @ts-expect-error
                     await Promise.allSettled(tasks)
                     await Promise.all(tasks) // throw if there were an error
                 })

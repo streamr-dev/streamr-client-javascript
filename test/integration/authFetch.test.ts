@@ -31,12 +31,12 @@ describe('authFetch', () => {
         // @ts-expect-error
         fetch.mockImplementation(realFetch)
         client = new StreamrClient({
+            ...config.clientOptions,
+            autoConnect: false,
+            autoDisconnect: false,
             auth: {
                 privateKey: fakePrivateKey()
             },
-            autoConnect: false,
-            autoDisconnect: false,
-            ...config.clientOptions,
         })
         await client.connect()
         expect(fetch).not.toHaveBeenCalled() // will get called in background though (questionable behaviour)

@@ -1,10 +1,8 @@
-import { StreamrClientOptions } from '../../src/Config'
-
 const toNumber = (value: string|undefined) => {
     return (value !== undefined) ? Number(value) : undefined
 }
 
-const clientOptions: StreamrClientOptions = {
+const clientOptions = {
     // ganache 1: 0x4178baBE9E5148c6D5fd431cD72884B07Ad855a0
     auth: {
         privateKey: process.env.ETHEREUM_PRIVATE_KEY || '0xe5af7834455b7239881b85be89d905d6881dcb4751063897f12be1b0dd546bdb',
