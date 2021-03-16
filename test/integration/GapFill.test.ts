@@ -14,7 +14,7 @@ const MAX_MESSAGES = 10
 
 describeRepeats('GapFill with resends', () => {
     let expectErrors = 0 // check no errors by default
-    let publishTestMessages: (n?: number, opts?: any) => Promise<[message: any, request: any][]>
+    let publishTestMessages: ReturnType<typeof getPublishTestMessages>
     let onError = jest.fn()
     let client: StreamrClient
     let stream: Stream

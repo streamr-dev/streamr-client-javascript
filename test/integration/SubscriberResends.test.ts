@@ -24,7 +24,7 @@ describeRepeats('resends', () => {
     let stream: Stream
     let published: any[]
     let publishedRequests: any[]
-    let publishTestMessages: ((n?: number, opts?: any) => Promise<[message: any, request: any][]>) & { raw: (...args: any[]) => any }
+    let publishTestMessages: ReturnType<typeof getPublishTestMessages>
     let waitForStorage: (...args: any[]) => Promise<void>
     let subscriber: Subscriber
 

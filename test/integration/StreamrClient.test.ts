@@ -626,7 +626,7 @@ describeRepeats('StreamrClient', () => {
     describe('StreamrClient', () => {
         let stream: Stream
         let waitForStorage: (...args: any[]) => Promise<void>
-        let publishTestMessages: ((n?: number, opts?: any) => Promise<[message: any, request: any][]>) & { raw: (...args: any[]) => any }
+        let publishTestMessages: ReturnType<typeof getPublishTestMessages>
 
         // These tests will take time, especially on Travis
         const TIMEOUT = 30 * 1000
