@@ -253,7 +253,7 @@ export class Stream {
         } else if (response.status === 404) {
             return false
         } else {
-            throw new Error('Unable to fetch stream storage status')
+            throw new Error(`Unexpected response code ${response.status} when fetching stream storage status`)
         }
     }
 
