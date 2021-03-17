@@ -69,6 +69,10 @@ export type StrictStreamrClientOptions = {
         templateMainnetAddress: EthereumAddress
         templateSidechainAddress: EthereumAddress
     },
+    storageNode: {
+        address: EthereumAddress
+        url: string
+    }
     cache: {
         maxSize: number,
         maxAge: number
@@ -137,6 +141,10 @@ export const STREAM_CLIENT_DEFAULTS: StrictStreamrClientOptions = {
         templateMainnetAddress: '0x5FE790E3751dd775Cb92e9086Acd34a2adeB8C7b',
         templateSidechainAddress: '0xf1E9d6E254BeA3f0129018AcA1A50AEcb7D528be',
     },
+    storageNode: {
+        address: '0x31546eEA76F2B2b3C5cC06B1c93601dc35c9D916',
+        url: 'https://corea1.streamr.network:8001'
+    },
     cache: {
         maxSize: 10000,
         maxAge: 30 * 60 * 1000, // 30 minutes
@@ -158,7 +166,8 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
         'dataUnion.factoryMainnetAddress',
         'dataUnion.factorySidechainAddress',
         'dataUnion.templateMainnetAddress',
-        'dataUnion.templateSidechainAddress'
+        'dataUnion.templateSidechainAddress',
+        'storageNode.address'
     ])
 
     const options: StrictStreamrClientOptions = {
@@ -172,7 +181,7 @@ export default function ClientConfig(opts: StreamrClientOptions = {}) {
             ...opts.cache,
             ...STREAM_CLIENT_DEFAULTS.cache,
         }
-        // NOTE: sidechain is not merged with the defaults
+        // NOTE: sidechain and storageNode settings are not merged with the defaults
     }
 
     const parts = options.url!.split('?')

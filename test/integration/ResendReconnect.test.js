@@ -5,7 +5,6 @@ import { StreamrClient } from '../../src/StreamrClient'
 import { Defer } from '../../src/utils'
 
 import config from './config'
-import { addToStorageNode } from './storageNode'
 
 const createClient = (opts = {}) => new StreamrClient({
     ...(config.clientOptions || {
@@ -36,7 +35,7 @@ describe('resend/reconnect', () => {
             name: uid('resends')
         })
 
-        await addToStorageNode(stream)
+        await stream.addToStorageNode(config.clientOptions.storageNode.address)
 
         publishTestMessages = getPublishTestMessages(client, {
             streamId: stream.id,

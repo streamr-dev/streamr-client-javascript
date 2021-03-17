@@ -11,7 +11,6 @@ import { Defer, pLimitFn } from '../../src/utils'
 import Connection from '../../src/Connection'
 
 import config from './config'
-import { addToStorageNode } from './storageNode'
 
 const WebSocket = require('ws')
 
@@ -649,7 +648,7 @@ describeRepeats('StreamrClient', () => {
                 requireSignedData,
                 ...opts,
             })
-            await addToStorageNode(s)
+            await s.addToStorageNode(config.clientOptions.storageNode.address)
 
             expect(s.id).toBeTruthy()
             expect(s.name).toEqual(name)
