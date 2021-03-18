@@ -66,8 +66,8 @@
 				<h1 align="left">
 					Streamr JavaScript Client
 				</h1>
-				<p>By using this client, you can easily interact with the <a href="https://streamr.network">Streamr</a> API from JavaScript-based environments, such as browsers and <a href="https://nodejs.org">node.js</a>. You can, for example, subscribe to real-time data in streams, produce new data to streams, and create new streams.</p>
-				<p>The client uses websockets for producing and consuming messages to/from streams. It should work in all modern browsers.</p>
+				<p>By using this client, you can easily interact with the <a href="https://streamr.network">Streamr</a> API from JavaScript-based environments, such as browsers and <a href="https://nodejs.org">node.js</a>. You can, for example, subscribe to real-time data in streams, produce new data to streams, and create new streams. The client uses websockets for producing and consuming messages to/from streams. It should work in all modern browsers.</p>
+				<p>Please see the <a href="https://streamr-dev.github.io/streamr-client-javascript/">API Docs</a> for more detailed documentation.</p>
 				<p><a href="https://travis-ci.com/streamr-dev/streamr-client-javascript"><img src="https://travis-ci.com/streamr-dev/streamr-client-javascript.svg?branch=master" alt="Build Status"></a></p>
 				<a href="#breaking-changes-notice" id="breaking-changes-notice" style="color: inherit; text-decoration: none;">
 					<h3>Breaking changes notice</h3>
@@ -79,7 +79,7 @@
 				<a href="#toc" id="toc" style="color: inherit; text-decoration: none;">
 					<h2>TOC</h2>
 				</a>
-				<p><a href="#installation">Installation</a> · <a href="#usage">Usage</a> · <a href="#api-docs">API Docs</a> · <a href="#client-options">Client options</a> · <a href="#authentication-options">Authentication options</a> · <a href="#message-handler-callback">Message handler callback</a> · <a href="#streamrclient-object">StreamrClient object</a> · <a href="#stream-object">Stream object</a> · <a href="#subscription-options">Subscription options</a> · <a href="#data-unions">Data Unions</a> · <a href="#utility-functions">Utility functions</a> · <a href="#binding-to-events">Events</a> · <a href="#partitioning">Partitioning</a> · <a href="#logging">Logging</a> · <a href="#publishing-latest">NPM Publishing</a></p>
+				<p><a href="#installation">Installation</a> · <a href="#usage">Usage</a> · <a href="#API-docs">API Docs</a> · <a href="#client-options">Client options</a> · <a href="#authentication">Authentication</a> · <a href="#managing-subscriptions">Managing subscriptions</a> · <a href="#stream-api">Stream API</a> · <a href="#subscription-options">Subscription options</a> · <a href="#data-unions">Data Unions</a> · <a href="#utility-functions">Utility functions</a> · <a href="#events">Events</a> · <a href="#stream-partitioning">Stream Partitioning</a> · <a href="#logging">Logging</a> · <a href="#publishing-latest">NPM Publishing</a></p>
 				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
 					<h2>Installation</h2>
 				</a>
@@ -87,12 +87,6 @@
 				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">install</span><span style="color: #000000"> </span><span style="color: #001080">streamr</span><span style="color: #000000">-</span><span style="color: #001080">client</span>
 </code></pre>
 				<p>Node v14 or higher is recommended if you intend to use the client in a Node environment. For example, inside a script.</p>
-				<a href="#api-docs" id="api-docs" style="color: inherit; text-decoration: none;">
-					<h2>API Docs</h2>
-				</a>
-				<p>We have automatically generated API documentation available <a href="https://streamr-dev.github.io/streamr-client-javascript/">here</a>. These docs are generated from the repository TypeScript source code. They can also be rebuilt locally via:</p>
-				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">docs</span>
-</code></pre>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
 				</a>
@@ -178,10 +172,12 @@
 <span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">stream</span><span style="color: #000000">.</span><span style="color: #795E26">publish</span><span style="color: #000000">(</span><span style="color: #001080">msg</span><span style="color: #000000">)</span>
 </code></pre>
 				<hr>
-				<a href="#docs" id="docs" style="color: inherit; text-decoration: none;">
-					<h1>Docs</h1>
+				<a href="#api-docs" id="api-docs" style="color: inherit; text-decoration: none;">
+					<h2>API Docs</h2>
 				</a>
-				<p>Please see the <a href="https://streamr-dev.github.io/streamr-client-javascript/">API Docs</a> for auto-generated documentation.</p>
+				<p>The <a href="https://streamr-dev.github.io/streamr-client-javascript/">API docs</a> are automatically generated from the TypeScript source code. They can also be rebuilt locally via:</p>
+				<pre><code><span style="color: #001080">npm</span><span style="color: #000000"> </span><span style="color: #001080">run</span><span style="color: #000000"> </span><span style="color: #001080">docs</span>
+</code></pre>
 				<a href="#client-options" id="client-options" style="color: inherit; text-decoration: none;">
 					<h2>Client options</h2>
 				</a>
@@ -262,8 +258,7 @@
 				<a href="#authentication-options" id="authentication-options" style="color: inherit; text-decoration: none;">
 					<h2>Authentication options</h2>
 				</a>
-				<p>Note: <strong>Authenticating with an API key has been deprecated.</strong></p>
-				<p>Note: <strong>Support for email/password authentication will be dropped in the future and cryptographic keys/wallets will be the only supported method.</strong></p>
+				<p>Note: <strong>Authenticating with an API key has been deprecated. Cryptographic keys/wallets is the only supported authentication method.</strong></p>
 				<p>If you don&#39;t have an Ethereum account you can use the utility function <code>StreamrClient.generateEthereumAccount()</code>, which returns the address and private key of a fresh Ethereum account.</p>
 				<p>Authenticating with Ethereum also automatically creates an associated Streamr user, even if it doesn&#39;t already exist. Under the hood, the client will cryptographically sign a challenge to authenticate you as a Streamr user:</p>
 				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
@@ -539,7 +534,7 @@
 				<a href="#data-unions" id="data-unions" style="color: inherit; text-decoration: none;">
 					<h2>Data Unions</h2>
 				</a>
-				<p>This library provides functions for working with Data Unions.</p>
+				<p>This library provides functions for working with Data Unions. Please see the <a href="https://streamr-dev.github.io/streamr-client-javascript/">API Docs</a> for auto-generated documentation on each Data Union endpoint.</p>
 				<p>To deploy a new DataUnion with default <a href="#deployment-options">deployment options</a>:</p>
 				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">()</span>
 </code></pre>
@@ -947,8 +942,8 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Reports errors, for example problems with message content</td>
 						</tr>
 				</tbody></table>
-				<a href="#partitioning" id="partitioning" style="color: inherit; text-decoration: none;">
-					<h2>Partitioning</h2>
+				<a href="#stream-partitioning" id="stream-partitioning" style="color: inherit; text-decoration: none;">
+					<h2>Stream Partitioning</h2>
 				</a>
 				<p>Partitioning (sharding) enables streams to scale horizontally. This section describes how to use partitioned streams via this library. To learn the basics of partitioning, see <a href="https://streamr.network/docs/streams#partitioning">the docs</a>.</p>
 				<a href="#creating-partitioned-streams" id="creating-partitioned-streams" style="color: inherit; text-decoration: none;">
