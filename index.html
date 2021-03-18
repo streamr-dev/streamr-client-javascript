@@ -540,7 +540,7 @@
 					<h2>Data Unions</h2>
 				</a>
 				<p>This library provides functions for working with Data Unions.</p>
-				<p>To deploy a new DataUnion:</p>
+				<p>To deploy a new DataUnion with default <a href="#deployment-options">deployment options</a>:</p>
 				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">()</span>
 </code></pre>
 				<p>To get an existing (previously deployed) <code>DataUnion</code> instance:</p>
@@ -597,15 +597,21 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Send all withdrawable earnings to the address signed off by the member (see <a href="#member-functions">example below</a>)</td>
 						</tr>
 				</tbody></table>
-				<p>Here&#39;s how to deploy a Data Union contract and set the admin fee to 30%:</p>
+				<p>Here&#39;s how to deploy a Data Union contract with 30% Admin fee and add some members:</p>
 				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
 
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #0000FF">new</span><span style="color: #000000"> </span><span style="color: #795E26">StreamrClient</span><span style="color: #000000">({</span>
 <span style="color: #000000">    </span><span style="color: #001080">auth:</span><span style="color: #000000"> { </span><span style="color: #001080">privateKey</span><span style="color: #000000"> },</span>
 <span style="color: #000000">})</span>
 
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">()</span>
-<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">setAdminFee</span><span style="color: #000000">(</span><span style="color: #098658">0.3</span><span style="color: #000000">)</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">adminFee:</span><span style="color: #000000"> </span><span style="color: #098658">0.3</span><span style="color: #000000">,</span>
+<span style="color: #000000">})</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">addMembers</span><span style="color: #000000">([</span>
+<span style="color: #000000">    </span><span style="color: #A31515">&quot;0x1234567890123456789012345678901234567890&quot;</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #A31515">&quot;0x1234567890123456789012345678901234567891&quot;</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #A31515">&quot;0x1234567890123456789012345678901234567892&quot;</span><span style="color: #000000">,</span>
+<span style="color: #000000">])</span>
 </code></pre>
 				<a href="#member-functions" id="member-functions" style="color: inherit; text-decoration: none;">
 					<h3>Member functions</h3>
@@ -721,7 +727,7 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 				<a href="#withdraw-options" id="withdraw-options" style="color: inherit; text-decoration: none;">
 					<h3>Withdraw options</h3>
 				</a>
-				<p>The functions <code>withdrawAll</code>, <code>withdrawAllTo</code>, <code>withdrawAllToMember</code>, <code>withdrawAllToSigned</code> all take an extra &quot;options&quot; argument. It&#39;s an object that can contain the following parameters:</p>
+				<p>The functions <code>withdrawAll</code>, <code>withdrawAllTo</code>, <code>withdrawAllToMember</code>, <code>withdrawAllToSigned</code> all can take an extra &quot;options&quot; argument. It&#39;s an object that can contain the following parameters:</p>
 				<table>
 					<thead>
 						<tr>
@@ -747,6 +753,83 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 						</tr>
 				</tbody></table>
 				<p>These withdraw transactions are sent to the sidechain, so gas price shouldn&#39;t be manually set (fees will hopefully stay very low), but a little bit of <a href="https://www.xdaichain.com/for-users/get-xdai-tokens">sidechain native token</a> is nonetheless required.</p>
+				<a href="#deployment-options" id="deployment-options" style="color: inherit; text-decoration: none;">
+					<h3>Deployment options</h3>
+				</a>
+				<p><code>deployDataUnion</code> can take an options object as the argument. It&#39;s an object that can contain the following parameters:</p>
+				<table>
+					<thead>
+						<tr>
+							<th align="left">Name</th>
+							<th align="left">Type</th>
+							<th align="left">Default</th>
+							<th align="left">Description</th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td align="left">owner</td>
+							<td align="left">Address</td>
+							<td align="left"><code>*</code>you</td>
+							<td align="left">Owner / admin of the newly created Data Union</td>
+						</tr>
+						<tr>
+							<td align="left">joinPartAgents</td>
+							<td align="left">Address[]</td>
+							<td align="left"><code>*</code>you, Streamr Core</td>
+							<td align="left">Able to add and remove members to/from the Data Union</td>
+						</tr>
+						<tr>
+							<td align="left">dataUnionName</td>
+							<td align="left">string</td>
+							<td align="left">Generated</td>
+							<td align="left">NOT stored anywhere, only used for address derivation</td>
+						</tr>
+						<tr>
+							<td align="left">adminFee</td>
+							<td align="left">number</td>
+							<td align="left">0 (no fee)</td>
+							<td align="left">Must be between 0...1 (inclusive)</td>
+						</tr>
+						<tr>
+							<td align="left">sidechainPollingIntervalMs</td>
+							<td align="left">number</td>
+							<td align="left">1000 (1&nbsp;second)</td>
+							<td align="left">How often requests are sent to find out if the deployment has completed</td>
+						</tr>
+						<tr>
+							<td align="left">sidechainRetryTimeoutMs</td>
+							<td align="left">number</td>
+							<td align="left">60000 (1&nbsp;minute)</td>
+							<td align="left">When to give up when waiting for the deployment to complete</td>
+						</tr>
+						<tr>
+							<td align="left">confirmations</td>
+							<td align="left">number</td>
+							<td align="left">1</td>
+							<td align="left">Blocks to wait after Data Union mainnet contract deployment to consider it final</td>
+						</tr>
+						<tr>
+							<td align="left">gasPrice</td>
+							<td align="left">BigNumber</td>
+							<td align="left">network estimate</td>
+							<td align="left">Ethereum Mainnet gas price to use when deploying the Data Union mainnet contract</td>
+						</tr>
+				</tbody></table>
+				<p><code>*</code>you here means the address of the authenticated StreamrClient
+				(that corresponds to the <code>auth.privateKey</code> given in constructor)</p>
+				<p>Streamr Core is added as a <code>joinPartAgent</code> by default
+					so that joining with secret works using the <a href="#member-functions">member function</a> <code>join</code>.
+					If you don&#39;t plan to use <code>join</code> for &quot;self-service joining&quot;,
+					you can leave out Streamr Core agent by calling <code>deployDataUnion</code>
+				e.g. with your own address as the sole joinPartAgent:</p>
+				<pre><code><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deployDataUnion</span><span style="color: #000000">({</span>
+<span style="color: #000000">    </span><span style="color: #001080">joinPartAgents:</span><span style="color: #000000"> [</span><span style="color: #001080">yourAddress</span><span style="color: #000000">],</span>
+<span style="color: #000000">    </span><span style="color: #001080">adminFee</span><span style="color: #000000">,</span>
+<span style="color: #000000">})</span>
+</code></pre>
+				<p><code>dataUnionName</code> option exists purely for the purpose of predicting the addresses of Data Unions not yet deployed.
+					Data Union deployment uses the <a href="https://eips.ethereum.org/EIPS/eip-1014">CREATE2 opcode</a> which means
+				a Data Union deployed by a particular address with particular &quot;name&quot; will have a predictable address.</p>
 				<a href="#utility-functions" id="utility-functions" style="color: inherit; text-decoration: none;">
 					<h2>Utility functions</h2>
 				</a>
@@ -774,7 +857,10 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Sidechain DATA token balance</td>
 						</tr>
 				</tbody></table>
-				<p><code>*</code> The static function <code>StreamrClient.generateEthereumAccount()</code> generates a new Ethereum private key and returns an object with fields <code>address</code> and <code>privateKey</code>. Note that this private key can be used to authenticate to the Streamr API by passing it in the authentication options, as described earlier in this document.</p>
+				<p><code>*</code> The static function <code>StreamrClient.generateEthereumAccount()</code> generates a new
+					Ethereum private key and returns an object with fields <code>address</code> and <code>privateKey</code>.
+					Note that this private key can be used to authenticate to the Streamr API
+				by passing it in the authentication options, as described earlier in this document.</p>
 				<a href="#events" id="events" style="color: inherit; text-decoration: none;">
 					<h2>Events</h2>
 				</a>
