@@ -20,6 +20,14 @@ export function StreamKey({ streamId, streamPartition = 0 }: Todo) {
     return `${streamId}::${streamPartition}`
 }
 
+export type StreamID = string & {
+    __brand: 'StreamID'
+}
+
+export function toStreamId(str: string) {
+  return str.toLowerCase() as StreamID
+}
+
 export function validateOptions(optionsOrStreamId: StreamPartDefinition): ValidatedStreamPartDefinition {
     if (!optionsOrStreamId) {
         throw new Error('streamId is required!')
@@ -29,7 +37,7 @@ export function validateOptions(optionsOrStreamId: StreamPartDefinition): Valida
     let options: Todo = {}
     if (typeof optionsOrStreamId === 'string') {
         options = {
-            streamId: optionsOrStreamId,
+            streamId: toStreamId(optionsOrStreamId),
             streamPartition: 0,
         }
     } else if (typeof optionsOrStreamId === 'object') {
