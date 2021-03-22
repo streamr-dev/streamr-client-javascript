@@ -33,6 +33,8 @@ export enum StreamOperation {
     STREAM_SHARE = 'stream_share'
 }
 
+
+
 export interface StreamProperties {
     id?: string
     name?: string
