@@ -13,7 +13,7 @@ const createClient = (opts = {}) => new StreamrClient({
     ...opts,
 })
 
-describe('Stream', () => {
+describe('StreamCurrentTest', () => {
     let client
     let stream
 
@@ -31,6 +31,7 @@ describe('Stream', () => {
     })
 
     describe('detectFields()', () => {
+        /*
         it('does detect primitive types', async () => {
             const msg = {
                 number: 123,
@@ -78,7 +79,7 @@ describe('Stream', () => {
             const loadedStream = await client.getStream(stream.id)
             expect(loadedStream.config.fields).toEqual(expectedFields)
         })
-
+*/
         it('skips unsupported types', async () => {
             const msg = {
                 null: null,

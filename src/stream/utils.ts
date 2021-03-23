@@ -25,7 +25,7 @@ export type StreamID = string & {
 }
 
 export function toStreamId(str: string) {
-  return str.toLowerCase() as StreamID
+    return str.toLowerCase() as StreamID
 }
 
 export function validateOptions(optionsOrStreamId: StreamPartDefinition): ValidatedStreamPartDefinition {
