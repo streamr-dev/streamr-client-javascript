@@ -242,7 +242,9 @@ export class Stream {
         )
         // wait for propagation: the storage node sees the database change in E&E and
         // is ready to store the any stream data which we publish
-        await waitForCondition(() => this.isStreamStoredInStorageNode(this.id))
+        const TIMEOUT = 30 * 1000
+        const POLL_INTERVAL = 500
+        await waitForCondition(() => this.isStreamStoredInStorageNode(this.id), TIMEOUT, POLL_INTERVAL)
     }
 
     private async isStreamStoredInStorageNode(streamId: string) {
