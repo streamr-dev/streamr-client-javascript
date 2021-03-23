@@ -244,7 +244,8 @@ export class Stream {
         // is ready to store the any stream data which we publish
         const TIMEOUT = 30 * 1000
         const POLL_INTERVAL = 500
-        await waitForCondition(() => this.isStreamStoredInStorageNode(this.id), TIMEOUT, POLL_INTERVAL)
+        await waitForCondition(() => this.isStreamStoredInStorageNode(this.id), TIMEOUT, POLL_INTERVAL,
+            () => `Propagation timeout when adding stream to a storage node: ${this.id}`)
     }
 
     private async isStreamStoredInStorageNode(streamId: string) {
