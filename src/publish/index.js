@@ -12,7 +12,9 @@ import Encrypt from './Encrypt'
 
 export class FailedToPublishError extends Error {
     constructor(streamId, msg, reason) {
-        super(`Failed to publish to stream ${streamId} due to: ${reason && reason.stack ? reason.stack : reason}. Message was: ${inspect(msg)}`)
+        super(`Failed to publish to stream ${streamId} due to: ${reason && reason.stack ? reason.stack : reason}. Message was: ${inspect(msg, {
+            maxStringLength: 1024,
+        })}`)
         this.streamId = streamId
         this.msg = msg
         this.reason = reason
