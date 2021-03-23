@@ -81,6 +81,21 @@ class StreamrConnection extends Connection {
             return
         }
 
+        if (controlMessage.streamMessage) {
+            Object.defineProperty(controlMessage.streamMessage, 'serializedContent', {
+                value: controlMessage.streamMessage.serializedContent,
+                writable: true,
+                configurable: true,
+                enumerable: false,
+            })
+            Object.defineProperty(controlMessage.streamMessage, 'parsedContent', {
+                value: controlMessage.streamMessage.parsedContent,
+                writable: true,
+                configurable: true,
+                enumerable: false,
+            })
+        }
+
         this.debug('(%o) << %o', this.getState(), controlMessage)
         this.emit(controlMessage.type, controlMessage)
     }

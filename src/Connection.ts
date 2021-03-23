@@ -677,15 +677,30 @@ export default class Connection extends EventEmitter {
 
     async _send(msg: Todo) {
         return new Promise((resolve, reject) => {
+            if (msg.streamMessage) {
+                Object.defineProperty(msg.streamMessage, 'serializedContent', {
+                    value: msg.streamMessage.serializedContent,
+                    writable: true,
+                    configurable: true,
+                    enumerable: false,
+                })
+                Object.defineProperty(msg.streamMessage, 'parsedContent', {
+                    value: msg.streamMessage.parsedContent,
+                    writable: true,
+                    configurable: true,
+                    enumerable: false,
+                })
+            }
+
             this.debug('(%s) >> %o', this.getState(), msg)
             // promisify send
             const data = typeof msg.serialize === 'function' ? msg.serialize() : msg
-            // send callback doesn't exist with browser websockets, just resolve
             /* istanbul ignore next */
             this.emit('_send', msg) // for informational purposes
             // @ts-expect-error
             if (process.browser) {
                 this.socket.send(data)
+                // send callback doesn't exist with browser websockets, just resolve
                 resolve(data)
             } else {
                 this.socket.send(data, (err: Todo) => {
