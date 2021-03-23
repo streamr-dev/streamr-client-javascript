@@ -11,7 +11,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // add global support for pretty millisecond formatting with %n
 // @ts-expect-error
-Debug.formatters.n = (v) => Debug.humanize(v)
+Debug.formatters.n = (v) => Debug.humanize(v || 0)
 
 export interface ConnectionOptions {
     url?: string,
