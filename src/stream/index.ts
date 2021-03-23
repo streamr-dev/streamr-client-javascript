@@ -240,7 +240,7 @@ export class Stream {
                 })
             },
         )
-        // wait for propagation: the storage node sees the database change in E&E and 
+        // wait for propagation: the storage node sees the database change in E&E and
         // is ready to store the any stream data which we publish
         await waitForCondition(() => this.isStreamStoredInStorageNode(this.id))
     }
@@ -250,11 +250,11 @@ export class Stream {
         const response = await fetch(url)
         if (response.status === 200) {
             return true
-        } else if (response.status === 404) {
-            return false
-        } else {
-            throw new Error(`Unexpected response code ${response.status} when fetching stream storage status`)
         }
+        if (response.status === 404) { // eslint-disable-line padding-line-between-statements
+            return false
+        }
+        throw new Error(`Unexpected response code ${response.status} when fetching stream storage status`)
     }
 
     async removeFromStorageNode(address: string) {
