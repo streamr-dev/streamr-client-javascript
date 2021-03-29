@@ -130,10 +130,23 @@ jobs:
         run: npm ci
       - name: benchmarks
         run: npm run benchmarks > benchmarks.txt
-      - uses: actions/upload-artifact@v2
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
         with:
-          name: benchmarks
-          path: benchmarks.txt
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: rhysd/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'benchmarkjs'
+          # Where the output from the benchmark tool is stored
+          output-file-path: benchmarks.txt
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-always: true
 
   streamr-client-testing-tool:
     name: ${{ matrix.config-name }} ${{ matrix.test-name }}
