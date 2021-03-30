@@ -1203,8 +1203,7 @@ describeRepeats('StreamrClient', () => {
                 await waitForEvent(sub, 'resent')
                 expect(messages).toEqual(published.slice(-3))
             })
-        // @ts-expect-error
-        }, 10000)
+        })
 
         describe('utf-8 encoding', () => {
             it('decodes realtime messages correctly', async () => {

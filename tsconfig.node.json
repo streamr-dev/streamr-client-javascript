@@ -19,10 +19,10 @@
         "strict": true,
         "moduleResolution": "node",
         "resolveJsonModule": true,
-        "module": "commonjs"
-    },
-    "globals": {
-        "ts-jest": {}
+        "module": "commonjs",
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*",
