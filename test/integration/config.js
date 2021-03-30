@@ -20,7 +20,7 @@ module.exports = {
             templateSidechainAddress: process.env.DU_TEMPLATE_SIDECHAIN || '0x36afc8c9283CC866b8EB6a61C6e6862a83cd6ee8',
         },
         storageNode: {
-            // "broker-node-storage-1" om Docker environment
+            // "broker-node-storage-1" on Docker environment
             address: '0xde1112f631486CfC759A50196853011528bC5FA0',
             url: 'http://10.200.10.1:8891'
         },
