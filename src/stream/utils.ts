@@ -37,7 +37,7 @@ export function validateOptions(optionsOrStreamId: StreamPartDefinition): Valida
     let options: Todo = {}
     if (typeof optionsOrStreamId === 'string') {
         options = {
-            streamId: toStreamId(optionsOrStreamId),
+            streamId: optionsOrStreamId,
             streamPartition: 0,
         }
     } else if (typeof optionsOrStreamId === 'object') {
@@ -70,6 +70,8 @@ export function validateOptions(optionsOrStreamId: StreamPartDefinition): Valida
     if (options.streamId == null) {
         throw new Error(`streamId must be set! Given: ${inspect(optionsOrStreamId)}`)
     }
+
+    options.streamId = toStreamId(options.streamId)
 
     options.streamPartition = options.streamPartition || 0
 

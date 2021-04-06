@@ -5,7 +5,7 @@ import qs from 'qs'
 import debugFactory from 'debug'
 
 import { getEndpointUrl } from '../utils'
-import { validateOptions } from '../stream/utils'
+import { validateOptions, toStreamId } from '../stream/utils'
 import { Stream, StreamOperation, StreamProperties } from '../stream'
 import StreamPart from '../stream/StreamPart'
 import { isKeyExchangeStream } from '../stream/KeyExchange'
@@ -89,7 +89,9 @@ export class StreamEndpoints {
     /**
      * @category Important
      */
-    async getStream(streamId: string) {
+    async getStream(untypedStreamId: string) {
+        const streamId = toStreamId(untypedStreamId)
+
         this.client.debug('getStream %o', {
             streamId,
         })
@@ -175,7 +177,9 @@ export class StreamEndpoints {
         return stream
     }
 
-    async getStreamPublishers(streamId: string) {
+    async getStreamPublishers(untypedStreamId: string) {
+        const streamId = toStreamId(untypedStreamId)
+
         this.client.debug('getStreamPublishers %o', {
             streamId,
         })
@@ -184,7 +188,9 @@ export class StreamEndpoints {
         return json.addresses.map((a: string) => a.toLowerCase())
     }
 
-    async isStreamPublisher(streamId: string, ethAddress: EthereumAddress) {
+    async isStreamPublisher(untypedStreamId: string, ethAddress: EthereumAddress) {
+        const streamId = toStreamId(untypedStreamId)
+
         this.client.debug('isStreamPublisher %o', {
             streamId,
             ethAddress,
@@ -202,7 +208,8 @@ export class StreamEndpoints {
         }
     }
 
-    async getStreamSubscribers(streamId: string) {
+    async getStreamSubscribers(untypedStreamId: string) {
+        const streamId = toStreamId(untypedStreamId)
         this.client.debug('getStreamSubscribers %o', {
             streamId,
         })
@@ -211,7 +218,8 @@ export class StreamEndpoints {
         return json.addresses.map((a: string) => a.toLowerCase())
     }
 
-    async isStreamSubscriber(streamId: string, ethAddress: EthereumAddress) {
+    async isStreamSubscriber(untypedStreamId: string, ethAddress: EthereumAddress) {
+        const streamId = toStreamId(untypedStreamId)
         this.client.debug('isStreamSubscriber %o', {
             streamId,
             ethAddress,
@@ -228,7 +236,8 @@ export class StreamEndpoints {
         }
     }
 
-    async getStreamValidationInfo(streamId: string) {
+    async getStreamValidationInfo(untypedStreamId: string) {
+        const streamId = toStreamId(untypedStreamId)
         this.client.debug('getStreamValidationInfo %o', {
             streamId,
         })

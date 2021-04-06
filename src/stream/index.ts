@@ -1,4 +1,5 @@
 import { getEndpointUrl } from '../utils'
+import { toStreamId } from './utils'
 import authFetch from '../rest/authFetch'
 
 import StorageNode from './StorageNode'
@@ -47,7 +48,7 @@ export interface StreamProperties {
     inactivityThresholdHours?: number
 }
 
-const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map'] as const
+const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map', 'StreamID'] as const
 
 export type Field = {
     name: string;
@@ -93,6 +94,9 @@ export class Stream {
     constructor(client: StreamrClient, props: StreamProperties) {
         this._client = client
         Object.assign(this, props)
+        if (props.id) {
+            this.id = toStreamId(props.id)
+        }
     }
 
     async update() {
@@ -202,19 +206,17 @@ export class Stream {
         })
 
         const receivedMsgs = await sub.collect()
-        // console.log('receivedMsgs.length', receivedMsgs.length)
         if (!receivedMsgs.length) { return }
 
         const [lastMessage] = receivedMsgs
-        // console.log('fields', Object.entries(lastMessage))
         const fields = Object.entries(lastMessage).map(([name, value]) => {
             const type = getFieldType(value)
+
             return !!type && {
                 name,
                 type,
             }
         }).filter(Boolean) as Field[] // see https://github.com/microsoft/TypeScript/issues/30621
-
         // Save field config back to the stream
         this.config.fields = fields
         await this.update()

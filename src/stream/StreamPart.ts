@@ -1,3 +1,5 @@
+import { toStreamId } from './utils'
+
 export default class StreamPart {
 
     _streamId: string
@@ -17,7 +19,7 @@ export default class StreamPart {
     }
 
     getStreamId() {
-        return this._streamId
+        return toStreamId(this._streamId)
     }
 
     getStreamPartition() {
