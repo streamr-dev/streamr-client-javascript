@@ -202,11 +202,11 @@ export class Stream {
         })
 
         const receivedMsgs = await sub.collect()
-        //console.log('receivedMsgs.length', receivedMsgs.length)
+        // console.log('receivedMsgs.length', receivedMsgs.length)
         if (!receivedMsgs.length) { return }
 
         const [lastMessage] = receivedMsgs
-        //console.log('fields', Object.entries(lastMessage))
+        // console.log('fields', Object.entries(lastMessage))
         const fields = Object.entries(lastMessage).map(([name, value]) => {
             const type = getFieldType(value)
             return !!type && {
