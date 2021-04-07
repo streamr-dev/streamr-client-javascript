@@ -4,7 +4,7 @@ import { waitForCondition } from 'streamr-test-utils'
 import { getEndpointUrl } from '../utils'
 import authFetch from '../rest/authFetch'
 
-import StorageNode from './StorageNode'
+import { StorageNode } from './StorageNode'
 import { StreamrClient } from '../StreamrClient'
 
 // TODO explicit types: e.g. we never provide both streamId and id, or both streamPartition and partition
