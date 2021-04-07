@@ -48,7 +48,7 @@ export interface StreamProperties {
     inactivityThresholdHours?: number
 }
 
-const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map', 'StreamID'] as const
+const VALID_FIELD_TYPES = ['number', 'string', 'boolean', 'list', 'map'] as const
 
 export type Field = {
     name: string;
@@ -93,13 +93,19 @@ export class Stream {
 
     constructor(client: StreamrClient, props: StreamProperties) {
         this._client = client
-        Object.assign(this, props)
         if (props.id) {
-            this.id = toStreamId(props.id)
+            props.id = toStreamId(props.id)
         }
+        Object.assign(this, props)
+
     }
 
     async update() {
+        /*
+        console.log(this.id)
+        console.log('url', getEndpointUrl(this._client.options.restUrl, 'streams', this.id))
+        console.log('body', JSON.stringify(this.toObject()))
+        console.log('session', this._client.session)*/
         const json = await authFetch<StreamProperties>(
             getEndpointUrl(this._client.options.restUrl, 'streams', this.id),
             this._client.session,

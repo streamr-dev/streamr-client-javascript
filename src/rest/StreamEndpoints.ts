@@ -140,6 +140,7 @@ export class StreamEndpoints {
             props,
         })
 
+
         const json = await authFetch<StreamProperties>(
             getEndpointUrl(this.client.options.restUrl, 'streams'),
             this.client.session,
