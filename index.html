@@ -547,11 +547,11 @@
 				<!-- This stuff REALLY isn't for those who use our infrastructure, neither DU admins nor DU client devs. It's only relevant if you're setting up your own sidechain.
 These DataUnion-specific options can be given to `new StreamrClient` options:
 
-| Property                            | Default                                                | Description                                                                                                      |
-| :---------------------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| dataUnion.minimumWithdrawTokenWei   | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge                          |
-| dataUnion.freeWithdraw              | false                                                  | true = someone else pays for the gas when transporting the withdraw tx to mainnet |
-|                                     |                                                        | false = client does the transport as self-service and pays the mainnet gas costs |
+| Property                            | Default                                                | Description                                                                                |
+| :---------------------------------- | :----------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| dataUnion.minimumWithdrawTokenWei   | 1000000                                                | Threshold value set in AMB configs, smallest token amount that can pass over the bridge    |
+| dataUnion.payForTransport           | true                                                   | true = client does the transport as self-service and pays the mainnet gas costs            |
+|                                     |                                                        | false = someone else pays for the gas when transporting the withdraw tx to mainnet         |
 -->
 				<a href="#admin-functions" id="admin-functions" style="color: inherit; text-decoration: none;">
 					<h3>Admin Functions</h3>
@@ -586,15 +586,16 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 						</tr>
 						<tr>
 							<td align="left">withdrawAllToMember(memberAddress[, <a href="#withdraw-options">options</a>])</td>
-							<td align="left">Transaction receipt</td>
+							<td align="left">Transaction receipt <code>*</code></td>
 							<td align="left">Send all withdrawable earnings to the member&#39;s address</td>
 						</tr>
 						<tr>
 							<td align="left">withdrawAllToSigned(memberAddress, recipientAddress, signature[, <a href="#withdraw-options">options</a>])</td>
-							<td align="left">Transaction receipt</td>
+							<td align="left">Transaction receipt <code>*</code></td>
 							<td align="left">Send all withdrawable earnings to the address signed off by the member (see <a href="#member-functions">example below</a>)</td>
 						</tr>
 				</tbody></table>
+				<p><code>*</code> The return value type may vary depending on <a href="#withdraw-options">the given options</a> that describe the use case. </p>
 				<p>Here&#39;s how to deploy a Data Union contract with 30% Admin fee and add some members:</p>
 				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
 
@@ -634,12 +635,12 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 						</tr>
 						<tr>
 							<td align="left">withdrawAll([<a href="#withdraw-options">options</a>])</td>
-							<td align="left">Transaction receipt</td>
+							<td align="left">Transaction receipt <code>*</code></td>
 							<td align="left">Withdraw funds from Data Union</td>
 						</tr>
 						<tr>
 							<td align="left">withdrawAllTo(recipientAddress[, <a href="#withdraw-options">options</a>])</td>
-							<td align="left">Transaction receipt</td>
+							<td align="left">Transaction receipt <code>*</code></td>
 							<td align="left">Donate/move your earnings to recipientAddress instead of your memberAddress</td>
 						</tr>
 						<tr>
@@ -652,7 +653,13 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Signature (string)</td>
 							<td align="left">Signature that can be used to withdraw a specific amount of tokens to given recipientAddress</td>
 						</tr>
+						<tr>
+							<td align="left">transportMessage(messageHash[, pollingIntervalMs[, retryTimeoutMs]])</td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Send the mainnet transaction to withdraw tokens from the sidechain</td>
+						</tr>
 				</tbody></table>
+				<p><code>*</code> The return value type may vary depending on <a href="#withdraw-options">the given options</a> that describe the use case.</p>
 				<p>Here&#39;s an example on how to sign off on a withdraw to (any) recipientAddress (NOTE: this requires no gas!)</p>
 				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
 
@@ -672,6 +679,13 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
 <span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">withdrawAllToSigned</span><span style="color: #000000">(</span><span style="color: #001080">memberAddress</span><span style="color: #000000">, </span><span style="color: #001080">recipientAddress</span><span style="color: #000000">, </span><span style="color: #001080">signature</span><span style="color: #000000">)</span>
+</code></pre>
+				<p>The <code>messageHash</code> argument to <code>transportMessage</code> will come from the withdraw function with the specific options. The following is equivalent to the above withdraw line:</p>
+				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">messageHash</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">withdrawAllToSigned</span><span style="color: #000000">(</span><span style="color: #001080">memberAddress</span><span style="color: #000000">, </span><span style="color: #001080">recipientAddress</span><span style="color: #000000">, </span><span style="color: #001080">signature</span><span style="color: #000000">, {</span>
+<span style="color: #000000">    </span><span style="color: #001080">payForTransport:</span><span style="color: #000000"> </span><span style="color: #0000FF">false</span><span style="color: #000000">,</span>
+<span style="color: #000000">    </span><span style="color: #001080">waitUntilTransportIsComplete:</span><span style="color: #000000"> </span><span style="color: #0000FF">false</span><span style="color: #000000">,</span>
+<span style="color: #000000">}) </span><span style="color: #008000">// only pay for sidechain gas</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">receipt</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">dataUnion</span><span style="color: #000000">.</span><span style="color: #795E26">transportMessage</span><span style="color: #000000">(</span><span style="color: #001080">messageHash</span><span style="color: #000000">) </span><span style="color: #008000">// only pay for mainnet gas</span>
 </code></pre>
 				<a href="#query-functions" id="query-functions" style="color: inherit; text-decoration: none;">
 					<h3>Query functions</h3>
@@ -740,6 +754,16 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Whether to send the withdrawn DATA tokens to mainnet address (or sidechain address)</td>
 						</tr>
 						<tr>
+							<td align="left">payForTransport</td>
+							<td align="left">true</td>
+							<td align="left">Whether to pay for the withdraw transaction signature transport to mainnet over the bridge</td>
+						</tr>
+						<tr>
+							<td align="left">waitUntilTransportIsComplete</td>
+							<td align="left">true</td>
+							<td align="left">Whether to wait until the withdrawn DATA tokens are visible in mainnet</td>
+						</tr>
+						<tr>
 							<td align="left">pollingIntervalMs</td>
 							<td align="left">1000 (1&nbsp;second)</td>
 							<td align="left">How often requests are sent to find out if the withdraw has completed</td>
@@ -750,7 +774,45 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">When to give up when waiting for the withdraw to complete</td>
 						</tr>
 				</tbody></table>
-				<p>These withdraw transactions are sent to the sidechain, so gas price shouldn&#39;t be manually set (fees will hopefully stay very low), but a little bit of <a href="https://www.xdaichain.com/for-users/get-xdai-tokens">sidechain native token</a> is nonetheless required.</p>
+				<p>These withdraw transactions are sent to the sidechain, so gas price shouldn&#39;t be manually set (fees will hopefully stay very low),
+				but a little bit of <a href="https://www.xdaichain.com/for-users/get-xdai-tokens">sidechain native token</a> is nonetheless required.</p>
+				<p>The return values from the withdraw functions also depend on the options.</p>
+				<p>If <code>sendToMainnet: false</code>, other options don&#39;t apply at all, and <strong>sidechain transaction receipt</strong> is returned as soon as the withdraw transaction is done. This should be fairly quick in the sidechain.</p>
+				<p>The use cases corresponding to the different combinations of the boolean flags:</p>
+				<table>
+					<thead>
+						<tr>
+							<th align="left"><code>transport</code></th>
+							<th align="left"><code>wait</code></th>
+							<th align="left">Returns</th>
+							<th align="left">Effect</th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td align="left"><code>true</code></td>
+							<td align="left"><code>true</code></td>
+							<td align="left">Transaction receipt</td>
+							<td align="left"><em>(default)</em> Self-service bridge to mainnet, client pays for mainnet gas</td>
+						</tr>
+						<tr>
+							<td align="left"><code>true</code></td>
+							<td align="left"><code>false</code></td>
+							<td align="left">Transaction receipt</td>
+							<td align="left">Self-service bridge to mainnet (but <strong>skip</strong> the wait that double-checks the withdraw succeeded and tokens arrived to destination)</td>
+						</tr>
+						<tr>
+							<td align="left"><code>false</code></td>
+							<td align="left"><code>true</code></td>
+							<td align="left"><code>null</code></td>
+							<td align="left">Someone else pays for the mainnet gas automatically, e.g. the bridge operator (in this case the transaction receipt can&#39;t be returned)</td>
+						</tr>
+						<tr>
+							<td align="left"><code>false</code></td>
+							<td align="left"><code>false</code></td>
+							<td align="left">AMB message hash</td>
+							<td align="left">Someone else pays for the mainnet gas, but we need to give them the message hash first</td>
+						</tr>
+				</tbody></table>
 				<a href="#deployment-options" id="deployment-options" style="color: inherit; text-decoration: none;">
 					<h3>Deployment options</h3>
 				</a>

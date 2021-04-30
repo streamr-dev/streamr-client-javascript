@@ -114,6 +114,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#signwithdrawallto" class="tsd-kind-icon">sign<wbr>Withdraw<wbr>All<wbr>To</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#signwithdrawamountto" class="tsd-kind-icon">sign<wbr>Withdraw<wbr>Amount<wbr>To</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#transfertomemberincontract" class="tsd-kind-icon">transfer<wbr>ToMember<wbr>InContract</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#transportmessage" class="tsd-kind-icon">transport<wbr>Message</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#withdrawall" class="tsd-kind-icon">withdraw<wbr>All</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#withdrawallto" class="tsd-kind-icon">withdraw<wbr>All<wbr>To</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="dataunion_dataunion.dataunion.html#withdrawalltomember" class="tsd-kind-icon">withdraw<wbr>All<wbr>ToMember</a></li>
@@ -131,7 +132,7 @@
 					<div class="tsd-signature tsd-kind-icon">client<span class="tsd-signature-symbol">:</span> <a href="streamrclient.streamrclient-1.html" class="tsd-signature-type" data-tsd-kind="Class">StreamrClient</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L74">src/dataunion/DataUnion.ts:74</a></li>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L87">src/dataunion/DataUnion.ts:87</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -141,7 +142,7 @@
 					<div class="tsd-signature tsd-kind-icon">contract<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L72">src/dataunion/DataUnion.ts:72</a></li>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L85">src/dataunion/DataUnion.ts:85</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -151,7 +152,7 @@
 					<div class="tsd-signature tsd-kind-icon">sidechain<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L73">src/dataunion/DataUnion.ts:73</a></li>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L86">src/dataunion/DataUnion.ts:86</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -162,27 +163,32 @@
 					<a name="_executewithdraw" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _execute<wbr>Withdraw</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
-						<li class="tsd-signature tsd-kind-icon">_execute<wbr>Withdraw<span class="tsd-signature-symbol">(</span>getWithdrawTxFunc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">_execute<wbr>Withdraw<span class="tsd-signature-symbol">(</span>getWithdrawTxFunc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L569">src/dataunion/DataUnion.ts:569</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L603">src/dataunion/DataUnion.ts:603</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Template for withdraw functions</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>getWithdrawTxFunc: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h5>
+									<h5>getWithdrawTxFunc: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></h5>
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter-signature">
 											<ul class="tsd-signatures tsd-kind-type-literal">
-												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
 												<li class="tsd-description">
-													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></h4>
 												</li>
 											</ul>
 										</li>
@@ -195,7 +201,11 @@
 									<h5>options: <a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol"> = ...</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>the sidechain withdraw transaction receipt IF called with sendToMainnet=false,
+								ELSE the message hash IF called with payForTransport=false and waitUntilTransportIsComplete=false,
+								ELSE the mainnet AMB signature execution transaction receipt IF we did the transport ourselves,
+							ELSE null IF transport to mainnet was done by someone else (in which case the receipt is lost)</p>
 						</li>
 					</ul>
 				</section>
@@ -203,13 +213,13 @@
 					<a name="addmembers" class="tsd-anchor"></a>
 					<h3>add<wbr>Members</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">add<wbr>Members<span class="tsd-signature-symbol">(</span>memberAddressList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Members<span class="tsd-signature-symbol">(</span>memberAddressList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L366">src/dataunion/DataUnion.ts:366</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L387">src/dataunion/DataUnion.ts:387</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -223,7 +233,7 @@
 									<h5>memberAddressList: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -237,7 +247,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L345">src/dataunion/DataUnion.ts:345</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L366">src/dataunion/DataUnion.ts:366</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -265,7 +275,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L84">src/dataunion/DataUnion.ts:84</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L97">src/dataunion/DataUnion.ts:97</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -282,7 +292,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L313">src/dataunion/DataUnion.ts:313</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L334">src/dataunion/DataUnion.ts:334</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -299,7 +309,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L307">src/dataunion/DataUnion.ts:307</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L328">src/dataunion/DataUnion.ts:328</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -321,7 +331,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L563">src/dataunion/DataUnion.ts:563</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L591">src/dataunion/DataUnion.ts:591</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Contracts</span></h4>
@@ -338,7 +348,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L277">src/dataunion/DataUnion.ts:277</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L296">src/dataunion/DataUnion.ts:296</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -366,7 +376,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L88">src/dataunion/DataUnion.ts:88</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L101">src/dataunion/DataUnion.ts:101</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -383,7 +393,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L253">src/dataunion/DataUnion.ts:253</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L272">src/dataunion/DataUnion.ts:272</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/dataunion_dataunion.dataunionstats.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionStats</a><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -400,7 +410,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L322">src/dataunion/DataUnion.ts:322</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L343">src/dataunion/DataUnion.ts:343</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -417,13 +427,13 @@
 					<a name="getwithdrawalltomembertx" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Withdraw<wbr>All<wbr>ToMember<wbr>Tx</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToMember<wbr>Tx<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToMember<wbr>Tx<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L412">src/dataunion/DataUnion.ts:412</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L436">src/dataunion/DataUnion.ts:436</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -443,7 +453,7 @@
 									<h5>sendToMainnet: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>await on call .wait to actually send the tx</p>
 						</li>
 					</ul>
@@ -452,13 +462,13 @@
 					<a name="getwithdrawalltosignedtx" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Withdraw<wbr>All<wbr>ToSigned<wbr>Tx</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToSigned<wbr>Tx<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToSigned<wbr>Tx<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L447">src/dataunion/DataUnion.ts:447</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L474">src/dataunion/DataUnion.ts:474</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -490,7 +500,7 @@
 									<h5>sendToMainnet: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>await on call .wait to actually send the tx</p>
 						</li>
 					</ul>
@@ -499,13 +509,13 @@
 					<a name="getwithdrawalltotx" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Withdraw<wbr>All<wbr>ToTx</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToTx<span class="tsd-signature-symbol">(</span>recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>ToTx<span class="tsd-signature-symbol">(</span>recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L186">src/dataunion/DataUnion.ts:186</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L205">src/dataunion/DataUnion.ts:205</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -525,7 +535,7 @@
 									<h5>sendToMainnet: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>await on call .wait to actually send the tx</p>
 						</li>
 					</ul>
@@ -534,13 +544,13 @@
 					<a name="getwithdrawalltx" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagPrivate">Private</span> get<wbr>Withdraw<wbr>All<wbr>Tx</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>Tx<span class="tsd-signature-symbol">(</span>sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Withdraw<wbr>All<wbr>Tx<span class="tsd-signature-symbol">(</span>sendToMainnet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L148">src/dataunion/DataUnion.ts:148</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L164">src/dataunion/DataUnion.ts:164</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -554,7 +564,7 @@
 									<h5>sendToMainnet: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractTransaction</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>await on call .wait to actually send the tx</p>
 						</li>
 					</ul>
@@ -569,7 +579,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L298">src/dataunion/DataUnion.ts:298</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L319">src/dataunion/DataUnion.ts:319</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -597,7 +607,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L122">src/dataunion/DataUnion.ts:122</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L135">src/dataunion/DataUnion.ts:135</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -620,7 +630,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L97">src/dataunion/DataUnion.ts:97</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L110">src/dataunion/DataUnion.ts:110</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -642,13 +652,13 @@
 					<a name="removemembers" class="tsd-anchor"></a>
 					<h3>remove<wbr>Members</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">remove<wbr>Members<span class="tsd-signature-symbol">(</span>memberAddressList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Members<span class="tsd-signature-symbol">(</span>memberAddressList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L379">src/dataunion/DataUnion.ts:379</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L400">src/dataunion/DataUnion.ts:400</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -662,7 +672,7 @@
 									<h5>memberAddressList: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -670,13 +680,13 @@
 					<a name="setadminfee" class="tsd-anchor"></a>
 					<h3>set<wbr>Admin<wbr>Fee</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">set<wbr>Admin<wbr>Fee<span class="tsd-signature-symbol">(</span>newFeeFraction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Admin<wbr>Fee<span class="tsd-signature-symbol">(</span>newFeeFraction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L460">src/dataunion/DataUnion.ts:460</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L487">src/dataunion/DataUnion.ts:487</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -690,7 +700,7 @@
 									<h5>newFeeFraction: <span class="tsd-signature-type">number</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -704,7 +714,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L210">src/dataunion/DataUnion.ts:210</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L229">src/dataunion/DataUnion.ts:229</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -742,7 +752,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L222">src/dataunion/DataUnion.ts:222</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L241">src/dataunion/DataUnion.ts:241</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -776,13 +786,13 @@
 					<a name="transfertomemberincontract" class="tsd-anchor"></a>
 					<h3>transfer<wbr>ToMember<wbr>InContract</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">transfer<wbr>ToMember<wbr>InContract<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, amountTokenWei<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">BigNumber</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">transfer<wbr>ToMember<wbr>InContract<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, amountTokenWei<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">BigNumber</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L476">src/dataunion/DataUnion.ts:476</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L503">src/dataunion/DataUnion.ts:503</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -805,8 +815,38 @@
 									</div>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionResponse</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>receipt once transfer transaction is confirmed</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="transportmessage" class="tsd-anchor"></a>
+					<h3>transport<wbr>Message</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">transport<wbr>Message<span class="tsd-signature-symbol">(</span>messageHash<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, pollingIntervalMs<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span>, retryTimeoutMs<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L672">src/dataunion/DataUnion.ts:672</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>messageHash: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>pollingIntervalMs: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1000</span></h5>
+								</li>
+								<li>
+									<h5>retryTimeoutMs: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 300000</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>null if message was already transported, ELSE the mainnet AMB signature execution transaction receipt</p>
 						</li>
 					</ul>
 				</section>
@@ -814,13 +854,13 @@
 					<a name="withdrawall" class="tsd-anchor"></a>
 					<h3>withdraw<wbr>All</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L135">src/dataunion/DataUnion.ts:135</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L151">src/dataunion/DataUnion.ts:151</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -834,8 +874,11 @@
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>receipt once withdraw is complete (tokens are seen in mainnet)</p>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>the sidechain withdraw transaction receipt IF called with sendToMainnet=false,
+								ELSE the message hash IF called with payForTransport=false and waitUntilTransportIsComplete=false,
+								ELSE the mainnet AMB signature execution transaction receipt IF we did the transport ourselves,
+							ELSE null IF transport to mainnet was done by someone else (in which case the receipt is lost)</p>
 						</li>
 					</ul>
 				</section>
@@ -843,13 +886,13 @@
 					<a name="withdrawallto" class="tsd-anchor"></a>
 					<h3>withdraw<wbr>All<wbr>To</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>To<span class="tsd-signature-symbol">(</span>recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>To<span class="tsd-signature-symbol">(</span>recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L169">src/dataunion/DataUnion.ts:169</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L188">src/dataunion/DataUnion.ts:188</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -866,8 +909,11 @@
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>get receipt once withdraw is complete (tokens are seen in mainnet)</p>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>the sidechain withdraw transaction receipt IF called with sendToMainnet=false,
+								ELSE the message hash IF called with payForTransport=false and waitUntilTransportIsComplete=false,
+								ELSE the mainnet AMB signature execution transaction receipt IF we did the transport ourselves,
+							ELSE null IF transport to mainnet was done by someone else (in which case the receipt is lost)</p>
 						</li>
 					</ul>
 				</section>
@@ -875,13 +921,13 @@
 					<a name="withdrawalltomember" class="tsd-anchor"></a>
 					<h3>withdraw<wbr>All<wbr>ToMember</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>ToMember<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>ToMember<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L395">src/dataunion/DataUnion.ts:395</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L419">src/dataunion/DataUnion.ts:419</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -902,8 +948,11 @@
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>Receipt once withdraw transaction is confirmed</p>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>the sidechain withdraw transaction receipt IF called with sendToMainnet=false,
+								ELSE the message hash IF called with payForTransport=false and waitUntilTransportIsComplete=false,
+								ELSE the mainnet AMB signature execution transaction receipt IF we did the transport ourselves,
+							ELSE null IF transport to mainnet was done by someone else (in which case the receipt is lost)</p>
 						</li>
 					</ul>
 				</section>
@@ -911,13 +960,13 @@
 					<a name="withdrawalltosigned" class="tsd-anchor"></a>
 					<h3>withdraw<wbr>All<wbr>ToSigned</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>ToSigned<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">withdraw<wbr>All<wbr>ToSigned<span class="tsd-signature-symbol">(</span>memberAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, recipientAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/007ee21/src/dataunion/DataUnion.ts#L425">src/dataunion/DataUnion.ts:425</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/108afd3/src/dataunion/DataUnion.ts#L452">src/dataunion/DataUnion.ts:452</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -949,8 +998,11 @@
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/dataunion_dataunion.dataunionwithdrawoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">DataUnionWithdrawOptions</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">TransactionReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>receipt once withdraw transaction is confirmed</p>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ContractReceipt</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>the sidechain withdraw transaction receipt IF called with sendToMainnet=false,
+								ELSE the message hash IF called with payForTransport=false and waitUntilTransportIsComplete=false,
+								ELSE the mainnet AMB signature execution transaction receipt IF we did the transport ourselves,
+							ELSE null IF transport to mainnet was done by someone else (in which case the receipt is lost)</p>
 						</li>
 					</ul>
 				</section>
@@ -1065,6 +1117,9 @@
 								<a href="dataunion_dataunion.dataunion.html#transfertomemberincontract" class="tsd-kind-icon">transfer<wbr>ToMember<wbr>InContract</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="dataunion_dataunion.dataunion.html#transportmessage" class="tsd-kind-icon">transport<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="dataunion_dataunion.dataunion.html#withdrawall" class="tsd-kind-icon">withdraw<wbr>All</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
@@ -1094,6 +1149,9 @@
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-module">
 						<a href="../interfaces/dataunion_dataunion.memberstats.html" class="tsd-kind-icon">Member<wbr>Stats</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+						<a href="../modules/dataunion_dataunion.html#ambmessagehash" class="tsd-kind-icon">Amb<wbr>Message<wbr>Hash</a>
 					</li>
 				</ul>
 			</nav>
