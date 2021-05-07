@@ -66,12 +66,7 @@ function GroupKeyObjectFromProps(data: GroupKeyProps | GroupKeyObject) {
     return data
 }
 
-interface GroupKey extends GroupKeyObject {}
-
-export type GroupKeyish = GroupKey | GroupKeyObject | ConstructorParameters<typeof GroupKey>
-
-// eslint-disable-next-line no-redeclare
-class GroupKey {
+class GroupKey implements GroupKeyObject {
     static InvalidGroupKeyError = InvalidGroupKeyError
 
     static validate(maybeGroupKey: GroupKey) {
@@ -130,7 +125,7 @@ class GroupKey {
             this.hex = Buffer.from(this.data).toString('hex')
         }
 
-        // eslint-disable-next-line no-extra-semi
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;(this.constructor as typeof GroupKey).validate(this)
     }
 
@@ -373,7 +368,7 @@ export default class EncryptionUtil extends EncryptionUtilBase {
     constructor(options: {
         privateKey: string,
         publicKey: string,
-    } | {} = {}) {
+    } | Record<string, never> = {}) {
         super()
         if ('privateKey' in options && 'publicKey' in options) {
             EncryptionUtil.validatePrivateKey(options.privateKey)

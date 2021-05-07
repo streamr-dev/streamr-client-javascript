@@ -8,7 +8,9 @@ import type { StreamPartDefinitionOptions } from '../src/stream'
 import { StreamrClient } from '../src/StreamrClient'
 import { PublishRequest } from 'streamr-client-protocol/dist/src/protocol/control_layer'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const crypto = require('crypto')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const config = require('./integration/config')
 
 export const uid = (prefix?: string) => counterId(`p${process.pid}${prefix ? '-' + prefix : ''}`)

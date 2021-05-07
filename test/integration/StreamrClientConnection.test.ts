@@ -10,6 +10,7 @@ import { StorageNode } from '../../src/stream/StorageNode'
 
 import config from './config'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const WebSocket = require('ws')
 
 const { SubscribeRequest, UnsubscribeRequest, ResendLastRequest } = ControlLayer

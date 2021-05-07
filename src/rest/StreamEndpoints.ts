@@ -271,7 +271,7 @@ export class StreamEndpoints {
         return result
     }
 
-    async publishHttp(streamObjectOrId: Stream|string, data: any, requestOptions: any = {}, keepAlive: boolean = true) {
+    async publishHttp(streamObjectOrId: Stream|string, data: any, requestOptions: any = {}, keepAlive = true) {
         let streamId
         if (streamObjectOrId instanceof Stream) {
             streamId = streamObjectOrId.id

@@ -81,7 +81,7 @@ export default class PushQueue<T> {
     error?: Error// queued error
     nextQueue: (ReturnType<typeof Defer>)[] = [] // queued promises for next()
     finished = false
-    pending: number = 0
+    pending = 0
     ended = false
     _onEnd: PushQueueOptions['onEnd']
     _onEndCalled = false
@@ -196,7 +196,7 @@ export default class PushQueue<T> {
         return this.throw(new AbortError())
     }
 
-    async next(...args:[] | [unknown]) {
+    async next(...args: [] | [unknown]) {
         return this.iterator.next(...args)
     }
 

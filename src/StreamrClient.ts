@@ -332,7 +332,7 @@ export class StreamrClient extends EventEmitter { // eslint-disable-line no-rede
     /**
      * @category Important
      */
-    async publish(streamObjectOrId: StreamPartDefinition, content: object, timestamp?: number|string|Date, partitionKey?: string) {
+    async publish(streamObjectOrId: StreamPartDefinition, content: Record<string, unknown>, timestamp?: number|string|Date, partitionKey?: string) {
         return this.publisher.publish(streamObjectOrId, content, timestamp, partitionKey)
     }
 

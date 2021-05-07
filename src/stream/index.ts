@@ -281,7 +281,7 @@ export class Stream {
         return json.map((item: any) => new StorageNode(item.storageNodeAddress))
     }
 
-    async publish(content: object, timestamp?: number|string|Date, partitionKey?: string) {
+    async publish(content: Record<string, unknown>, timestamp?: number|string|Date, partitionKey?: string) {
         return this._client.publish(this.id, content, timestamp, partitionKey)
     }
 }
