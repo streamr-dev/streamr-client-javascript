@@ -141,6 +141,10 @@
 <span style="color: #000000">    </span><span style="color: #001080">name:</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;My awesome stream created via the API&#039;</span><span style="color: #000000">,</span>
 <span style="color: #000000">})</span>
 <span style="color: #001080">console</span><span style="color: #000000">.</span><span style="color: #795E26">log</span><span style="color: #000000">(</span><span style="color: #A31515">`Stream </span><span style="color: #0000FF">${</span><span style="color: #001080">stream</span><span style="color: #000000FF">.</span><span style="color: #001080">id</span><span style="color: #0000FF">}</span><span style="color: #A31515"> has been created!`</span><span style="color: #000000">)</span>
+
+<span style="color: #008000">// Optional: to enable historical data resends, add the stream to a storage node</span>
+<span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">stream</span><span style="color: #000000">.</span><span style="color: #795E26">addToStorageNode</span><span style="color: #000000">(</span><span style="color: #001080">StorageNode</span><span style="color: #000000">.</span><span style="color: #0070C1">STREAMR_GERMANY</span><span style="color: #000000">)</span>
+
 <span style="color: #008000">// Do something with the stream, for example call stream.publish(message)</span>
 </code></pre>
 				<a href="#publishing-data-points-to-a-stream" id="publishing-data-points-to-a-stream" style="color: inherit; text-decoration: none;">
