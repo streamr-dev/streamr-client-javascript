@@ -78,6 +78,12 @@
 						<span class="tsd-signature-type">LoginEndpoints</span>
 					</li>
 					<li>
+						<span class="tsd-signature-type">ReturnType</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">Publisher</span><span class="tsd-signature-symbol">&gt;</span>
+					</li>
+					<li>
+						<span class="tsd-signature-type">Subscriber</span>
+					</li>
+					<li>
 						<span class="tsd-signature-type">EventEmitter</span>
 						<ul class="tsd-hierarchy">
 							<li>
@@ -102,6 +108,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#options" class="tsd-kind-icon">options</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#session" class="tsd-kind-icon">session</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#subscriptions" class="tsd-kind-icon">subscriptions</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="streamrclient.streamrclient-1.html#prefixed" class="tsd-kind-icon">prefixed</a></li>
 							</ul>
 						</section>
@@ -114,16 +121,17 @@
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getorcreatestream" class="tsd-kind-icon">get<wbr>OrCreate<wbr>Stream</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getstream" class="tsd-kind-icon">get<wbr>Stream</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#liststreams" class="tsd-kind-icon">list<wbr>Streams</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#publish" class="tsd-kind-icon">publish</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#resend" class="tsd-kind-icon">resend</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#subscribe" class="tsd-kind-icon">subscribe</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#unsubscribe" class="tsd-kind-icon">unsubscribe</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#publish" class="tsd-kind-icon">publish</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#resend" class="tsd-kind-icon">resend</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#subscribe" class="tsd-kind-icon">subscribe</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#unsubscribe" class="tsd-kind-icon">unsubscribe</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="streamrclient.streamrclient-1.html#generateethereumaccount" class="tsd-kind-icon">generate<wbr>Ethereum<wbr>Account</a></li>
 							</ul>
 							<h3>Other Methods</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external"><a href="streamrclient.streamrclient-1.html#addlistener" class="tsd-kind-icon">add<wbr>Listener</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#canencrypt" class="tsd-kind-icon">can<wbr>Encrypt</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#count" class="tsd-kind-icon">count</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#deploydataunion" class="tsd-kind-icon">deploy<wbr>Data<wbr>Union</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external"><a href="streamrclient.streamrclient-1.html#emit" class="tsd-kind-icon">emit</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#enableautoconnect" class="tsd-kind-icon">enable<wbr>Auto<wbr>Connect</a></li>
@@ -131,7 +139,9 @@
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#ensureconnected" class="tsd-kind-icon">ensure<wbr>Connected</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#ensuredisconnected" class="tsd-kind-icon">ensure<wbr>Disconnected</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="streamrclient.streamrclient-1.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#get" class="tsd-kind-icon">get</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getaddress" class="tsd-kind-icon">get<wbr>Address</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getall" class="tsd-kind-icon">get<wbr>All</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getdataunion" class="tsd-kind-icon">get<wbr>Data<wbr>Union</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getpublisherid" class="tsd-kind-icon">get<wbr>Publisher<wbr>Id</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getsidechaintokenbalance" class="tsd-kind-icon">get<wbr>Sidechain<wbr>Token<wbr>Balance</a></li>
@@ -142,6 +152,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getstreamsubscribers" class="tsd-kind-icon">get<wbr>Stream<wbr>Subscribers</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getstreamvalidationinfo" class="tsd-kind-icon">get<wbr>Stream<wbr>Validation<wbr>Info</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getsubscription" class="tsd-kind-icon">get<wbr>Subscription</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#getsubscriptionsession" class="tsd-kind-icon">get<wbr>Subscription<wbr>Session</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getsubscriptions" class="tsd-kind-icon">get<wbr>Subscriptions</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#gettokenbalance" class="tsd-kind-icon">get<wbr>Token<wbr>Balance</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#getuserid" class="tsd-kind-icon">get<wbr>User<wbr>Id</a></li>
@@ -161,10 +172,14 @@
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#onerror" class="tsd-kind-icon">on<wbr>Error</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external"><a href="streamrclient.streamrclient-1.html#once" class="tsd-kind-icon">once</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#publishhttp" class="tsd-kind-icon">publish<wbr>Http</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#rekey" class="tsd-kind-icon">rekey</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="streamrclient.streamrclient-1.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external"><a href="streamrclient.streamrclient-1.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#rotategroupkey" class="tsd-kind-icon">rotate<wbr>Group<wbr>Key</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="streamrclient.streamrclient-1.html#setnextgroupkey" class="tsd-kind-icon">set<wbr>Next<wbr>Group<wbr>Key</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#resendsubscribe" class="tsd-kind-icon">resend<wbr>Subscribe</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#rotategroupkey" class="tsd-kind-icon">rotate<wbr>Group<wbr>Key</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#setnextgroupkey" class="tsd-kind-icon">set<wbr>Next<wbr>Group<wbr>Key</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#startkeyexchange" class="tsd-kind-icon">start<wbr>Key<wbr>Exchange</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="streamrclient.streamrclient-1.html#stop" class="tsd-kind-icon">stop</a></li>
 							</ul>
 						</section>
 					</div>
@@ -183,7 +198,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.constructor</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L184">src/StreamrClient.ts:184</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L185">src/StreamrClient.ts:185</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -208,7 +223,7 @@
 					<div class="tsd-signature tsd-kind-icon">options<span class="tsd-signature-symbol">:</span> <a href="../modules/streamrclientconfig.html#strictstreamrclientoptions" class="tsd-signature-type" data-tsd-kind="Type alias">StrictStreamrClientOptions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L173">src/StreamrClient.ts:173</a></li>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L174">src/StreamrClient.ts:174</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -218,7 +233,18 @@
 					<div class="tsd-signature tsd-kind-icon">session<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">default</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L174">src/StreamrClient.ts:174</a></li>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L175">src/StreamrClient.ts:175</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+					<a name="subscriptions" class="tsd-anchor"></a>
+					<h3>subscriptions</h3>
+					<div class="tsd-signature tsd-kind-icon">subscriptions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Subscriptions</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from Subscriber.subscriptions</p>
+						<ul>
+							<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L580">src/subscribe/index.ts:580</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -245,7 +271,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L293">src/StreamrClient.ts:293</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L294">src/StreamrClient.ts:294</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -263,7 +289,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.createStream</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L137">src/rest/StreamEndpoints.ts:137</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L137">src/rest/StreamEndpoints.ts:137</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -286,7 +312,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L304">src/StreamrClient.ts:304</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L305">src/StreamrClient.ts:305</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -304,7 +330,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getOrCreateStream</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L156">src/rest/StreamEndpoints.ts:156</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L156">src/rest/StreamEndpoints.ts:156</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -328,7 +354,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStream</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L93">src/rest/StreamEndpoints.ts:93</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L93">src/rest/StreamEndpoints.ts:93</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -352,7 +378,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.listStreams</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L113">src/rest/StreamEndpoints.ts:113</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L113">src/rest/StreamEndpoints.ts:113</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -365,17 +391,18 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="publish" class="tsd-anchor"></a>
 					<h3>publish</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 						<li class="tsd-signature tsd-kind-icon">publish<span class="tsd-signature-symbol">(</span>streamObjectOrId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">StreamPartDefinition</span>, content<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, timestamp<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Date</span>, partitionKey<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.publish</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L335">src/StreamrClient.ts:335</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L336">src/StreamrClient.ts:336</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -397,17 +424,18 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="resend" class="tsd-anchor"></a>
 					<h3>resend</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 						<li class="tsd-signature tsd-kind-icon">resend<span class="tsd-signature-symbol">(</span>opts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, onMessage<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#onmessagecallback" class="tsd-signature-type" data-tsd-kind="Type alias">OnMessageCallback</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Subscription</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.resend</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L399">src/StreamrClient.ts:399</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L404">src/StreamrClient.ts:404</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -423,17 +451,18 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="subscribe" class="tsd-anchor"></a>
 					<h3>subscribe</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 						<li class="tsd-signature tsd-kind-icon">subscribe<span class="tsd-signature-symbol">(</span>opts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">StreamPartDefinitionOptions</span>, onMessage<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#onmessagecallback" class="tsd-signature-type" data-tsd-kind="Type alias">OnMessageCallback</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.subscribe</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L354">src/StreamrClient.ts:354</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L359">src/StreamrClient.ts:359</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -449,17 +478,18 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="unsubscribe" class="tsd-anchor"></a>
 					<h3>unsubscribe</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 						<li class="tsd-signature tsd-kind-icon">unsubscribe<span class="tsd-signature-symbol">(</span>subscription<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">StreamPartDefinitionOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Subscription</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.unsubscribe</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L392">src/StreamrClient.ts:392</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L397">src/StreamrClient.ts:397</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -482,7 +512,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L482">src/StreamrClient.ts:482</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L487">src/StreamrClient.ts:487</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>privateKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></h4>
@@ -563,7 +593,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L437">src/StreamrClient.ts:437</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L442">src/StreamrClient.ts:442</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -572,6 +602,30 @@
 								</div>
 							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="count" class="tsd-anchor"></a>
+					<h3>count</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">count<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">StreamPartDefinition</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.count</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L600">src/subscribe/index.ts:600</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <span class="tsd-signature-type">StreamPartDefinition</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -585,7 +639,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L467">src/StreamrClient.ts:467</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L472">src/StreamrClient.ts:472</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -645,7 +699,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L418">src/StreamrClient.ts:418</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L423">src/StreamrClient.ts:423</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -668,7 +722,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L422">src/StreamrClient.ts:422</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L427">src/StreamrClient.ts:427</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -691,7 +745,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L320">src/StreamrClient.ts:320</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L321">src/StreamrClient.ts:321</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -708,7 +762,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L324">src/StreamrClient.ts:324</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L325">src/StreamrClient.ts:325</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -738,6 +792,30 @@
 						</li>
 					</ul>
 				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="get" class="tsd-anchor"></a>
+					<h3>get</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">get<span class="tsd-signature-symbol">(</span>opts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">StreamPartDefinition</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.get</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L592">src/subscribe/index.ts:592</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>opts: <span class="tsd-signature-type">StreamPartDefinition</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="getaddress" class="tsd-anchor"></a>
 					<h3>get<wbr>Address</h3>
@@ -748,10 +826,28 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L426">src/StreamrClient.ts:426</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L431">src/StreamrClient.ts:431</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="getall" class="tsd-anchor"></a>
+					<h3>get<wbr>All</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>All<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.getAll</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L596">src/subscribe/index.ts:596</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -765,7 +861,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L463">src/StreamrClient.ts:463</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L468">src/StreamrClient.ts:468</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -788,7 +884,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L430">src/StreamrClient.ts:430</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L435">src/StreamrClient.ts:435</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -805,7 +901,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L455">src/StreamrClient.ts:455</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L460">src/StreamrClient.ts:460</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -834,7 +930,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamByName</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L122">src/rest/StreamEndpoints.ts:122</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L122">src/rest/StreamEndpoints.ts:122</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -858,7 +954,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamLast</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L241">src/rest/StreamEndpoints.ts:241</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L241">src/rest/StreamEndpoints.ts:241</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -882,7 +978,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamPartsByStorageNode</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L259">src/rest/StreamEndpoints.ts:259</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L259">src/rest/StreamEndpoints.ts:259</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -906,7 +1002,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamPublishers</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L179">src/rest/StreamEndpoints.ts:179</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L179">src/rest/StreamEndpoints.ts:179</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -930,7 +1026,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamSubscribers</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L206">src/rest/StreamEndpoints.ts:206</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L206">src/rest/StreamEndpoints.ts:206</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -954,7 +1050,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.getStreamValidationInfo</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L232">src/rest/StreamEndpoints.ts:232</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L232">src/rest/StreamEndpoints.ts:232</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -977,13 +1073,37 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L316">src/StreamrClient.ts:316</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L317">src/StreamrClient.ts:317</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>definition: <span class="tsd-signature-type">StreamPartDefinition</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="getsubscriptionsession" class="tsd-anchor"></a>
+					<h3>get<wbr>Subscription<wbr>Session</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Subscription<wbr>Session<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.getSubscriptionSession</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L587">src/subscribe/index.ts:587</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
@@ -1000,7 +1120,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L312">src/StreamrClient.ts:312</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L313">src/StreamrClient.ts:313</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
@@ -1017,7 +1137,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L444">src/StreamrClient.ts:444</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L449">src/StreamrClient.ts:449</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1045,7 +1165,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L339">src/StreamrClient.ts:339</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L340">src/StreamrClient.ts:340</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -1063,7 +1183,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from LoginEndpoints.getUserInfo</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/LoginEndpoints.ts#L93">src/rest/LoginEndpoints.ts:93</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/LoginEndpoints.ts#L93">src/rest/LoginEndpoints.ts:93</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">UserDetails</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -1080,7 +1200,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L274">src/StreamrClient.ts:274</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L275">src/StreamrClient.ts:275</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -1097,7 +1217,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L278">src/StreamrClient.ts:278</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L279">src/StreamrClient.ts:279</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -1114,7 +1234,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L286">src/StreamrClient.ts:286</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L287">src/StreamrClient.ts:287</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -1131,7 +1251,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L282">src/StreamrClient.ts:282</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L283">src/StreamrClient.ts:283</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -1149,7 +1269,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.isStreamPublisher</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L188">src/rest/StreamEndpoints.ts:188</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L188">src/rest/StreamEndpoints.ts:188</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1176,7 +1296,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.isStreamSubscriber</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L215">src/rest/StreamEndpoints.ts:215</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L215">src/rest/StreamEndpoints.ts:215</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1264,7 +1384,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L328">src/StreamrClient.ts:328</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L329">src/StreamrClient.ts:329</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -1281,7 +1401,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L297">src/StreamrClient.ts:297</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L298">src/StreamrClient.ts:298</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -1412,7 +1532,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L270">src/StreamrClient.ts:270</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L271">src/StreamrClient.ts:271</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1499,7 +1619,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from StreamEndpoints.publishHttp</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/rest/StreamEndpoints.ts#L270">src/rest/StreamEndpoints.ts:270</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/rest/StreamEndpoints.ts#L270">src/rest/StreamEndpoints.ts:270</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1518,6 +1638,30 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="rekey" class="tsd-anchor"></a>
+					<h3>rekey</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">rekey<span class="tsd-signature-symbol">(</span>streamId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.rekey</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L352">src/StreamrClient.ts:352</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>streamId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -1610,49 +1754,117 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="rotategroupkey" class="tsd-anchor"></a>
-					<h3>rotate<wbr>Group<wbr>Key</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">rotate<wbr>Group<wbr>Key<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="resendsubscribe" class="tsd-anchor"></a>
+					<h3>resend<wbr>Subscribe</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">resend<wbr>Subscribe<span class="tsd-signature-symbol">(</span>opts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">StreamPartDefinitionOptions</span>, onFinally<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">MaybeAsync</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from Subscriber.resendSubscribe</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L347">src/StreamrClient.ts:347</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/subscribe/index.ts#L639">src/subscribe/index.ts:639</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span></h5>
+									<h5>opts: <span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-symbol">{ </span>resend<span class="tsd-signature-symbol">?: </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> &amp; </span><a href="../modules/streamrclient.html#resendoptions" class="tsd-signature-type" data-tsd-kind="Type alias">ResendOptions</a><span class="tsd-signature-symbol"> &amp; </span><span class="tsd-signature-type">StreamPartDefinitionOptions</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> onFinally: <span class="tsd-signature-type">MaybeAsync</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="rotategroupkey" class="tsd-anchor"></a>
+					<h3>rotate<wbr>Group<wbr>Key</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">rotate<wbr>Group<wbr>Key<span class="tsd-signature-symbol">(</span>streamId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.rotateGroupKey</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L348">src/StreamrClient.ts:348</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>streamId: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="setnextgroupkey" class="tsd-anchor"></a>
 					<h3>set<wbr>Next<wbr>Group<wbr>Key</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">set<wbr>Next<wbr>Group<wbr>Key<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Next<wbr>Group<wbr>Key<span class="tsd-signature-symbol">(</span>streamId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, newKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">GroupKey</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.setNextGroupKey</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/7cb3912/src/StreamrClient.ts#L343">src/StreamrClient.ts:343</a></li>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/StreamrClient.ts#L344">src/StreamrClient.ts:344</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span></h5>
+									<h5>streamId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>newKey: <span class="tsd-signature-type">GroupKey</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="startkeyexchange" class="tsd-anchor"></a>
+					<h3>start<wbr>Key<wbr>Exchange</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">start<wbr>Key<wbr>Exchange<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.startKeyExchange</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/publish/index.js#L309">src/publish/index.js:309</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="stop" class="tsd-anchor"></a>
+					<h3>stop</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">stop<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from ReturnType.stop</p>
+								<ul>
+									<li>Defined in <a href="https://github.com/streamr-dev/streamr-client-javascript/blob/ad2db70/src/publish/index.js#L312">src/publish/index.js:312</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -1691,6 +1903,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#session" class="tsd-kind-icon">session</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#subscriptions" class="tsd-kind-icon">subscriptions</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="streamrclient.streamrclient-1.html#prefixed" class="tsd-kind-icon">prefixed</a>
 							</li>
@@ -1702,6 +1917,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#connect" class="tsd-kind-icon">connect</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#count" class="tsd-kind-icon">count</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#createstream" class="tsd-kind-icon">create<wbr>Stream</a>
@@ -1730,8 +1948,14 @@
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
 								<a href="streamrclient.streamrclient-1.html#eventnames" class="tsd-kind-icon">event<wbr>Names</a>
 							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#get" class="tsd-kind-icon">get</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#getaddress" class="tsd-kind-icon">get<wbr>Address</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#getall" class="tsd-kind-icon">get<wbr>All</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#getdataunion" class="tsd-kind-icon">get<wbr>Data<wbr>Union</a>
@@ -1768,6 +1992,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#getsubscription" class="tsd-kind-icon">get<wbr>Subscription</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#getsubscriptionsession" class="tsd-kind-icon">get<wbr>Subscription<wbr>Session</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="streamrclient.streamrclient-1.html#getsubscriptions" class="tsd-kind-icon">get<wbr>Subscriptions</a>
@@ -1826,11 +2053,14 @@
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external">
 								<a href="streamrclient.streamrclient-1.html#once" class="tsd-kind-icon">once</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#publish" class="tsd-kind-icon">publish</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#publishhttp" class="tsd-kind-icon">publish<wbr>Http</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#rekey" class="tsd-kind-icon">rekey</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
 								<a href="streamrclient.streamrclient-1.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a>
@@ -1838,19 +2068,28 @@
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter tsd-is-external">
 								<a href="streamrclient.streamrclient-1.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#resend" class="tsd-kind-icon">resend</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#resendsubscribe" class="tsd-kind-icon">resend<wbr>Subscribe</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#rotategroupkey" class="tsd-kind-icon">rotate<wbr>Group<wbr>Key</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#setnextgroupkey" class="tsd-kind-icon">set<wbr>Next<wbr>Group<wbr>Key</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#startkeyexchange" class="tsd-kind-icon">start<wbr>Key<wbr>Exchange</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="streamrclient.streamrclient-1.html#stop" class="tsd-kind-icon">stop</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#subscribe" class="tsd-kind-icon">subscribe</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="streamrclient.streamrclient-1.html#unsubscribe" class="tsd-kind-icon">unsubscribe</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
@@ -1884,12 +2123,13 @@
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 			</ul>
 			<ul class="tsd-legend">
 				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
