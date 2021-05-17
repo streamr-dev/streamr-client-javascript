@@ -200,7 +200,7 @@ export async function waitForRequestResponse(client: StreamrClient, request: Tod
     })
 }
 
-export const createStreamId = async (streamIdOrPath: string, ownerProvider?: () => Promise<EthereumAddress>) => {
+export const createStreamId = async (streamIdOrPath: string, ownerProvider?: () => Promise<EthereumAddress|undefined>) => {
     if (streamIdOrPath === undefined) {
         throw new Error('Missing stream id')
     }

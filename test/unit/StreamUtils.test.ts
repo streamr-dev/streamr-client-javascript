@@ -62,7 +62,7 @@ describe('Stream utils', () => {
 
         it('path: no owner', () => {
             const path = '/foo/BAR'
-            return expect(createStreamId(path, () => undefined)).rejects.toThrowError('Owner missing for stream id: /foo/BAR')
+            return expect(createStreamId(path, async () => undefined)).rejects.toThrowError('Owner missing for stream id: /foo/BAR')
         })
 
         it('path: no owner provider', () => {
@@ -95,7 +95,7 @@ describe('Stream utils', () => {
         })
 
         it('undefined', () => {
-            return expect(createStreamId(undefined)).rejects.toThrowError('Missing stream id')
+            return expect(createStreamId(undefined as any)).rejects.toThrowError('Missing stream id')
         })
     })
 })
