@@ -59,12 +59,12 @@ describe('Stream utils', () => {
             const actual = await createStreamId(path, ownerProvider)
             expect(actual).toBe('0xaaaaaaaaaa123456789012345678901234567890/foo/BAR')
         })
-        
+
         it('path: no owner', () => {
             const path = '/foo/BAR'
             return expect(createStreamId(path, () => undefined)).rejects.toThrowError('Owner missing for stream id: /foo/BAR')
         })
-        
+
         it('path: no owner provider', () => {
             const path = '/foo/BAR'
             return expect(createStreamId(path, undefined)).rejects.toThrowError('Owner provider missing for stream id: /foo/BAR')

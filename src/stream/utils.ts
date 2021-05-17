@@ -204,9 +204,11 @@ export const createStreamId = async (streamIdOrPath: string, ownerProvider?: () 
     if (streamIdOrPath === undefined) {
         throw new Error('Missing stream id')
     }
+
     if (!streamIdOrPath.startsWith('/')) {
         return streamIdOrPath
     }
+
     if (ownerProvider === undefined) {
         throw new Error(`Owner provider missing for stream id: ${streamIdOrPath}`)
     }
