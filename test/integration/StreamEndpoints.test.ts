@@ -4,7 +4,7 @@ import { Stream, StreamOperation } from '../../src/stream'
 import { StorageNode } from '../../src/stream/StorageNode'
 
 import { StreamrClient } from '../../src/StreamrClient'
-import { uid } from '../utils'
+import { uid, fakeAddress } from '../utils'
 
 import config from './config'
 
@@ -144,6 +144,18 @@ function TestStreamEndpoints(getName: () => string) {
                 id: newPath,
             })
             expect(newStream.id).toEqual(`${wallet.address.toLowerCase()}${newPath}`)
+        })
+
+        it('fails if stream prefixed with other users address', async () => {
+            // can't create streams for other users
+            const otherAddress = `0x${fakeAddress()}`
+            const newPath = `/StreamEndpoints-getOrCreate-newPath-${Date.now()}`
+            // backend should error
+            await expect(async () => {
+                await client.getOrCreateStream({
+                    id: `${otherAddress}${newPath}`,
+                })
+            }).rejects.toThrow('Validation')
         })
     })
 
