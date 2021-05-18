@@ -54,7 +54,6 @@ async function SubscriberKeyExhangeSubscription(
     getGroupKeyStore: (streamId: string) => Promise<GroupKeyStore>,
     encryptionUtil: EncryptionUtil
 ) {
-    let sub: Subscription
     async function onKeyExchangeMessage(_parsedContent: any, streamMessage: StreamMessage) {
         try {
             const { messageType } = streamMessage
@@ -73,7 +72,7 @@ async function SubscriberKeyExhangeSubscription(
         }
     }
 
-    sub = await subscribeToKeyExchangeStream(client, onKeyExchangeMessage)
+    const sub = await subscribeToKeyExchangeStream(client, onKeyExchangeMessage)
     sub.on('error', () => {}) // errors should not shut down subscription
     return sub
 }

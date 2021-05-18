@@ -96,12 +96,11 @@ export function getVersionString() {
 
 export function waitFor(emitter: EventEmitter, event: Parameters<EventEmitter['on']>[0]) {
     return new Promise((resolve, reject) => {
-        let onError: (error: Error) => void
         const onEvent = (value: any) => {
             emitter.off('error', onError)
             resolve(value)
         }
-        onError = (error) => {
+        const onError: (error: Error) => void = (error) => {
             emitter.off(event, onEvent)
             reject(error)
         }
@@ -522,7 +521,7 @@ export async function allSettledValues(items: Parameters<typeof Promise['allSett
         .map((v) => (v as PromiseFulfilledResult<unknown>).value)
 }
 
-export async function sleep(ms: number = 0) {
+export async function sleep(ms = 0) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms)
     })

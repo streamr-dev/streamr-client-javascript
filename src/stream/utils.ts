@@ -110,7 +110,11 @@ export async function waitForMatchingMessage({
                 return false
             }
         }
-        let onDisconnected: Todo
+        const onDisconnected = () => {
+            cleanup()
+            // @ts-expect-error
+            resolve() // noop
+        }
         const onResponse = (res: Todo) => {
             if (!tryMatch(res)) { return }
             // clean up err handler
@@ -142,12 +146,6 @@ export async function waitForMatchingMessage({
         })
 
         connection.on(ControlMessage.TYPES.ErrorResponse, onErrorResponse)
-
-        onDisconnected = () => {
-            cleanup()
-            // @ts-expect-error
-            resolve() // noop
-        }
 
         connection.once('disconnected', onDisconnected)
     })

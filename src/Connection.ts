@@ -131,6 +131,7 @@ const STATE = {
 
 /* eslint-disable no-underscore-dangle, no-param-reassign */
 function SocketConnector(connection: Connection) {
+    // eslint-disable-next-line prefer-const
     let next: Todo
     let socket: Todo
     let startedConnecting = false
@@ -463,15 +464,13 @@ export default class Connection extends EventEmitter {
 
         this.isWaiting = true
         return new Promise((resolve, reject) => {
-            let onError: Todo
-            let onDone: Todo
             const onConnected = () => {
                 this.off('done', onDone)
                 this.off('error', onError)
                 this.off('_error', onError)
                 resolve(undefined)
             }
-            onDone = (err: Todo) => {
+            const onDone = (err: Todo) => {
                 this.off('error', onError)
                 this.off('_error', onError)
                 this.off('connected', onConnected)
@@ -481,7 +480,7 @@ export default class Connection extends EventEmitter {
                     resolve(undefined)
                 }
             }
-            onError = (err: Todo) => {
+            const onError = (err: Todo) => {
                 this.off('done', onDone)
                 this.off('connected', onConnected)
                 reject(err)
@@ -587,12 +586,11 @@ export default class Connection extends EventEmitter {
         }
 
         return new Promise((resolve, reject) => {
-            let onError: Todo
             const onDisconnected = () => {
                 this.off('error', onError)
                 resolve(undefined)
             }
-            onError = (err: Todo) => {
+            const onError = (err: Todo) => {
                 this.off('disconnected', onDisconnected)
                 reject(err)
             }
@@ -768,7 +766,6 @@ export default class Connection extends EventEmitter {
         // @ts-expect-error
         onError,
     }) {
-        let onDoneHandler: Todo
         const cleanUp = async () => {
             this
                 .off('connecting', onConnecting)
@@ -781,7 +778,7 @@ export default class Connection extends EventEmitter {
             }
         }
 
-        onDoneHandler = async (...args: Todo[]) => {
+        const onDoneHandler = async (...args: Todo[]) => {
             // @ts-expect-error
             cleanUp(...args)
             // @ts-expect-error

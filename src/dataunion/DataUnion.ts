@@ -161,7 +161,7 @@ export class DataUnion {
      * Get the tx promise for withdrawing all your earnings
      * @returns await on call .wait to actually send the tx
      */
-    private async getWithdrawAllTx(sendToMainnet: boolean = true): Promise<ContractTransaction> {
+    private async getWithdrawAllTx(sendToMainnet = true): Promise<ContractTransaction> {
         const signer = await this.client.ethereum.getSidechainSigner()
         const address = await signer.getAddress()
         const duSidechain = await this.getContracts().getSidechainContract(this.contractAddress)
@@ -202,7 +202,7 @@ export class DataUnion {
      * @param recipientAddress - the address to receive the tokens
      * @returns await on call .wait to actually send the tx
      */
-    private async getWithdrawAllToTx(recipientAddress: EthereumAddress, sendToMainnet: boolean = true): Promise<ContractTransaction> {
+    private async getWithdrawAllToTx(recipientAddress: EthereumAddress, sendToMainnet = true): Promise<ContractTransaction> {
         const signer = await this.client.ethereum.getSidechainSigner()
         const address = await signer.getAddress()
         const duSidechain = await this.getContracts().getSidechainContract(this.contractAddress)
@@ -363,7 +363,7 @@ export class DataUnion {
     /**
      * Add a new data union secret
      */
-    async createSecret(name: string = 'Untitled Data Union Secret'): Promise<string> {
+    async createSecret(name = 'Untitled Data Union Secret'): Promise<string> {
         const url = getEndpointUrl(this.client.options.restUrl, 'dataunions', this.contractAddress, 'secrets')
         const res = await authFetch<{secret: string}>(
             url,
@@ -433,7 +433,7 @@ export class DataUnion {
      * @param memberAddress - the other member who gets their tokens out of the Data Union
      * @returns await on call .wait to actually send the tx
      */
-    private async getWithdrawAllToMemberTx(memberAddress: EthereumAddress, sendToMainnet: boolean = true): Promise<ContractTransaction> {
+    private async getWithdrawAllToMemberTx(memberAddress: EthereumAddress, sendToMainnet = true): Promise<ContractTransaction> {
         const a = getAddress(memberAddress) // throws if bad address
         const duSidechain = await this.getContracts().getSidechainContract(this.contractAddress)
         return duSidechain.withdrawAll(a, sendToMainnet)
@@ -475,7 +475,7 @@ export class DataUnion {
         memberAddress: EthereumAddress,
         recipientAddress: EthereumAddress,
         signature: string,
-        sendToMainnet: boolean = true,
+        sendToMainnet = true,
     ) {
         const duSidechain = await this.getContracts().getSidechainContract(this.contractAddress)
         return duSidechain.withdrawAllToSigned(memberAddress, recipientAddress, sendToMainnet, signature)
@@ -669,7 +669,7 @@ export class DataUnion {
     /**
      * @returns null if message was already transported, ELSE the mainnet AMB signature execution transaction receipt
      */
-    async transportMessage(messageHash: AmbMessageHash, pollingIntervalMs: number = 1000, retryTimeoutMs: number = 300000) {
+    async transportMessage(messageHash: AmbMessageHash, pollingIntervalMs = 1000, retryTimeoutMs = 300000) {
         const helper = this.getContracts()
         const [sidechainAmb, mainnetAmb] = await Promise.all([
             helper.getSidechainAmb(),

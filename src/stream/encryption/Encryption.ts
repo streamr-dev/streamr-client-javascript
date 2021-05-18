@@ -66,12 +66,7 @@ function GroupKeyObjectFromProps(data: GroupKeyProps | GroupKeyObject) {
     return data
 }
 
-interface GroupKey extends GroupKeyObject {}
-
-export type GroupKeyish = GroupKey | GroupKeyObject | ConstructorParameters<typeof GroupKey>
-
-// eslint-disable-next-line no-redeclare
-class GroupKey {
+class GroupKey implements GroupKeyObject {
     static InvalidGroupKeyError = InvalidGroupKeyError
 
     static validate(maybeGroupKey: GroupKey) {
@@ -130,7 +125,7 @@ class GroupKey {
             this.hex = Buffer.from(this.data).toString('hex')
         }
 
-        // eslint-disable-next-line no-extra-semi
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;(this.constructor as typeof GroupKey).validate(this)
     }
 
@@ -243,7 +238,7 @@ class EncryptionUtilBase {
     // These overrides tell ts outputInHex returns string
     static encryptWithPublicKey(plaintextBuffer: Uint8Array, publicKey: crypto.KeyLike): string
     static encryptWithPublicKey(plaintextBuffer: Uint8Array, publicKey: crypto.KeyLike, outputInHex: false): Buffer
-    static encryptWithPublicKey(plaintextBuffer: Uint8Array, publicKey: crypto.KeyLike, outputInHex: boolean = false) {
+    static encryptWithPublicKey(plaintextBuffer: Uint8Array, publicKey: crypto.KeyLike, outputInHex = false) {
         this.validatePublicKey(publicKey)
         const ciphertextBuffer = crypto.publicEncrypt(publicKey, plaintextBuffer)
         if (outputInHex) {
@@ -373,7 +368,7 @@ export default class EncryptionUtil extends EncryptionUtilBase {
     constructor(options: {
         privateKey: string,
         publicKey: string,
-    } | {} = {}) {
+    } | Record<string, never> = {}) {
         super()
         if ('privateKey' in options && 'publicKey' in options) {
             EncryptionUtil.validatePrivateKey(options.privateKey)

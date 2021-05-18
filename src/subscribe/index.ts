@@ -657,6 +657,7 @@ export class Subscriber {
             }
         }
 
+        // eslint-disable-next-line prefer-const
         let resendSubscribeSub: Todo
 
         let lastResentMsgId: Todo
