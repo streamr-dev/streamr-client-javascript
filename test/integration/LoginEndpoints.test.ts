@@ -5,6 +5,7 @@ import { ethers } from 'ethers'
 import { StreamrClient } from '../../src/StreamrClient'
 
 import config from './config'
+import { fakePrivateKey } from '../utils'
 
 describe('LoginEndpoints', () => {
     let client: StreamrClient
@@ -12,7 +13,7 @@ describe('LoginEndpoints', () => {
     const createClient = (opts = {}) => new StreamrClient({
         ...config.clientOptions,
         auth: {
-            apiKey: 'tester1-api-key',
+            privateKey: fakePrivateKey()
         },
         autoConnect: false,
         autoDisconnect: false,
@@ -73,18 +74,10 @@ describe('LoginEndpoints', () => {
     })
 
     describe('API key login', () => {
-        it('should fail to get a session token', async () => {
+        it('should fail', async () => {
             await expect(async () => {
                 await client.loginWithApiKey('apikey')
             }).rejects.toThrow()
-        })
-
-        it('should get a session token', async () => {
-            const sessionToken = await client.loginWithApiKey('tester1-api-key')
-            assert(sessionToken)
-            assert(sessionToken.token)
-            // @ts-expect-error
-            assert(sessionToken.expires)
         })
     })
 
@@ -108,7 +101,7 @@ describe('LoginEndpoints', () => {
         it('should not be able to use the same session token after logout', async () => {
             await client.getUserInfo() // first fetches the session token, then requests the endpoint
             const sessionToken1 = client.session.options.sessionToken
-            await client.logoutEndpoint() // invalidates the session token in engine-and-editor
+            await client.logoutEndpoint() // invalidates the session token in core-api
             await client.getUserInfo() // requests the endpoint with sessionToken1, receives 401, fetches a new session token
             const sessionToken2 = client.session.options.sessionToken
             assert.notDeepStrictEqual(sessionToken1, sessionToken2)

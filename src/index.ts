@@ -10,7 +10,7 @@ import { StreamrClient } from './StreamrClient'
 export * from './StreamrClient'
 export * from './Config'
 export * from './stream'
-export * from './stream/Encryption'
+export * from './stream/encryption/Encryption'
 export * from './stream/StreamPart'
 export * from './stream/StorageNode'
 export * from './subscribe'
@@ -28,7 +28,7 @@ export { BigNumber } from '@ethersproject/bignumber'
 export { ConnectionInfo } from '@ethersproject/web'
 export { Contract } from '@ethersproject/contracts'
 export { BytesLike, Bytes } from '@ethersproject/bytes'
-export { TransactionReceipt, TransactionResponse } from '@ethersproject/providers'
+export { ContractReceipt, ContractTransaction } from '@ethersproject/contracts'
 
 export default StreamrClient
 

@@ -243,7 +243,7 @@ export function Defer<T>(executor: (...args: Parameters<Promise<T>['then']>) => 
     }
 
     // eslint-disable-next-line promise/param-names
-    const p = new Promise((_resolve, _reject) => {
+    const p: Promise<T> = new Promise((_resolve, _reject) => {
         resolveFn = _resolve
         rejectFn = _reject
         executor(resolve, reject)
@@ -272,7 +272,7 @@ export function Defer<T>(executor: (...args: Parameters<Promise<T>['then']>) => 
         }
     }
 
-    function handleErrBack(err: Error) {
+    function handleErrBack(err?: Error) {
         if (err) {
             reject(err)
         } else {
@@ -345,13 +345,17 @@ export function LimitAsyncFnByKey<KeyType>(limit = 1) {
 
 export function pOrderedResolve(fn: F.Function) {
     const queue = pLimit(1)
-    return async (...args: Parameters<typeof fn>) => {
+    return Object.assign(async (...args: Parameters<typeof fn>) => {
         const d = Defer()
         const done = queue(() => d)
         // eslint-disable-next-line promise/catch-or-return
         await Promise.resolve(fn(...args)).then(d.resolve, d.reject)
         return done
-    }
+    }, {
+        clear() {
+            queue.clearQueue()
+        }
+    })
 }
 
 /**
@@ -360,7 +364,11 @@ export function pOrderedResolve(fn: F.Function) {
 
 export function pLimitFn(fn: F.Function, limit = 1) {
     const queue = pLimit(limit)
-    return (...args: unknown[]) => queue(() => fn(...args))
+    return Object.assign((...args: unknown[]) => queue(() => fn(...args)), {
+        clear() {
+            queue.clearQueue()
+        }
+    })
 }
 
 /**
@@ -378,6 +386,46 @@ export function pOne(fn: F.Function) {
         }
 
         return inProgress
+    }
+}
+
+type Unwrap<T> = T extends Promise<infer U> ? U : T
+
+/**
+ * Only allows calling `fn` once.
+ * Returns same promise while task is executing.
+ */
+
+export function pOnce<Args extends any[], R>(
+    fn: (...args: Args) => R
+): (...args: Args) => Promise<Unwrap<R>> {
+    let inProgress: Promise<void> | undefined
+    let started = false
+    let value: Unwrap<R>
+    let error: Error | undefined
+    return async (...args: Args) => {
+        if (!started) {
+            started = true
+            inProgress = (async () => {
+                try {
+                    value = await Promise.resolve(fn(...args)) as Unwrap<R>
+                } catch (err) {
+                    error = err
+                } finally {
+                    inProgress = undefined
+                }
+            })()
+        }
+
+        if (inProgress) {
+            await inProgress
+        }
+
+        if (error) {
+            throw error
+        }
+
+        return value
     }
 }
 
@@ -480,24 +528,35 @@ export async function sleep(ms: number = 0) {
     })
 }
 
+// condition could as well return any instead of boolean, could be convenient sometimes if waiting until a value is returned. Maybe change if such use case emerges.
 /**
  * Wait until a condition is true
  * @param condition - wait until this callback function returns true
  * @param timeOutMs - stop waiting after that many milliseconds, -1 for disable
  * @param pollingIntervalMs - check condition between so many milliseconds
+ * @param failedMsgFn - append the string return value of this getter function to the error message, if given
+ * @return the (last) truthy value returned by the condition function
  */
-export async function until(condition: MaybeAsync<() => boolean>, timeOutMs = 10000, pollingIntervalMs = 100) {
+export async function until(condition: MaybeAsync<() => boolean>, timeOutMs = 10000, pollingIntervalMs = 100, failedMsgFn?: () => string) {
+    const err = new Error(`Timeout after ${timeOutMs} milliseconds`)
     let timeout = false
     if (timeOutMs > 0) {
         setTimeout(() => { timeout = true }, timeOutMs)
     }
-
     // Promise wrapped condition function works for normal functions just the same as Promises
-    while (!await Promise.resolve().then(condition)) { // eslint-disable-line no-await-in-loop
-        if (timeout) {
-            throw new Error(`Timeout after ${timeOutMs} milliseconds`)
+    let wasDone
+    while (!wasDone && !timeout) { // eslint-disable-line no-await-in-loop
+        wasDone = await Promise.resolve().then(condition) // eslint-disable-line no-await-in-loop
+        if (!wasDone && !timeout) {
+            await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
         }
-        await sleep(pollingIntervalMs) // eslint-disable-line no-await-in-loop
+
     }
-    return condition()
+    if (timeout) {
+        if (failedMsgFn) {
+            err.message += ` ${failedMsgFn()}`
+        }
+        throw err
+    }
+    return wasDone
 }
