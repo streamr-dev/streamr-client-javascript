@@ -24,7 +24,8 @@
         "types": [
             "jest",
             "node"
-        ]
+        ],
+        "sourceMap": true
     },
     "include": [
         "src/**/*",

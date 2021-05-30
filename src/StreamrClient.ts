@@ -22,8 +22,7 @@ import { DataUnion, DataUnionDeployOptions } from './dataunion/DataUnion'
 import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
-import { StreamPartDefinition } from './stream'
-import type { GroupKey } from './stream/Encryption'
+import { StreamPartDefinition, GroupKey } from './stream'
 
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
@@ -176,7 +175,7 @@ export class StreamrClient extends EventEmitter { // eslint-disable-line no-rede
     /** @internal */
     connection: StreamrConnection
     /** @internal */
-    publisher: Todo
+    publisher: ReturnType<typeof Publisher>
     /** @internal */
     subscriber: Subscriber
     /** @internal */
@@ -341,15 +340,15 @@ export class StreamrClient extends EventEmitter { // eslint-disable-line no-rede
         return getUserId(this)
     }
 
-    setNextGroupKey(streamId: string, newKey: GroupKey) {
+    async setNextGroupKey(streamId: string, newKey: GroupKey): Promise<void> {
         return this.publisher.setNextGroupKey(streamId, newKey)
     }
 
-    rotateGroupKey(streamId: string) {
+    async rotateGroupKey(streamId: string) {
         return this.publisher.rotateGroupKey(streamId)
     }
 
-    rekey(streamId: string) {
+    async rekey(streamId: string) {
         return this.publisher.rekey(streamId)
     }
 
