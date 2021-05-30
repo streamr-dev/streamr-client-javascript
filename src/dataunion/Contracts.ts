@@ -6,7 +6,7 @@ import { defaultAbiCoder } from '@ethersproject/abi'
 import { verifyMessage } from '@ethersproject/wallet'
 import debug from 'debug'
 import { EthereumAddress, Todo } from '../types'
-import { dataUnionMainnetABI, dataUnionSidechainABI, factoryMainnetABI, mainnetAmbABI, sidechainAmbABI } from './abi'
+import { dataUnionMainnetABI, dataUnionSidechainABI, factoryMainnetABI, mainnetAmbABI, sidechainAmbABI, binanceAdapterABI } from './abi'
 import { until } from '../utils'
 import { BigNumber } from '@ethersproject/bignumber'
 import StreamrEthereum from '../Ethereum'
@@ -27,6 +27,8 @@ export class Contracts {
     factorySidechainAddress: EthereumAddress
     templateMainnetAddress: EthereumAddress
     templateSidechainAddress: EthereumAddress
+    binanceAdapterAddress: EthereumAddress
+    binanceSmartChainAMBAddress: EthereumAddress
     cachedSidechainAmb?: Todo
 
     constructor(client: StreamrClient) {
@@ -35,6 +37,8 @@ export class Contracts {
         this.factorySidechainAddress = client.options.dataUnion.factorySidechainAddress
         this.templateMainnetAddress = client.options.dataUnion.templateMainnetAddress
         this.templateSidechainAddress = client.options.dataUnion.templateSidechainAddress
+        this.binanceAdapterAddress = client.options.binanceAdapterAddress
+        this.binanceSmartChainAMBAddress = client.options.binanceSmartChainAMBAddress
     }
 
     async fetchDataUnionMainnetAddress(
@@ -92,6 +96,14 @@ export class Contracts {
         const duSidechainAddress = this.getDataUnionSidechainAddress(duMainnet.address)
         const duSidechain = new Contract(duSidechainAddress, dataUnionSidechainABI, provider)
         return duSidechain
+    }
+
+    async getBinanceAdapter() {
+        return new Contract(this.binanceAdapterAddress, binanceAdapterABI, this.ethereum.getSidechainProvider())
+    }
+
+    async getBinanceSmartChainAmb() {
+        return new Contract(this.binanceSmartChainAMBAddress, mainnetAmbABI, this.ethereum.getBinanceProvider())
     }
 
     // Find the Asyncronous Message-passing Bridge sidechain ("home") contract
