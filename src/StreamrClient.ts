@@ -23,6 +23,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { getAddress } from '@ethersproject/address'
 import { Contract } from '@ethersproject/contracts'
 import { StreamPartDefinition, GroupKey } from './stream'
+import { BytesLike } from '@ethersproject/bytes'
 
 // TODO get metadata type from streamr-protocol-js project (it doesn't export the type definitions yet)
 export type OnMessageCallback = MaybeAsync<(message: any, metadata: any) => void>
@@ -471,6 +472,26 @@ export class StreamrClient extends EventEmitter { // eslint-disable-line no-rede
     async deployDataUnion(options?: DataUnionDeployOptions) {
         return DataUnion._deploy(options, this) // eslint-disable-line no-underscore-dangle
     }
+
+    async setBinanceDepositAddress(binanceRecipient: EthereumAddress){
+        return DataUnion._setBinanceDepositAddress(binanceRecipient, this) // eslint-disable-line no-underscore-dangle
+    }
+ 
+    async setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike){
+        return DataUnion._setBinanceDepositAddressFromSignature(from, binanceRecipient, signature, this) // eslint-disable-line no-underscore-dangle
+    }
+ 
+    async getBinanceDepositAddress(userAddress: EthereumAddress){
+        return DataUnion._getBinanceDepositAddress(userAddress, this) // eslint-disable-line no-underscore-dangle
+    }
+    
+
+    /*
+        static async _setBinanceDepositAddress(binanceRecipient: EthereumAddress, client: StreamrClient) {
+    static async _setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike, client: StreamrClient) {
+    static async _getBinanceDepositAddress(userAddress: string, client: StreamrClient) {
+
+    */
 
     /** @internal */
     _getDataUnionFromName({ dataUnionName, deployerAddress }: { dataUnionName: string, deployerAddress: EthereumAddress}) {

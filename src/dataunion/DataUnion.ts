@@ -1,6 +1,6 @@
 import { getAddress } from '@ethersproject/address'
 import { BigNumber } from '@ethersproject/bignumber'
-import { arrayify, hexZeroPad } from '@ethersproject/bytes'
+import { arrayify, BytesLike, hexZeroPad } from '@ethersproject/bytes'
 import { Contract, ContractReceipt, ContractTransaction } from '@ethersproject/contracts'
 import { keccak256 } from '@ethersproject/keccak256'
 import { Wallet } from '@ethersproject/wallet'
@@ -428,6 +428,15 @@ export class DataUnion {
         )
     }
 
+    async withdrawAllToBinance(options?: DataUnionWithdrawOptions) {
+        return this.withdrawAllToMember(this.client.options.binanceAdapterAddress ,options)
+    }
+
+    async signWithdrawAllToBinance() {
+        return this.signWithdrawAllTo(this.client.options.binanceAdapterAddress)
+    }
+
+
     /**
      * Admin: get the tx promise for withdrawing all earnings on behalf of a member
      * @param memberAddress - the other member who gets their tokens out of the Data Union
@@ -463,6 +472,8 @@ export class DataUnion {
             options
         )
     }
+
+    
 
     /**
      * Admin: Withdraw a member's earnings to another address, signed by the member
@@ -565,6 +576,30 @@ export class DataUnion {
     }
 
     // Internal functions
+    /** @internal */
+    static async _getBinanceDepositAddress(userAddress: string, client: StreamrClient) {
+        const contracts = new Contracts(client)
+        const recip =  (await (await contracts.getBinanceAdapter()).binanceRecipient())[1]
+        if(recip == 0)
+            return undefined
+        return recip
+    }
+
+
+    /** @internal */
+    static async _setBinanceDepositAddress(binanceRecipient: EthereumAddress, client: StreamrClient) {
+        const contracts = new Contracts(client)
+        const tx = await (await contracts.getBinanceAdapter()).setBinanceRecipient(binanceRecipient)
+        return (await tx.wait())
+    }
+
+    /** @internal */
+    static async _setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike, client: StreamrClient) {
+        const contracts = new Contracts(client)
+        const tx = await (await contracts.getBinanceAdapter()).setBinanceRecipientFromSig(from, binanceRecipient, signature)
+        return (await tx.wait())
+    }
+
 
     /** @internal */
     static _fromContractAddress(contractAddress: string, client: StreamrClient) {

@@ -269,11 +269,6 @@ export const binanceAdapterABI = [
           "type": "address"
         },
         {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
           "internalType": "bytes",
           "name": "sig",
           "type": "bytes"

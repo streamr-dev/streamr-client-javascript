@@ -1,9 +1,9 @@
 import { getCreate2Address, isAddress } from '@ethersproject/address'
-import { arrayify, hexZeroPad } from '@ethersproject/bytes'
+import { arrayify, BytesLike, hexZeroPad } from '@ethersproject/bytes'
 import { Contract, ContractReceipt } from '@ethersproject/contracts'
 import { keccak256 } from '@ethersproject/keccak256'
 import { defaultAbiCoder } from '@ethersproject/abi'
-import { verifyMessage } from '@ethersproject/wallet'
+import { verifyMessage, Wallet } from '@ethersproject/wallet'
 import debug from 'debug'
 import { EthereumAddress, Todo } from '../types'
 import { dataUnionMainnetABI, dataUnionSidechainABI, factoryMainnetABI, mainnetAmbABI, sidechainAmbABI, binanceAdapterABI } from './abi'
@@ -99,11 +99,13 @@ export class Contracts {
     }
 
     async getBinanceAdapter() {
-        return new Contract(this.binanceAdapterAddress, binanceAdapterABI, this.ethereum.getSidechainProvider())
+        const signer = await this.ethereum.getSidechainSigner()
+        return new Contract(this.binanceAdapterAddress, binanceAdapterABI, signer)
     }
 
-    async getBinanceSmartChainAmb() {
-        return new Contract(this.binanceSmartChainAMBAddress, mainnetAmbABI, this.ethereum.getBinanceProvider())
+    async getBinanceSmartChainAmb(binanceSenderPrivateKey: BytesLike) {
+        const signer = new Wallet(binanceSenderPrivateKey, this.ethereum.getBinanceProvider())
+        return new Contract(this.binanceSmartChainAMBAddress, mainnetAmbABI, signer)
     }
 
     // Find the Asyncronous Message-passing Bridge sidechain ("home") contract
