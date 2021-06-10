@@ -551,6 +551,9 @@
 				<p>To get an existing (previously deployed) <code>DataUnion</code> instance:</p>
 				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">getDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
 </code></pre>
+				<p>Or to verify untrusted (e.g. user) input, use:</p>
+				<pre><code class="language-js"><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dataUnion</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">safeGetDataUnion</span><span style="color: #000000">(</span><span style="color: #001080">dataUnionAddress</span><span style="color: #000000">)</span>
+</code></pre>
 				<!-- This stuff REALLY isn't for those who use our infrastructure, neither DU admins nor DU client devs. It's only relevant if you're setting up your own sidechain.
 These DataUnion-specific options can be given to `new StreamrClient` options:
 
