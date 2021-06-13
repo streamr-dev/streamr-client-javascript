@@ -252,6 +252,28 @@ export class DataUnion {
         return this._createWithdrawSignature(amountTokenWei, to, withdrawn, signer)
     }
 
+    async signSetBinanceRecipient(
+        recipientAddress: EthereumAddress,
+    ): Promise<string> {
+        const to = getAddress(recipientAddress) // throws if bad address
+        const signer = this.client.ethereum.getSigner() // it shouldn't matter if it's mainnet or sidechain signer since key should be the same
+        return this._createSetBinanceRecipientSignature(to, signer)
+    }
+
+    /** @internal */
+    async _createSetBinanceRecipientSignature(
+        to: EthereumAddress,
+        signer: Wallet | JsonRpcSigner
+    ) {
+        const binanceAdapter : Contract = await this.getContracts().getBinanceAdapter();
+        const nextNonce = (await binanceAdapter.binanceRecipient(await signer.getAddress()))[1].add(BigNumber.from(1))
+        const message = to 
+            + hexZeroPad(nextNonce.toHexString(), 32).slice(2) 
+            + binanceAdapter.address.slice(2);
+        const signature = await signer.signMessage(arrayify(message))
+        return signature
+    }
+
     /** @internal */
     async _createWithdrawSignature(
         amountTokenWei: BigNumber|number|string,
@@ -579,7 +601,7 @@ export class DataUnion {
     /** @internal */
     static async _getBinanceDepositAddress(userAddress: string, client: StreamrClient) {
         const contracts = new Contracts(client)
-        const recip =  (await (await contracts.getBinanceAdapter()).binanceRecipient())[1]
+        const recip =  (await (await contracts.getBinanceAdapter()).binanceRecipient())[0]
         if(recip == 0)
             return undefined
         return recip
