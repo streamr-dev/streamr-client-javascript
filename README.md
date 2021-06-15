@@ -4,8 +4,10 @@
   </a>
 </p>
 <h1 align="left">
-  Streamr JavaScript Client
+  <strike> Streamr JavaScript Client </strike>
 </h1>
+
+## This repository is deprecated, Streamr Javascript Client development has moved into the [network-monorepo](https://github.com/streamr-dev/network-monorepo) 
 
 ![Build Status](https://img.shields.io/github/workflow/status/streamr-dev/streamr-client-javascript/Test%20Build/master)
 [![GitHub release](https://img.shields.io/github/release/streamr-dev/streamr-client-javascript.svg?style=flat)](https://github.com/streamr-dev/streamr-client-javascript/releases/)
@@ -19,7 +21,7 @@ Please see the [API Docs](https://streamr-dev.github.io/streamr-client-javascrip
 
 ### Breaking changes notice
 
-* Date TBD: Support for unsigned data will be dropped.
+* Support for unsigned data will be dropped.
 
 ----
 
@@ -359,6 +361,11 @@ const dataUnion = await client.deployDataUnion()
 To get an existing (previously deployed) `DataUnion` instance:
 ```js
 const dataUnion = client.getDataUnion(dataUnionAddress)
+```
+
+Or to verify untrusted (e.g. user) input, use:
+```js
+const dataUnion = await client.safeGetDataUnion(dataUnionAddress)
 ```
 
 <!-- This stuff REALLY isn't for those who use our infrastructure, neither DU admins nor DU client devs. It's only relevant if you're setting up your own sidechain.
