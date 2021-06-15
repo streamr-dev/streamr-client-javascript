@@ -60,9 +60,9 @@ export type StrictStreamrClientOptions = {
     binanceRPC: ConnectionInfo & { chainId?: number }
     tokenAddress: EthereumAddress,
     tokenSidechainAddress: EthereumAddress,
-    //address on sidechain
+    // address on sidechain
     binanceAdapterAddress: EthereumAddress
-    //AMB address on BSC. used to port TXs to BSC
+    // AMB address on BSC. used to port TXs to BSC
     binanceSmartChainAMBAddress: EthereumAddress
     dataUnion: {
         /**
@@ -139,7 +139,7 @@ export const STREAM_CLIENT_DEFAULTS: StrictStreamrClientOptions = {
         url: 'https://rpc.xdaichain.com/',
         chainId: 100
     },
-    binanceRPC : {
+    binanceRPC: {
         url: 'https://bsc-dataseed.binance.org/',
         chainId: 56
     },

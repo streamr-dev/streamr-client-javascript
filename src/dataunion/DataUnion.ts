@@ -265,11 +265,11 @@ export class DataUnion {
         to: EthereumAddress,
         signer: Wallet | JsonRpcSigner
     ) {
-        const binanceAdapter : Contract = await this.getContracts().getBinanceAdapter();
+        const binanceAdapter : Contract = await this.getContracts().getBinanceAdapter()
         const nextNonce = (await binanceAdapter.binanceRecipient(await signer.getAddress()))[1].add(BigNumber.from(1))
-        const message = to 
-            + hexZeroPad(nextNonce.toHexString(), 32).slice(2) 
-            + binanceAdapter.address.slice(2);
+        const message = to
+            + hexZeroPad(nextNonce.toHexString(), 32).slice(2)
+            + binanceAdapter.address.slice(2)
         const signature = await signer.signMessage(arrayify(message))
         return signature
     }
@@ -451,13 +451,12 @@ export class DataUnion {
     }
 
     async withdrawAllToBinance(options?: DataUnionWithdrawOptions) {
-        return this.withdrawAllToMember(this.client.options.binanceAdapterAddress ,options)
+        return this.withdrawAllToMember(this.client.options.binanceAdapterAddress, options)
     }
 
     async signWithdrawAllToBinance() {
         return this.signWithdrawAllTo(this.client.options.binanceAdapterAddress)
     }
-
 
     /**
      * Admin: get the tx promise for withdrawing all earnings on behalf of a member
@@ -494,8 +493,6 @@ export class DataUnion {
             options
         )
     }
-
-    
 
     /**
      * Admin: Withdraw a member's earnings to another address, signed by the member
@@ -601,27 +598,27 @@ export class DataUnion {
     /** @internal */
     static async _getBinanceDepositAddress(userAddress: string, client: StreamrClient) {
         const contracts = new Contracts(client)
-        const recip =  (await (await contracts.getBinanceAdapter()).binanceRecipient())[0]
-        if(recip == 0)
-            return undefined
-        return recip
+        const adapter = await contracts.getBinanceAdapter()
+        const recipientAddress = (await adapter.binanceRecipient())[0]
+        if (recipientAddress === '0x') { return undefined } // TODO: test this
+        return recipientAddress
     }
-
 
     /** @internal */
     static async _setBinanceDepositAddress(binanceRecipient: EthereumAddress, client: StreamrClient) {
         const contracts = new Contracts(client)
-        const tx = await (await contracts.getBinanceAdapter()).setBinanceRecipient(binanceRecipient)
-        return (await tx.wait())
+        const adapter = await contracts.getBinanceAdapter()
+        const tx = await adapter.setBinanceRecipient(binanceRecipient)
+        return tx.wait()
     }
 
     /** @internal */
     static async _setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike, client: StreamrClient) {
         const contracts = new Contracts(client)
-        const tx = await (await contracts.getBinanceAdapter()).setBinanceRecipientFromSig(from, binanceRecipient, signature)
-        return (await tx.wait())
+        const adapter = await contracts.getBinanceAdapter()
+        const tx = await adapter.setBinanceRecipientFromSig(from, binanceRecipient, signature)
+        return tx.wait()
     }
-
 
     /** @internal */
     static _fromContractAddress(contractAddress: string, client: StreamrClient) {

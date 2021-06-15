@@ -473,18 +473,17 @@ export class StreamrClient extends EventEmitter { // eslint-disable-line no-rede
         return DataUnion._deploy(options, this) // eslint-disable-line no-underscore-dangle
     }
 
-    async setBinanceDepositAddress(binanceRecipient: EthereumAddress){
+    async setBinanceDepositAddress(binanceRecipient: EthereumAddress) {
         return DataUnion._setBinanceDepositAddress(binanceRecipient, this) // eslint-disable-line no-underscore-dangle
     }
- 
-    async setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike){
+
+    async setBinanceDepositAddressFromSignature(from: EthereumAddress, binanceRecipient: EthereumAddress, signature: BytesLike) {
         return DataUnion._setBinanceDepositAddressFromSignature(from, binanceRecipient, signature, this) // eslint-disable-line no-underscore-dangle
     }
- 
-    async getBinanceDepositAddress(userAddress: EthereumAddress){
+
+    async getBinanceDepositAddress(userAddress: EthereumAddress) {
         return DataUnion._getBinanceDepositAddress(userAddress, this) // eslint-disable-line no-underscore-dangle
     }
-    
 
     /*
         static async _setBinanceDepositAddress(binanceRecipient: EthereumAddress, client: StreamrClient) {
