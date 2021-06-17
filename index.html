@@ -604,6 +604,11 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Transaction receipt <code>*</code></td>
 							<td align="left">Send all withdrawable earnings to the address signed off by the member (see <a href="#member-functions">example below</a>)</td>
 						</tr>
+						<tr>
+							<td align="left">withdrawAmountToSigned(memberAddress, recipientAddress, amountTokenWei, signature[, <a href="#withdraw-options">options</a>])</td>
+							<td align="left">Transaction receipt <code>*</code></td>
+							<td align="left">Send some of the withdrawable earnings to the address signed off by the member</td>
+						</tr>
 				</tbody></table>
 				<p><code>*</code> The return value type may vary depending on <a href="#withdraw-options">the given options</a> that describe the use case. </p>
 				<p>Here&#39;s how to deploy a Data Union contract with 30% Admin fee and add some members:</p>
@@ -749,7 +754,7 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 				<a href="#withdraw-options" id="withdraw-options" style="color: inherit; text-decoration: none;">
 					<h3>Withdraw options</h3>
 				</a>
-				<p>The functions <code>withdrawAll</code>, <code>withdrawAllTo</code>, <code>withdrawAllToMember</code>, <code>withdrawAllToSigned</code> all can take an extra &quot;options&quot; argument. It&#39;s an object that can contain the following parameters:</p>
+				<p>The functions <code>withdrawAll</code>, <code>withdrawAllTo</code>, <code>withdrawAllToMember</code>, <code>withdrawAllToSigned</code>, <code>withdrawAmountToSigned</code> all can take an extra &quot;options&quot; argument. It&#39;s an object that can contain the following parameters:</p>
 				<table>
 					<thead>
 						<tr>
