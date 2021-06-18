@@ -580,11 +580,6 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Create a secret for a Data Union</td>
 						</tr>
 						<tr>
-							<td align="left">setAdminFee(newFeeFraction)</td>
-							<td align="left">Transaction receipt</td>
-							<td align="left"><code>newFeeFraction</code> is a <code>Number</code> between 0.0 and 1.0 (inclusive)</td>
-						</tr>
-						<tr>
 							<td align="left">addMembers(memberAddressList)</td>
 							<td align="left">Transaction receipt</td>
 							<td align="left">Add members</td>
@@ -593,6 +588,11 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">removeMembers(memberAddressList)</td>
 							<td align="left">Transaction receipt</td>
 							<td align="left">Remove members from Data Union</td>
+						</tr>
+						<tr>
+							<td align="left">setAdminFee(newFeeFraction[, ethersOptions]) <code>**</code></td>
+							<td align="left">Transaction receipt</td>
+							<td align="left"><code>newFeeFraction</code> is a <code>Number</code> between 0.0 and 1.0 (inclusive)</td>
 						</tr>
 						<tr>
 							<td align="left">withdrawAllToMember(memberAddress[, <a href="#withdraw-options">options</a>])</td>
@@ -610,7 +610,8 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">Send some of the withdrawable earnings to the address signed off by the member</td>
 						</tr>
 				</tbody></table>
-				<p><code>*</code> The return value type may vary depending on <a href="#withdraw-options">the given options</a> that describe the use case. </p>
+				<p><code>*</code> The return value type may vary depending on <a href="#withdraw-options">the given options</a> that describe the use case.<br>
+				<code>**</code> <code>ethersOptions</code> that <code>setAdminFee</code> takes can be found as <a href="https://docs.ethers.io/v5/api/contract/contract/#contract-functionsSend">&quot;overrides&quot; documented in docs.ethers.io</a>.</p>
 				<p>Here&#39;s how to deploy a Data Union contract with 30% Admin fee and add some members:</p>
 				<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">StreamrClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;streamr-client&#039;</span>
 
@@ -787,6 +788,11 @@ These DataUnion-specific options can be given to `new StreamrClient` options:
 							<td align="left">retryTimeoutMs</td>
 							<td align="left">60000 (1&nbsp;minute)</td>
 							<td align="left">When to give up when waiting for the withdraw to complete</td>
+						</tr>
+						<tr>
+							<td align="left">gasPrice</td>
+							<td align="left">network estimate</td>
+							<td align="left">Ethereum Mainnet transaction gas price to use when transporting tokens over the bridge</td>
 						</tr>
 				</tbody></table>
 				<p>These withdraw transactions are sent to the sidechain, so gas price shouldn&#39;t be manually set (fees will hopefully stay very low),
